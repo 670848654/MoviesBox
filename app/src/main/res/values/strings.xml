@@ -218,7 +218,7 @@
     <string name="testModelSubContent">Xiaomi 12S Ultra | XiaomiPad 5 Pro\nAndroid 14 | 13</string>
     <string name="currentVersionTitle">当前版本</string>
     <string name="lastBuildDateTitle">最后构建日期</string>
-    <string name="lastBuildDateSubContent">2024年3月26日20:34:45</string>
+    <string name="lastBuildDateSubContent">2024年4月3日23:07:34</string>
     <string name="cacheDirectoryTitle">缓存目录</string>
     <string name="cacheDirectorySubContent">%s\n卸载后自行删除此目录</string>
     <string name="openSourceTitle">开源相关</string>

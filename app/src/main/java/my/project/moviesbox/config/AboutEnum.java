@@ -25,7 +25,7 @@ public enum AboutEnum {
     TEST_MODEL(R.drawable.round_phonelink_setup_24, Utils.getString(R.string.testModelTitle), Utils.getString(R.string.testModelSubContent)),
     CACHE_DIRECTORY(R.drawable.round_snippet_folder_24, Utils.getString(R.string.cacheDirectoryTitle), ""),
     LAST_BUILD_DATE(R.drawable.round_code_24, Utils.getString(R.string.lastBuildDateTitle), Utils.getString(R.string.lastBuildDateSubContent)),
-    VIP_VIDEO_PARSER(R.drawable.vip_url, Utils.getString(R.string.vipVideoParserTitle), ""),
+//    VIP_VIDEO_PARSER(R.drawable.vip_url, Utils.getString(R.string.vipVideoParserTitle), ""),
     GITHUB(R.drawable.star, Utils.getString(R.string.githubTitle), Utils.getString(R.string.githubSubContent)),
     OPEN_SOURCE(R.drawable.github, Utils.getString(R.string.openSourceTitle), "");
     @DrawableRes

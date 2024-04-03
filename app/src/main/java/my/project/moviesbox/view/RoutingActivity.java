@@ -20,7 +20,7 @@ public class RoutingActivity extends Activity {
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         // Keep the splash screen visible for this Activity.
-        splashScreen.setKeepVisibleCondition(() -> true );
+        splashScreen.setKeepOnScreenCondition(() -> true );
         startActivity(new Intent(this, HomeActivity.class));
         finish();
     }

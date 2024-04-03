@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.chad.library.adapter.base.animation.AlphaInAnimation;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -34,6 +35,7 @@ import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.THistoryManager;
 import my.project.moviesbox.database.manager.TVideoManager;
 import my.project.moviesbox.event.RefreshEvent;
+import my.project.moviesbox.event.ShowProgressEvent;
 import my.project.moviesbox.event.UpdateImgEvent;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.presenter.HistoryPresenter;
@@ -439,6 +441,21 @@ public class HistoryFragment extends BaseFragment<HistoryContract.View, HistoryP
         if (getActivity().isFinishing()) return;
         updateImgPresenter = new UpdateImgPresenter(updateImgEvent.getOldImgUrl(), updateImgEvent.getDescUrl(), this);
         updateImgPresenter.loadData();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void ShowProgress(ShowProgressEvent showProgressEvent) {
+        // LinearProgressIndicator在RecyclerView使用有BUG进度会消失，暂时使用该方法进行重新显示
+        if (getActivity().isFinishing()) return;
+        for (int i=0,size=historyBeans.size(); i<size; i++) {
+            THistoryWithFields tHistoryWithFields = historyBeans.get(i);
+            long watchProgress = tHistoryWithFields.getWatchProgress();
+            long videoDuration = tHistoryWithFields.getVideoDuration();
+            LinearProgressIndicator linearProgressIndicator = (LinearProgressIndicator) adapter.getViewByPosition(i, R.id.bottom_progress);
+            linearProgressIndicator.setVisibility(watchProgress == 0 ? View.GONE : View.VISIBLE);
+            linearProgressIndicator.setMax((int) videoDuration);
+            linearProgressIndicator.setProgress((int) watchProgress);
+        }
     }
 
     @Override
