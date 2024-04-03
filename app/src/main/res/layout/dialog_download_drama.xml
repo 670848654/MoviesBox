@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+        android:id="@+id/drag_handle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <com.ctetin.expandabletextviewlibrary.ExpandableTextView
+        android:id="@+id/info"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginBottom="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        app:ep_need_link="false"
+        app:ep_need_mention="true"
+        app:ep_max_line="1"
+        android:lineSpacingExtra="4dp"
+        app:ep_need_contract="true"
+        app:ep_need_animation="true"
+        app:ep_expand_text="@string/clickToView"
+        app:ep_expand_color="@color/pink200" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/download_list"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:clipToPadding="false"
+        android:paddingBottom="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>

@@ -1,0 +1,365 @@
+<resources>
+    <string name="app_name">MoviesBox</string>
+
+    <!-- 权限文本 -->
+    <string name="notificationsPermissionsTitle">是否允许下载相关通知权限？</string>
+    <string name="writeExternalStoragePermissionsTitle">未授权会导致使用中可能出现应用崩溃，是否同意授权？</string>
+    <string name="permissionsAgree">同意</string>
+    <string name="permissionsDisagree">不同意</string>
+    <string name="noPermissionsContent">未授权会导致使用中可能出现应用崩溃</string>
+
+    <!-- notification -->
+    <string name="channelId">download</string>
+    <string name="channelName">下载通知</string>
+    <string name="channelDescription">下载通知</string>
+    <string name="channelInfoId">downloadInfo</string>
+    <string name="channelInfoName">下载状态</string>
+    <string name="channelInfoDescription">下载状态</string>
+    <string name="channelServiceInfoId">downloadService</string>
+    <string name="channelServiceInfoName">下载服务</string>
+    <string name="channelServiceInfoDescription">下载服务</string>
+    <string name="channelCheckServiceInfoId">checkUpdateService</string>
+    <string name="channelCheckServiceInfoName">检测更新服务</string>
+    <string name="channelCheckServiceInfoDescription">检测更新服务</string>
+
+    <!-- crash -->
+    <string name="exceptionType">异常类型：%s\n</string>
+    <string name="exceptionInformation">异常信息：%s\n</string>
+    <string name="exceptionStackTrace">异常堆栈跟踪：\n</string>
+    <string name="whatCausedTheException">导致异常的原因：%s</string>
+
+    <!-- 第一次进入APP弹窗信息 -->
+    <string name="firstOpenAppDialogContent">本应用只是爬取一些影视网站部分内容编写的第三方APP，所有数据均来自网络，影视资源无法播放多为源网站问题，不要相信视频中的任何广告！\n仅供学习交流，禁止非法传播或用于商业用途！</string>
+
+    <!-- 解析相关文本 -->
+    <string name="parseVodPlayUrl">解析视频地址中，请稍后&#8230;</string>
+    <string name="parseVodPlayUrlError">无法获取该视频播放地址！</string>
+    <string name="parsingErrorContent">!*解析异常*!\n%s\n%s</string>
+    <string name="errorDialogTitle">!*出错啦*!</string>
+    <string name="retryBtnText">点击重试</string>
+    <string name="closeBtnText">关闭</string>
+    <string name="emptyData">无数据</string>
+    <string name="errorDanmuMsg">获取弹幕信息失败！</string>
+    <string name="loadErrorMsg">数据加载失败</string>
+
+    <!-- 通用文本 -->
+    <string name="otherOperation">操作</string>
+    <string name="defaultPositiveBtnText">确定</string>
+    <string name="defaultNegativeBtnText">取消</string>
+    <string name="yesterday">昨天 </string>
+    <string name="today">今天 </string>
+    <string name="selectVideoPlayer">请选择视频播放器</string>
+    <string name="noAppFound">没有找到匹配的程序</string>
+
+    <string name="pageAndAllPage">"%s/%s页</string>
+    <string name="loadPageAndAllPage">加载第%s页，共%s页</string>
+
+    <string name="emptyMyList">空空如也</string>
+
+    <string name="loading">加载中…</string>
+    <string name="failedToLoad">加载失败</string>
+    <string name="noMoreData">无更多数据</string>
+    <string name="noMoreContent">没有更多内容</string>
+
+    <!-- 收藏相关文本 -->
+    <string name="favoriteTabTitle">收藏夹</string>
+    <string name="addFavoriteBtnText">加入收藏</string>
+    <string name="removeFavoriteBtnText">移除收藏</string>
+    <string name="addFavorite">已加入收藏夹</string>
+    <string name="removeFavorite">已从收藏夹移除</string>
+    <string name="checkFavoriteUpdate">检测影视是否有更新</string>
+
+    <!-- 历史记录相关 -->
+    <string name="historyTabTitle">历史记录</string>
+    <string name="deleteSingleHistory">是否删除该历史记录？</string>
+    <string name="deleteAllHistory">是否清空所有历史记录？清空之后就什么都没有了哦~</string>
+    <string name="historyDescMenuText">影视详情</string>
+    <string name="historyDeleteMenuText">删除</string>
+
+    <!-- 详情界面文本 -->
+    <string name="noWifiDialogTitle">注意</string>
+    <string name="noWifiDialogContent">当前网络未连接到WLAN，确定要继续下载吗？</string>
+
+    <string name="downloadInfoContent">下载须知&#187; \n下载标识：\n\u3000绿色→ 表示该剧集已存在下载任务。\n后台下载：\n\u3000请注意如果你需要在后台进行下载时，由于数据操作是在服务中进行，不同手机可能存在后台、锁屏后下载服务被杀死的情况，请根据自己的手机设置手动将该APP设置电池优化白名单或允许后台运行，否则后台下载时会出现下载失败的情况！\nM3U8：\n\u3000虽然支持M3U8协议格式的视频下载，由于M3U8协议的特殊性，其中可能存在格式伪装、资源加密、多级级域名、key等资源路劲问题，解析方法只能兼容经测试过的部分规则，所以不一定能执行成功，如果下载失败自行删除下载任务！下载成功后会进行ts分片合并通过ffmpeg转为MP4，耗时与手机配置挂钩~\n\u3000下载的视频仅在 我的→ 下载列表中进行播放，其他界面播放还是使用网络解析播放！</string>
+    <string name="downloadMultipleVideoDialogTitle">请选择下载资源</string>
+    <string name="hasDownloadTask">已存在下载任务，请勿重复执行！</string>
+
+    <string name="notSupportDownloadMsg">不支持的下载格式，该地址可能非视频地址！ -> %s</string>
+    <string name="downloadM3u8Tips">该视频资源类型为M3U8，可能无法正常下载成功！</string>
+    <string name="downloadStart">开始下载 -> %s</string>
+    <string name="episodeSize">%s [共%d集]</string>
+    <string name="noEpisode">无可播放列表</string>
+    <string name="playUrlParserError">%s -> 播放地址解析失败</string>
+
+    <string name="loadVodDescInfo">请在影视详情加载完毕后再进行操作</string>
+
+    <!-- 搜索界面文本 -->
+    <string name="searchPleaseTryAgainLater">正在执行搜索操作，请稍后再试！</string>
+
+    <!-- 下载列表界面文本 -->
+    <string name="downloadTaskOperationTitle">下载任务操作</string>
+    <string name="downloadTaskOperationContent">你有%d个未完成的下载任务，是否继续下载？</string>
+
+    <!-- 下载子列表界面文本 -->
+    <string-array name="downloadItems">
+        <item>继续任务</item>
+        <item>暂停任务</item>
+        <item><![CDATA[<font color="#ff0000">删除任务<font>]]></item>
+    </string-array>
+
+    <string-array name="completeItems">
+        <item>使用内置播放器播放</item>
+        <item>使用外部播放器播放</item>
+        <item><![CDATA[<font color="#ff0000">删除任务<font>]]></item>
+    </string-array>
+
+    <string-array name="downloadErrorItems">
+        <item>尝试重新下载</item>
+        <item><![CDATA[<font color="#ff0000">删除任务<font>]]></item>
+    </string-array>
+
+    <string name="taskDoesNotExist">操作出错，任务ID不存在！</string>
+    <string name="taskOperationFailedTitle">任务操作失败</string>
+    <string name="taskOperationFailedContent">任务ID不存在，无法执行下载，请删除该下载任务！</string>
+
+    <!-- 下载相关文本 -->
+    <string name="downloadTabTitle">下载列表</string>
+
+    <string name="deleteSingleDownloadDialogSubContent">请选择执行操作</string>
+    <string name="deleteSingleDownloadDialogPositiveBtnText">仅数据</string>
+    <string name="deleteSingleDownloadDialogNeutralBtnText">和文件一起</string>
+    <string name="taskDeletedMsg">已删除该剧集任务</string>
+
+    <string name="resumeDownloadDialogSubPositiveBtnText">继续下载</string>
+    <string name="resumeDownloadDialogSubNegativeBtnText">忽略</string>
+
+    <string name="downloadVodNotCompleteListContent">其中有 %s 个未完成</string>
+    <string name="downloadVodListContent">共 %s 个内容</string>
+    <string name="downloadFileSize">存储占用约: %s</string>
+
+    <string name="waitState">等待下载</string>
+    <string name="downloadingState">下载中</string>
+    <string name="successState">下载成功</string>
+    <string name="errorState">下载失败</string>
+
+    <string name="downloadErrorMsg">❌下载失败 →%s</string>
+    <string name="downloadDefaultErrorMsg">未知错误，可能下载的资源不存在或文件路劲不可写！</string>
+    <string name="downloadSuccessMsg">下载成功</string>
+    <string name="downloadTsSuccessMsg">下载成功&amp;合并TS完成，开始转换为MP4格式</string>
+    <string name="convertTSToMP4SuccessMsg">🎉🎉🎉 TS转MP4完成</string>
+    <string name="convertTSToMP4ErrorMsg">❌转换出错，错误代码：%s</string>
+
+    <!-- 播放相关文本 -->
+    <string name="preEpisode">上一集 %s</string>
+    <string name="nextEpisode">下一集 %s</string>
+    <string name="neverWatched">从未观看</string>
+    <string name="watchTo">观看至%s</string>
+    <string name="finishedReading">已看完</string>
+    <string name="playbackError">播放错误</string>
+    <string name="playSource">%s | 播放源%s</string>
+
+    <string name="getPlaylistErrorMsg">获取播放列表时出错</string>
+    <string name="getNextEpisodeFailedMoreThan3Times">获取下一集播放地址失败已超过3次，已终止尝试</string>
+
+    <string name="setUserSpeed">设置快进/快退时长</string>
+    <string-array name="fast_forward_item">
+        <item>5s</item>
+        <item>10s</item>
+        <item>15s</item>
+        <item>30s</item>
+    </string-array>
+    <integer-array name="fast_forward_set_item">
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+        <item>30</item>
+    </integer-array>
+    <string name="playerSettingTitle">播放器设置</string>
+    <string name="hideProgress">播放时隐藏底部进度</string>
+    <string name="playNextVideo">自动播放下一集</string>
+    <string name="playerOtherTitle">其他操作</string>
+    <string name="playWithExternalPlayer">使用外部播放器播放</string>
+    <string name="openExternalBrowser">通过浏览器访问原地址</string>
+    <string name="clickToSniffer">尝试网页嗅探解析</string>
+    <string name="selectVideoSource">选择播放源</string>
+    <string name="open_drama_list">打开选集列表</string>
+    <string name="tipsNotWifi">您当前正在使用移动网络，继续播放将消耗流量</string>
+    <string name="tipsNotWifiCancel">停止播放</string>
+    <string name="tipsNotWifiConfirm">继续播放</string>
+    <string-array name="speed_item">
+        <item>0.5x</item>
+        <item>1.0x</item>
+        <item>1.25x</item>
+        <item>1.5x</item>
+        <item>1.75x</item>
+        <item>2.0x</item>
+        <item>2.5x</item>
+        <item>3.0x</item>
+    </string-array>
+
+    <!-- 投屏面文本 -->
+    <string name="upnpDevice">设备列表</string>
+    <string name="upnpVideoUrl">播放地址：%s</string>
+    <string name="upnpNotice">请选择连接设备，连接设备后才可播放</string>
+    <string name="upnpDeviceSelected">已选中: %s</string>
+    <string name="upnpProgress">进度</string>
+    <string name="upnpVolume">音量</string>
+    <string name="upnpPlayBtn">播放</string>
+    <string name="upnpPauseBtn">暂停</string>
+    <string name="upnpStopBtn">停止</string>
+    <string name="upnpExitBtn">退出</string>
+
+    <!-- 关于界面文本 -->
+    <string name="aboutTitle">关于</string>
+    <string name="dataSourcesTitle">数据来源</string>
+    <string name="statementTitle">声明</string>
+    <string name="statementSubContent">仅供学习交流\n禁止非法传播或用于商业用途</string>
+    <string name="testModelTitle">测试设备</string>
+    <string name="testModelSubContent">Xiaomi 12S Ultra | XiaomiPad 5 Pro\nAndroid 14 | 13</string>
+    <string name="currentVersionTitle">当前版本</string>
+    <string name="lastBuildDateTitle">最后构建日期</string>
+    <string name="lastBuildDateSubContent">2024年3月26日20:34:45</string>
+    <string name="cacheDirectoryTitle">缓存目录</string>
+    <string name="cacheDirectorySubContent">%s\n卸载后自行删除此目录</string>
+    <string name="openSourceTitle">开源相关</string>
+    <string name="vipVideoParserTitle">VIP视频解析小工具</string>
+    <string name="githubTitle">Github仓库</string>
+    <string name="githubSubContent">帮我点个Star？:-)\nhttps://github.com/670848654/MoviesBox</string>
+    <string name="githubUrl">https://github.com/670848654/MoviesBox</string>
+    <string name="githubApi">https://api.github.com/repos/670848654/MoviesBox/releases/latest</string>
+
+    <!-- 设置界面文本 -->
+    <string name="settingTitle">设置</string>
+
+    <string name="transferProtocol">传输协议</string>
+    <string name="siteDomainName">站点域名</string>
+    <string name="setDomainTitle">网站域名配置</string>
+    <string name="setDomainDialogTitle">设置域名&lt;font color=\'red\'&gt;*PC端*&lt;/font&gt;</string>
+    <string name="setDomainDialogSubContent">该功能在网站域名变更后导致无法通过旧域名访问从而获取数据异常时使用。\n如果网站仅变更域名，网页布局无变动，你可在此输入相关站点的新域名保存即可。</string>
+    <string name="setDomainReleaseSubContent">🚩可通过站点发布页查看最新域名：</string>
+    <string name="setDomainSuccessText">已修改域名为：%s</string>
+    <string name="setDomainErrorText1">域名不能为空</string>
+    <string name="setDomainErrorText2">域名格式错误</string>
+    <string name="setDomainPositiveBtnText">修改域名</string>
+    <string name="setDomainNeutralBtnText">恢复默认</string>
+    <string-array name="prefix">
+        <item>http://</item>
+        <item>https://</item>
+    </string-array>
+
+    <string name="setPlayerTitle">视频播放器</string>
+    <string-array name="setPlayerItems">
+        <item>内置</item>
+        <item>外置</item>
+    </string-array>
+
+    <string name="setPlayerKernelTitle">播放器内核</string>
+    <string-array name="setPlayerKernelItems">
+        <item>ExoPlayer</item>
+        <item>IjkPlayer</item>
+    </string-array>
+
+    <string name="setDanmuTitle">播放器弹幕开关</string>
+    <string-array name="setDanmuItems">
+        <item>开启</item>
+        <item>关闭</item>
+    </string-array>
+
+    <string name="setThemeTitle">主题设置</string>
+    <string-array name="theme">
+        <item>明亮主题</item>
+        <item>黑暗主题</item>
+        <item>跟随系统（Android 10+）</item>
+    </string-array>
+
+    <string name="setM3u8QueueIgnoreTsTitle">⬆︎ 忽略下载失败的ts切片，即使有失败的切片，下载完成后也要合并所有切片，但会丢失下载失败的片段，可能存在某个或多个切片一直下载失败，这种情况如果非要下载该视频时，请开启忽略！</string>
+    <string name="setM3u8QueueIgnoreTs">忽略失败的切片</string>
+    <string name="setM3u8Title">M3U8协议下载相关配置</string>
+    <string name="setM3u8QueueNumDialogSubContent">⬆︎ 滑动设置同时下载的ts分片数量，根据网络带宽自行配置，加速M3U8类型资源下载速度。</string>
+    <string name="setM3u8QueueNumSuccess">配置已保存，将在下次任务中生效</string>
+    <string name="setM3u8RegRemoveAd">尝试移除广告切片</string>
+    <string name="setM3u8RegRemoveAdTitle">正则规则</string>
+    <string name="setM3u8RegRemoveAdDefaultConfig">(.*ad)+.*</string>
+    <string name="setM3u8RegRemoveAdRegsReset">恢复默认</string>
+    <string name="setM3u8RemoveAdRegs">⬆︎ 广告切片匹配正则配置，仅针对某些ts列表插入了广告ts切片而不是广告内容内嵌在正常视频中的情况，多个使用|分割\n*不懂配置则不要修改，否则可能影响正常切片下载！</string>
+    <string name="setM3u8RemoveAdInfo">⬆︎ 通过一些规则尝试过滤M3U8文件ts列表中的广告切片。\n*注意：开启后可能会出现M3U8协议资源无法下载、移除了正常的视频切片导致视频不完整等异常！</string>
+
+    <string name="setBackupsTitle">备份•恢复</string>
+    <string name="setBackupsSubContent">用于备份/恢复应用设置、收藏夹及历史记录数据</string>
+    <string name="setBackupsFileErrorMsg">请选择正确的备份文件！</string>
+    <string name="setBackupsRestoredMsg">已从备份文件中恢复数据</string>
+    <string name="setBackupsInProgress">任务正在执行中，请等待&#8230;</string>
+    <string name="setBackupsFileComplete">已生成备份文件%s</string>
+    <string-array name="backupsItems">
+        <item>创建数据备份</item>
+        <item>恢复数据备份</item>
+    </string-array>
+
+    <string name="setRemoveDownloadsTitle">清除所有下载记录</string>
+    <string name="setRemoveDownloadsSubContent">当下载功能出现异常时可尝试该操作</string>
+    <string name="setRemoveDownloadsDialogSubContent">是否清空所有下载记录？\n执行后将清空所有下载记录，但不会删除文件。</string>
+    <string name="setRemoveDownloadsSuccess">已删除所有下载记录</string>
+
+    <string name="checkUpdateTitle">检测更新</string>
+    <string name="checkForUpdates">正在检查是否有更新</string>
+    <string name="alreadyTheLatestVersion">已是最新版本</string>
+    <string name="connection2GithubTimedOut">检查更新失败，当前网络无法连接到GitHub</string>
+    <string name="checkUpdateError">检查更新失败，%s</string>
+    <string name="newVersionFound">发现新版本 %s %s</string>
+    <string name="go2TheReleasePage">，点击前往发布页查看</string>
+    <string name="go2TheReleasePageBtnText">前往发布页</string>
+
+    <!-- 分类界面文本 -->
+    <string name="categorySearch">分类检索</string>
+    <string name="classificationQuery">分类查询</string>
+    <string name="resetCondition">重置条件</string>
+
+    <!-- 详情界面文本 -->
+    <string name="downloadBtn">下载</string>
+    <string name="sourceWebPageBtn">源网页</string>
+    <string name="doNotBelieveAnyAdsInTheVideo">资源来自网站，不要相信视频中的任何广告！</string>
+    <string name="reverseOrderOfList">列表反序</string>
+    <string name="expandAllEpisodes">展开全部</string>
+    <string name="multipleSeasons">多季</string>
+    <string name="relatedSuggestion">相关推荐</string>
+    <string name="clickToView">点击查看</string>
+
+    <string name="vipQuickAccess">VIP视频网站快捷访问</string>
+    <string name="playbackAddress">影视播放地址</string>
+    <string name="parseVideoData">解析影视数据</string>
+
+    <!-- 星期文本 -->
+    <string name="monday">周一</string>
+    <string name="tuesday">周二</string>
+    <string name="wednesday">周三</string>
+    <string name="thursday">周四</string>
+    <string name="friday">周五</string>
+    <string name="saturday">周六</string>
+    <string name="sunday">周日</string>
+
+    <!-- 首页界面文本 -->
+    <string name="searchVod">搜索影视</string>
+    <string name="homeBottomBar">首页</string>
+    <string name="myBottomBar">我的</string>
+    <string name="settingBottomBar">设置</string>
+    <string name="searchMenu">搜索</string>
+
+    <!-- VIP解析文本 -->
+    <string name="QQ">腾讯视频</string>
+    <string name="iQiYi">爱奇艺</string>
+    <string name="YouKu">优酷</string>
+    <string name="ManGuoTv">芒果TV</string>
+
+    <!-- 播放器文本 -->
+    <string name="turnOffScreenLock">屏幕锁定关闭</string>
+    <string name="turnOnScreenLock">屏幕锁定开启</string>
+    <string name="castScreenNeedWlan">投屏需要连接WLAN，确保与投屏设备网络环境一致!</string>
+    <string name="selectEpisodes">选集</string>
+    <string name="playingAt2xSpeed">2倍速播放中</string>
+    <string name="doubleSpeed">倍速</string>
+    <string name="doubleSpeedX">倍速×</string>
+    <string name="adaptiveScale">自适应比例</string>
+    <string name="stretchFullScreen">拉伸全屏</string>
+    <string name="cropFullScreen">裁剪全屏</string>
+    <string name="originalSize">原始大小</string>
+</resources>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <include layout="@layout/toolbar" />
+
+        <include layout="@layout/content_home" />
+
+        <FrameLayout
+            android:id="@+id/standard_bottom_sheet"
+            android:visibility="gone"
+            style="@style/BottomSheetDialogTheme2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fitsSystemWindows="true"
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+                    android:id="@+id/drag_handle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/bottom_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipToPadding="false"
+                    android:paddingBottom="?attr/actionBarSize"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/toggleButton"
+                android:visibility="visible"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_margin="8dp"
+                android:layout_gravity="bottom|right">
+
+                <Button
+                    android:id="@+id/rest"
+                    style="@style/Button.OutlinedButton.Icon"
+                    android:layout_marginEnd="4dp"
+                    app:icon="@drawable/round_filter_list_24"
+                    app:iconTint="@color/orange600"
+                    app:strokeColor="@color/orange600"
+                    android:textColor="@color/orange600"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/resetCondition"/>
+
+                <Button
+                    android:id="@+id/done"
+                    style="@style/Button.OutlinedButton.Icon"
+                    android:layout_marginLeft="4dp"
+                    android:layout_marginRight="4dp"
+                    app:icon="@drawable/round_done_all_24"
+                    app:iconTint="@color/pink200"
+                    app:strokeColor="@color/pink200"
+                    android:textColor="@color/pink200"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/classificationQuery"/>
+                <Button
+                    android:id="@+id/close"
+                    style="@style/Button.OutlinedButton.Icon"
+                    android:layout_marginStart="4dp"
+                    app:icon="@drawable/round_close_24"
+                    app:iconTint="@color/red600"
+                    app:strokeColor="@color/red600"
+                    android:textColor="@color/red600"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/closeBtnText"/>
+            </LinearLayout>
+
+        </FrameLayout>
+
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/classFab"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:layout_anchorGravity="bottom|end"
+            android:text="@string/categorySearch"
+            app:layout_anchor="@id/mSwipe"
+            android:textColor="@color/white"
+            app:iconTint="@color/white"
+            app:backgroundTint="@color/pink200"
+            app:icon="@drawable/round_line_style_24"/>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+</RelativeLayout>

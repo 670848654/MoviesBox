@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- 错误视图 -->
+    <RelativeLayout
+        android:id="@+id/error_view"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="4dp"
+        android:layout_centerVertical="true">
+
+        <ImageView
+            android:id="@+id/error_bg"
+            android:src="@drawable/round_warning_24"
+            app:tint="#C53A54"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_centerHorizontal="true"/>
+
+        <TextView
+            android:id="@+id/error_msg"
+            android:layout_below="@+id/error_bg"
+            android:visibility="visible"
+            android:padding="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:gravity="center"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:lineSpacingExtra="10dp"
+            android:textColor="#C53A54"/>
+
+        <Button
+            android:id="@+id/ref_data"
+            android:layout_below="@+id/error_msg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:backgroundTint="@color/pink200"
+            android:textColor="@color/white"
+            app:elevation="5dp"
+            android:text="@string/retryBtnText"
+            app:iconSize="24dp"
+            app:icon="@drawable/round_refresh_24"/>
+
+    </RelativeLayout>
+
+    <!-- 加载中视图 -->
+    <!--<ProgressBar
+        android:id="@+id/progress"
+        android:visibility="gone"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>-->
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progress"
+        android:visibility="gone"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:showAnimationBehavior="inward"
+        app:hideAnimationBehavior="outward"
+        android:indeterminate="true" />
+
+    <!-- 数据为空视图 -->
+    <LinearLayout
+        android:id="@+id/empty_view"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:orientation="vertical">
+
+        <ImageView
+            android:src="@drawable/round_view_in_ar_24"
+            app:tint="#575757"
+            android:layout_gravity="center_horizontal"
+            android:layout_width="50dp"
+            android:layout_height="50dp"/>
+
+        <TextView
+            android:id="@+id/empty_msg"
+            android:text="@string/emptyMyList"
+            android:padding="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:gravity="center"
+            android:lineSpacingExtra="10dp"
+            android:textColor="#575757"/>
+
+    </LinearLayout>
+</RelativeLayout>

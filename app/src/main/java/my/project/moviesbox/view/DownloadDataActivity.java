@@ -1,0 +1,541 @@
+package my.project.moviesbox.view;
+
+import static my.project.moviesbox.utils.Utils.DOWNLOAD_SAVE_PATH;
+import static my.project.moviesbox.utils.Utils.getArray;
+
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.text.Html;
+import android.view.HapticFeedbackConstants;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.arialyy.annotations.Download;
+import com.arialyy.aria.core.Aria;
+import com.arialyy.aria.core.download.DownloadEntity;
+import com.arialyy.aria.core.task.DownloadTask;
+import com.chad.library.adapter.base.animation.AlphaInAnimation;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.io.File;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import butterknife.BindView;
+import my.project.moviesbox.R;
+import my.project.moviesbox.adapter.DownloadDataAdapter;
+import my.project.moviesbox.config.M3U8DownloadConfig;
+import my.project.moviesbox.contract.DownloadContract;
+import my.project.moviesbox.custom.CustomLoadMoreView;
+import my.project.moviesbox.database.entity.TDownloadDataWithFields;
+import my.project.moviesbox.database.entity.TDownloadWithFields;
+import my.project.moviesbox.database.manager.TDownloadDataManager;
+import my.project.moviesbox.database.manager.TDownloadManager;
+import my.project.moviesbox.database.manager.TVideoManager;
+import my.project.moviesbox.event.DownloadEvent;
+import my.project.moviesbox.event.RefreshDownloadEvent;
+import my.project.moviesbox.event.RefreshEvent;
+import my.project.moviesbox.parser.config.SourceEnum;
+import my.project.moviesbox.presenter.DownloadPresenter;
+import my.project.moviesbox.service.DownloadService;
+import my.project.moviesbox.utils.Utils;
+
+/**
+  * @包名: my.project.moviesbox.view
+  * @类名: DownloadDataActivity
+  * @描述: 下载子列表数据集合列表视图
+  * @作者: Li Z
+  * @日期: 2024/2/4 17:10
+  * @版本: 1.0
+ */
+public class DownloadDataActivity extends BaseActivity<DownloadContract.View, DownloadPresenter> implements DownloadContract.View {
+    @BindView(R.id.rv_list)
+    RecyclerView mRecyclerView;
+    @BindView(R.id.mSwipe)
+    SwipeRefreshLayout mSwipe;
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
+    private List<TDownloadDataWithFields> downloadDataBeans = new ArrayList<>();
+    private DownloadDataAdapter adapter;
+    private String downloadId;
+    private String vodTitle;
+    private int limit = 10;
+    private int downloadDataCount = 0;
+    private boolean isMain = true;
+    protected boolean isErr = true;
+    private static final String[] DOWNLOAD_STR = getArray(R.array.downloadItems);
+    private static final String[] COMPLETE_STR = getArray(R.array.completeItems);
+    private static final String[] DOWNLOAD_ERROR_STR = getArray(R.array.downloadErrorItems);
+    private File downloadDir;
+
+    @Override
+    protected DownloadPresenter createPresenter() {
+        return new DownloadPresenter(downloadId, downloadDataBeans.size(), limit, this);
+    }
+
+    @Override
+    protected void loadData() {
+        downloadDataCount = TDownloadDataManager.queryDownloadDataCount(downloadId);
+        mPresenter.loadDownloadDataList(true);
+    }
+
+    @Override
+    protected int setLayoutRes() {
+        return R.layout.activity_vod_list;
+    }
+
+    @Override
+    protected void init() {
+        EventBus.getDefault().register(this);
+        Aria.download(this).register();
+        Bundle bundle = getIntent().getExtras();
+        downloadId = bundle.getString("downloadId");
+        vodTitle = bundle.getString("vodTitle");
+        initToolbar();
+        initSwipe();
+        initFab();
+        initAdapter();
+    }
+
+    private void initToolbar() {
+        toolbar.setTitle(vodTitle);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        toolbar.setNavigationOnClickListener(view -> {
+            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            finish();
+        });
+    }
+
+    private void initSwipe() {
+        mSwipe.setEnabled(false);
+    }
+
+    private void initFab() {
+
+    }
+
+    private void initAdapter() {
+        adapter = new DownloadDataAdapter(this, downloadDataBeans);
+        adapter.setAnimationEnable(true);
+        adapter.setAdapterAnimation(new AlphaInAnimation());
+        adapter.setOnItemClickListener((adapter, view, position) -> {
+            if (!Utils.isFastClick()) return;
+            long taskId = downloadDataBeans.get(position).getTDownloadData().getAriaTaskId();
+            DownloadEntity downloadEntity = Aria.download(this).getDownloadEntity(taskId);
+            switch (downloadDataBeans.get(position).getTDownloadData().getComplete()) {
+                case 0:
+                    // 等待下载状态
+                    Utils.showSingleListAlert(this, "", DOWNLOAD_STR, true, (dialogInterface, i) -> {
+                        switch (i) {
+                            case 0:
+                                // 继续下载
+                                if (!Utils.isNullOrEmpty(downloadEntity)) {
+                                    boolean isM3u8 = downloadEntity.getUrl().contains("m3u8");
+                                    if (isM3u8)
+                                        Aria.download(this).load(taskId).m3u8VodOption(new M3U8DownloadConfig().setM3U8Option()).ignoreCheckPermissions().resume();
+                                    else
+                                        Aria.download(this).load(taskId).ignoreCheckPermissions().resume();
+                                    downloadDataBeans.get(position).getTDownloadData().setComplete(0);
+                                    startService(new Intent(this, DownloadService.class));
+                                } else
+                                    application.showToastMsg(getString(R.string.taskDoesNotExist));
+                                break;
+                            case 1:
+                                // 暂停任务
+                                if (!Utils.isNullOrEmpty(downloadEntity)) {
+                                    Aria.download(this).load(taskId).ignoreCheckPermissions().stop();
+                                    downloadDataBeans.get(position).getTDownloadData().setComplete(0);
+                                    adapter.notifyItemChanged(position);
+                                    stopService(new Intent(this, DownloadService.class));
+                                } else
+                                    application.showToastMsg(getString(R.string.taskDoesNotExist));
+                                break;
+                            case 2:
+                                // 删除任务
+                                showDeleteDataDialog(downloadDataBeans.get(position), position);
+                                break;
+                        }
+                        dialogInterface.dismiss();
+                    });
+                    break;
+                case 1:
+                    Utils.showSingleListAlert(this, "", COMPLETE_STR, true, (dialogInterface, i) -> {
+                        switch (i) {
+                            case 0:
+                                Bundle bundle = new Bundle();
+                                bundle.putString("localFilePath",  downloadDataBeans.get(position).getTDownloadData().getSavePath());
+                                bundle.putString("vodTitle", vodTitle);
+                                bundle.putString("dramaTitle", downloadDataBeans.get(position).getTDownloadData().getVideoNumber());
+                                bundle.putSerializable("downloadDataBeans", (Serializable) downloadDataBeans);
+                                startActivity(new Intent(this, LocalPlayerActivity.class).putExtras(bundle));
+                                break;
+                            case 1:
+                                Utils.selectVideoPlayer(this, downloadDataBeans.get(position).getTDownloadData().getSavePath());
+                                break;
+                            case 2:
+                                showDeleteDataDialog(downloadDataBeans.get(position), position);
+                                break;
+                        }
+                        dialogInterface.dismiss();
+                    });
+                    break;
+                case 2:
+                    Utils.showSingleListAlert(this, "", DOWNLOAD_ERROR_STR, true, (dialogInterface, i) -> {
+                        switch (i) {
+                            case 0:
+                                if (!Utils.isNullOrEmpty(downloadEntity)) {
+                                    boolean isM3u8 = downloadEntity.getUrl().contains("m3u8");
+                                    if (isM3u8)
+                                        Aria.download(this).load(taskId).m3u8VodOption(new M3U8DownloadConfig().setM3U8Option()).ignoreCheckPermissions().resume();
+                                    else
+                                        Aria.download(this).load(taskId).ignoreCheckPermissions().resume();
+                                    downloadDataBeans.get(position).getTDownloadData().setComplete(0);
+                                    TDownloadDataManager.updateDownloadState(taskId);
+                                    startService(new Intent(this, DownloadService.class));
+                                } else
+                                    application.showToastMsg(getString(R.string.taskDoesNotExist));
+                                break;
+                            case 1:
+                                showDeleteDataDialog(downloadDataBeans.get(position), position);
+                                break;
+                        }
+                        dialogInterface.dismiss();
+                    });
+            }
+        });
+        if (Utils.checkHasNavigationBar(this))
+            mRecyclerView.setPadding(0,0,0, Utils.getNavigationBarHeight(this));
+        adapter.getLoadMoreModule().setLoadMoreView(new CustomLoadMoreView());
+        adapter.getLoadMoreModule().setOnLoadMoreListener(() -> mRecyclerView.postDelayed(() -> {
+            if (downloadDataBeans.size() >= downloadDataCount) {
+                //数据全部加载完毕
+                adapter.getLoadMoreModule().loadMoreEnd();
+            } else {
+                if (isErr) {
+                    //成功获取更多数据
+                    isMain = false;
+                    mPresenter = createPresenter();
+                    mPresenter.loadDownloadDataList(false);
+                } else {
+                    //获取更多数据失败
+                    isErr = true;
+                    adapter.getLoadMoreModule().loadMoreFail();
+                }
+            }
+        }, 500));
+        mRecyclerView.setAdapter(adapter);
+        adapter.setEmptyView(rvView);
+    }
+
+    private void showDeleteDataDialog(TDownloadDataWithFields tDownloadDataWithFields, int position) {
+        Utils.showAlert(
+                this,
+                getString(R.string.otherOperation),
+                getString(R.string.deleteSingleDownloadDialogSubContent),
+                true,
+                getString(R.string.deleteSingleDownloadDialogPositiveBtnText),
+                getString(R.string.defaultNegativeBtnText),
+                getString(R.string.deleteSingleDownloadDialogNeutralBtnText),
+                (dialog, which) -> {
+                    deleteData(false, tDownloadDataWithFields, position);
+                },
+                (dialog, which) -> {
+                    dialog.dismiss();
+                },
+                (dialog, which) -> {
+                    deleteData(true, tDownloadDataWithFields, position);
+                }
+        );
+    }
+
+    private void deleteData(boolean removeFile, TDownloadDataWithFields tDownloadDataWithFields, int position) {
+        TDownloadDataManager.deleteDownloadData(tDownloadDataWithFields.getTDownloadData().getDownloadDataId());
+        String downloadPath = String.format(DOWNLOAD_SAVE_PATH, SourceEnum.getTitleBySource(tDownloadDataWithFields.getVideoSource()), tDownloadDataWithFields.getVideoTitle());
+        downloadDir = new File(downloadPath);
+        if (tDownloadDataWithFields.getTDownloadData().getAriaTaskId() == -1) {
+            // -1直接删除
+            adapter.removeAt(position);
+            application.showToastMsg(getString(R.string.taskDeletedMsg));
+        } else {
+            if (!downloadDir.exists())
+                return;
+            // 获取所有下载任务
+            List<DownloadEntity> list = Aria.download(this).getTaskList();
+            // 判断任务列表是否存在，当应用卸载重装时为NULL会报错
+            if (list != null && list.size() > 0) {
+                for (DownloadEntity entity : list) {
+                    // 未下载完成
+                    if (tDownloadDataWithFields.getTDownloadData().getAriaTaskId() != -99 && tDownloadDataWithFields.getTDownloadData().getAriaTaskId() == entity.getId()) {
+                        // 从Aria数据库中删除任务
+                        Aria.download(this).load(entity.getId()).ignoreCheckPermissions().cancel(false);
+                        break;
+                    }
+                }
+            }
+            // 是否删除文件
+            deleteDownloadData(removeFile, tDownloadDataWithFields, position);
+        }
+        downloadDataCount = TDownloadDataManager.queryDownloadDataCount(downloadId);
+        if (downloadDataBeans.size() == 0) {
+            shouldDeleteDownloadDir();
+            TDownloadManager.deleteDownload(downloadId);
+            finish();
+        }
+        EventBus.getDefault().post(new RefreshEvent(3));
+        EventBus.getDefault().post(new RefreshEvent(4));
+    }
+
+    /**
+     * 删除数据
+     * @param removeFile
+     * @param tDownloadDataWithFields
+     * @param position
+     */
+    private void deleteDownloadData(boolean removeFile, TDownloadDataWithFields tDownloadDataWithFields, int position) {
+        // 如果已完成的任务
+        if (tDownloadDataWithFields.getTDownloadData().getComplete() == 1 && removeFile) {
+            File mp4File = new File(tDownloadDataWithFields.getTDownloadData().getSavePath());
+            if (mp4File.exists()) mp4File.delete();
+            File m3u8File = new File(tDownloadDataWithFields.getTDownloadData().getSavePath().replaceAll("mp4", "m3u8"));
+            if (m3u8File.exists()) m3u8File.delete();
+        }
+        application.showToastMsg(getString(R.string.taskDeletedMsg));
+        adapter.removeAt(position);
+    }
+
+    /**
+     * 是否应该删除下载主目录
+     */
+    private void shouldDeleteDownloadDir() {
+        try {
+            if (downloadDir.list().length == 0) // 文件夹下没有任何文件才删除主目录
+                downloadDir.delete();
+        } catch (Exception e) {}
+    }
+
+    public void setLoadState(boolean loadState) {
+        isErr = loadState;
+        adapter.getLoadMoreModule().loadMoreComplete();
+    }
+
+    private void loadDownloadData() {
+        isMain = true;
+        mPresenter = createPresenter();
+        loadData();
+    }
+
+    @Download.onTaskRunning
+    protected void running(DownloadTask downloadTask) {
+        for (int i = 0, size = downloadDataBeans.size(); i < size; i++) {
+            if (downloadDataBeans.get(i).getTDownloadData().getAriaTaskId() == downloadTask.getEntity().getId() &&
+                    downloadTask.getTaskName().contains(downloadDataBeans.get(i).getTDownloadData().getVideoNumber())) {
+                TextView number = (TextView) adapter.getViewByPosition(i, R.id.number);
+                if (number != null)
+                    number.setText(downloadTask.getConvertSpeed() == null ? "0kb/s" : downloadTask.getConvertSpeed());
+                TextView state = (TextView) adapter.getViewByPosition(i, R.id.state);
+                if (state != null) {
+                    state.setText(Html.fromHtml("<font color=\"#FF5722\">"+Utils.getString(R.string.downloadingState)+"</font>"));
+                }
+                TextView fileSize = (TextView) adapter.getViewByPosition(i, R.id.file_size);
+                if (fileSize != null) {
+                    if (fileSize.getVisibility() != View.VISIBLE)
+                        fileSize.setVisibility(View.VISIBLE);
+                    fileSize.setText(Utils.getNetFileSizeDescription(downloadTask.getEntity().getFileSize()));
+                }
+                LinearProgressIndicator linearProgressIndicator = (LinearProgressIndicator) adapter.getViewByPosition(i, R.id.bottom_progress);
+                if (linearProgressIndicator != null) {
+                    if (linearProgressIndicator.getVisibility() != View.VISIBLE) linearProgressIndicator.setVisibility(View.VISIBLE);
+                    linearProgressIndicator.setProgress(downloadTask.getPercent());
+                }
+            }
+        }
+    }
+
+    /*@Download.onTaskComplete
+    public void onTaskComplete(DownloadTask downloadTask) {
+        Log.e("Activity onTaskComplete", downloadTask.getTaskName() + "，下载完成");
+        String title = (String) DatabaseUtil.queryDownloadAnimeInfo(downloadTask.getEntity().getId()).get(0);
+        for (int i = 0, size = downloadDataBeans.size(); i < size; i++) {
+            if (downloadDataBeans.get(i).getAnimeTitle().equals(title) && downloadTask.getTaskName().contains(downloadDataBeans.get(i).getPlayNumber())) {
+                downloadDataBeans.get(i).setComplete(1);
+                String path = downloadTask.getFilePath();
+                if (path.contains("m3u8")) {
+                    path = path.replaceAll("m3u8", "mp4");
+                    File file = new File(path);
+                    downloadDataBeans.get(i).setFileSize(file == null ? 0 : file.length());
+                    downloadDataBeans.get(i).setPath(path);
+                } else {
+                    downloadDataBeans.get(i).setFileSize(downloadTask.getFileSize());
+                    downloadDataBeans.get(i).setPath(downloadTask.getFilePath());
+                }
+                adapter.notifyItemChanged(i);
+                DatabaseUtil.updateDownloadSuccess((String) VideoUtils.getAnimeInfo(downloadTask, 0), (Integer) VideoUtils.getAnimeInfo(downloadTask, 1), downloadTask.getFilePath(), downloadTask.getEntity().getId(), downloadTask.getFileSize());
+                break;
+            }
+        }
+    }*/
+
+    @Download.onTaskCancel
+    public void onTaskCancel(DownloadTask downloadTask) {
+        shouldDeleteDownloadDir();
+        EventBus.getDefault().post(new RefreshEvent(3));
+    }
+
+    @Download.onTaskFail
+    public void onTaskFail(DownloadTask downloadTask) {
+        try {
+            List<Object> objects = TVideoManager.queryDownloadVodInfo(downloadTask.getEntity().getId());
+            for (int i = 0, size = downloadDataBeans.size(); i < size; i++) {
+                if (downloadDataBeans.get(i).getVideoTitle().equals(objects.get(0)) && downloadTask.getTaskName().contains(downloadDataBeans.get(i).getTDownloadData().getVideoNumber())) {
+                    downloadDataBeans.get(i).getTDownloadData().setComplete(2);
+                    TextView number = (TextView) adapter.getViewByPosition(i, R.id.number);
+                    if (number != null)
+                        number.setText("");
+                    adapter.notifyItemChanged(i);
+                    break;
+                }
+            }
+            EventBus.getDefault().post(new RefreshEvent(3));
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            Utils.showAlert(this,
+                    getString(R.string.taskOperationFailedTitle),
+                    getString(R.string.taskOperationFailedContent),
+                    false,
+                    getString(R.string.defaultPositiveBtnText),
+                    "",
+                    "",
+                    (DialogInterface.OnClickListener) (dialog, which) -> dialog.dismiss(),
+                    null,
+                    null);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        Aria.download(this).unRegister();
+        EventBus.getDefault().unregister(this);
+        super.onDestroy();
+    }
+
+    @Override
+    protected void initBeforeView() {
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onEvent(RefreshDownloadEvent refreshDownloadData) {
+        for (int i=0,size=downloadDataBeans.size(); i<size; i++) {
+            if (downloadDataBeans.get(i).getTDownloadData().getDownloadDataId().equals(refreshDownloadData.getId())) {
+                downloadDataBeans.get(i).getTDownloadData().setWatchProgress(refreshDownloadData.getPlayPosition());
+                downloadDataBeans.get(i).getTDownloadData().setVideoDuration(refreshDownloadData.getVideoDuration());
+                adapter.notifyItemChanged(i);
+                break;
+            }
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onDownloadEvent(DownloadEvent downloadEvent) {
+        new Handler().postDelayed(() -> {
+            for (int i = 0, size = downloadDataBeans.size(); i < size; i++) {
+                if (downloadDataBeans.get(i).getTDownloadData().getAriaTaskId() == downloadEvent.getTaskId() &&
+                        downloadEvent.getDrama().contains(downloadDataBeans.get(i).getTDownloadData().getVideoNumber())) {
+                    downloadDataBeans.get(i).getTDownloadData().setComplete(downloadEvent.getComplete());
+                    TextView number = (TextView) adapter.getViewByPosition(i, R.id.number);
+                    if (number != null)
+                        number.setText("");
+                    if (downloadEvent.getComplete() == 1) {
+                        String path = downloadEvent.getFilePath();
+                        if (path.contains("m3u8")) {
+                            path = path.replaceAll("m3u8", "mp4");
+                            File file = new File(path);
+                            downloadDataBeans.get(i).getTDownloadData().setVideoFileSize(file == null ? 0 : file.length());
+                            downloadDataBeans.get(i).getTDownloadData().setSavePath(path);
+                        } else {
+                            downloadDataBeans.get(i).getTDownloadData().setVideoFileSize(downloadEvent.getFileSize());
+                            downloadDataBeans.get(i).getTDownloadData().setSavePath(downloadEvent.getFilePath());
+                        }
+                    }
+                    adapter.notifyItemChanged(i);
+                    break;
+                }
+            }
+        }, 1000);
+    }
+
+    @Override
+    protected void setConfigurationChanged() {
+        if (downloadDataBeans.size() == 0) return;
+        setRecyclerViewView();
+    }
+
+    @Override
+    protected void retryListener() {
+
+    }
+
+    private void setRecyclerViewEmpty() {
+        mRecyclerView.setLayoutManager(new GridLayoutManager(this, 1));
+    }
+
+    private void setRecyclerViewView() {
+        position = mRecyclerView.getLayoutManager() == null ? 0 : ((GridLayoutManager) mRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+        mRecyclerView.setLayoutManager(new GridLayoutManager(this, parserInterface.setDownloadDataListItemSize(Utils.isPad(), isPortrait)));
+        mRecyclerView.getLayoutManager().scrollToPosition(position);
+    }
+
+    @Override
+    public void loadingView() {
+        rvLoading();
+    }
+
+    @Override
+    public void errorView(String msg) {
+        if (isFinishing()) return;
+        setLoadState(false);
+        runOnUiThread(() -> {
+            if (isMain) {
+                setRecyclerViewEmpty();
+                rvEmpty(msg);
+            }
+        });
+    }
+
+    @Override
+    public void emptyView() {
+
+    }
+
+    @Override
+    public void downloadList(List<TDownloadWithFields> list) {
+
+    }
+
+    @Override
+    public void downloadDataList(List<TDownloadDataWithFields> list) {
+        if (isFinishing()) return;
+        setLoadState(true);
+        runOnUiThread(() -> {
+            if (isMain) {
+                hideProgress();
+                downloadDataBeans = list;
+                setRecyclerViewView();
+                adapter.setNewInstance(downloadDataBeans);
+            } else
+                adapter.addData(list);
+        });
+    }
+}

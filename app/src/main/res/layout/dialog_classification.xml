@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+    <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+        android:id="@+id/drag_handle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:paddingBottom="?attr/actionBarSize"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/toggleButton"
+        android:visibility="visible"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="8dp"
+        android:layout_gravity="bottom|right">
+
+        <Button
+            android:id="@+id/rest"
+            style="@style/Button.OutlinedButton.Icon"
+            android:layout_marginEnd="4dp"
+            app:icon="@drawable/round_filter_list_24"
+            app:iconTint="@color/orange600"
+            app:strokeColor="@color/orange600"
+            android:textColor="@color/orange600"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/resetCondition"/>
+        <Button
+            android:id="@+id/done"
+            style="@style/Button.OutlinedButton.Icon"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            app:icon="@drawable/round_done_all_24"
+            app:iconTint="@color/pink200"
+            app:strokeColor="@color/pink200"
+            android:textColor="@color/pink200"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/classificationQuery"/>
+        <Button
+            android:id="@+id/close"
+            style="@style/Button.OutlinedButton.Icon"
+            android:layout_marginStart="4dp"
+            app:icon="@drawable/round_close_24"
+            app:iconTint="@color/red600"
+            app:strokeColor="@color/red600"
+            android:textColor="@color/red600"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/closeBtnText"/>
+    </LinearLayout>
+
+</FrameLayout>
