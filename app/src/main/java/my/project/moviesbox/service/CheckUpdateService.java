@@ -56,7 +56,7 @@ public class CheckUpdateService extends Service {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 mNotify.uploadCheckUpdateInfo(notificationId, getString(R.string.checkUpdateTitle), getString(R.string.connection2GithubTimedOut), "");
-                EventBus.getDefault().post(new CheckUpdateEvent().fail(getString(R.string.alreadyTheLatestVersion)));
+                EventBus.getDefault().post(new CheckUpdateEvent().fail(getString(R.string.connection2GithubTimedOut)));
                 stopSelf();
             }
 
@@ -68,7 +68,7 @@ public class CheckUpdateService extends Service {
                     String latestVersion = jsonObject.getString("tag_name");
                     if (latestVersion.equals(Utils.getASVersionName())) {
                         mNotify.cancelNotification(notificationId);
-                        EventBus.getDefault().post(new CheckUpdateEvent().fail(getString(R.string.connection2GithubTimedOut)));
+                        EventBus.getDefault().post(new CheckUpdateEvent().fail(getString(R.string.alreadyTheLatestVersion)));
                     } else {
                         String url = jsonObject.getString("html_url");
                         String body = jsonObject.getString("body");
