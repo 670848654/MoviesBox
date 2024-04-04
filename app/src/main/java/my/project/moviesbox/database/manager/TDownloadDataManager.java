@@ -29,7 +29,8 @@ public class TDownloadDataManager extends BaseManager {
     public static void updateDownloadDataProgressById(long position, long duration, String downloadDataId) {
         TDownloadData tDownloadData = tDownloadDataDao.queryById(downloadDataId);
         tDownloadData.setWatchProgress(position);
-        tDownloadData.setVideoDuration(duration);
+        if (tDownloadData.getVideoDuration() == 0)
+            tDownloadData.setVideoDuration(duration);
         tDownloadDataDao.update(tDownloadData);
     }
 

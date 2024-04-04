@@ -102,7 +102,8 @@ public class THistoryManager extends BaseManager {
         tHistoryDao.update(tHistory);
         THistoryData tHistoryData = tHistoryDataDao.queryByLinkIdVideoUrl(tHistory.getHistoryId(), videoUrl);
         tHistoryData.setWatchProgress(position);
-        tHistoryData.setVideoDuration(duration);
+        if (tHistoryData.getVideoDuration() == 0)
+            tHistoryData.setVideoDuration(duration);
         tHistoryData.setUpdateTime(getDateTimeStr());
         tHistoryDataDao.update(tHistoryData);
     }
