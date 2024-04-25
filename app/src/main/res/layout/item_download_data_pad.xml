@@ -39,7 +39,7 @@
                         android:scaleType="centerCrop"
                         android:transitionName="sharedImg" />
 
-                    <!--<ProgressBar
+                    <ProgressBar
                         android:id="@+id/show_progress"
                         style="?android:attr/progressBarStyleHorizontal"
                         android:layout_alignParentBottom="true"
@@ -48,9 +48,9 @@
                         android:max="100"
                         android:visibility="gone"
                         app:layout_constraintBottom_toBottomOf="@+id/img"
-                        android:progressDrawable="@drawable/progress_bg" />-->
+                        android:progressDrawable="@drawable/progress_bg" />
 
-                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                    <!--<com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/show_progress"
                         android:visibility="gone"
                         android:layout_width="match_parent"
@@ -58,9 +58,10 @@
                         android:layout_alignParentBottom="true"
                         app:layout_constraintBottom_toBottomOf="@+id/img"
                         app:indicatorColor="#fff85959"
-                        app:showAnimationBehavior="inward"
-                        app:hideAnimationBehavior="outward"
-                        android:max="100"/>
+                        app:trackColor="#80000000"
+                        app:showAnimationBehavior="outward"
+                        app:hideAnimationBehavior="inward"
+                        android:max="100"/>-->
 
                     <TextView
                         android:id="@+id/time"

@@ -1,5 +1,7 @@
 package my.project.moviesbox.view;
 
+import static my.project.moviesbox.view.BaseActivity.ADAPTER_SCALE_IN_ANIMATION;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -8,8 +10,6 @@ import android.view.ViewGroup;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.chad.library.adapter.base.animation.AlphaInAnimation;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -67,8 +67,9 @@ public class WeekFragment extends BaseFragment {
     public void initAdapter() {
         if (adapter == null) {
             adapter = new WeekAdapter(getActivity(), parserInterface.setWeekItemType(), weekItems);
-            adapter.setAnimationEnable(true);
-            adapter.setAdapterAnimation(new AlphaInAnimation());
+            WeekActivity weekActivity = (WeekActivity) getActivity();
+            if (weekActivity != null)
+                weekActivity.setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
             adapter.setEmptyView(rvView);
             adapter.setOnItemClickListener((adapter, view, position) -> {
                 if (!Utils.isFastClick()) return;

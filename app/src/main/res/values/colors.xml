@@ -289,4 +289,5 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="delete_color">#FF0000</color>
+    <color name="sub_content_color">#8C8C8C</color>
 </resources>

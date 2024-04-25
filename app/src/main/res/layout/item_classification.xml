@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:id="@+id/root"
+<LinearLayout android:id="@+id/root"
+    android:padding="8dp"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="horizontal"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <TextView
         android:id="@+id/title"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical|start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:textSize="16sp" />
+        app:drawableRightCompat="@drawable/round_arrow_right_24" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_list"

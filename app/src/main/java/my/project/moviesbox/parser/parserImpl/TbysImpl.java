@@ -18,6 +18,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -34,7 +35,6 @@ import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.bean.WeekDataBean;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
-import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.HomeFragment;
@@ -413,21 +413,30 @@ public class TbysImpl implements ParserInterface {
                 if (!column.hasClass("is-hidden")) {
                     index += 1;
                     ClassificationDataBean classificationDataBean = new ClassificationDataBean();
-                    classificationDataBean.setClassificationTitle(column.select("span").text());
+                    String classificationTitle = column.select("span").text();
+                    classificationDataBean.setClassificationTitle(classificationTitle);
                     classificationDataBean.setMultipleChoices(false);
                     classificationDataBean.setIndex(index);
                     Elements aList = column.select("a");
                     List<ClassificationDataBean.Item> items = new ArrayList<>();
                     for (Element a : aList) {
                         String title = a.text();
-                        items.add(new ClassificationDataBean.Item(title, title.equals("全部") ? "" : title, title.equals("全部")));
+                        boolean isAll = title.equals("全部");
+                        items.add(new ClassificationDataBean.Item(title, isAll ? "" : title, isAll));
+                    }
+                    if (classificationTitle.contains("年份")) {
+                        // 判断是否有今年 没有则手动添加进去 方便查询
+                        String nowYear = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+                        if (!items.get(1).getTitle().equals(nowYear))
+                            items.add(1, new ClassificationDataBean.Item(nowYear, nowYear, false));
                     }
                     classificationDataBean.setItemList(items);
                     classificationDataBeans.add(classificationDataBean);
                 }
             }
             List<ClassificationDataBean.Item> items = new ArrayList<>();
-            items.add(new ClassificationDataBean.Item("按更新", "time", true));
+            items.add(new ClassificationDataBean.Item("全部", "", true));
+            items.add(new ClassificationDataBean.Item("按更新", "time", false));
             items.add(new ClassificationDataBean.Item("按人气", "hits", false));
             items.add(new ClassificationDataBean.Item("按推荐", "score", false));
             index += 1;
@@ -462,6 +471,15 @@ public class TbysImpl implements ParserInterface {
                     bean.setTitle(item.attr("title"));
                     bean.setUrl(item.attr("href"));
                     bean.setImg(getImageUrl(item.select("img").attr("data-src")));
+                    Elements tags = item.select(".vod-tagsinfo span");
+                    if (!Utils.isNullOrEmpty(tags) && tags.size() > 0) {
+                        for (Element tag : tags) {
+                            if (tag.hasClass("is-hidden-mobile"))
+                                bean.setEpisodesTag(tag.text());
+                            else
+                                bean.setTopLeftTag(tag.text());
+                        }
+                    }
                     items.add(bean);
                 }
                 vodDataBean.setItemList(items);

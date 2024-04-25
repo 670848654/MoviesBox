@@ -29,27 +29,48 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"/>
 
+                <ImageView
+                    android:src="@drawable/round_info_24"
+                    app:tint="@color/sub_content_color"
+                    android:layout_marginBottom="8dp"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"/>
+
                 <TextView
                     android:text="@string/setM3u8QueueIgnoreTsTitle"
-                    android:textSize="14sp"
-                    android:textColor="@color/pink200"
+                    android:textSize="12sp"
+                    android:textColor="@color/sub_content_color"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
                 <com.google.android.material.slider.Slider
-                    android:id="@+id/slider"
+                    android:id="@+id/setM3u8QueueNumSlider"
                     android:layout_marginTop="8dp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    app:trackHeight="24dp"
+                    app:trackColorInactive="@color/pink50"
+                    app:trackColorActive="@color/pinka100"
+                    app:tickColorActive="@color/pink50"
+                    app:tickColorInactive="@color/pinka100"
+                    app:thumbColor="@color/pinka100"
+                    android:value="20"
                     android:stepSize="1"
                     android:valueFrom="4.0"
                     android:valueTo="100.0" />
 
+                <ImageView
+                    android:src="@drawable/round_info_24"
+                    app:tint="@color/sub_content_color"
+                    android:layout_marginBottom="8dp"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"/>
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:textColor="@color/pink200"
+                    android:textSize="12sp"
+                    android:textColor="@color/sub_content_color"
                     android:text="@string/setM3u8QueueNumDialogSubContent" />
 
                 <com.google.android.material.materialswitch.MaterialSwitch
@@ -61,12 +82,18 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
+                <ImageView
+                    android:src="@drawable/round_info_24"
+                    app:tint="@color/sub_content_color"
+                    android:layout_marginBottom="8dp"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"/>
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textSize="14sp"
-                    android:textColor="@color/pink200"
+                    android:textSize="12sp"
+                    android:textColor="@color/sub_content_color"
                     android:text="@string/setM3u8RemoveAdInfo" />
 
                 <!--<LinearLayout

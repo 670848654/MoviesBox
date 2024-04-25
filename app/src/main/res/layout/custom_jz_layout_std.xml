@@ -18,6 +18,7 @@
             android:adjustViewBounds="true"
             android:background="#000000"
             android:scaleType="fitXY" />
+
     </my.project.moviesbox.custom.LongPressEventView>
 
     <RelativeLayout
@@ -263,7 +264,7 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginEnd="12dp"
-            android:layout_toStartOf="@+id/battery_time_layout"
+            android:layout_toStartOf="@+id/rightBox"
             android:layout_toEndOf="@+id/back"
             android:ellipsize="end"
             android:maxLines="1"
@@ -271,6 +272,7 @@
             android:textSize="18sp" />
 
         <LinearLayout
+            android:id="@+id/rightBox"
             android:layout_toStartOf="@+id/dateTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -2,10 +2,8 @@ package my.project.moviesbox.view;
 
 import static android.app.Activity.RESULT_OK;
 
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
@@ -18,6 +16,7 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.util.Patterns;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,14 +33,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.JSONReader;
 import com.arialyy.aria.core.Aria;
-import com.chad.library.adapter.base.animation.SlideInBottomAnimation;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.codec.binary.Base64;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -50,21 +46,18 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.SettingAboutAdapter;
 import my.project.moviesbox.bean.SettingAboutBean;
-import my.project.moviesbox.config.M3U8DownloadConfig;
 import my.project.moviesbox.config.SettingEnum;
 import my.project.moviesbox.database.entity.TFavorite;
 import my.project.moviesbox.database.entity.THistory;
@@ -74,19 +67,12 @@ import my.project.moviesbox.database.manager.BackupsManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.event.CheckUpdateEvent;
 import my.project.moviesbox.event.RefreshEvent;
-import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.service.CheckUpdateService;
-import my.project.moviesbox.service.DownloadService;
 import my.project.moviesbox.utils.DarkModeUtils;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
-
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -97,15 +83,18 @@ import java.util.concurrent.Executors;
   * @版本: 1.0
  */
 public class SettingFragment extends BaseFragment {
+    @BindView(R.id.title)
+    TextView titleView;
     private View view;
-    private int source = parserInterface.getSource();
+    private final int source = parserInterface.getSource();
     private String defaultPrefix;
-    private String[] themeItems = Utils.getArray(R.array.theme);
+    private final String[] themeItems = Utils.getArray(R.array.theme);
     @BindView(R.id.rv_list)
     RecyclerView recyclerView;
     private SettingAboutAdapter adapter;
-    private List<SettingAboutBean> list = SettingEnum.getSettingAboutBeanList();
+    private final List<SettingAboutBean> list = SettingEnum.getSettingAboutBeanList();
     private CheckUpdateEvent checkUpdateEvent;
+    private HomeActivity homeActivity;
 
     @Override
     protected void setConfigurationChanged() {
@@ -123,6 +112,7 @@ public class SettingFragment extends BaseFragment {
                 parent.removeView(view);
             }
         }
+        homeActivity = (HomeActivity) getActivity();
         initData();
         initAdapter();
         return view;
@@ -155,8 +145,7 @@ public class SettingFragment extends BaseFragment {
     private void initAdapter() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         adapter = new SettingAboutAdapter(getActivity(), list);
-        adapter.setAnimationEnable(true);
-        adapter.setAdapterAnimation(new SlideInBottomAnimation());
+        homeActivity.setAdapterAnimation(adapter, BaseActivity.ADAPTER_ALPHA_IN_ANIMATION, true);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             String title = list.get(position).getTitle();
             if (title.equals(getString(R.string.setDomainTitle)))
@@ -259,7 +248,8 @@ public class SettingFragment extends BaseFragment {
                     setDataSubTitle(dataPosition, newDomain);
                     dialog.dismiss();
                     EventBus.getDefault().post(new RefreshEvent(0));
-                    application.showToastMsg(String.format(getString(R.string.setDomainSuccessText), newDomain));
+//                    application.showToastMsg(String.format(getString(R.string.setDomainSuccessText), newDomain));
+                    homeActivity.showBottomNavigationViewSnackbar(titleView, String.format(getString(R.string.setDomainSuccessText), newDomain), false);
                 } else
                     textInputLayout.getEditText().setError(getString(R.string.setDomainErrorText2));
             }
@@ -385,9 +375,10 @@ public class SettingFragment extends BaseFragment {
         MaterialSwitch materialSwitch = view.findViewById(R.id.ignoreTs);
         materialSwitch.setChecked(SharedPreferencesUtils.getIgnoreTs());
         materialSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> SharedPreferencesUtils.setIgnoreTs(isChecked));
-        Slider slider = view.findViewById(R.id.slider);
-        slider.setValue(SharedPreferencesUtils.getMaxTsQueueNum());
-        slider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
+        Slider setM3u8QueueNumSlider = view.findViewById(R.id.setM3u8QueueNumSlider);
+        setM3u8QueueNumSlider.setValue(SharedPreferencesUtils.getMaxTsQueueNum());
+        setM3u8QueueNumSlider.addOnChangeListener((slider, value, fromUser) -> slider.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING));
+        setM3u8QueueNumSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
             @Override
             public void onStartTrackingTouch(@NonNull Slider slider) {
 
@@ -422,7 +413,8 @@ public class SettingFragment extends BaseFragment {
         alertDialog.setOnDismissListener(dialog -> {
 //            if (removeAdTsSwitch.isChecked())
 //                SharedPreferencesUtils.setRemoveAdTsRegs(regLayout.getEditText().getText().toString());
-            application.showToastMsg(getString(R.string.setM3u8QueueNumSuccess));
+//            application.showToastMsg(getString(R.string.setM3u8QueueNumSuccess));
+            homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setM3u8QueueNumSuccess), false);
         });
         alertDialog.show();
     }
@@ -436,7 +428,8 @@ public class SettingFragment extends BaseFragment {
      */
     private void backups(int position) {
         if (inProgress) {
-            application.showToastMsg(getString(R.string.setBackupsInProgress));
+//            application.showToastMsg(getString(R.string.setBackupsInProgress));
+            homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setBackupsInProgress), true);
             return;
         }
         Utils.showSingleListAlert(getActivity(), getString(R.string.setBackupsTitle), Utils.getArray(R.array.backupsItems), true, (dialogInterface, i) -> {
@@ -452,7 +445,8 @@ public class SettingFragment extends BaseFragment {
                         BackupsManager.createBackupsFile(filePath);
                         getActivity().runOnUiThread(() -> {
                             adapter.notifyItemChanged(position);
-                            application.showToastMsg(String.format(getString(R.string.setBackupsFileComplete), backupsFileName));
+//                            application.showToastMsg(String.format(getString(R.string.setBackupsFileComplete), backupsFileName));
+                            homeActivity.showBottomNavigationViewSnackbar(titleView, String.format(getString(R.string.setBackupsFileComplete), backupsFileName), false);
                             inProgress = false;
                         });
                     });
@@ -484,7 +478,8 @@ public class SettingFragment extends BaseFragment {
                     readTextFromUri(uri);
                 } else {
                     inProgress = false;
-                    application.showToastMsg(getString(R.string.setBackupsFileErrorMsg));
+//                    application.showToastMsg(getString(R.string.setBackupsFileErrorMsg));
+                    homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setBackupsFileErrorMsg), true);
                 }
             }
         }
@@ -534,7 +529,8 @@ public class SettingFragment extends BaseFragment {
                         BackupsManager.restoreBackup(tVideoList, tFavorites, tHistories, tHistoryData);
                     }
                     getActivity().runOnUiThread(() -> {
-                        application.showToastMsg("已从备份文件中还原数据");
+//                        application.showToastMsg(getString(R.string.setBackupsRestoredMsg));
+                        homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setBackupsRestoredMsg), false);
                         initData();
                         adapter.notifyDataSetChanged();
                         switch (DarkModeUtils.chooseIndex(getActivity())) {
@@ -554,14 +550,16 @@ public class SettingFragment extends BaseFragment {
                 } else {
                     getActivity().runOnUiThread(() -> {
                         adapter.notifyItemChanged(BACKUPS_POSITION);
-                        application.showToastMsg(getString(R.string.setBackupsFileErrorMsg));
+//                        application.showToastMsg(getString(R.string.setBackupsFileErrorMsg));
+                        homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setBackupsFileErrorMsg), true);
                     });
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 getActivity().runOnUiThread(() -> {
                     adapter.notifyItemChanged(BACKUPS_POSITION);
-                    application.showToastMsg(e.getMessage());
+//                    application.showToastMsg(e.getMessage());
+                    homeActivity.showBottomNavigationViewSnackbar(titleView, e.getMessage(), true);
                 });
             }
             inProgress = false;
@@ -582,17 +580,22 @@ public class SettingFragment extends BaseFragment {
                 true,
                 getString(R.string.defaultPositiveBtnText),
                 getString(R.string.defaultNegativeBtnText),
-                null,
+                getString(R.string.setRemoveDownloadsNeutralTitle),
                 (dialogInterface, i) -> {
                     EventBus.getDefault().post(new RefreshEvent(99));
                     Aria.download(this).removeAllTask(false);
                     TDownloadManager.deleteAllDownloads();
                     EventBus.getDefault().post(new RefreshEvent(3));
-                    application.showToastMsg(getString(R.string.setRemoveDownloadsSuccess));
+//                    application.showToastMsg(getString(R.string.setRemoveDownloadsSuccess));
+                    homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setRemoveDownloadsSuccess), false);
                     dialogInterface.dismiss();
                 },
                 (dialogInterface, i) -> dialogInterface.dismiss(),
-                null);
+                (dialogInterface, i) -> {
+                    Aria.download(this).removeAllTask(false);
+                    homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setRemoveDownloadsNeutralSuccess), false);
+                    dialogInterface.dismiss();
+                });
     }
 
     /**
@@ -642,7 +645,8 @@ public class SettingFragment extends BaseFragment {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onCheckUpdateEvent(CheckUpdateEvent checkUpdateEvent) {
         this.checkUpdateEvent = checkUpdateEvent;
-        application.showToastMsg(checkUpdateEvent.getMsg());
+//        application.showToastMsg(checkUpdateEvent.getMsg());
+        homeActivity.showBottomNavigationViewSnackbar(titleView, checkUpdateEvent.getMsg(), false);
         for (int i=0,size=list.size(); i<size; i++) {
             if (list.get(i).getTitle().equals(getString(R.string.currentVersionTitle))) {
                 if (checkUpdateEvent.isHasUpdate())

@@ -27,7 +27,6 @@ import my.project.moviesbox.parser.bean.WeekDataBean;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
-import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.HomeFragment;
 import my.project.moviesbox.view.PlayerActivity;
@@ -479,6 +478,7 @@ public class IYingHuaImpl implements ParserInterface {
                     bean.setTitle(item.select("h2").text());
                     bean.setUrl(item.select("h2 > a").attr("href"));
                     bean.setImg(item.select("img").attr("src"));
+                    bean.setEpisodesTag(item.select("span font").text());
                     items.add(bean);
                 }
                 vodDataBean.setItemList(items);

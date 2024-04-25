@@ -10,8 +10,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.chad.library.adapter.base.animation.AlphaInAnimation;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,8 +93,7 @@ public class TopticListActivity extends BaseActivity<TopTicListContract.View, To
 
     public void initDefaultAdapter() {
         adapter = new VodListAdapter(isVodList ? parserInterface.setVodListItemType() : parserInterface.setTopticListItemType(), items);
-        adapter.setAnimationEnable(true);
-        adapter.setAdapterAnimation(new AlphaInAnimation());
+        setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             VodDataBean.Item bean = (VodDataBean.Item) adapter.getItem(position);
@@ -229,7 +226,6 @@ public class TopticListActivity extends BaseActivity<TopTicListContract.View, To
         runOnUiThread(() -> {
             if (firstTimeData) {
             mSwipe.setRefreshing(false);
-            setRecyclerViewEmpty();
             rvError(msg);
             Utils.showAlert(this,
                     getString(R.string.errorDialogTitle),

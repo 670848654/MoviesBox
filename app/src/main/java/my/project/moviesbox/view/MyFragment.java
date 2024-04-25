@@ -13,7 +13,6 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.tabs.TabLayout;
 
-import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
@@ -29,7 +28,6 @@ import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.THistoryManager;
 import my.project.moviesbox.event.RefreshEvent;
-import my.project.moviesbox.event.ShowProgressEvent;
 import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.DarkModeUtils;
 
@@ -103,8 +101,8 @@ public class MyFragment extends BaseFragment {
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 tabLayout.selectTab(tabLayout.getTabAt(position));
-                if (position == 1)
-                    EventBus.getDefault().post(new ShowProgressEvent());
+                /*if (position == 1)
+                    EventBus.getDefault().post(new ShowProgressEvent());*/
             }
         });
         setTabBadge(0);

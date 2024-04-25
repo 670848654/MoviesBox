@@ -42,7 +42,6 @@ import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.utils.DigestUtils;
-import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.HomeFragment;
@@ -528,6 +527,12 @@ public class SilisiliImpl implements ParserInterface {
                     item.setTitle(header.text());
                     item.setUrl(elements.get(i).select("div.entry-media > a").attr("href"));
                     item.setImg(getImg(elements.get(i).select("div.entry-media > a > img").attr("src")));
+                    String tags = elements.get(i).select(".entry-meta").text().replaceAll(" ", "");
+                    if (!Utils.isNullOrEmpty(tags)) {
+                        String[] tagArr = tags.split("/");
+                        if (tagArr.length > 0)
+                            item.setEpisodesTag(tagArr[tagArr.length - 1]);
+                    }
                     items.add(item);
                 }
                 vodDataBean.setItemList(items);
@@ -560,6 +565,12 @@ public class SilisiliImpl implements ParserInterface {
                     bean.setTitle(item.select("div.search-image").select("a").attr("title"));
                     bean.setUrl(item.select("div.search-image").select("a").attr("href"));
                     bean.setImg(getImg(item.select("div.search-image").select("img").attr("srcset")));
+                    String tags = item.select(".entry-meta").text().replaceAll(" ", "");
+                    if (!Utils.isNullOrEmpty(tags)) {
+                        String[] tagArr = tags.split("/");
+                        if (tagArr.length > 0)
+                            bean.setEpisodesTag(tagArr[tagArr.length - 1]);
+                    }
                     items.add(bean);
                 }
                 vodDataBean.setItemList(items);

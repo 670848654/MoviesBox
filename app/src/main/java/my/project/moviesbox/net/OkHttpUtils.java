@@ -97,6 +97,17 @@ public class OkHttpUtils {
         call.enqueue(callback);
     }
 
+    public void doGet(String url, Headers headers, Callback callback) {
+        Request request;
+        request =new Request.Builder()
+                .url(url)
+                .headers(headers)
+                .get()
+                .build();
+        Call call = getOkHttpClient().newCall(request);
+        call.enqueue(callback);
+    }
+
     /**
      * post请求
      * @param url

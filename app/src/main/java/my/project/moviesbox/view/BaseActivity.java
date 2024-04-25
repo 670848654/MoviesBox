@@ -1,6 +1,5 @@
 package my.project.moviesbox.view;
 
-import android.Manifest;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
@@ -17,7 +16,10 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.permissionx.guolindev.PermissionX;
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.animation.AlphaInAnimation;
+import com.chad.library.adapter.base.animation.ScaleInAnimation;
+import com.google.android.material.snackbar.Snackbar;
 
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
@@ -65,7 +67,7 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
         Configuration configuration = getResources().getConfiguration();
         change = configuration.orientation;
         isPortrait = change == Configuration.ORIENTATION_PORTRAIT;
-        setDeviceOrientation();
+//        setDeviceOrientation();
         initBeforeView();
         setContentView(setLayoutRes());
         if (Utils.checkHasNavigationBar(this)) {
@@ -81,7 +83,7 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 getWindow().setNavigationBarContrastEnforced(false);
                 getWindow().setStatusBarContrastEnforced(false);
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            } else {
                 getWindow().getDecorView().setSystemUiVisibility(
                         View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
@@ -99,24 +101,7 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
         mUnBinder = ButterKnife.bind(this);
         if (application == null)
             application = (App) getApplication();
-        if (gtSdk33()) {
-            // Android13以上通知权限
-            PermissionX.init(this)
-                    .permissions(PermissionX.permission.POST_NOTIFICATIONS)
-                    .onExplainRequestReason((scope, deniedList) -> scope.showRequestReasonDialog(deniedList, getString(R.string.notificationsPermissionsTitle), getString(R.string.permissionsAgree), getString(R.string.permissionsDisagree)))
-                    .request((allGranted, grantedList, deniedList) -> build());
-        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            // Android11以下需要存储权限
-            PermissionX.init(this)
-                    .permissions(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
-                    .onExplainRequestReason((scope, deniedList) -> scope.showRequestReasonDialog(deniedList, getString(R.string.writeExternalStoragePermissionsTitle), getString(R.string.permissionsAgree), getString(R.string.permissionsDisagree)))
-                    .request((allGranted, grantedList, deniedList) -> {
-                        if (deniedList.size() > 0)
-                            application.showToastMsg(getString(R.string.noPermissionsContent));
-                        build();
-                    });
-        } else
-            build();
+        build();
     }
 
     protected abstract P createPresenter();
@@ -157,13 +142,35 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
         refDataBtn.setOnClickListener(view -> retryListener());
     }
 
+
+    protected static final int ADAPTER_SCALE_IN_ANIMATION = 0;
+    protected static final int ADAPTER_ALPHA_IN_ANIMATION = 1;
+    /**
+     * 设置rvlist动画
+     * @param adapter
+     * @param adapterAnimation
+     * @param firstOnly
+     */
+    protected void setAdapterAnimation(BaseQuickAdapter adapter, int adapterAnimation, boolean firstOnly) {
+        adapter.setAnimationEnable(true);
+        adapter.setAnimationFirstOnly(firstOnly);
+        switch (adapterAnimation) {
+            case ADAPTER_SCALE_IN_ANIMATION:
+                adapter.setAdapterAnimation(new ScaleInAnimation());
+                break;
+            case ADAPTER_ALPHA_IN_ANIMATION:
+                adapter.setAdapterAnimation(new AlphaInAnimation());
+                break;
+        }
+    }
+
     /**
      * 刷新视图
      */
     protected void rvLoading() {
         if (isFinishing()) return;
         progressBar.setVisibility(View.VISIBLE);
-        errorMsgView.setVisibility(View.GONE);
+        errorView.setVisibility(View.GONE);
         emptyView.setVisibility(View.GONE);
     }
 
@@ -182,7 +189,7 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
     protected void rvEmpty(String msg) {
         if (isFinishing()) return;
         progressBar.setVisibility(View.GONE);
-        errorMsgView.setVisibility(View.GONE);
+        errorView.setVisibility(View.GONE);
         emptyMsg.setText(msg);
         emptyView.setVisibility(View.VISIBLE);
     }
@@ -195,7 +202,7 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
         if (isFinishing()) return;
         progressBar.setVisibility(View.GONE);
         errorMsgView.setText(msg);
-        errorMsgView.setVisibility(View.VISIBLE);
+        errorView.setVisibility(View.VISIBLE);
         emptyView.setVisibility(View.GONE);
     }
 
@@ -230,6 +237,12 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
             lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
             getWindow().setAttributes(lp);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setDeviceOrientation();
     }
 
     @Override
@@ -269,7 +282,8 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
                 !getRunningActivityName().equals("PlayerActivity") &&
                 !getRunningActivityName().equals("LocalPlayerActivity") &&
                 !getRunningActivityName().equals("VipParsingInterfacesPlayerActivity") &&
-                !getRunningActivityName().equals("UpnpActivity")) {
+                !getRunningActivityName().equals("UpnpActivity") &&
+                !getRunningActivityName().equals("ImageActivity")) {
             StatusBarUtil.setColorForSwipeBack(this, DarkModeUtils.isDarkMode(this) ? getColor(R.color.night_color_primary) : getColor(R.color.light_color_primary), 0);
         }
         if (DarkModeUtils.isDarkMode(this) || getRunningActivityName().equals("DetailsActivity"))
@@ -309,4 +323,13 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
      * @return
      */
     protected abstract void retryListener();
+
+    protected void showSnackbarMsg(View view, String msg, View anchorView, boolean warning) {
+        Snackbar
+                .make(view, msg, Snackbar.LENGTH_LONG)
+                .setAnchorView(anchorView)
+                .setTextColor(getColor(R.color.night_text_color))
+                .setBackgroundTint(warning ? getColor(R.color.orange500) : getColor(R.color.pink200))
+                .show();
+    }
 }

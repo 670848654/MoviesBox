@@ -3,13 +3,11 @@ package my.project.moviesbox.adapter;
 import android.content.Context;
 import android.view.View;
 import android.widget.ImageView;
-
-import androidx.cardview.widget.CardView;
+import android.widget.ProgressBar;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.module.LoadMoreModule;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import java.util.List;
 
@@ -50,7 +48,8 @@ public class HistoryListAdapter extends BaseQuickAdapter<THistoryWithFields, Bas
             helper.setText(R.id.time, watchProgress == 0 ? Utils.getString(R.string.finishedReading) : JZUtils.stringForTime(watchProgress) + "/" + JZUtils.stringForTime(videoDuration));
 //        helper.setText(R.id.info, String.format(Utils.getString(R.string.playSource), item.getVideoNumber(), (item.getVideoPlaySource()+1)));
         helper.setText(R.id.info, item.getVideoNumber());
-        LinearProgressIndicator linearProgressIndicator = helper.getView(R.id.bottom_progress);
+//        LinearProgressIndicator linearProgressIndicator = helper.getView(R.id.bottom_progress);
+        ProgressBar linearProgressIndicator = helper.getView(R.id.bottom_progress);
         linearProgressIndicator.setVisibility(watchProgress == 0 ? View.GONE : View.VISIBLE);
         linearProgressIndicator.setMax((int) videoDuration);
         linearProgressIndicator.setProgress((int) watchProgress);

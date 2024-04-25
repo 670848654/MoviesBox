@@ -2,6 +2,7 @@ package my.project.moviesbox.adapter;
 
 import android.widget.ImageView;
 
+import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
@@ -44,5 +45,16 @@ public class VodListAdapter extends BaseQuickAdapter<VodDataBean.Item, BaseViewH
         imageView.setTag(R.id.imageid, imgUrl);
         Utils.setDefaultImage(item.getImg(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title));
         helper.setText(R.id.title, item.getTitle());
+        setTagInfo(helper, item.getTopLeftTag(), R.id.topLeftTag);
+        setTagInfo(helper, item.getEpisodesTag(), R.id.episodesTag);
+    }
+
+    private void setTagInfo(BaseViewHolder helper, String title, @IdRes int id) {
+        if (Utils.isNullOrEmpty(title))
+            helper.setGone(id, true);
+        else {
+            helper.setText(id, title);
+            helper.setVisible(id, true);
+        }
     }
 }

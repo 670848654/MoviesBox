@@ -1,5 +1,7 @@
 package my.project.moviesbox.view;
 
+import static my.project.moviesbox.view.BaseActivity.ADAPTER_SCALE_IN_ANIMATION;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,7 +18,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.chad.library.adapter.base.animation.AlphaInAnimation;
 import com.chad.library.adapter.base.entity.MultiItemEntity;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
@@ -143,8 +144,9 @@ public class HomeFragment extends BaseFragment<HomeContract.View, HomePresenter>
     private void initAdapter() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         adapter = new HomeAdapter(getActivity(), multiItemEntities, this);
-        adapter.setAnimationEnable(true);
-        adapter.setAdapterAnimation(new AlphaInAnimation());
+        HomeActivity homeActivity = (HomeActivity) getActivity();
+        if (homeActivity != null)
+            homeActivity.setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
         adapter.addChildClickViewIds(R.id.more);
         adapter.setOnItemChildClickListener((adapter, view, position) -> {
             switch (adapter.getItemViewType(position)) {

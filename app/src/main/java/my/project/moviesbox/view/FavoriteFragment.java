@@ -1,5 +1,7 @@
 package my.project.moviesbox.view;
 
+import static my.project.moviesbox.view.BaseActivity.ADAPTER_SCALE_IN_ANIMATION;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,8 +11,6 @@ import android.view.ViewGroup;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.chad.library.adapter.base.animation.AlphaInAnimation;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -80,8 +80,9 @@ public class FavoriteFragment extends BaseFragment<FavoriteContract.View, Favori
 
     private void initAdapter() {
         adapter = new FavoriteListAdapter(favoriteList);
-        adapter.setAnimationEnable(true);
-        adapter.setAdapterAnimation(new AlphaInAnimation());
+        HomeActivity homeActivity = (HomeActivity) getActivity();
+        if (homeActivity != null)
+            homeActivity.setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
         adapter.setEmptyView(rvView);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;

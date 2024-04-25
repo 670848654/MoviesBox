@@ -1,5 +1,7 @@
 package my.project.moviesbox.view;
 
+import static my.project.moviesbox.view.BaseActivity.ADAPTER_SCALE_IN_ANIMATION;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,9 +13,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.chad.library.adapter.base.animation.AlphaInAnimation;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -103,8 +103,9 @@ public class HistoryFragment extends BaseFragment<HistoryContract.View, HistoryP
 
     private void initAdapter() {
         adapter = new HistoryListAdapter(getActivity(), historyBeans);
-        adapter.setAnimationEnable(true);
-        adapter.setAdapterAnimation(new AlphaInAnimation());
+        HomeActivity homeActivity = (HomeActivity) getActivity();
+        if (homeActivity != null)
+            homeActivity.setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
         adapter.setEmptyView(rvView);
         adapter.addChildClickViewIds(R.id.option);
         adapter.setOnItemClickListener((adapter, view, position) -> {
@@ -446,7 +447,7 @@ public class HistoryFragment extends BaseFragment<HistoryContract.View, HistoryP
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void ShowProgress(ShowProgressEvent showProgressEvent) {
         // LinearProgressIndicator在RecyclerView使用有BUG进度会消失，暂时使用该方法进行重新显示
-        if (getActivity().isFinishing()) return;
+        /*if (getActivity().isFinishing()) return;
         for (int i=0,size=historyBeans.size(); i<size; i++) {
             THistoryWithFields tHistoryWithFields = historyBeans.get(i);
             long watchProgress = tHistoryWithFields.getWatchProgress();
@@ -455,7 +456,7 @@ public class HistoryFragment extends BaseFragment<HistoryContract.View, HistoryP
             linearProgressIndicator.setVisibility(watchProgress == 0 ? View.GONE : View.VISIBLE);
             linearProgressIndicator.setMax((int) videoDuration);
             linearProgressIndicator.setProgress((int) watchProgress);
-        }
+        }*/
     }
 
     @Override

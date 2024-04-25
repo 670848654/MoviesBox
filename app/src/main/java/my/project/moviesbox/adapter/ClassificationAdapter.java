@@ -39,7 +39,7 @@ public class ClassificationAdapter extends BaseMultiItemQuickAdapter<MultiItemEn
                 RecyclerView recyclerView = helper.getView(R.id.rv_list);
                 ClassificationDataBean classificationDataBean = (ClassificationDataBean) item;
                 List<ClassificationDataBean.Item> items = classificationDataBean.getItemList();
-                helper.setText(R.id.title, classificationDataBean.getClassificationTitle());
+                helper.setText(R.id.title, classificationDataBean.getClassificationTitle().replaceAll("：", "").replaceAll(":", ""));
                 recyclerView.setLayoutManager(new AutoLineFeedLayoutManager());
                 classificationItemAdapter = new ClassificationItemAdapter(items);
                 classificationItemAdapter.setOnItemClickListener((adapter, view, position) -> {

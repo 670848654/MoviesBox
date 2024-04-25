@@ -2,6 +2,7 @@ package my.project.moviesbox.view;
 
 import android.content.Intent;
 import android.os.Handler;
+import android.view.View;
 
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
@@ -165,5 +166,9 @@ public class HomeActivity extends BaseActivity {
         this.doubleBackToExitPressedOnce = true;
         application.showToastMsg("再按一次退出应用");
         new Handler().postDelayed(() -> doubleBackToExitPressedOnce = false, 2000); // 2秒内再次按下返回键生效
+    }
+
+    public void showBottomNavigationViewSnackbar(View view, String msg, boolean warning) {
+        showSnackbarMsg(view, msg, bottomNavigationView, warning);
     }
 }

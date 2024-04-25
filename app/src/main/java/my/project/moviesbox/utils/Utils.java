@@ -63,7 +63,6 @@ import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.config.GlideApp;
 import my.project.moviesbox.event.UpdateImgEvent;
-import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.config.ParserInterfaceFactory;
 
 /**
@@ -129,12 +128,12 @@ public class Utils {
      * 创建数据文件夹
      * @param folderPath
      */
-    public static void createDataFolder(String folderPath) {
+    public static boolean createDataFolder(String folderPath) {
         File folder = new File(folderPath);
         if (!folder.exists()) {
-            boolean success = folder.mkdirs();
-            LogUtil.logInfo("mkdir", success+"");
+            return folder.mkdirs();
         }
+        return false;
     }
 
     /**

@@ -534,7 +534,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
         if (Utils.isNullOrEmpty(content))
             textView.setVisibility(View.GONE);
         else {
-            textView.setText("·"+content);
+            textView.setText("•"+content);
             textView.setVisibility(View.VISIBLE);
         }
     }
@@ -694,7 +694,11 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
      */
     private void createDownloadConfig() {
         savePath = String.format(DOWNLOAD_SAVE_PATH, ParserInterfaceFactory.getParserInterface().getSourceName() , detailsTitle);
-        Utils.createDataFolder(savePath);
+        boolean isSuccess = Utils.createDataFolder(savePath);
+        if (!isSuccess) {
+            savePath = this.getFilesDir().getAbsolutePath()+String.format("/%s/%s", ParserInterfaceFactory.getParserInterface().getSourceName() , detailsTitle);
+            Utils.createDataFolder(savePath);
+        }
     }
 
     /**

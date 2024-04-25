@@ -586,7 +586,8 @@ public class FiveMovieImpl implements ParserInterface {
             // 添加分类选项
             for (ClassificationDataBean bean : classificationDataBeans) {
                 if (bean.getClassificationTitle().equals("排序")) {
-                    bean.getItemList().add(new ClassificationDataBean.Item("时间排序", "time", true));
+                    bean.getItemList().add(new ClassificationDataBean.Item("全部", "", true));
+                    bean.getItemList().add(new ClassificationDataBean.Item("时间排序", "time", false));
                     bean.getItemList().add(new ClassificationDataBean.Item("人气排序", "hits", false));
                     bean.getItemList().add(new ClassificationDataBean.Item("评分排序", "score", false));
                 }
@@ -620,6 +621,8 @@ public class FiveMovieImpl implements ParserInterface {
                     bean.setTitle(item.select(".module-poster-item-title").text());
                     bean.setUrl(item.attr("href"));
                     bean.setImg(item.select("img").attr("data-original"));
+                    bean.setEpisodesTag(item.select(".module-item-note").text());
+                    bean.setTopLeftTag(item.select(".module-item-douban").text());
                     items.add(bean);
                 }
                 vodDataBean.setItemList(items);
@@ -652,6 +655,14 @@ public class FiveMovieImpl implements ParserInterface {
                     bean.setTitle(a.parent().getElementsByTag("strong").text());
                     bean.setUrl(a.attr("href"));
                     bean.setImg(a.select("img").attr("data-original"));
+                    String tags = a.parent().select(".module-info-item-content").text();
+                    if (!Utils.isNullOrEmpty(tags)) {
+                        String[] tagArr = tags.split("/");
+                        if (tagArr.length > 2) {
+                            bean.setTopLeftTag(tagArr[0].replaceAll(" ", ""));
+                            bean.setEpisodesTag(tagArr[1].replaceAll(" ", ""));
+                        }
+                    }
                     items.add(bean);
                 }
                 vodDataBean.setItemList(items);
@@ -678,13 +689,15 @@ public class FiveMovieImpl implements ParserInterface {
             List<VodDataBean.Item> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
 
-            Elements elements = document.select(".module-items.module-poster-items a");
+            Elements elements = document.select(".module-items a");
             if (elements.size() > 0) {
                 for (Element item : elements) {
                     VodDataBean.Item bean = new VodDataBean.Item();
                     bean.setTitle(item.select(".module-poster-item-title").text());
                     bean.setUrl(item.attr("href"));
                     bean.setImg(item.select("img").attr("data-original"));
+                    bean.setEpisodesTag(item.select(".module-item-note").text());
+                    bean.setTopLeftTag(item.select(".module-item-douban").text());
                     items.add(bean);
                 }
                 vodDataBean.setItemList(items);
@@ -842,77 +855,6 @@ public class FiveMovieImpl implements ParserInterface {
     @Override
     public FormBody getPostFormBodyByClassName(String className) {
         return null;
-    }
-
-    /**
-     * 默认视频列表一行显示几个内容
-     *
-     * @param isPad      是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    @Override
-    public int setVodListItemSize(boolean isPad, boolean isPortrait) {
-        return ParserInterface.super.setVodListItemSize(isPad, isPortrait);
-    }
-
-    /**
-     * 默认收藏列表一行显示几个内容
-     *
-     * @param isPad      是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    @Override
-    public int setFavoriteListItemSize(boolean isPad, boolean isPortrait) {
-        return ParserInterface.super.setFavoriteListItemSize(isPad, isPortrait);
-    }
-
-    /**
-     * 默认历史记录列表一行显示几个内容
-     *
-     * @param isPad      是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    @Override
-    public int setHistoryListItemSize(boolean isPad, boolean isPortrait) {
-        return ParserInterface.super.setHistoryListItemSize(isPad, isPortrait);
-    }
-
-    /**
-     * 默认下载列表一行显示几个内容
-     *
-     * @param isPad      是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    @Override
-    public int setDownloadListItemSize(boolean isPad, boolean isPortrait) {
-        return ParserInterface.super.setDownloadListItemSize(isPad, isPortrait);
-    }
-
-    /**
-     * 默认下载子列表一行显示几个内容
-     *
-     * @param isPad      是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    @Override
-    public int setDownloadDataListItemSize(boolean isPad, boolean isPortrait) {
-        return ParserInterface.super.setDownloadDataListItemSize(isPad, isPortrait);
-    }
-
-    /**
-     * 默认详情剧集展开列表一行显示几个内容
-     *
-     * @param isPad 是否为平板
-     * @return 返回不能为0！！！
-     */
-    @Override
-    public int setDetailExpandListItemSize(boolean isPad) {
-        return ParserInterface.super.setDetailExpandListItemSize(isPad);
     }
 
     /**

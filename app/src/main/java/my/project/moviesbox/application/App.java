@@ -6,11 +6,8 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.Application;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.os.Handler;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.BounceInterpolator;
@@ -21,7 +18,6 @@ import android.widget.Toast;
 import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
 
-import com.alibaba.fastjson.JSONObject;
 import com.arialyy.aria.core.Aria;
 import com.bumptech.glide.Glide;
 import com.google.android.material.snackbar.Snackbar;
@@ -42,7 +38,6 @@ import javax.net.ssl.X509TrustManager;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.config.MyExceptionHandler;
-import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.utils.CropUtil;
 import my.project.moviesbox.utils.DarkModeUtils;
 import my.project.moviesbox.utils.SharedPreferencesUtils;

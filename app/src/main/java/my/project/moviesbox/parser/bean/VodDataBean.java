@@ -46,6 +46,8 @@ public class VodDataBean implements Serializable {
         private String title; // 标题
         private String img; // 图片
         private String url; // 地址
+        private String topLeftTag; // 左上角TAG
+        private String episodesTag; // 图片底部TAG 一般为集数
 
         @Override
         public String toString() {

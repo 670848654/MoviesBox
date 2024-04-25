@@ -2,14 +2,14 @@ package my.project.moviesbox.view;
 
 import android.content.Intent;
 import android.view.HapticFeedbackConstants;
+import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.chad.library.adapter.base.animation.SlideInBottomAnimation;
-
+import java.io.File;
 import java.util.List;
 
 import butterknife.BindView;
@@ -36,7 +36,7 @@ public class AboutActivity extends BaseActivity {
     SwipeRefreshLayout mSwipe;
     @BindView(R.id.rv_list)
     RecyclerView recyclerView;
-    private SettingAboutAdapter adapter;
+    private SettingAboutAdapter settingAboutAdapter;
     private List<SettingAboutBean> list = AboutEnum.getSettingAboutBeanList();
 
     @Override
@@ -91,20 +91,53 @@ public class AboutActivity extends BaseActivity {
             if (bean.getTitle().equals(getString(R.string.dataSourcesTitle))) {
                 bean.setSubTitle(SharedPreferencesUtils.getUserSetDomain(SharedPreferencesUtils.getDefaultSource()));
             } else if (bean.getTitle().equals(getString(R.string.cacheDirectoryTitle))) {
-                bean.setSubTitle(String.format(getString(R.string.cacheDirectorySubContent), Utils.APP_DATA_PATH));
+                File file = new File(Utils.APP_DATA_PATH);
+                bean.setSubTitle(file.canRead() ? String.format(getString(R.string.cacheDirectorySubContent), Utils.APP_DATA_PATH) : this.getFilesDir().getAbsolutePath());
             }
         }
     }
 
+    private static final long DOUBLE_CLICK_TIME_DELTA = 600; // 双击时间间隔
+    private long lastClickTime = 0; // 上一次点击的时间
+    private int clickCount = 0; // 连续点击次数
+    private final static int MAX_CLICK_COUNT = 9; // 最大点击次数
+    private static Toast toast;
+
     private void initAdapter() {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new SettingAboutAdapter(this, list);
-        adapter.setAnimationEnable(true);
-        adapter.setAdapterAnimation(new SlideInBottomAnimation());
-        adapter.setOnItemClickListener((adapter, view, position) -> {
+        settingAboutAdapter = new SettingAboutAdapter(this, list);
+        setAdapterAnimation(settingAboutAdapter, ADAPTER_ALPHA_IN_ANIMATION, true);
+        settingAboutAdapter.setOnItemClickListener((adapter, view, position) -> {
             String title = list.get(position).getTitle();
             if (title.equals(getString(R.string.dataSourcesTitle)))
                 Utils.viewInChrome(this, parserInterface.getDefaultDomain());
+            else if (title.equals(getString(R.string.testModelTitle)) && !SharedPreferencesUtils.getTurnOnHiddenFeatures()) {
+                long clickTime = System.currentTimeMillis();
+                // 计算点击时间间隔
+                long deltaTime = clickTime - lastClickTime;
+                if (deltaTime < DOUBLE_CLICK_TIME_DELTA) {
+                    // 连续点击
+                    clickCount++;
+                    if (clickCount > 3 && clickCount <MAX_CLICK_COUNT) {
+                        cancelToast();
+                        toast = Toast.makeText(this, "再点击"+(MAX_CLICK_COUNT-clickCount)+"次开启隐藏功能！", Toast.LENGTH_SHORT);
+                        toast.show();
+                    }
+                    if (clickCount == 9) {
+                        SharedPreferencesUtils.setTurnOnHiddenFeatures();
+                        list.addAll(5, AboutEnum.getTurnOnHiddenFeaturesList());
+                        settingAboutAdapter.notifyDataSetChanged();
+                        application.showSnackbarMsgAction(toolbar, "你已开启隐藏功能！", "好", v -> {
+
+                        });
+                    }
+                } else {
+                    // 重新计数
+                    clickCount = 1;
+                }
+                // 更新上一次点击时间
+                lastClickTime = clickTime;
+            }
              else if (title.equals(getString(R.string.vipVideoParserTitle)))
                 startActivity(new Intent(this, VipParsingInterfacesActivity.class));
              else if (title.equals(getString(R.string.githubTitle)))
@@ -113,6 +146,12 @@ public class AboutActivity extends BaseActivity {
                 startActivity(new Intent(this, OpenSourceActivity.class));
         });
         if (Utils.checkHasNavigationBar(this)) recyclerView.setPadding(0,0,0, Utils.getNavigationBarHeight(this) + 15);
-        recyclerView.setAdapter(adapter);
+        recyclerView.setAdapter(settingAboutAdapter);
+    }
+
+    private void cancelToast() {
+        if (toast != null) {
+            toast.cancel();
+        }
     }
 }

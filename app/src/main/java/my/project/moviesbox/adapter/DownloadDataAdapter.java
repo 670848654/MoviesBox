@@ -4,11 +4,11 @@ import android.content.Context;
 import android.text.Html;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.module.LoadMoreModule;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import java.util.List;
 
@@ -53,7 +53,8 @@ public class DownloadDataAdapter extends BaseQuickAdapter<TDownloadDataWithField
                 completeText = "<font color=\"#FF5722\">"+Utils.getString(R.string.errorState)+"</font>";
                 break;
         }
-        LinearProgressIndicator linearProgressIndicator = helper.getView(R.id.show_progress);
+//        LinearProgressIndicator linearProgressIndicator = helper.getView(R.id.show_progress);
+        ProgressBar linearProgressIndicator = helper.getView(R.id.show_progress);
         long watchProgress = item.getTDownloadData().getWatchProgress();
         long videoDuration = item.getTDownloadData().getVideoDuration();
         if (videoDuration != 0) { // 只有播放过才有视频时长 因此用来做判断

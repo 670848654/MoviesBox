@@ -130,20 +130,19 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
                     Utils.dpToPx(this, 16),
                     Utils.getNavigationBarHeight(this) + 1);
             classFab.setLayoutParams(params);
-            classFab.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
         }
     }
 
     @OnClick(R.id.classFab)
-    public void openBSD() {
+    public void openBSD(View view) {
+        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
         classificationBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
         classificationBottomSheetDialog.show();
     }
 
     public void initDefaultAdapter() {
         adapter = new VodListAdapter(parserInterface.setVodListItemType(), items);
-        adapter.setAnimationEnable(true);
-        adapter.setAdapterAnimation(new AlphaInAnimation());
+        setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             VodDataBean.Item bean = (VodDataBean.Item) adapter.getItem(position);
@@ -200,6 +199,19 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
         });
         Button doneButton = classificationView.findViewById(R.id.done);
         doneButton.setOnClickListener(view -> {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0, size = paramsTitle.length - 1; i < size; i++) {
+                if (!Utils.isNullOrEmpty(paramsTitle[i])) {
+                    stringBuilder.append(paramsTitle[i]);
+                    stringBuilder.append(",");
+                }
+            }
+            if (stringBuilder.length() > 0) {
+                stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+                stringBuilder.insert(0, "[");
+                stringBuilder.append("]");
+            }
+            toolbar.setTitle(title + stringBuilder);
             // 条件检索
             view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
             page = parserInterface.startPageNum();
@@ -224,19 +236,6 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
     }
 
     private void setToolbarInfo() {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0, size = paramsTitle.length - 1; i < size; i++) {
-            if (paramsTitle[i] != null) {
-                stringBuilder.append(paramsTitle[i]);
-                stringBuilder.append(",");
-            }
-        }
-        if (stringBuilder.length() > 0) {
-            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-            stringBuilder.insert(0, "[");
-            stringBuilder.append("]");
-        }
-        toolbar.setTitle(title + stringBuilder);
         toolbar.setSubtitle(String.format(PAGE_AND_ALL_PAGE, page, pageCount));
     }
 
@@ -368,7 +367,6 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
         runOnUiThread(() -> {
             if (firstTimeData) {
                 mSwipe.setRefreshing(false);
-                setRecyclerViewEmpty();
                 rvError(msg);
                 Utils.showAlert(this,
                         getString(R.string.errorDialogTitle),

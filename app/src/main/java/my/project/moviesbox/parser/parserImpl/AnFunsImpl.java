@@ -39,7 +39,6 @@ import my.project.moviesbox.parser.bean.WeekDataBean;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
-import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.HomeFragment;
@@ -488,7 +487,8 @@ public class AnFunsImpl implements ParserInterface {
                 }
             }
             List<ClassificationDataBean.Item> items = new ArrayList<>();
-            items.add(new ClassificationDataBean.Item("按最新", "time", true));
+            items.add(new ClassificationDataBean.Item("全部", "", true));
+            items.add(new ClassificationDataBean.Item("按最新", "time", false));
             items.add(new ClassificationDataBean.Item("按最热", "hits", false));
             items.add(new ClassificationDataBean.Item("按评分", "score", false));
             index += 1;
@@ -523,6 +523,8 @@ public class AnFunsImpl implements ParserInterface {
                     bean.setTitle(item.attr("title"));
                     bean.setUrl(item.attr("href"));
                     bean.setImg(item.attr("data-original"));
+                    bean.setTopLeftTag(item.select("span.state").text());
+                    bean.setEpisodesTag(item.select("span.remarks").text());
                     items.add(bean);
                 }
                 vodDataBean.setItemList(items);

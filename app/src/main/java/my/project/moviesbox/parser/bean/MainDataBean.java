@@ -28,7 +28,8 @@ import my.project.moviesbox.view.DetailsActivity;
 public class MainDataBean implements MultiItemEntity, Serializable {
     public static final int TAG_LIST = 0; // 首页TAG
     public static final int BANNER_LIST = 1; // 轮播
-    public static final int ITEM_LIST = 2; // 剧集列表
+    public static final int ITEM_LIST = 2; // 剧集列表 横向列表
+    public static final int ITEM_SINGLE_LINE_LIST = 3; // 单条数据列表 纵向
     private String title; // 标题
     private String url; // 地址
     private boolean hasMore; // 是否有更多
@@ -88,6 +89,7 @@ public class MainDataBean implements MultiItemEntity, Serializable {
         // 如需要更多布局类型 需要自行定义实现，默认仅提供两种
         public static final int ITEM_TYPE_0 = 0; // 布局类型 宽<高[类似：1:1.4]
         public static final int ITEM_TYPE_1 = 1; // 布局类型 宽>高[类似：16:9]
+        public static final int ITEM_TYPE_2 = 2; // 布局类型 宽>高[类似：2:1]
         private String title; // 剧集标题
         private String img; // 图片地址
         private String url; // 访问地址

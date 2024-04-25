@@ -98,7 +98,8 @@ public class DownloadService extends Service {
 
     @Download.onTaskResume
     public void onTaskResume(DownloadTask downloadTask) {
-        mNotify.showDefaultNotification(new Long(downloadTask.getEntity().getId()).intValue(), (String) VideoUtils.getVodInfo(downloadTask, 0), downloadTask.getTaskName());
+        Long taskId = downloadTask.getEntity().getId();
+        mNotify.showDefaultNotification(taskId.intValue(), (String) VideoUtils.getVodInfo(downloadTask, 0), downloadTask.getTaskName());
 //        EventBus.getDefault().post(new Refresh(3));
     }
 
@@ -106,8 +107,9 @@ public class DownloadService extends Service {
     @Download.onTaskStart
     public void onTaskStart(DownloadTask downloadTask) {
 //        EventBus.getDefault().post(new RefreshEvent(3));
-        taskIds.add(new Long(downloadTask.getEntity().getId()));
-        mNotify.showDefaultNotification(new Long(downloadTask.getEntity().getId()).intValue(), (String) VideoUtils.getVodInfo(downloadTask, 0), downloadTask.getTaskName());
+        Long taskId = downloadTask.getEntity().getId();
+        taskIds.add(taskId);
+        mNotify.showDefaultNotification(taskId.intValue(), (String) VideoUtils.getVodInfo(downloadTask, 0), downloadTask.getTaskName());
     }
 
     @Download.onTaskStop
@@ -118,8 +120,9 @@ public class DownloadService extends Service {
 
     @Download.onTaskCancel
     public void onTaskCancel(DownloadTask downloadTask) {
-        taskIds.add(new Long(downloadTask.getEntity().getId()));
-        mNotify.cancelNotification(new Long(downloadTask.getEntity().getId()).intValue());
+        Long taskId = downloadTask.getEntity().getId();
+        taskIds.add(taskId);
+        mNotify.cancelNotification(taskId.intValue());
         shouldUnRegister();
     }
 
@@ -129,7 +132,7 @@ public class DownloadService extends Service {
         String vodEpisodes = downloadTask.getTaskName();
         String savePath = downloadTask.getFilePath();
         String vodTitle = (String) VideoUtils.getVodInfo(downloadTask, 0);
-        mNotify.uploadInfo(new Long(downloadTask.getEntity().getId()).intValue(), vodTitle, downloadTask.getTaskName(), String.format(Utils.getString(R.string.downloadErrorMsg), (e == null ? Utils.getString(R.string.downloadDefaultErrorMsg) :  ALog.getExceptionString(e))));
+        mNotify.uploadInfo(taskId.intValue(), vodTitle, downloadTask.getTaskName(), String.format(Utils.getString(R.string.downloadErrorMsg), (e == null ? Utils.getString(R.string.downloadDefaultErrorMsg) :  ALog.getExceptionString(e))));
         TDownloadManager.updateDownloadError(downloadTask.getFilePath(), downloadTask.getEntity().getId(), downloadTask.getFileSize());
         EventBus.getDefault().post(new DownloadEvent(taskId, vodTitle, vodEpisodes, savePath, 0, 2));
         shouldUnRegister();
@@ -144,7 +147,7 @@ public class DownloadService extends Service {
         String savePath = downloadTask.getFilePath();
         boolean isM3U8 = savePath.contains("m3u8");
         taskIds.remove(downloadTask.getEntity().getId());
-        Aria.download(this).load(downloadTask.getEntity().getId()).ignoreCheckPermissions().cancel(false); // 下载完成删除任务
+        Aria.download(this).load(taskId).ignoreCheckPermissions().cancel(false); // 下载完成删除任务
         if (!isM3U8) {
             // MP4
             mNotify.uploadInfo(taskId.intValue(), vodTitle, vodEpisodes, Utils.getString(R.string.downloadSuccessMsg));
@@ -162,7 +165,8 @@ public class DownloadService extends Service {
 
     @Download.onTaskRunning
     public void onTaskRunning(DownloadTask downloadTask) {
-        mNotify.upload(new Long(downloadTask.getEntity().getId()).intValue(), downloadTask.getPercent());
+        Long taskId = downloadTask.getEntity().getId();
+        mNotify.upload(taskId.intValue(), downloadTask.getPercent());
     }
 
     private void shouldUnRegister() {

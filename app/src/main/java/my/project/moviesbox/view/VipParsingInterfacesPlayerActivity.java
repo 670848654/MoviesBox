@@ -52,7 +52,7 @@ import my.project.moviesbox.utils.Utils;
  */
 public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInterfacesContract.View, ParsingInterfacesPresenter> implements
         JZPlayer.CompleteListener, JZPlayer.TouchListener,
-        JZPlayer.ShowOrHideChangeViewListener,  JZPlayer.OnProgressListener, JZPlayer.PlayingListener, JZPlayer.PauseListener, JZPlayer.OnQueryDanmuListener, ParsingInterfacesContract.View {
+        JZPlayer.ShowOrHideChangeViewListener,  JZPlayer.OnProgressListener, JZPlayer.PlayingListener, JZPlayer.PauseListener, JZPlayer.OnQueryDanmuListener, JZPlayer.ActivityOrientationListener, ParsingInterfacesContract.View {
     @BindView(R.id.player)
     JZPlayer player;
     protected String videoTitle, dramaTitle, url;
@@ -138,6 +138,8 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
 
 
     private void initPlayerView() {
+        if (dramasItems.size() == 0)
+            player.selectDramaView.setVisibility(View.GONE);
         otherView.setVisibility(View.GONE);
         player.configView.setOnClickListener(v -> {
             if (!Utils.isFastClick()) return;
@@ -145,9 +147,12 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
                 drawerLayout.closeDrawer(GravityCompat.START);
             else drawerLayout.openDrawer(GravityCompat.START);
         });
-        player.setListener(this, this, this, this, this, this, this, this, this);
-        player.WIFI_TIP_DIALOG_SHOWED = true;
-        player.backButton.setOnClickListener(v -> finish());
+        player.setListener(this, this, this, this, this, this, this, this, this, this);
+//        player.WIFI_TIP_DIALOG_SHOWED = true;
+        player.backButton.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            finish();
+        });
         player.preVideo.setOnClickListener(v -> {
             clickIndex--;
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
@@ -234,6 +239,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     }
 
     private void setPreNextData() {
+        if (dramasItems.size() == 0) return;
         player.preVideo.setText(hasPreVideo ? String.format(PREVIDEOSTR, dramasItems.get(clickIndex-1).getTitle()) : "");
         hasNextVideo = clickIndex != dramasItems.size() - 1;
         player.nextVideo.setText(hasNextVideo ? String.format(NEXTVIDEOSTR, dramasItems.get(clickIndex+1).getTitle()) : "");
@@ -499,6 +505,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
         } else {
             player.releaseDanMu();
             application.showToastMsg("全部播放完毕");
+            if (dramasItems.size() == 0) return;
             if (!drawerLayout.isDrawerOpen(GravityCompat.END))
                 drawerLayout.openDrawer(GravityCompat.END);
         }
@@ -517,5 +524,13 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     @Override
     public void queryDamu(String queryDanmuTitle, String queryDanmuDrama) {
 
+    }
+
+    @Override
+    public void setOrientation(int type) {
+        Handler handler = new Handler();
+        handler.postDelayed(() -> {
+            setRequestedOrientation(type);
+        }, 500);
     }
 }

@@ -12,18 +12,6 @@
         android:paddingTop="20dp"
         android:paddingRight="25dp">
 
-        <TextView
-            android:text="@string/setDomainDialogSubContent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <TextView
-            android:id="@+id/website"
-            android:visibility="gone"
-            android:layout_marginTop="8dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
         <!--<Spinner
             android:id="@+id/prefix"
             android:layout_marginTop="8dp"
@@ -35,7 +23,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/transferProtocol"
-            android:layout_marginTop="8dp"
             android:textColorHint="@color/m3_textfield_label_color"
             app:boxStrokeColor="@color/m3_textfield_label_color"
             app:hintTextColor="@color/m3_textfield_label_color"
@@ -71,6 +58,29 @@
                 android:layout_height="wrap_content" />
 
         </com.google.android.material.textfield.TextInputLayout>
+
+        <ImageView
+            android:src="@drawable/round_info_24"
+            app:tint="@color/sub_content_color"
+            android:layout_marginBottom="8dp"
+            android:layout_width="18dp"
+            android:layout_height="18dp"/>
+
+        <TextView
+            android:text="@string/setDomainDialogSubContent"
+            android:textSize="12sp"
+            android:textColor="@color/sub_content_color"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/website"
+            android:textSize="12sp"
+            android:textColor="@color/sub_content_color"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
 
     </LinearLayout>
 

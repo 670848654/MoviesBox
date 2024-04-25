@@ -43,6 +43,7 @@ import butterknife.OnClick;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.VipVideoAdapter;
 import my.project.moviesbox.contract.ParsingInterfacesContract;
+import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.VipVideoDataBean;
 import my.project.moviesbox.presenter.ParsingInterfacesPresenter;
 import my.project.moviesbox.utils.Utils;
@@ -159,8 +160,8 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
     }
 
     private void initToolbar() {
-        toolbar.setTitle("VIP视频解析小工具");
-        toolbar.setSubtitle("通过第三方接口解析各大网站资源");
+        toolbar.setTitle(getString(R.string.vipVideoParserTitle));
+        toolbar.setSubtitle(getString(R.string.vipVideoParserSubTitle));
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         toolbar.setNavigationOnClickListener(view -> {
@@ -308,10 +309,11 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
                     String aes_key = jsonObject.getString("aes_key");
                     String aes_iv = jsonObject.getString("aes_iv");
                     String videoInfoHtml = getData(aes_iv, aes_key, jsonObject.getString("html"));
+                    LogUtil.logInfo("videoInfoHtml", videoInfoHtml);
                     if (Utils.isNullOrEmpty(videoInfoHtml)) {
                         handleEmptyVideoInfo(name, aes_iv, aes_key, url);
                     } else {
-                        handleNonEmptyVideoInfo(videoInfoHtml, aes_iv, aes_key, url);
+                        handleNonEmptyVideoInfo(name, videoInfoHtml, aes_iv, aes_key, url);
                     }
                     vipVideoDataBean.setDramasItemList(dramasItemList);
                     adapter.setNewInstance(dramasItemList);
@@ -345,10 +347,11 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
         dramaIntroductionView.setVisibility(View.GONE);
     }
 
-    private void handleNonEmptyVideoInfo(String videoInfoHtml, String aes_iv, String aes_key, String url) {
+    private void handleNonEmptyVideoInfo(String title, String videoInfoHtml, String aes_iv, String aes_key, String url) {
         Document document = Jsoup.parse(videoInfoHtml);
         String imgUrl = document.select(".bj").attr("src");
-        String title = document.select(".anthology-title-wrap .title").text();
+        String htmlTitle = document.select(".anthology-title-wrap .title").text();
+        title = Utils.isNullOrEmpty(htmlTitle) ? title : htmlTitle;
         String introduction = document.select(".title-info").text();
         String dramaIntroduction = document.select(".component-title").text();
 
@@ -365,10 +368,16 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
         }
 
         titleView.setText(title);
-        introductionView.setContent(introduction);
-        introductionView.setVisibility(View.VISIBLE);
-        dramaIntroductionView.setVisibility(View.VISIBLE);
-        dramaIntroductionView.setText(dramaIntroduction);
+        if (!Utils.isNullOrEmpty(introduction)) {
+            introductionView.setContent(introduction);
+            introductionView.setVisibility(View.VISIBLE);
+        } else
+            introductionView.setVisibility(View.GONE);
+        if (!Utils.isNullOrEmpty(dramaIntroduction)) {
+            dramaIntroductionView.setText(dramaIntroduction);
+            dramaIntroductionView.setVisibility(View.VISIBLE);
+        } else
+            dramaIntroductionView.setVisibility(View.GONE);
     }
 
     private void handleEmptyList(String aes_iv, String aes_key, String url) {

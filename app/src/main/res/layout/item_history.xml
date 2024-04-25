@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/card_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -53,24 +52,25 @@
                         android:layout_marginBottom="3dp"
                         android:transitionName="sharedImg" />
 
-                    <!--<ProgressBar
+                    <ProgressBar
                         android:id="@+id/bottom_progress"
                         style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="match_parent"
                         android:layout_height="3dp"
                         app:layout_constraintBottom_toBottomOf="@+id/img"
-                        android:progressDrawable="@drawable/progress_bg" />-->
+                        android:progressDrawable="@drawable/progress_bg" />
 
-                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                    <!--<com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/bottom_progress"
                         app:trackCornerRadius="2dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         app:layout_constraintBottom_toBottomOf="@+id/img"
                         app:indicatorColor="#fff85959"
-                        app:showAnimationBehavior="inward"
-                        app:hideAnimationBehavior="outward"
-                        android:max="100"/>
+                        app:showAnimationBehavior="outward"
+                        app:hideAnimationBehavior="inward"
+                        app:trackColor="#80000000"
+                        android:max="100"/>-->
 
                     <TextView
                         android:id="@+id/time"

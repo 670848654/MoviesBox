@@ -7,8 +7,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.chad.library.adapter.base.animation.SlideInBottomAnimation;
-
 import java.util.List;
 
 import butterknife.BindView;
@@ -89,8 +87,7 @@ public class OpenSourceActivity extends BaseActivity {
     public void initAdapter() {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new SourceAdapter(list);
-        adapter.setAnimationEnable(true);
-        adapter.setAdapterAnimation(new SlideInBottomAnimation());
+        setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (Utils.isFastClick()) Utils.viewInChrome(this, list.get(position).getUrl());
         });

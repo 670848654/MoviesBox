@@ -80,7 +80,7 @@
     <string name="noWifiDialogTitle">注意</string>
     <string name="noWifiDialogContent">当前网络未连接到WLAN，确定要继续下载吗？</string>
 
-    <string name="downloadInfoContent">下载须知&#187; \n下载标识：\n\u3000绿色→ 表示该剧集已存在下载任务。\n后台下载：\n\u3000请注意如果你需要在后台进行下载时，由于数据操作是在服务中进行，不同手机可能存在后台、锁屏后下载服务被杀死的情况，请根据自己的手机设置手动将该APP设置电池优化白名单或允许后台运行，否则后台下载时会出现下载失败的情况！\nM3U8：\n\u3000虽然支持M3U8协议格式的视频下载，由于M3U8协议的特殊性，其中可能存在格式伪装、资源加密、多级级域名、key等资源路劲问题，解析方法只能兼容经测试过的部分规则，所以不一定能执行成功，如果下载失败自行删除下载任务！下载成功后会进行ts分片合并通过ffmpeg转为MP4，耗时与手机配置挂钩~\n\u3000下载的视频仅在 我的→ 下载列表中进行播放，其他界面播放还是使用网络解析播放！</string>
+    <string name="downloadInfoContent">下载须知&#187; \n下载标识：\n\u3000绿色→ 表示该剧集已存在下载任务。\n后台下载：\n\u3000请注意如果你需要在后台进行下载时，由于数据操作是在服务中进行，不同设备可能存在后台、锁屏后下载服务被杀死的情况，请根据自己的设备设置手动将该APP设置电池优化白名单或允许后台运行，否则后台下载时会出现下载失败的情况！\nM3U8：\n\u3000虽然支持M3U8协议格式的视频下载，由于M3U8协议的特殊性，其中可能存在格式伪装、资源加密、多级级域名、key等资源路劲问题，解析方法只能兼容经测试过的部分规则，所以不一定能执行成功，如果下载失败自行删除下载任务！下载成功后会进行ts分片合并通过ffmpeg转为MP4，耗时与设备配置挂钩~\n\u3000下载的视频仅在 我的→ 下载列表中进行播放，其他界面播放还是使用网络解析播放！</string>
     <string name="downloadMultipleVideoDialogTitle">请选择下载资源</string>
     <string name="hasDownloadTask">已存在下载任务，请勿重复执行！</string>
 
@@ -218,11 +218,12 @@
     <string name="testModelSubContent">Xiaomi 12S Ultra | XiaomiPad 5 Pro\nAndroid 14 | 13</string>
     <string name="currentVersionTitle">当前版本</string>
     <string name="lastBuildDateTitle">最后构建日期</string>
-    <string name="lastBuildDateSubContent">2024年4月3日23:07:34</string>
+    <string name="lastBuildDateSubContent">2024年4月25日21:08:22</string>
     <string name="cacheDirectoryTitle">缓存目录</string>
     <string name="cacheDirectorySubContent">%s\n卸载后自行删除此目录</string>
     <string name="openSourceTitle">开源相关</string>
     <string name="vipVideoParserTitle">VIP视频解析小工具</string>
+    <string name="vipVideoParserSubTitle">通过第三方接口解析各大网站资源</string>
     <string name="githubTitle">Github仓库</string>
     <string name="githubSubContent">帮我点个Star？:-)\nhttps://github.com/670848654/MoviesBox</string>
     <string name="githubUrl">https://github.com/670848654/MoviesBox</string>
@@ -236,7 +237,7 @@
     <string name="setDomainTitle">网站域名配置</string>
     <string name="setDomainDialogTitle">设置域名&lt;font color=\'red\'&gt;*PC端*&lt;/font&gt;</string>
     <string name="setDomainDialogSubContent">该功能在网站域名变更后导致无法通过旧域名访问从而获取数据异常时使用。\n如果网站仅变更域名，网页布局无变动，你可在此输入相关站点的新域名保存即可。</string>
-    <string name="setDomainReleaseSubContent">🚩可通过站点发布页查看最新域名：</string>
+    <string name="setDomainReleaseSubContent">🚩站点发布页：</string>
     <string name="setDomainSuccessText">已修改域名为：%s</string>
     <string name="setDomainErrorText1">域名不能为空</string>
     <string name="setDomainErrorText2">域名格式错误</string>
@@ -272,17 +273,17 @@
         <item>跟随系统（Android 10+）</item>
     </string-array>
 
-    <string name="setM3u8QueueIgnoreTsTitle">⬆︎ 忽略下载失败的ts切片，即使有失败的切片，下载完成后也要合并所有切片，但会丢失下载失败的片段，可能存在某个或多个切片一直下载失败，这种情况如果非要下载该视频时，请开启忽略！</string>
+    <string name="setM3u8QueueIgnoreTsTitle">忽略下载失败的ts切片，即使有失败的切片，下载完成后也要合并所有切片，但会丢失下载失败的片段，可能存在某个或多个切片一直下载失败，这种情况如果非要下载该视频时，请开启忽略！</string>
     <string name="setM3u8QueueIgnoreTs">忽略失败的切片</string>
     <string name="setM3u8Title">M3U8协议下载相关配置</string>
-    <string name="setM3u8QueueNumDialogSubContent">⬆︎ 滑动设置同时下载的ts分片数量，根据网络带宽自行配置，加速M3U8类型资源下载速度。</string>
+    <string name="setM3u8QueueNumDialogSubContent">︎滑动设置同时下载的ts分片数量，根据网络带宽自行配置，加速M3U8类型资源下载速度。</string>
     <string name="setM3u8QueueNumSuccess">配置已保存，将在下次任务中生效</string>
     <string name="setM3u8RegRemoveAd">尝试移除广告切片</string>
     <string name="setM3u8RegRemoveAdTitle">正则规则</string>
     <string name="setM3u8RegRemoveAdDefaultConfig">(.*ad)+.*</string>
     <string name="setM3u8RegRemoveAdRegsReset">恢复默认</string>
-    <string name="setM3u8RemoveAdRegs">⬆︎ 广告切片匹配正则配置，仅针对某些ts列表插入了广告ts切片而不是广告内容内嵌在正常视频中的情况，多个使用|分割\n*不懂配置则不要修改，否则可能影响正常切片下载！</string>
-    <string name="setM3u8RemoveAdInfo">⬆︎ 通过一些规则尝试过滤M3U8文件ts列表中的广告切片。\n*注意：开启后可能会出现M3U8协议资源无法下载、移除了正常的视频切片导致视频不完整等异常！</string>
+    <string name="setM3u8RemoveAdRegs">广告切片匹配正则配置，仅针对某些ts列表插入了广告ts切片而不是广告内容内嵌在正常视频中的情况，多个使用|分割\n*不懂配置则不要修改，否则可能影响正常切片下载！</string>
+    <string name="setM3u8RemoveAdInfo">通过一些规则尝试过滤M3U8文件ts列表中的广告切片。\n*注意：开启后可能会出现M3U8协议资源无法下载、移除了正常的视频切片导致视频不完整等异常！</string>
 
     <string name="setBackupsTitle">备份•恢复</string>
     <string name="setBackupsSubContent">用于备份/恢复应用设置、收藏夹及历史记录数据</string>
@@ -298,6 +299,8 @@
     <string name="setRemoveDownloadsTitle">清除所有下载记录</string>
     <string name="setRemoveDownloadsSubContent">当下载功能出现异常时可尝试该操作</string>
     <string name="setRemoveDownloadsDialogSubContent">是否清空所有下载记录？\n执行后将清空所有下载记录，但不会删除文件。</string>
+    <string name="setRemoveDownloadsNeutralTitle">仅删除Aria数据</string>
+    <string name="setRemoveDownloadsNeutralSuccess">已删除Aria全部下载任务</string>
     <string name="setRemoveDownloadsSuccess">已删除所有下载记录</string>
 
     <string name="checkUpdateTitle">检测更新</string>

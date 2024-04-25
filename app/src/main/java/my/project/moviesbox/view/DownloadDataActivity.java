@@ -5,11 +5,13 @@ import static my.project.moviesbox.utils.Utils.getArray;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Html;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.Toolbar;
@@ -21,8 +23,6 @@ import com.arialyy.annotations.Download;
 import com.arialyy.aria.core.Aria;
 import com.arialyy.aria.core.download.DownloadEntity;
 import com.arialyy.aria.core.task.DownloadTask;
-import com.chad.library.adapter.base.animation.AlphaInAnimation;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -129,8 +129,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
 
     private void initAdapter() {
         adapter = new DownloadDataAdapter(this, downloadDataBeans);
-        adapter.setAnimationEnable(true);
-        adapter.setAdapterAnimation(new AlphaInAnimation());
+        setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             long taskId = downloadDataBeans.get(position).getTDownloadData().getAriaTaskId();
@@ -263,30 +262,41 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
 
     private void deleteData(boolean removeFile, TDownloadDataWithFields tDownloadDataWithFields, int position) {
         TDownloadDataManager.deleteDownloadData(tDownloadDataWithFields.getTDownloadData().getDownloadDataId());
-        String downloadPath = String.format(DOWNLOAD_SAVE_PATH, SourceEnum.getTitleBySource(tDownloadDataWithFields.getVideoSource()), tDownloadDataWithFields.getVideoTitle());
-        downloadDir = new File(downloadPath);
-        if (tDownloadDataWithFields.getTDownloadData().getAriaTaskId() == -1) {
-            // -1直接删除
-            adapter.removeAt(position);
-            application.showToastMsg(getString(R.string.taskDeletedMsg));
+        String savePath = tDownloadDataWithFields.getTDownloadData().getSavePath();
+        if (Utils.isNullOrEmpty(savePath)) {
+            // 下载位置为空
+            removeAdapterByPosition(position);
+            Aria.download(this).load(tDownloadDataWithFields.getTDownloadData().getAriaTaskId()).ignoreCheckPermissions().cancel(false);
         } else {
-            if (!downloadDir.exists())
-                return;
-            // 获取所有下载任务
-            List<DownloadEntity> list = Aria.download(this).getTaskList();
-            // 判断任务列表是否存在，当应用卸载重装时为NULL会报错
-            if (list != null && list.size() > 0) {
-                for (DownloadEntity entity : list) {
-                    // 未下载完成
-                    if (tDownloadDataWithFields.getTDownloadData().getAriaTaskId() != -99 && tDownloadDataWithFields.getTDownloadData().getAriaTaskId() == entity.getId()) {
-                        // 从Aria数据库中删除任务
-                        Aria.download(this).load(entity.getId()).ignoreCheckPermissions().cancel(false);
-                        break;
+            String downloadPath = savePath.contains("MoviesBox") ?
+                    String.format(DOWNLOAD_SAVE_PATH, SourceEnum.getTitleBySource(tDownloadDataWithFields.getVideoSource()), tDownloadDataWithFields.getVideoTitle())
+                    :
+                    this.getFilesDir().getAbsolutePath()+String.format("/%s/%s", SourceEnum.getTitleBySource(tDownloadDataWithFields.getVideoSource()), tDownloadDataWithFields.getVideoTitle());
+            downloadDir = new File(downloadPath);
+            if (tDownloadDataWithFields.getTDownloadData().getAriaTaskId() == -1) {
+                // -1直接删除
+                removeAdapterByPosition(position);
+            } else {
+                if (!downloadDir.exists()) {
+                    removeAdapterByPosition(position);
+                } else {
+                    // 获取所有下载任务
+                    List<DownloadEntity> list = Aria.download(this).getTaskList();
+                    // 判断任务列表是否存在，当应用卸载重装时为NULL会报错
+                    if (list != null && list.size() > 0) {
+                        for (DownloadEntity entity : list) {
+                            // 未下载完成
+                            if (tDownloadDataWithFields.getTDownloadData().getAriaTaskId() != -99 && tDownloadDataWithFields.getTDownloadData().getAriaTaskId() == entity.getId()) {
+                                // 从Aria数据库中删除任务
+                                Aria.download(this).load(entity.getId()).ignoreCheckPermissions().cancel(false);
+                                break;
+                            }
+                        }
                     }
+                    // 是否删除文件
+                    deleteDownloadData(removeFile, tDownloadDataWithFields, position);
                 }
             }
-            // 是否删除文件
-            deleteDownloadData(removeFile, tDownloadDataWithFields, position);
         }
         downloadDataCount = TDownloadDataManager.queryDownloadDataCount(downloadId);
         if (downloadDataBeans.size() == 0) {
@@ -312,8 +322,14 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
             File m3u8File = new File(tDownloadDataWithFields.getTDownloadData().getSavePath().replaceAll("mp4", "m3u8"));
             if (m3u8File.exists()) m3u8File.delete();
         }
-        application.showToastMsg(getString(R.string.taskDeletedMsg));
-        adapter.removeAt(position);
+        removeAdapterByPosition(position);
+    }
+
+    private void removeAdapterByPosition(int position) {
+        runOnUiThread(() -> {
+            application.showToastMsg(getString(R.string.taskDeletedMsg));
+            adapter.removeAt(position);
+        });
     }
 
     /**
@@ -355,10 +371,14 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
                         fileSize.setVisibility(View.VISIBLE);
                     fileSize.setText(Utils.getNetFileSizeDescription(downloadTask.getEntity().getFileSize()));
                 }
-                LinearProgressIndicator linearProgressIndicator = (LinearProgressIndicator) adapter.getViewByPosition(i, R.id.bottom_progress);
+//                LinearProgressIndicator linearProgressIndicator = (LinearProgressIndicator) adapter.getViewByPosition(i, R.id.bottom_progress);
+                ProgressBar linearProgressIndicator = (ProgressBar) adapter.getViewByPosition(i, R.id.bottom_progress);
                 if (linearProgressIndicator != null) {
                     if (linearProgressIndicator.getVisibility() != View.VISIBLE) linearProgressIndicator.setVisibility(View.VISIBLE);
-                    linearProgressIndicator.setProgress(downloadTask.getPercent());
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                        linearProgressIndicator.setProgress(downloadTask.getPercent(), true);
+                    else
+                        linearProgressIndicator.setProgress(downloadTask.getPercent());
                 }
             }
         }

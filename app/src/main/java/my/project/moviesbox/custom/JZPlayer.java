@@ -3,6 +3,7 @@ package my.project.moviesbox.custom;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -69,6 +70,7 @@ public class JZPlayer extends JzvdStd {
     private PlayingListener playingListener;
     private PauseListener pauseListener;
     private OnQueryDanmuListener onQueryDanmuListener; // 手动查询弹幕点击监听 删除
+    private ActivityOrientationListener activityOrientationListener;
     private ImageView leftBLock, rightBlock;
     private boolean locked = false;
     public ImageView fastForward, quickRetreat;
@@ -105,7 +107,7 @@ public class JZPlayer extends JzvdStd {
     public void setListener(Activity activity, Context context, CompleteListener listener,
                             TouchListener touchListener, ShowOrHideChangeViewListener showOrHideChangeViewListener,
                             OnProgressListener onProgressListener, PlayingListener playingListener, PauseListener pauseListener,
-                            OnQueryDanmuListener onQueryDanmuListener) {
+                            OnQueryDanmuListener onQueryDanmuListener, ActivityOrientationListener activityOrientationListener) {
         this.activity = activity;
         this.context = context;
         this.listener = listener;
@@ -115,6 +117,7 @@ public class JZPlayer extends JzvdStd {
         this.pauseListener = pauseListener;
         this.showOrHideChangeViewListener = showOrHideChangeViewListener;
         this.onQueryDanmuListener = onQueryDanmuListener;
+        this.activityOrientationListener = activityOrientationListener;
     }
 
     @Override
@@ -682,6 +685,10 @@ public class JZPlayer extends JzvdStd {
         void queryDamu(String queryDanmuTitle, String queryDanmuDrama);
     }
 
+    public interface ActivityOrientationListener {
+        void setOrientation(int type);
+    }
+
     @Override
     public void setUp(JZDataSource jzDataSource, int screen, Class mediaInterfaceClass) {
         super.setUp(jzDataSource, screen, mediaInterfaceClass);
@@ -711,28 +718,32 @@ public class JZPlayer extends JzvdStd {
 
     @Override
     public void showWifiDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.DialogStyle);
-        builder.setMessage(getResources().getString(R.string.tipsNotWifi));
-        builder.setPositiveButton(getResources().getString(R.string.tipsNotWifiConfirm), (dialog, which) -> {
-            dialog.dismiss();
-            WIFI_TIP_DIALOG_SHOWED = true;
-            if (state == STATE_PAUSE) {
-                startButton.performClick();
-            } else {
-                startVideo();
-            }
-
-        });
-        builder.setNegativeButton(getResources().getString(R.string.tipsNotWifiCancel), (dialog, which) -> {
-            dialog.dismiss();
-            releaseAllVideos();
-            ViewGroup vg = (ViewGroup) (JZUtils.scanForActivity(getContext())).getWindow().getDecorView();
-            vg.removeView(this);
-            if (mediaInterface != null) mediaInterface.release();
-            CURRENT_JZVD = null;
-        });
-        builder.setCancelable(false);
-        builder.create().show();
+        Utils.showAlert(
+                context,
+                "",
+                getResources().getString(R.string.tipsNotWifi),
+                false,
+                getResources().getString(R.string.tipsNotWifiConfirm),
+                getResources().getString(R.string.tipsNotWifiCancel),
+                "",
+                (dialog, which) -> {
+                    dialog.dismiss();
+                    WIFI_TIP_DIALOG_SHOWED = true;
+                    if (state == STATE_PAUSE)
+                        startButton.performClick();
+                    else
+                        startVideo();
+                },
+                (dialog, which) -> {
+                    dialog.dismiss();
+                    releaseAllVideos();
+                    ViewGroup vg = (ViewGroup) (JZUtils.scanForActivity(getContext())).getWindow().getDecorView();
+                    vg.removeView(this);
+                    if (mediaInterface != null) mediaInterface.release();
+                    CURRENT_JZVD = null;
+                },
+                null
+        );
     }
 
     @Override
@@ -823,7 +834,14 @@ public class JZPlayer extends JzvdStd {
                         }
                     } else {
                         //如果y轴滑动距离超过设置的处理范围，那么进行滑动事件处理
-                        if (mDownX < mScreenHeight * 0.5f) {//左侧改变亮度
+                        float halfLength = mScreenHeight * 0.5f;
+                        if (Jzvd.FULLSCREEN_ORIENTATION == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                                || Jzvd.FULLSCREEN_ORIENTATION == ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT
+                                || Jzvd.FULLSCREEN_ORIENTATION == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                                || Jzvd.FULLSCREEN_ORIENTATION == ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT) {
+                            halfLength = mScreenWidth * 0.5f;
+                        }
+                        if (mDownX < halfLength) {//左侧改变亮度
                             mChangeBrightness = true;
                             WindowManager.LayoutParams lp = JZUtils.getWindow(getContext()).getAttributes();
                             if (lp.screenBrightness < 0) {
@@ -839,9 +857,10 @@ public class JZPlayer extends JzvdStd {
                             }
                         } else {//右侧改变声音
                             mChangeVolume = true;
-                            if (mAudioManager == null) {
+                            mAudioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+                            /*if (mAudioManager == null) {
                                 mAudioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-                            }
+                            }*/
                             mGestureDownVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
                         }
                     }
@@ -889,6 +908,24 @@ public class JZPlayer extends JzvdStd {
             int brightnessPercent = (int) (mGestureDownBrightness * 100 / 255 + deltaY * 3 * 100 / mScreenHeight);
             showBrightnessDialog(brightnessPercent);
 //                        mDownY = y;
+        }
+    }
+
+    @Override
+    public void onVideoSizeChanged(int width, int height) {
+        super.onVideoSizeChanged(width, height);
+        if (height > 0 && height > 0) {
+            if (height > width) {
+                Log.e("PORTRAIT", "SCREEN_ORIENTATION_PORTRAIT");
+                Jzvd.FULLSCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                Jzvd.NORMAL_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                activityOrientationListener.setOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            } else {
+                Log.e("LANDSCAPE", "SCREEN_ORIENTATION_SENSOR_LANDSCAPE");
+                Jzvd.FULLSCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+                Jzvd.NORMAL_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+                activityOrientationListener.setOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+            }
         }
     }
 }

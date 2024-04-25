@@ -78,7 +78,7 @@ import my.project.moviesbox.utils.VideoUtils;
   * @版本: 1.0
  */
 public abstract class BasePlayerActivity extends BaseActivity implements JZPlayer.CompleteListener, JZPlayer.TouchListener,
-        JZPlayer.ShowOrHideChangeViewListener,  JZPlayer.OnProgressListener, JZPlayer.PlayingListener, JZPlayer.PauseListener, JZPlayer.OnQueryDanmuListener, DanmuContract.View {
+        JZPlayer.ShowOrHideChangeViewListener,  JZPlayer.OnProgressListener, JZPlayer.PlayingListener, JZPlayer.PauseListener, JZPlayer.OnQueryDanmuListener, JZPlayer.ActivityOrientationListener, DanmuContract.View {
     @BindView(R.id.player)
     JZPlayer player; // 播放器
     @BindView(R.id.rv_list)
@@ -175,11 +175,12 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     }
 
     private void initPlayerView() {
+        Jzvd.SAVE_PROGRESS = false;
         player.configView.setOnClickListener(v -> setDrawerOpen(GravityCompat.START));
         player.openDrama.setOnClickListener(view -> setDrawerOpen(GravityCompat.END));
         player.selectDramaView.setOnClickListener(view -> setDrawerOpen(GravityCompat.END));
-        player.setListener(this, this, this, this, this, this, this, this, this);
-        player.WIFI_TIP_DIALOG_SHOWED = true;
+        player.setListener(this, this, this, this, this, this, this, this, this, this);
+//        player.WIFI_TIP_DIALOG_SHOWED = true;
         player.backButton.setOnClickListener(v -> {
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
             finish();
@@ -326,20 +327,14 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     protected abstract void changeVideo(String title);
 
     private void saveProgress() {
+        boolean completed = Utils.videoHasComplete(playPosition, videoDuration);
+        boolean gt2second = playPosition > 2000;
+        long witchPosition = completed ? 0 : (gt2second ? playPosition : 0);
         if (isLocalVideo()) {
-            if (Utils.videoHasComplete(playPosition, videoDuration)) {
-                TDownloadDataManager.updateDownloadDataProgressById(0, videoDuration, downloadDataId);
-            }
-            else
-                TDownloadDataManager.updateDownloadDataProgressById(playPosition > 2000 ? playPosition : 0, videoDuration, downloadDataId);
-            EventBus.getDefault().post(new RefreshDownloadEvent(downloadDataId, playPosition > 2000 ? playPosition : 0, videoDuration));
-        } else {
-            if (Utils.videoHasComplete(playPosition, videoDuration)) {
-                THistoryManager.updateHistory(vodId, dramaUrl, 0, videoDuration);
-            }
-            else
-                THistoryManager.updateHistory(vodId, dramaUrl, playPosition > 2000 ? playPosition : 0, videoDuration);
-        }
+            TDownloadDataManager.updateDownloadDataProgressById( witchPosition, videoDuration, downloadDataId);
+            EventBus.getDefault().post(new RefreshDownloadEvent(downloadDataId, witchPosition, videoDuration));
+        } else
+            THistoryManager.updateHistory(vodId, dramaUrl, witchPosition, videoDuration);
     }
 
     /**
@@ -665,5 +660,13 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         player.danmuInfoView.setVisibility(View.GONE);
         danmuPresenter = new DanmuPresenter(this, getDanmuParams());
         danmuPresenter.loadDanmu();
+    }
+
+    @Override
+    public void setOrientation(int type) {
+        Handler handler = new Handler();
+        handler.postDelayed(() -> {
+            setRequestedOrientation(type);
+        }, 500);
     }
 }

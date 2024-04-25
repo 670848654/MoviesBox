@@ -105,6 +105,21 @@ public class SharedPreferencesUtils {
     public static void setAppMainInfo() {
         setParam("app_info", true);
     }
+
+    /**
+     * 是否显示隐藏功能
+     * @return
+     */
+    public static boolean getTurnOnHiddenFeatures() {
+        return (boolean) getParam("turnOnHiddenFeatures", false);
+    }
+
+    /**
+     * 显示隐藏功能
+     */
+    public static void setTurnOnHiddenFeatures() {
+        setParam("turnOnHiddenFeatures", true);
+    }
     /********************************************************** 系统相关结束 **********************************************************/
 
     /******************************************************** M3U8配置相关开始 ********************************************************/

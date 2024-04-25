@@ -1,5 +1,7 @@
 package my.project.moviesbox.view;
 
+import static my.project.moviesbox.view.BaseActivity.ADAPTER_SCALE_IN_ANIMATION;
+
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
@@ -110,6 +112,9 @@ public class DownloadFragment extends BaseFragment<DownloadContract.View, Downlo
             if (!Utils.isServiceRunning(getContext(), DownloadService.class)) {
                 List<DownloadEntity> list = Aria.download(this).getAllNotCompleteTask();
                 if (list != null && list.size() > 0) {
+                    for (DownloadEntity d : list) {
+                        LogUtil.logInfo("savePath", d.getFilePath());
+                    }
                     Utils.showAlert(getActivity(),
                             getString(R.string.downloadTaskOperationTitle),
                             String.format(getString(R.string.downloadTaskOperationContent), list.size()),
@@ -141,6 +146,10 @@ public class DownloadFragment extends BaseFragment<DownloadContract.View, Downlo
     @SuppressLint("RestrictedApi")
     private void initAdapter() {
         adapter = new DownloadAdapter(getActivity(), downloadList);
+        HomeActivity homeActivity = (HomeActivity) getActivity();
+        if (homeActivity != null)
+            homeActivity.setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
+        adapter.setEmptyView(rvView);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             Bundle bundle = new Bundle();
@@ -165,7 +174,6 @@ public class DownloadFragment extends BaseFragment<DownloadContract.View, Downlo
         }, 500));
         if (Utils.checkHasNavigationBar(getActivity())) recyclerView.setPadding(0,0,0, Utils.getNavigationBarHeight(getActivity()));
         recyclerView.setAdapter(adapter);
-        adapter.setEmptyView(rvView);
     }
 
     public void setLoadState(boolean loadState) {

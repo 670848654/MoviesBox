@@ -13,7 +13,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.chad.library.adapter.base.animation.AlphaInAnimation;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
@@ -101,8 +100,7 @@ public class TextListActivity extends BaseActivity<TextListContract.View, TextLi
 
     public void initAdapter() {
         adapter = new TextListAdapter(this, items);
-        adapter.setAnimationEnable(true);
-        adapter.setAdapterAnimation(new AlphaInAnimation());
+        setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             TextDataBean.Item item = (TextDataBean.Item) adapter.getItem(position);

@@ -149,7 +149,7 @@ public class WeekActivity extends BaseActivity<WeekContract.View, WeekPresenter>
                 viewPager2.setAdapter(weekPageAdapter);
                 int nowWeek = DateUtils.getWeekOfDate(new Date());
                 tabLayout.getTabAt(nowWeek).select();
-                viewPager2.setCurrentItem(nowWeek);
+                viewPager2.setCurrentItem(nowWeek, false);
             }, 500);
         });
     }

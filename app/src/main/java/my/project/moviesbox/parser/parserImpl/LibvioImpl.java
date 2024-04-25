@@ -32,7 +32,6 @@ import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.bean.WeekDataBean;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
-import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.HomeFragment;
 import my.project.moviesbox.view.PlayerActivity;
@@ -435,6 +434,8 @@ public class LibvioImpl implements ParserInterface {
                     bean.setTitle(item.attr("title"));
                     bean.setUrl(item.attr("href"));
                     bean.setImg(item.attr("data-original"));
+                    bean.setEpisodesTag(item.select(".text-right").text());
+                    bean.setTopLeftTag(item.select(".pic-tag-top").text());
                     items.add(bean);
                 }
                 vodDataBean.setItemList(items);
@@ -467,6 +468,8 @@ public class LibvioImpl implements ParserInterface {
                     bean.setTitle(item.attr("title"));
                     bean.setUrl(item.attr("href"));
                     bean.setImg(item.attr("data-original"));
+                    bean.setEpisodesTag(item.select(".text-right").text());
+                    bean.setTopLeftTag(item.select(".pic-tag-top").text());
                     items.add(bean);
                 }
                 vodDataBean.setItemList(items);
