@@ -1,7 +1,5 @@
 package my.project.moviesbox.view;
 
-import static my.project.moviesbox.view.BaseActivity.ADAPTER_SCALE_IN_ANIMATION;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -66,7 +64,6 @@ public class HistoryFragment extends BaseFragment<HistoryContract.View, HistoryP
     protected boolean isErr = true;
     private AlertDialog alertDialog;
     private VideoPresenter videoPresenter;
-//    private UpdateImgPresenter updateImgPresenter;
     private String vodId;
     private String vodTitle;
     private String vodDramaUrl;
@@ -105,7 +102,7 @@ public class HistoryFragment extends BaseFragment<HistoryContract.View, HistoryP
         adapter = new HistoryListAdapter(getActivity(), historyBeans);
         HomeActivity homeActivity = (HomeActivity) getActivity();
         if (homeActivity != null)
-            homeActivity.setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
+            homeActivity.setAdapterAnimation(adapter);
         adapter.setEmptyView(rvView);
         adapter.addChildClickViewIds(R.id.option);
         adapter.setOnItemClickListener((adapter, view, position) -> {
@@ -464,7 +461,7 @@ public class HistoryFragment extends BaseFragment<HistoryContract.View, HistoryP
         if (getActivity().isFinishing()) return;
         getActivity().runOnUiThread(() -> {
             for (int i=0,size=historyBeans.size(); i<size; i++) {
-                if (historyBeans.get(i).getTHistory().getVideoImgUrl().contains(oldImgUrl)) {
+                if (historyBeans.get(i).getTHistory().getVideoImgUrl().equals(oldImgUrl)) {
                     historyBeans.get(i).getTHistory().setVideoImgUrl(imgUrl);
                     adapter.notifyItemChanged(i);
                     TVideoManager.updateImg(historyBeans.get(i).getVideoId(), imgUrl, 1);

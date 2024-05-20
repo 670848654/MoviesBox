@@ -23,7 +23,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.MyViewPageAdapter;
-import my.project.moviesbox.config.ParallaxTransformer;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.THistoryManager;
@@ -74,7 +73,7 @@ public class MyFragment extends BaseFragment {
         list.add(new DownloadFragment());
         myViewPageAdapter = new MyViewPageAdapter(getActivity(), list);
         viewPager2.setAdapter(myViewPageAdapter);
-        viewPager2.setPageTransformer(new ParallaxTransformer());
+//        viewPager2.setPageTransformer(new ParallaxTransformer());
         int iconSelectedColor = ContextCompat.getColor(getActivity(), R.color.pink200);
         tabLayout.getTabAt(0).getIcon().setColorFilter(iconSelectedColor, PorterDuff.Mode.SRC_IN);
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {

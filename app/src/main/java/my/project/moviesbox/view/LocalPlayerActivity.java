@@ -8,9 +8,11 @@ import androidx.core.view.GravityCompat;
 
 import java.util.List;
 
+import cn.jzvd.Jzvd;
 import my.project.moviesbox.adapter.DramaAdapter;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.database.entity.TDownloadDataWithFields;
+import my.project.moviesbox.enums.VideoUrlChangeEnum;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.service.DLNAService;
 import my.project.moviesbox.utils.Utils;
@@ -51,6 +53,7 @@ public class LocalPlayerActivity extends BasePlayerActivity {
     protected void initCustomData() {
         startService(new Intent(this, DLNAService.class));
         otherView.setVisibility(View.GONE);
+        Jzvd.WIFI_TIP_DIALOG_SHOWED = true;
     }
 
     @Override
@@ -63,7 +66,7 @@ public class LocalPlayerActivity extends BasePlayerActivity {
 
     @Override
     protected void playVideo() {
-        toPlay(localFilePath, dramaTitle);
+        playLocalVideo(localFilePath, dramaTitle);
     }
 
     @Override
@@ -85,18 +88,18 @@ public class LocalPlayerActivity extends BasePlayerActivity {
         dramaAdapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             drawerLayout.closeDrawer(GravityCompat.END);
-            changePlayUrl(position);
+            changePlayUrl(VideoUrlChangeEnum.CLICK, position);
         });
     }
 
     @Override
-    protected DetailsDataBean.DramasItem setVodDramas(int position) {
+    protected DetailsDataBean.DramasItem getItemByPosition(VideoUrlChangeEnum changeEnum, int position) {
         return dramaAdapter.getItem(position);
     }
 
 
     @Override
-    protected void changeVideo(String title) {
+    protected void parseVideoUrl(String dramaTitle) {
 
     }
 

@@ -98,14 +98,6 @@ public class Utils {
     }
 
     /**
-     * 获取私有目录下的数据库文件
-     * @return
-     */
-    public static String getPrivateDbPath() {
-        return context.getExternalFilesDir(null).getPath()+"/moviesBox.db";
-    }
-
-    /**
      * 公共下载目录地址
      */
     public static final String DOWNLOAD_PATH = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
@@ -113,7 +105,6 @@ public class Utils {
     public static final String APP_DOWNLOAD_PATH = APP_DATA_PATH + File.separator + "Downloads";
     public final static String DOWNLOAD_SAVE_PATH = APP_DOWNLOAD_PATH + "/%s/%s/";
     public static final String APP_CRASH_LOGS_PATH = APP_DATA_PATH + File.separator + "CrashLogs";
-    public static final String APP_BACKUPS_PATH = APP_DATA_PATH + File.separator + "Backups";
 
     /**
      * 创建缓存目录
@@ -243,7 +234,6 @@ public class Utils {
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
     }
-
 
     /**
      * 显示加载框

@@ -26,8 +26,6 @@ public class LogUtil {
     public static void logInfo(String message, String args) {
         if (Utils.isNullOrEmpty(message) && Utils.isNullOrEmpty(args))
             return;
-        StringBuffer stringBuffer = new StringBuffer(Utils.isNullOrEmpty(message) ? "" : message + " -> ");
-        stringBuffer.append("%s");
-        Logger.d(Utils.isNullOrEmpty(args) ? message : String.format(stringBuffer.toString(), args));
+        Logger.d(Utils.isNullOrEmpty(args) ? message : String.format((Utils.isNullOrEmpty(message) ? "" : message + " -> ") + "%s", args));
     }
 }

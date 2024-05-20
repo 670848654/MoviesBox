@@ -1,4 +1,4 @@
-package my.project.moviesbox.config;
+package my.project.moviesbox.enums;
 
 import androidx.annotation.DrawableRes;
 import androidx.appcompat.app.AppCompatDelegate;

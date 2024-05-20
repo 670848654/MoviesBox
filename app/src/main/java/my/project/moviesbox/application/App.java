@@ -37,6 +37,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import my.project.moviesbox.R;
+import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.config.MyExceptionHandler;
 import my.project.moviesbox.utils.CropUtil;
 import my.project.moviesbox.utils.DarkModeUtils;
@@ -66,6 +67,7 @@ public class App extends Application {
         appContext = this;
         mainHandler = new Handler(this.getMainLooper());
         SharedPreferencesUtils.shouldSetDataName();
+        ConfigManager.init(this);
         Utils.init(this);
         DarkModeUtils.init(this);
         // 让API < 29的版本支持TLSv1.3

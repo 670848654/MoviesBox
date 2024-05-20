@@ -1,4 +1,4 @@
-package my.project.moviesbox.utils;
+package my.project.moviesbox.utils.md5;
 
 import java.io.IOException;
 import java.io.InputStream;

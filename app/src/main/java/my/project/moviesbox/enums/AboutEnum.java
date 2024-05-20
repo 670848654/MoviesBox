@@ -1,4 +1,4 @@
-package my.project.moviesbox.config;
+package my.project.moviesbox.enums;
 
 import androidx.annotation.DrawableRes;
 
@@ -25,6 +25,7 @@ public enum AboutEnum {
     AFFIRM(R.drawable.round_front_hand_24, Utils.getString(R.string.statementTitle), Utils.getString(R.string.statementSubContent), true),
     TEST_MODEL(R.drawable.round_phonelink_setup_24, Utils.getString(R.string.testModelTitle), Utils.getString(R.string.testModelSubContent), true),
     CACHE_DIRECTORY(R.drawable.round_snippet_folder_24, Utils.getString(R.string.cacheDirectoryTitle), "", true),
+    AUTHORIZATION_DIRECTORY(R.drawable.round_folder_shared_24, Utils.getString(R.string.authorizationDirectoryTitle), "", true),
     LAST_BUILD_DATE(R.drawable.round_code_24, Utils.getString(R.string.lastBuildDateTitle), Utils.getString(R.string.lastBuildDateSubContent), true),
     VIP_VIDEO_PARSER(R.drawable.vip_url, Utils.getString(R.string.vipVideoParserTitle), Utils.getString(R.string.vipVideoParserSubTitle), SharedPreferencesUtils.getTurnOnHiddenFeatures()),
     GITHUB(R.drawable.star, Utils.getString(R.string.githubTitle), Utils.getString(R.string.githubSubContent), true),

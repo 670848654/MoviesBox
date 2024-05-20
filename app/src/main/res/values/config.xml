@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 应用默认设置 -->
+    <!-- 是否显示首次弹窗 非true则显示 -->
+    <bool name="appInfo">false</bool>
+    <!-- 是否开启自用第三方VIP解析小工具 用处不大 -->
+    <bool name="turnOnHiddenFeatures">false</bool>
+    <!-- 是否开启忽略ts -->
+    <bool name="ignoreTs">false</bool>
+    <!-- 是否开启移除广告切片 -->
+    <bool name="removeAdTs">false</bool>
+    <!-- ts同时下载数量 范围(4-100) -->
+    <integer name="maxTsQueueNum">20</integer>
+    <!-- 默认视频播放器 0：使用应用内置 1：使用第三方外部播放器 -->
+    <integer name="player">0</integer>
+    <!-- 内置播放器默认使用内核 0：ExoPlayer 1：IjkPlayer -->
+    <integer name="playerKernel">1</integer>
+    <!-- 内置播放器快进/快退时长 单位：秒 -->
+    <integer name="userSpeed">15</integer>
+    <!-- 播放时是否隐藏底部进度条 -->
+    <bool name="hideProgress">false</bool>
+    <!-- 自动播放下一集 -->
+    <bool name="playNextVideo">false</bool>
+    <!-- 开启播放器弹幕 站点支持弹幕才有效 -->
+    <bool name="openDanmu">true</bool>
+
+    <!-- BRVAH列表适配器动画配置 -->
+    <!-- 是否开启动画 -->
+    <bool name="animationEnable">true</bool>
+    <!-- 动画是否只执行一次 -->
+    <bool name="animationFirstOnly">true</bool>
+    <!--
+        - ALPHA_IN # 淡入显示的动画
+        - SCALE_IN # 缩放进入的动画
+        - SLIDE_IN_BOTTOM # 从底部滑入的动画
+        - SLIDE_IN_LEFT # 从左侧滑入的动画
+        - SLIDE_IN_RIGHT # 从右侧滑入的动画
+     -->
+    <string name="animationDefault">ALPHA_IN</string>
+</resources>

@@ -1,6 +1,7 @@
 package my.project.moviesbox.view;
 
 import android.content.Intent;
+import android.os.Environment;
 import android.view.HapticFeedbackConstants;
 import android.widget.Toast;
 
@@ -16,8 +17,9 @@ import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.SettingAboutAdapter;
 import my.project.moviesbox.bean.SettingAboutBean;
-import my.project.moviesbox.config.AboutEnum;
+import my.project.moviesbox.enums.AboutEnum;
 import my.project.moviesbox.presenter.Presenter;
+import my.project.moviesbox.utils.SAFUtils;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
 
@@ -91,8 +93,12 @@ public class AboutActivity extends BaseActivity {
             if (bean.getTitle().equals(getString(R.string.dataSourcesTitle))) {
                 bean.setSubTitle(SharedPreferencesUtils.getUserSetDomain(SharedPreferencesUtils.getDefaultSource()));
             } else if (bean.getTitle().equals(getString(R.string.cacheDirectoryTitle))) {
-                File file = new File(Utils.APP_DATA_PATH);
-                bean.setSubTitle(file.canRead() ? String.format(getString(R.string.cacheDirectorySubContent), Utils.APP_DATA_PATH) : this.getFilesDir().getAbsolutePath());
+                String savePath = "<font color=\"#FF5722\">" + (SAFUtils.canReadDownloadDirectory() ? Environment.DIRECTORY_DOWNLOADS+File.separator + "MoviesBox[" + SharedPreferencesUtils.getDataName() + "]" : "私有目录") + "</font>";
+                String subTitle = String.format(getString(R.string.cacheDirectorySubContent), savePath);
+                bean.setSubTitle(subTitle);
+            } else if (bean.getTitle().equals(getString(R.string.authorizationDirectoryTitle))) {
+                String authorizationDirectory = SAFUtils.checkHasSetDataSaveUri() ? "<font color=\"#31BDEC\">"+SAFUtils.getUriDirectoryName()+"</font>" : "无授权";
+                bean.setSubTitle(authorizationDirectory);
             }
         }
     }
@@ -106,7 +112,7 @@ public class AboutActivity extends BaseActivity {
     private void initAdapter() {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         settingAboutAdapter = new SettingAboutAdapter(this, list);
-        setAdapterAnimation(settingAboutAdapter, ADAPTER_ALPHA_IN_ANIMATION, true);
+        setAdapterAnimation(settingAboutAdapter);
         settingAboutAdapter.setOnItemClickListener((adapter, view, position) -> {
             String title = list.get(position).getTitle();
             if (title.equals(getString(R.string.dataSourcesTitle)))

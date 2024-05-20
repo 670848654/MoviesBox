@@ -1,7 +1,5 @@
 package my.project.moviesbox.view;
 
-import static my.project.moviesbox.view.BaseActivity.ADAPTER_SCALE_IN_ANIMATION;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -146,7 +144,7 @@ public class HomeFragment extends BaseFragment<HomeContract.View, HomePresenter>
         adapter = new HomeAdapter(getActivity(), multiItemEntities, this);
         HomeActivity homeActivity = (HomeActivity) getActivity();
         if (homeActivity != null)
-            homeActivity.setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
+            homeActivity.setAdapterAnimation(adapter);
         adapter.addChildClickViewIds(R.id.more);
         adapter.setOnItemChildClickListener((adapter, view, position) -> {
             switch (adapter.getItemViewType(position)) {

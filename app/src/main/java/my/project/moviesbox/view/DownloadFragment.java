@@ -1,7 +1,5 @@
 package my.project.moviesbox.view;
 
-import static my.project.moviesbox.view.BaseActivity.ADAPTER_SCALE_IN_ANIMATION;
-
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
@@ -148,7 +146,7 @@ public class DownloadFragment extends BaseFragment<DownloadContract.View, Downlo
         adapter = new DownloadAdapter(getActivity(), downloadList);
         HomeActivity homeActivity = (HomeActivity) getActivity();
         if (homeActivity != null)
-            homeActivity.setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
+            homeActivity.setAdapterAnimation(adapter);
         adapter.setEmptyView(rvView);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;

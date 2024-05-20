@@ -1,4 +1,4 @@
-package my.project.moviesbox.config;
+package my.project.moviesbox.enums;
 
 import java.util.ArrayList;
 import java.util.List;

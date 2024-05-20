@@ -148,7 +148,6 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
             else drawerLayout.openDrawer(GravityCompat.START);
         });
         player.setListener(this, this, this, this, this, this, this, this, this, this);
-//        player.WIFI_TIP_DIALOG_SHOWED = true;
         player.backButton.setOnClickListener(v -> {
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
             finish();

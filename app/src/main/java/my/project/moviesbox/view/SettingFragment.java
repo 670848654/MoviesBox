@@ -58,19 +58,20 @@ import butterknife.ButterKnife;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.SettingAboutAdapter;
 import my.project.moviesbox.bean.SettingAboutBean;
-import my.project.moviesbox.config.SettingEnum;
 import my.project.moviesbox.database.entity.TFavorite;
 import my.project.moviesbox.database.entity.THistory;
 import my.project.moviesbox.database.entity.THistoryData;
 import my.project.moviesbox.database.entity.TVideo;
 import my.project.moviesbox.database.manager.BackupsManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
+import my.project.moviesbox.enums.SettingEnum;
 import my.project.moviesbox.event.CheckUpdateEvent;
 import my.project.moviesbox.event.RefreshEvent;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.service.CheckUpdateService;
 import my.project.moviesbox.utils.DarkModeUtils;
+import my.project.moviesbox.utils.SAFUtils;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
 
@@ -83,6 +84,7 @@ import my.project.moviesbox.utils.Utils;
   * @版本: 1.0
  */
 public class SettingFragment extends BaseFragment {
+    private static final int REQUEST_DOCUMENT_TREE = 10000;
     @BindView(R.id.title)
     TextView titleView;
     private View view;
@@ -95,6 +97,7 @@ public class SettingFragment extends BaseFragment {
     private final List<SettingAboutBean> list = SettingEnum.getSettingAboutBeanList();
     private CheckUpdateEvent checkUpdateEvent;
     private HomeActivity homeActivity;
+    private int adapterItemPosition;
 
     @Override
     protected void setConfigurationChanged() {
@@ -145,8 +148,9 @@ public class SettingFragment extends BaseFragment {
     private void initAdapter() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         adapter = new SettingAboutAdapter(getActivity(), list);
-        homeActivity.setAdapterAnimation(adapter, BaseActivity.ADAPTER_ALPHA_IN_ANIMATION, true);
+        homeActivity.setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
+            adapterItemPosition = position;
             String title = list.get(position).getTitle();
             if (title.equals(getString(R.string.setDomainTitle)))
                 setDomain(position);
@@ -433,23 +437,10 @@ public class SettingFragment extends BaseFragment {
             return;
         }
         Utils.showSingleListAlert(getActivity(), getString(R.string.setBackupsTitle), Utils.getArray(R.array.backupsItems), true, (dialogInterface, i) -> {
-            inProgress = true;
             switch (i) {
                 case 0:
                     // 创建备份文件
-                    String backupsFileName = getString(R.string.app_name) + System.currentTimeMillis()+".backups";
-                    String filePath = Utils.APP_DATA_PATH + File.separator + backupsFileName;
-                    adapter.getViewByPosition(position, R.id.progress).setVisibility(View.VISIBLE);
-                    Executor executor = Executors.newSingleThreadExecutor();
-                    executor.execute(() -> {
-                        BackupsManager.createBackupsFile(filePath);
-                        getActivity().runOnUiThread(() -> {
-                            adapter.notifyItemChanged(position);
-//                            application.showToastMsg(String.format(getString(R.string.setBackupsFileComplete), backupsFileName));
-                            homeActivity.showBottomNavigationViewSnackbar(titleView, String.format(getString(R.string.setBackupsFileComplete), backupsFileName), false);
-                            inProgress = false;
-                        });
-                    });
+                    createBackupsFile(position);
                     break;
                 case 1:
                     // 恢复数据
@@ -457,6 +448,34 @@ public class SettingFragment extends BaseFragment {
                     break;
             }
             dialogInterface.dismiss();
+        });
+    }
+
+    /**
+     * 创建备份文件
+     */
+    private void createBackupsFile(int position) {
+        inProgress = true;
+        String backupsFileName = getString(R.string.app_name) + System.currentTimeMillis()+".backups";
+        String filePath = SAFUtils.checkHasSetDataSaveUri() ? getActivity().getFilesDir().getAbsolutePath()+ File.separator + backupsFileName : Utils.APP_DATA_PATH + File.separator + backupsFileName;
+        adapter.getViewByPosition(position, R.id.progress).setVisibility(View.VISIBLE);
+        Executor executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            Map<String, Object> resultMap = BackupsManager.createBackupsFile(getActivity(), filePath, backupsFileName);
+            getActivity().runOnUiThread(() -> {
+                inProgress = false;
+                adapter.notifyItemChanged(position);
+                boolean success = (boolean) resultMap.get("success");
+                if (success)
+                    homeActivity.showBottomNavigationViewSnackbar(titleView, String.format(getString(R.string.setBackupsFileComplete), resultMap.get("path")), false);
+                else
+                    SAFUtils.showUnauthorizedAlert(
+                            getActivity(),
+                            (dialog, which) -> {
+                                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                                startActivityForResult(intent, REQUEST_DOCUMENT_TREE);
+                            });
+            });
         });
     }
 
@@ -471,9 +490,19 @@ public class SettingFragment extends BaseFragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == READ_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+        if (requestCode == REQUEST_DOCUMENT_TREE && resultCode == RESULT_OK) {
             Uri uri = data.getData();
             if (uri != null) {
+                getActivity().getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                // 保存授权的目录
+                SharedPreferencesUtils.setDataSaveUri(uri.toString());
+                homeActivity.showBottomNavigationViewSnackbar(titleView, "已授权 "+ uri, false);
+                createBackupsFile(adapterItemPosition);
+            }
+        } else if (requestCode == READ_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            Uri uri = data.getData();
+            if (uri != null) {
+                inProgress = true;
                 if (uri.toString().endsWith(".backups")) {
                     readTextFromUri(uri);
                 } else {
@@ -486,7 +515,7 @@ public class SettingFragment extends BaseFragment {
     }
 
     private void readTextFromUri(Uri uri) {
-        adapter.getViewByPosition(position, R.id.progress).setVisibility(View.VISIBLE);
+        adapter.getViewByPosition(adapterItemPosition, R.id.progress).setVisibility(View.VISIBLE);
         Executor executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {

@@ -100,7 +100,7 @@ public class TextListActivity extends BaseActivity<TextListContract.View, TextLi
 
     public void initAdapter() {
         adapter = new TextListAdapter(this, items);
-        setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
+        setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             TextDataBean.Item item = (TextDataBean.Item) adapter.getItem(position);

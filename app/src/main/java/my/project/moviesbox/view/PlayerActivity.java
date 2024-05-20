@@ -15,6 +15,7 @@ import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.DramaAdapter;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.contract.VideoContract;
+import my.project.moviesbox.enums.VideoUrlChangeEnum;
 import my.project.moviesbox.event.DramaEvent;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
@@ -72,7 +73,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
 
     @Override
     protected void playVideo() {
-        play(url);
+        playNetworkVideo(url);
     }
 
     @Override
@@ -82,21 +83,29 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
         dramaAdapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             drawerLayout.closeDrawer(GravityCompat.END);
-            changePlayUrl(position);
+            changePlayUrl(VideoUrlChangeEnum.CLICK, position);
         });
     }
 
     @Override
-    protected DetailsDataBean.DramasItem setVodDramas(int position) {
-        if (Utils.isNullOrEmpty(nextPlayUrl))
-            alertDialog = Utils.getProDialog(this, R.string.parseVodPlayUrl);
+    protected DetailsDataBean.DramasItem getItemByPosition(VideoUrlChangeEnum changeEnum, int position) {
+        switch (changeEnum) {
+            case CLICK:
+            case PRE:
+                alertDialog = Utils.getProDialog(this, R.string.parseVodPlayUrl);
+                break;
+            case NEXT:
+                if (Utils.isNullOrEmpty(nextPlayUrl))
+                    alertDialog = Utils.getProDialog(this, R.string.parseVodPlayUrl);
+                break;
+        }
         EventBus.getDefault().post(new DramaEvent(nowSource, position));
         return dramaAdapter.getItem(position);
     }
 
     @Override
-    protected void changeVideo(String title) {
-        videoPresenter = new VideoPresenter(false, vodTitle, dramaUrl, nowSource, title, this);
+    protected void parseVideoUrl(String dramaTitle) {
+        videoPresenter = new VideoPresenter(false, vodTitle, dramaUrl, nowSource, dramaTitle, this);
         videoPresenter.loadData(true);
     }
 
@@ -133,11 +142,11 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
             hideNavBar();
             cancelDialog();
             if (urls.size() == 1)
-                play(urls.get(0));
+                playNetworkVideo(urls.get(0));
             else
                 VideoUtils.showMultipleVideoSources(this,
                         urls,
-                        (dialog, index) -> play(urls.get(index)),
+                        (dialog, index) -> playNetworkVideo(urls.get(index)),
                         null,
                          true);
         });

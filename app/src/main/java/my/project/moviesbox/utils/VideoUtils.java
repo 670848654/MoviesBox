@@ -59,10 +59,7 @@ public class VideoUtils {
     public static void showMultipleVideoSources4Download(Context context,
                                                          List<String> list,
                                                          DialogInterface.OnClickListener listener) {
-        String[] items = new String[list.size()];
-        for (int i = 0, size = list.size(); i < size; i++) {
-            items[i] = list.get(i);
-        }
+        String[] items = list.toArray(new String[0]);
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context, R.style.DialogStyle);
         builder.setTitle(Utils.getString(R.string.downloadMultipleVideoDialogTitle));
         builder.setCancelable(false);
@@ -108,6 +105,7 @@ public class VideoUtils {
      * 读取key内容
      * @param file
      * @return
+     * @deprecated 请使用 {@link #readKeyInfo2Byte}
      */
     @Deprecated
     public static String readKeyInfo2String(File file){
@@ -150,6 +148,7 @@ public class VideoUtils {
      * @param key 密钥
      * @param iv IV
      * @return 解密后的字节数组
+     * @deprecated 请使用 {@link #decrypt}
      */
     @Deprecated
     public static byte[] decrypt(byte[] fileBytes, String key, byte[] iv) {

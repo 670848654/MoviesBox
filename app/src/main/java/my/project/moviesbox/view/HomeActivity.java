@@ -19,7 +19,6 @@ import java.util.List;
 import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.HomeViewPageAdapter;
-import my.project.moviesbox.config.ParallaxTransformer;
 import my.project.moviesbox.event.RefreshEvent;
 import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.service.DownloadService;
@@ -66,7 +65,7 @@ public class HomeActivity extends BaseActivity {
         homeViewPageAdapter = new HomeViewPageAdapter(this, list);
         viewPager2.setAdapter(homeViewPageAdapter);
         viewPager2.setUserInputEnabled(false);
-        viewPager2.setPageTransformer(new ParallaxTransformer());
+//        viewPager2.setPageTransformer(new ParallaxTransformer());
         //设置bottomNavigationView item 点击事件
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();

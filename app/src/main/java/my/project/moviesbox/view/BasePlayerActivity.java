@@ -57,6 +57,7 @@ import my.project.moviesbox.database.manager.TDownloadDataManager;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.THistoryManager;
 import my.project.moviesbox.database.manager.TVideoManager;
+import my.project.moviesbox.enums.VideoUrlChangeEnum;
 import my.project.moviesbox.event.RefreshDownloadEvent;
 import my.project.moviesbox.event.RefreshEvent;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
@@ -160,27 +161,44 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     protected abstract boolean isLocalVideo();
 
     /**
-     * 设置上/下一集数据
+     * 自定义属性初始化抽象方法
      */
-    protected abstract void setPreNextData();
+    protected abstract void initCustomData();
 
+    protected abstract void setActivityName();
+
+    protected abstract void setBundleData(Bundle bundle);
+
+    /**
+     * 设置抽屉
+     */
     private void initNavConfigView() {
         //设置右面的侧滑菜单只能通过代码来打开
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
     }
 
+    /**
+     * 设置上/下一集数据抽象方法
+     */
+    protected abstract void setPreNextData();
+
+    /**
+     * 设置上一集/下一集按钮
+     */
     protected void initPlayerPreNextTag() {
         hasPreVideo = clickIndex != 0;
         setPreNextData();
     }
 
+    /**
+     * 初始化播放器相关事件
+     */
     private void initPlayerView() {
         Jzvd.SAVE_PROGRESS = false;
         player.configView.setOnClickListener(v -> setDrawerOpen(GravityCompat.START));
         player.openDrama.setOnClickListener(view -> setDrawerOpen(GravityCompat.END));
         player.selectDramaView.setOnClickListener(view -> setDrawerOpen(GravityCompat.END));
         player.setListener(this, this, this, this, this, this, this, this, this, this);
-//        player.WIFI_TIP_DIALOG_SHOWED = true;
         player.backButton.setOnClickListener(v -> {
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
             finish();
@@ -188,12 +206,12 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         player.preVideo.setOnClickListener(v -> {
             clickIndex--;
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            changePlayUrl(clickIndex);
+            changePlayUrl(VideoUrlChangeEnum.PRE, clickIndex);
         });
         player.nextVideo.setOnClickListener(v -> {
             clickIndex++;
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            changePlayUrl(clickIndex);
+            changePlayUrl(VideoUrlChangeEnum.NEXT, clickIndex);
         });
         if (isLocalVideo())
             player.danmuView.setVisibility(View.GONE);
@@ -203,6 +221,10 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         playVideo();
     }
 
+    /**
+     * 设置抽屉打开方式
+     * @param drawerGravity
+     */
     private void setDrawerOpen(int drawerGravity) {
         if (!Utils.isFastClick()) return;
         if (drawerLayout.isDrawerOpen(drawerGravity))
@@ -210,16 +232,28 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         else drawerLayout.openDrawer(drawerGravity);
     }
 
+    /**
+     * 播放视频抽象方法
+     */
     protected abstract void playVideo();
 
+    /**
+     * 设置剧集列表适配器
+     */
     public void initAdapter() {
         recyclerView.setNestedScrollingEnabled(false);
         recyclerView.setLayoutManager(new AutoLineFeedLayoutManager());
         setAdapter();
     }
 
+    /**
+     * 设置剧集适配器数据抽象方法
+     */
     protected abstract void setAdapter();
 
+    /**
+     * 初始化用户设置
+     */
     private void initUserConfig() {
         switch (SharedPreferencesUtils.getUserSetSpeed()) {
             case 5:
@@ -245,87 +279,130 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         });
     }
 
-    private void setUserSpeedConfig(int userSet) {
-        SharedPreferencesUtils.setUserSetSpeed(speedsIntItems[userSet]);
-        speedTextView.setText(speedsStrItems[userSet]);
-        userSpeed = userSet;
+    /**
+     * 设置用户保存的快进、快退时长
+     * @param index 下标
+     */
+    private void setUserSpeedConfig(int index) {
+        SharedPreferencesUtils.setUserSetSpeed(speedsIntItems[index]);
+        speedTextView.setText(speedsStrItems[index]);
+        userSpeed = index;
     }
 
+    /**
+     * 播放器设置点击事件
+     * @param relativeLayout
+     */
     @OnClick({R.id.speed_config, R.id.player_config, R.id.browser_config})
     public void configBtnClick(RelativeLayout relativeLayout) {
         switch (relativeLayout.getId()) {
-            case R.id.speed_config:
-                setDefaultSpeed();
+            case R.id.speed_config: // 设置快进/快退时长
+                Utils.showSingleChoiceAlert(this,
+                        getString(R.string.setUserSpeed),
+                        speedsStrItems,
+                        true,
+                        userSpeed,
+                        (dialogInterface, i) -> {
+                            setUserSpeedConfig(i);
+                            dialogInterface.dismiss();
+                        }
+                );
                 break;
-            case R.id.player_config:
+            case R.id.player_config: // 使用外部播放器播放
                 Utils.selectVideoPlayer(this, url);
                 break;
-            case R.id.browser_config:
+            case R.id.browser_config: // 访问源网站
                 Utils.viewInChrome(this, dramaUrl);
                 break;
         }
     }
 
-    private void setDefaultSpeed() {
-        Utils.showSingleChoiceAlert(this,
-                getString(R.string.setUserSpeed),
-                speedsStrItems,
-                true,
-                userSpeed,
-                (dialogInterface, i) -> {
-                    setUserSpeedConfig(i);
-                    dialogInterface.dismiss();
-                }
-        );
-    }
-
-    protected void changePlayUrl(int position) {
+    /**
+     * 切换集数
+     * @param changeEnum 切换集数点击事件枚举
+     * @param position 集数下标
+     */
+    protected void changePlayUrl(VideoUrlChangeEnum changeEnum, int position) {
         player.releaseDanMu();
         player.danmuInfoView.setVisibility(View.GONE);
         dramaAdapter.getData().get(position).setSelected(true);
-        dramaAdapter.notifyDataSetChanged();
+        dramaAdapter.notifyItemChanged(position);
+        // 本地视频换集
         if (isLocalVideo()) {
             changeLocalPlayUrl(position);
             return;
         }
+        // 网络视频换集
         retryCount = 0;
         clickIndex = position;
         initPlayerPreNextTag();
-        DetailsDataBean.DramasItem bean = setVodDramas(position);
+        DetailsDataBean.DramasItem bean = getItemByPosition(changeEnum, position);
         Jzvd.releaseAllVideos();
 
         saveProgress();
         dramaUrl = bean.getUrl();
         dramaTitle = bean.getTitle();
         player.playingShow();
-        if (Utils.isNullOrEmpty(nextPlayUrl))
-            changeVideo(bean.getTitle());
-        else {
-            if (nextPlayUrl.size() == 1)
-                play(nextPlayUrl.get(0));
-            else
-                VideoUtils.showMultipleVideoSources(this,
-                        nextPlayUrl,
-                        (dialog, index) -> play(nextPlayUrl.get(index)),
-                        null,
-                        true);
+        switch (changeEnum) {
+            case CLICK:
+            case PRE:
+                parseVideoUrl(dramaTitle);
+                break;
+            case NEXT:
+                if (Utils.isNullOrEmpty(nextPlayUrl))
+                    parseVideoUrl(dramaTitle);
+                else
+                    handleNextPlayUrl(nextPlayUrl);
+                break;
         }
     }
 
+    /**
+     * 播放下一集
+     * @param nextPlayUrl 下一集播放地址集合
+     */
+    private void handleNextPlayUrl(List<String> nextPlayUrl) {
+        if (nextPlayUrl.size() == 1)
+            playNetworkVideo(nextPlayUrl.get(0));
+        else
+            VideoUtils.showMultipleVideoSources(this,
+                    nextPlayUrl,
+                    (dialog, index) -> playNetworkVideo(nextPlayUrl.get(index)),
+                    null,
+                    true);
+    }
+
+    /**
+     * 本地视频换集
+     * @param position
+     */
     protected void changeLocalPlayUrl(int position) {
         saveProgress();
         clickIndex = position;
         initPlayerPreNextTag();
-        DetailsDataBean.DramasItem bean = setVodDramas(position);
+        DetailsDataBean.DramasItem bean = getItemByPosition(VideoUrlChangeEnum.CLICK, position);
         Jzvd.releaseAllVideos();
         downloadDataId = bean.getDownloadDataId();
-        toPlay(bean.getUrl(), bean.getTitle());
+        playLocalVideo(bean.getUrl(), bean.getTitle());
     }
 
-    protected abstract DetailsDataBean.DramasItem setVodDramas(int position);
+    /**
+     * 获取当前点击播放集数数据抽象方法
+     * @param changeEnum 切换集数点击事件枚举
+     * @param position 集数下标
+     * @return
+     */
+    protected abstract DetailsDataBean.DramasItem getItemByPosition(VideoUrlChangeEnum changeEnum, int position);
 
-    protected abstract void changeVideo(String title);
+    /**
+     * 解析视频地址抽象方法
+     * @param dramaTitle 集数
+     */
+    protected abstract void parseVideoUrl(String dramaTitle);
 
+    /**
+     * 保存进度
+     */
     private void saveProgress() {
         boolean completed = Utils.videoHasComplete(playPosition, videoDuration);
         boolean gt2second = playPosition > 2000;
@@ -341,13 +418,13 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
      * 播放视频
      * @param playUrl
      */
-    protected void play(String playUrl) {
+    protected void playNetworkVideo(String videoUrl) {
         nextPlayUrl = new ArrayList<>();
         hideNavBar();
         TFavoriteManager.updateFavorite(dramaUrl, dramaTitle, vodId);
         TVideoManager.addVideoHistory(vodId, dramaUrl, nowSource, dramaTitle);
         Jzvd.releaseAllVideos();
-        player.setUp(playUrl, vodTitle + " - " + dramaTitle, Jzvd.SCREEN_FULLSCREEN, VideoUtils.getUserPlayerKernel());
+        player.setUp(videoUrl, vodTitle + " - " + dramaTitle, Jzvd.SCREEN_FULLSCREEN, VideoUtils.getUserPlayerKernel());
         userSavePosition = THistoryManager.getPlayPosition(vodId, dramaUrl);
         player.seekToInAdvance = userSavePosition;//跳转到指定的播放进度
         hasPosition = userSavePosition > 0;
@@ -374,10 +451,15 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
      */
     protected abstract String[] getDanmuParams();
 
-    protected void toPlay(String path, String dramaTitle) {
+    /**
+     * 播放本地视频
+     * @param localVideoPath 本地视频地址
+     * @param dramaTitle 集数
+     */
+    protected void playLocalVideo(String localVideoPath, String dramaTitle) {
         player.playingShow();
-        player.localVideoPath = path;
-        String localFilePath = Uri.fromFile(new File(path)).toString();
+        player.localVideoPath = localVideoPath;
+        String localFilePath = Uri.fromFile(new File(localVideoPath)).toString();
         try {
             localFilePath = URLDecoder.decode(localFilePath, "UTF-8");
         } catch (Exception e) {
@@ -391,12 +473,6 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         player.startButton.performClick();//响应点击事件
         getDanmu();
     }
-
-    protected abstract void initCustomData();
-
-    protected abstract void setActivityName();
-
-    protected abstract void setBundleData(Bundle bundle);
 
     @Override
     public void onBackPressed() {
@@ -419,6 +495,12 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
             return false;
     }
 
+    /**
+     * 画中画
+     * @param isInPictureInPictureMode True if the activity is in picture-in-picture mode.
+     * @param newConfig The new configuration of the activity with the state
+     *                  {@param isInPictureInPictureMode}.
+     */
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration newConfig) {
@@ -434,18 +516,24 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         }
     }
 
+    /**
+     * 窗口变化
+     * @param isInMultiWindowMode True if the activity is in multi-window mode.
+     * @param newConfig The new configuration of the activity with the state
+     *                  {@param isInMultiWindowMode}.
+     */
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onMultiWindowModeChanged(boolean isInMultiWindowMode, Configuration newConfig) {
         super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig);
         if (isInMultiWindowMode)
-            player.goOnPlayOnResume();
+            Jzvd.goOnPlayOnResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        player.goOnPlayOnPause();
+        Jzvd.goOnPlayOnPause();
     }
 
     @Override
@@ -454,7 +542,7 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         Jzvd.FULLSCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
         Jzvd.NORMAL_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
         hideNavBar();
-        if (!inMultiWindow()) player.goOnPlayOnResume();
+        if (!inMultiWindow()) Jzvd.goOnPlayOnResume();
     }
 
     @Override
@@ -498,6 +586,9 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
             getNextPlayUrl();
     }
 
+    /**
+     * 获取下一集播放地址抽象方法
+     */
     protected abstract void getNextPlayUrl();
 
     @Override
@@ -511,7 +602,7 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         if (hasNextVideo && playNextVideo) {
             application.showToastMsg("开始播放下一集");
             clickIndex++;
-            changePlayUrl(clickIndex);
+            changePlayUrl(VideoUrlChangeEnum.NEXT, clickIndex);
         } else {
             player.releaseDanMu();
             application.showToastMsg("全部播放完毕");
@@ -647,7 +738,7 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
             EventBus.getDefault().post(new RefreshEvent(2));
         }
         player.releaseDanMu();
-        player.releaseAllVideos();
+        Jzvd.releaseAllVideos();
         player.danmakuView = null;
         if (danmuPresenter != null)
             danmuPresenter.detachView();

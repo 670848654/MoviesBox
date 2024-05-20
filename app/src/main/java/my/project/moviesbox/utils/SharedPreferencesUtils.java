@@ -5,7 +5,8 @@ import android.content.SharedPreferences;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
-import my.project.moviesbox.config.SettingEnum;
+import my.project.moviesbox.config.ConfigManager;
+import my.project.moviesbox.enums.SettingEnum;
 import my.project.moviesbox.parser.config.ParserInterfaceFactory;
 import my.project.moviesbox.parser.config.SourceEnum;
 
@@ -29,16 +30,22 @@ public class SharedPreferencesUtils {
         String type = object.getClass().getSimpleName();
         SharedPreferences sp = App.getInstance().getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
-        if ("String".equals(type)) {
-            editor.putString(key, (String) object);
-        } else if ("Integer".equals(type)) {
-            editor.putInt(key, (Integer) object);
-        } else if ("Boolean".equals(type)) {
-            editor.putBoolean(key, (Boolean) object);
-        } else if ("Float".equals(type)) {
-            editor.putFloat(key, (Float) object);
-        } else if ("Long".equals(type)) {
-            editor.putLong(key, (Long) object);
+        switch (type) {
+            case "String":
+                editor.putString(key, (String) object);
+                break;
+            case "Integer":
+                editor.putInt(key, (Integer) object);
+                break;
+            case "Boolean":
+                editor.putBoolean(key, (Boolean) object);
+                break;
+            case "Float":
+                editor.putFloat(key, (Float) object);
+                break;
+            case "Long":
+                editor.putLong(key, (Long) object);
+                break;
         }
         editor.commit();
     }
@@ -52,21 +59,38 @@ public class SharedPreferencesUtils {
     public static Object getParam(String key, Object defaultObject) {
         String type = defaultObject.getClass().getSimpleName();
         SharedPreferences sp = App.getInstance().getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE);
-        if ("String".equals(type)) {
-            return sp.getString(key, (String) defaultObject);
-        } else if ("Integer".equals(type)) {
-            return sp.getInt(key, (Integer) defaultObject);
-        } else if ("Boolean".equals(type)) {
-            return sp.getBoolean(key, (Boolean) defaultObject);
-        } else if ("Float".equals(type)) {
-            return sp.getFloat(key, (Float) defaultObject);
-        } else if ("Long".equals(type)) {
-            return sp.getLong(key, (Long) defaultObject);
+        switch (type) {
+            case "String":
+                return sp.getString(key, (String) defaultObject);
+            case "Integer":
+                return sp.getInt(key, (Integer) defaultObject);
+            case "Boolean":
+                return sp.getBoolean(key, (Boolean) defaultObject);
+            case "Float":
+                return sp.getFloat(key, (Float) defaultObject);
+            case "Long":
+                return sp.getLong(key, (Long) defaultObject);
         }
         return null;
     }
 
     /********************************************************** 系统相关开始 **********************************************************/
+    /**
+     * 保存授权的保存目录rui
+     * @param uri
+     */
+    public static void setDataSaveUri(String uri) {
+        setParam("dataSaveUri", uri);
+    }
+
+    /**
+     * 获取授权的保存目录rui
+     * @return
+     */
+    public static String getDataSaveUri() {
+        return (String) getParam("dataSaveUri", "");
+    }
+
     /**
      * 设置数据保存位置名称后缀
      * @param suffix
@@ -96,7 +120,7 @@ public class SharedPreferencesUtils {
      * @return
      */
     public static boolean appMainInfo() {
-        return (boolean) getParam("app_info", false);
+        return (boolean) getParam("app_info", ConfigManager.getInstance().isAppInfo());
     }
 
     /**
@@ -111,7 +135,7 @@ public class SharedPreferencesUtils {
      * @return
      */
     public static boolean getTurnOnHiddenFeatures() {
-        return (boolean) getParam("turnOnHiddenFeatures", false);
+        return (boolean) getParam("turnOnHiddenFeatures", ConfigManager.getInstance().isTurnOnHiddenFeatures());
     }
 
     /**
@@ -136,7 +160,7 @@ public class SharedPreferencesUtils {
      * @return
      */
     public static boolean getIgnoreTs() {
-        return (boolean) getParam("ignoreTs", false);
+        return (boolean) getParam("ignoreTs", ConfigManager.getInstance().isIgnoreTs());
     }
 
     /**
@@ -152,7 +176,7 @@ public class SharedPreferencesUtils {
      * @return
      */
     public static boolean getRemoveAdTs() {
-        return (boolean) getParam("removeAdTs", false);
+        return (boolean) getParam("removeAdTs", ConfigManager.getInstance().isRemoveAdTs());
     }
 
     /**
@@ -186,7 +210,7 @@ public class SharedPreferencesUtils {
      * @return
      */
     public static int getMaxTsQueueNum() {
-        return (int) getParam("maxTsQueueNum", 20);
+        return (int) getParam("maxTsQueueNum", ConfigManager.getInstance().getMaxTsQueueNum());
     }
     /******************************************************** M3U8配置相关结束 ********************************************************/
 
@@ -232,7 +256,7 @@ public class SharedPreferencesUtils {
      * @return
      */
     public static int getUserSetOpenVidePlayer() {
-        return (Integer) getParam( "player", 0);
+        return (Integer) getParam( "player", ConfigManager.getInstance().getPlayer());
     }
 
     /**
@@ -248,7 +272,7 @@ public class SharedPreferencesUtils {
      * @return
      */
     public static int getUserSetPlayerKernel() {
-        return (Integer) getParam( "player_kernel", 1);
+        return (Integer) getParam( "player_kernel", ConfigManager.getInstance().getPlayerKernel());
     }
 
     /**
@@ -264,7 +288,7 @@ public class SharedPreferencesUtils {
      * @return
      */
     public static int getUserSetSpeed() {
-        return (Integer) getParam( "user_speed", 15);
+        return (Integer) getParam( "user_speed", ConfigManager.getInstance().getUserSpeed());
     }
 
     /**
@@ -276,15 +300,15 @@ public class SharedPreferencesUtils {
     }
 
     /**
-     * 读取播放时是否隐藏进度进度条配置
+     * 读取播放时是否隐藏底部进度条配置
      * @return
      */
     public static boolean getUserSetHideProgress() {
-        return (boolean) getParam("hide_progress", false);
+        return (boolean) getParam("hide_progress", ConfigManager.getInstance().isHideProgress());
     }
 
     /**
-     * 保存播放时是否隐藏进度进度条配置
+     * 保存播放时是否隐藏底部进度条配置
      * @param set
      */
     public static void setUserSetHideProgress(boolean set) {
@@ -296,7 +320,7 @@ public class SharedPreferencesUtils {
      * @return
      */
     public static boolean getUserAutoPlayNextVideo() {
-        return (boolean) getParam("play_next_video", false);
+        return (boolean) getParam("play_next_video", ConfigManager.getInstance().isPlayNextVideo());
     }
 
     /**
@@ -312,7 +336,7 @@ public class SharedPreferencesUtils {
      * @return
      */
     public static boolean getUserSetOpenDanmu() {
-        return (boolean) getParam("open_danmu", true);
+        return (boolean) getParam("open_danmu", ConfigManager.getInstance().isOpenDanmu());
     }
 
     /**

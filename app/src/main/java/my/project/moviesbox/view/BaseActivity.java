@@ -19,12 +19,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.animation.AlphaInAnimation;
 import com.chad.library.adapter.base.animation.ScaleInAnimation;
+import com.chad.library.adapter.base.animation.SlideInBottomAnimation;
+import com.chad.library.adapter.base.animation.SlideInLeftAnimation;
+import com.chad.library.adapter.base.animation.SlideInRightAnimation;
 import com.google.android.material.snackbar.Snackbar;
+
+import java.util.Locale;
 
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.config.ConfigManager;
+import my.project.moviesbox.enums.AdapterAnimationType;
 import my.project.moviesbox.parser.config.ParserInterfaceFactory;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.presenter.Presenter;
@@ -142,25 +149,35 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
         refDataBtn.setOnClickListener(view -> retryListener());
     }
 
-
-    protected static final int ADAPTER_SCALE_IN_ANIMATION = 0;
-    protected static final int ADAPTER_ALPHA_IN_ANIMATION = 1;
     /**
      * 设置rvlist动画
      * @param adapter
-     * @param adapterAnimation
-     * @param firstOnly
      */
-    protected void setAdapterAnimation(BaseQuickAdapter adapter, int adapterAnimation, boolean firstOnly) {
-        adapter.setAnimationEnable(true);
-        adapter.setAnimationFirstOnly(firstOnly);
-        switch (adapterAnimation) {
-            case ADAPTER_SCALE_IN_ANIMATION:
-                adapter.setAdapterAnimation(new ScaleInAnimation());
-                break;
-            case ADAPTER_ALPHA_IN_ANIMATION:
-                adapter.setAdapterAnimation(new AlphaInAnimation());
-                break;
+    protected void setAdapterAnimation(BaseQuickAdapter adapter) {
+        ConfigManager configManager = ConfigManager.getInstance();
+        boolean enableAnimation = configManager.isAnimationEnable();
+        if (enableAnimation) {
+            adapter.setAnimationEnable(true);
+            adapter.setAnimationFirstOnly(configManager.isAnimationFirstOnly());
+            String animationDefaultStr = configManager.getAnimationDefault();
+            AdapterAnimationType animationDefault = AdapterAnimationType.valueOf(animationDefaultStr.toUpperCase(Locale.US));
+            switch (animationDefault) {
+                case ALPHA_IN:
+                    adapter.setAdapterAnimation(new AlphaInAnimation());
+                    break;
+                case SCALE_IN:
+                    adapter.setAdapterAnimation(new ScaleInAnimation());
+                    break;
+                case SLIDE_IN_BOTTOM:
+                    adapter.setAdapterAnimation(new SlideInBottomAnimation());
+                    break;
+                case SLIDE_IN_LEFT:
+                    adapter.setAdapterAnimation(new SlideInLeftAnimation());
+                    break;
+                case SLIDE_IN_RIGHT:
+                    adapter.setAdapterAnimation(new SlideInRightAnimation());
+                    break;
+            }
         }
     }
 

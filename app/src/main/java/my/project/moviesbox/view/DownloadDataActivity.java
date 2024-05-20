@@ -5,15 +5,18 @@ import static my.project.moviesbox.utils.Utils.getArray;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.text.Html;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -32,6 +35,8 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import butterknife.BindView;
 import my.project.moviesbox.R;
@@ -50,6 +55,8 @@ import my.project.moviesbox.event.RefreshEvent;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.DownloadPresenter;
 import my.project.moviesbox.service.DownloadService;
+import my.project.moviesbox.utils.SAFUtils;
+import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
 
 /**
@@ -61,6 +68,7 @@ import my.project.moviesbox.utils.Utils;
   * @版本: 1.0
  */
 public class DownloadDataActivity extends BaseActivity<DownloadContract.View, DownloadPresenter> implements DownloadContract.View {
+    private static final int REQUEST_DOCUMENT_TREE = 10000;
     @BindView(R.id.rv_list)
     RecyclerView mRecyclerView;
     @BindView(R.id.mSwipe)
@@ -77,8 +85,10 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
     protected boolean isErr = true;
     private static final String[] DOWNLOAD_STR = getArray(R.array.downloadItems);
     private static final String[] COMPLETE_STR = getArray(R.array.completeItems);
+    private static final String[] COMPLETE_EXPORT_STR = getArray(R.array.completeExportItems);
     private static final String[] DOWNLOAD_ERROR_STR = getArray(R.array.downloadErrorItems);
     private File downloadDir;
+    private ExecutorService executorService;
 
     @Override
     protected DownloadPresenter createPresenter() {
@@ -100,6 +110,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
     protected void init() {
         EventBus.getDefault().register(this);
         Aria.download(this).register();
+        executorService = Executors.newFixedThreadPool(1);
         Bundle bundle = getIntent().getExtras();
         downloadId = bundle.getString("downloadId");
         vodTitle = bundle.getString("vodTitle");
@@ -129,7 +140,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
 
     private void initAdapter() {
         adapter = new DownloadDataAdapter(this, downloadDataBeans);
-        setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
+        setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             long taskId = downloadDataBeans.get(position).getTDownloadData().getAriaTaskId();
@@ -171,23 +182,52 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
                     });
                     break;
                 case 1:
-                    Utils.showSingleListAlert(this, "", COMPLETE_STR, true, (dialogInterface, i) -> {
-                        switch (i) {
-                            case 0:
-                                Bundle bundle = new Bundle();
-                                bundle.putString("localFilePath",  downloadDataBeans.get(position).getTDownloadData().getSavePath());
-                                bundle.putString("vodTitle", vodTitle);
-                                bundle.putString("dramaTitle", downloadDataBeans.get(position).getTDownloadData().getVideoNumber());
-                                bundle.putSerializable("downloadDataBeans", (Serializable) downloadDataBeans);
-                                startActivity(new Intent(this, LocalPlayerActivity.class).putExtras(bundle));
-                                break;
-                            case 1:
-                                Utils.selectVideoPlayer(this, downloadDataBeans.get(position).getTDownloadData().getSavePath());
-                                break;
-                            case 2:
-                                showDeleteDataDialog(downloadDataBeans.get(position), position);
-                                break;
-                        }
+                    String savePath = downloadDataBeans.get(position).getTDownloadData().getSavePath();
+                    String videoNumber = downloadDataBeans.get(position).getTDownloadData().getVideoNumber();
+                    if (savePath.contains(getFilesDir().getAbsolutePath()))
+                        Utils.showSingleListAlert(this, "", COMPLETE_EXPORT_STR, true, (dialogInterface, i) -> {
+                            switch (i) {
+                                case 0:
+                                    playLocalVideo(position);
+                                    break;
+                                case 1:
+                                    Utils.selectVideoPlayer(this, savePath);
+                                    break;
+                                case 2:
+                                    if (SAFUtils.checkHasSetDataSaveUri()) {
+                                        application.showSnackbarMsg(toolbar, videoNumber + " 开始执行导出，请稍后...");
+                                        executorService.submit(() -> {
+                                            SAFUtils.copyConfigFileToSAF(DownloadDataActivity.this, savePath, "video/mp4", false);
+                                            Handler uiThread = new Handler(Looper.getMainLooper());
+                                            uiThread.post(() -> application.showSnackbarMsg(toolbar, videoNumber + " 已导出到 "  + SAFUtils.getUriDirectoryName()));
+                                        });
+                                    } else
+                                        SAFUtils.showUnauthorizedAlert(
+                                                this,
+                                                (dialog, which) -> {
+                                                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                                                    startActivityForResult(intent, REQUEST_DOCUMENT_TREE);
+                                                });
+                                    break;
+                                case 3:
+                                    showDeleteDataDialog(downloadDataBeans.get(position), position);
+                                    break;
+                            }
+                            dialogInterface.dismiss();
+                        });
+                    else
+                        Utils.showSingleListAlert(this, "", COMPLETE_STR, true, (dialogInterface, i) -> {
+                            switch (i) {
+                                case 0:
+                                    playLocalVideo(position);
+                                    break;
+                                case 1:
+                                    Utils.selectVideoPlayer(this, downloadDataBeans.get(position).getTDownloadData().getSavePath());
+                                    break;
+                                case 2:
+                                    showDeleteDataDialog(downloadDataBeans.get(position), position);
+                                    break;
+                            }
                         dialogInterface.dismiss();
                     });
                     break;
@@ -239,6 +279,15 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
         adapter.setEmptyView(rvView);
     }
 
+    private void playLocalVideo(int position) {
+        Bundle bundle = new Bundle();
+        bundle.putString("localFilePath",  downloadDataBeans.get(position).getTDownloadData().getSavePath());
+        bundle.putString("vodTitle", vodTitle);
+        bundle.putString("dramaTitle", downloadDataBeans.get(position).getTDownloadData().getVideoNumber());
+        bundle.putSerializable("downloadDataBeans", (Serializable) downloadDataBeans);
+        startActivity(new Intent(this, LocalPlayerActivity.class).putExtras(bundle));
+    }
+
     private void showDeleteDataDialog(TDownloadDataWithFields tDownloadDataWithFields, int position) {
         Utils.showAlert(
                 this,
@@ -258,6 +307,20 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
                     deleteData(true, tDownloadDataWithFields, position);
                 }
         );
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_DOCUMENT_TREE && resultCode == RESULT_OK) {
+            Uri uri = data.getData();
+            if (uri != null) {
+                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                // 保存授权的目录
+                SharedPreferencesUtils.setDataSaveUri(uri.toString());
+                application.showToastMsg("已授权 "+ uri);
+            }
+        }
     }
 
     private void deleteData(boolean removeFile, TDownloadDataWithFields tDownloadDataWithFields, int position) {
@@ -448,6 +511,8 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
     public void onDestroy() {
         Aria.download(this).unRegister();
         EventBus.getDefault().unregister(this);
+        if (!executorService.isShutdown())
+            executorService.shutdownNow();
         super.onDestroy();
     }
 

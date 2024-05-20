@@ -13,7 +13,7 @@ import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.SourceAdapter;
 import my.project.moviesbox.bean.SourceBean;
-import my.project.moviesbox.config.OpenSourceEnum;
+import my.project.moviesbox.enums.OpenSourceEnum;
 import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.Utils;
 
@@ -87,7 +87,7 @@ public class OpenSourceActivity extends BaseActivity {
     public void initAdapter() {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new SourceAdapter(list);
-        setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
+        setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (Utils.isFastClick()) Utils.viewInChrome(this, list.get(position).getUrl());
         });

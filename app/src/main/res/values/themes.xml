@@ -285,4 +285,14 @@
         screen. This is required. -->
         <item name="postSplashScreenTheme">@style/Theme.MoviesBox</item>
     </style>
+
+    <style name="PopupTopAnim" parent="android:Animation">
+        <item name="android:windowEnterAnimation">@anim/popup_in</item>
+        <item name="android:windowExitAnimation">@anim/popup_out</item>
+    </style>
+
+    <style name="BottomDialogAnimation" parent="android:Animation">
+        <item name="android:windowEnterAnimation">@anim/translate_dialog_in</item>
+        <item name="android:windowExitAnimation">@anim/translate_dialog_out</item>
+    </style>
 </resources>

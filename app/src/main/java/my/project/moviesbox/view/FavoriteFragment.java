@@ -1,7 +1,5 @@
 package my.project.moviesbox.view;
 
-import static my.project.moviesbox.view.BaseActivity.ADAPTER_SCALE_IN_ANIMATION;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -82,7 +80,7 @@ public class FavoriteFragment extends BaseFragment<FavoriteContract.View, Favori
         adapter = new FavoriteListAdapter(favoriteList);
         HomeActivity homeActivity = (HomeActivity) getActivity();
         if (homeActivity != null)
-            homeActivity.setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
+            homeActivity.setAdapterAnimation(adapter);
         adapter.setEmptyView(rvView);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
@@ -269,7 +267,7 @@ public class FavoriteFragment extends BaseFragment<FavoriteContract.View, Favori
         if (getActivity().isFinishing()) return;
         getActivity().runOnUiThread(() -> {
             for (int i=0,size=favoriteList.size(); i<size; i++) {
-                if (favoriteList.get(i).getTFavorite().getVideoImgUrl().contains(oldImgUrl)) {
+                if (favoriteList.get(i).getTFavorite().getVideoImgUrl().equals(oldImgUrl)) {
                     favoriteList.get(i).getTFavorite().setVideoImgUrl(imgUrl);
                     adapter.notifyItemChanged(i);
                     TVideoManager.updateImg(favoriteList.get(i).getVideoId(), imgUrl, 0);

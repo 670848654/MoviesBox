@@ -38,7 +38,8 @@ public class DownloadDataAdapter extends BaseQuickAdapter<TDownloadDataWithField
         String imgUrl = item.getVideoImgUrl();
         ImageView imageView = helper.getView(R.id.img);
         imageView.setTag(R.id.imageid, imgUrl);
-        helper.setText(R.id.title, item.getTDownloadData().getVideoNumber());
+        String title = item.getTDownloadData().getVideoNumber() + (item.getTDownloadData().getSavePath().contains(context.getFilesDir().getAbsolutePath()) ? " <font color=\"#FF5722\">[私有目录]</font>" : " <font color=\"#31BDEC\">[公共存储]</font>");
+        helper.setText(R.id.title, Html.fromHtml(title));
         helper.setText(R.id.file_size, item.getTDownloadData().getVideoFileSize() != 0 ? Utils.getNetFileSizeDescription(item.getTDownloadData().getVideoFileSize()) : "0B");
         helper.setVisible(R.id.bottom_progress, false);
         String completeText = "";

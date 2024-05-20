@@ -93,7 +93,7 @@ public class TopticListActivity extends BaseActivity<TopTicListContract.View, To
 
     public void initDefaultAdapter() {
         adapter = new VodListAdapter(isVodList ? parserInterface.setVodListItemType() : parserInterface.setTopticListItemType(), items);
-        setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
+        setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             VodDataBean.Item bean = (VodDataBean.Item) adapter.getItem(position);

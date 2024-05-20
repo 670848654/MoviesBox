@@ -69,6 +69,7 @@ import my.project.moviesbox.presenter.DetailsPresenter;
 import my.project.moviesbox.presenter.DownloadVideoPresenter;
 import my.project.moviesbox.presenter.VideoPresenter;
 import my.project.moviesbox.service.DownloadService;
+import my.project.moviesbox.utils.SAFUtils;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.StatusBarUtil;
 import my.project.moviesbox.utils.Utils;
@@ -308,21 +309,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
                 favoriteVod();
                 break;
             case R.id.download:
-                if (downloadAdapter.getData().size() == 0)
-                    return;
-                if (!Utils.isWifiConnected(this)) {
-                    Utils.showAlert(this,
-                            getString(R.string.noWifiDialogTitle),
-                            getString(R.string.noWifiDialogContent),
-                            false,
-                            getString(R.string.defaultPositiveBtnText),
-                            getString(R.string.defaultNegativeBtnText),
-                            "",
-                            (dialog, which) -> showDownloadBsd(),
-                            (dialog, which) -> dialog.dismiss(),
-                            null);
-                } else
-                    showDownloadBsd();
+                select2Download();
                 break;
             case R.id.browser:
                 Utils.viewInChrome(DetailsActivity.this, detailsUrl);
@@ -334,6 +321,24 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
                 }
                 break;
         }
+    }
+
+    private void select2Download() {
+        if (downloadAdapter.getData().size() == 0)
+            return;
+        if (!Utils.isWifiConnected(this)) {
+            Utils.showAlert(this,
+                    getString(R.string.noWifiDialogTitle),
+                    getString(R.string.noWifiDialogContent),
+                    false,
+                    getString(R.string.defaultPositiveBtnText),
+                    getString(R.string.defaultNegativeBtnText),
+                    "",
+                    (dialog, which) -> showDownloadBsd(),
+                    (dialog, which) -> dialog.dismiss(),
+                    null);
+        } else
+            showDownloadBsd();
     }
 
     private void showDownloadBsd() {
@@ -402,7 +407,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
 
         View downloadView = LayoutInflater.from(this).inflate(R.layout.dialog_download_drama, null);
         ExpandableTextView expandableTextView = downloadView.findViewById(R.id.info);
-        expandableTextView.setContent(getString(R.string.downloadInfoContent));
+        expandableTextView.setContent(String.format(getString(R.string.downloadInfoContent), SharedPreferencesUtils.getDataName()));
         expandableTextView.setNeedExpend(true);
         downloadListRv = downloadView.findViewById(R.id.download_list);
 
@@ -494,9 +499,9 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
         RequestOptions options = new RequestOptions()
                 .centerCrop()
                 .format(DecodeFormat.PREFER_RGB_565)
-                .error(R.drawable.error);
+                .error(R.drawable.default_bg);
         if (Utils.isNullOrEmpty(detailsDataBean.getImg()))
-            bgView.setImageDrawable(getDrawable(R.drawable.error));
+            bgView.setImageDrawable(getDrawable(R.drawable.default_bg));
         else
             GlideApp.with(this)
                     .load(Utils.getGlideUrl(detailsDataBean.getImg()))
@@ -690,13 +695,14 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
 
     /****************************************** 下载相关 ******************************************/
     /**
-     * 下载配置
+     * 创建下载保存目录
      */
     private void createDownloadConfig() {
         savePath = String.format(DOWNLOAD_SAVE_PATH, ParserInterfaceFactory.getParserInterface().getSourceName() , detailsTitle);
-        boolean isSuccess = Utils.createDataFolder(savePath);
-        if (!isSuccess) {
-            savePath = this.getFilesDir().getAbsolutePath()+String.format("/%s/%s", ParserInterfaceFactory.getParserInterface().getSourceName() , detailsTitle);
+        if (SAFUtils.canReadDownloadDirectory())
+            Utils.createDataFolder(savePath);
+        else {
+            savePath = getFilesDir().getAbsolutePath()+String.format("/%s/%s/", ParserInterfaceFactory.getParserInterface().getSourceName() , detailsTitle);
             Utils.createDataFolder(savePath);
         }
     }

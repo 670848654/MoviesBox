@@ -80,7 +80,7 @@
     <string name="noWifiDialogTitle">注意</string>
     <string name="noWifiDialogContent">当前网络未连接到WLAN，确定要继续下载吗？</string>
 
-    <string name="downloadInfoContent">下载须知&#187; \n下载标识：\n\u3000绿色→ 表示该剧集已存在下载任务。\n后台下载：\n\u3000请注意如果你需要在后台进行下载时，由于数据操作是在服务中进行，不同设备可能存在后台、锁屏后下载服务被杀死的情况，请根据自己的设备设置手动将该APP设置电池优化白名单或允许后台运行，否则后台下载时会出现下载失败的情况！\nM3U8：\n\u3000虽然支持M3U8协议格式的视频下载，由于M3U8协议的特殊性，其中可能存在格式伪装、资源加密、多级级域名、key等资源路劲问题，解析方法只能兼容经测试过的部分规则，所以不一定能执行成功，如果下载失败自行删除下载任务！下载成功后会进行ts分片合并通过ffmpeg转为MP4，耗时与设备配置挂钩~\n\u3000下载的视频仅在 我的→ 下载列表中进行播放，其他界面播放还是使用网络解析播放！</string>
+    <string name="downloadInfoContent">下载须知&#187; \n下载标识：\n\u3000绿色→ 表示该剧集已存在下载任务。\n存储位置：\n\u3000默认存储位置为公共目录/Download/MoviesBox[%s]中（其中Android 11以下需存储授权、Android 11及以上不需要权限但并非所有设备都支持这种方式），如公共目录无法读写或未授予存储权限将存入应用自身私有目录中，可通过SAF自定义授权目录进行导出，导出为复制操作，导出后并不会删除源下载文件，需自行在下载列表进行删除。\n 后台下载：\n\u3000请注意如果你需要在后台进行下载时，由于数据操作是在服务中进行，不同设备可能存在后台、锁屏后下载服务被杀死的情况，请根据自己的设备设置手动将该APP设置电池优化白名单或允许后台运行，否则后台下载时会出现下载失败的情况！\nM3U8协议格式：\n\u3000虽然支持M3U8协议格式的视频下载，由于M3U8协议的特殊性，其中可能存在格式伪装、资源加密、多级域名、key等资源路劲问题，解析方法只能兼容经测试过的部分规则，所以不一定能执行成功，如果下载失败自行删除下载任务！下载成功后会进行ts分片合并通过ffmpeg转为MP4，耗时与设备配置挂钩~\n\u3000下载的视频仅在 我的→ 下载列表中进行播放，其他界面播放还是使用网络解析播放！</string>
     <string name="downloadMultipleVideoDialogTitle">请选择下载资源</string>
     <string name="hasDownloadTask">已存在下载任务，请勿重复执行！</string>
 
@@ -110,6 +110,13 @@
     <string-array name="completeItems">
         <item>使用内置播放器播放</item>
         <item>使用外部播放器播放</item>
+        <item><![CDATA[<font color="#ff0000">删除任务<font>]]></item>
+    </string-array>
+
+    <string-array name="completeExportItems">
+        <item>使用内置播放器播放</item>
+        <item>使用外部播放器播放</item>
+        <item>导出到外部存储授权目录</item>
         <item><![CDATA[<font color="#ff0000">删除任务<font>]]></item>
     </string-array>
 
@@ -213,19 +220,20 @@
     <string name="aboutTitle">关于</string>
     <string name="dataSourcesTitle">数据来源</string>
     <string name="statementTitle">声明</string>
-    <string name="statementSubContent">仅供学习交流\n禁止非法传播或用于商业用途</string>
+    <string name="statementSubContent">仅供学习交流<![CDATA[<br>]]>禁止非法传播或用于商业用途</string>
     <string name="testModelTitle">测试设备</string>
-    <string name="testModelSubContent">Xiaomi 12S Ultra | XiaomiPad 5 Pro\nAndroid 14 | 13</string>
+    <string name="testModelSubContent">Xiaomi 12S Ultra | XiaomiPad 5 Pro<![CDATA[<br>]]>Android 14 | 13</string>
     <string name="currentVersionTitle">当前版本</string>
     <string name="lastBuildDateTitle">最后构建日期</string>
-    <string name="lastBuildDateSubContent">2024年4月25日21:08:22</string>
-    <string name="cacheDirectoryTitle">缓存目录</string>
-    <string name="cacheDirectorySubContent">%s\n卸载后自行删除此目录</string>
+    <string name="lastBuildDateSubContent">2024年5月15日15:58:05</string>
+    <string name="cacheDirectoryTitle">存储位置</string>
+    <string name="cacheDirectorySubContent">%s<![CDATA[<br>]]>卸载后自行删除此目录</string>
+    <string name="authorizationDirectoryTitle">外部存储授权目录</string>
     <string name="openSourceTitle">开源相关</string>
     <string name="vipVideoParserTitle">VIP视频解析小工具</string>
     <string name="vipVideoParserSubTitle">通过第三方接口解析各大网站资源</string>
     <string name="githubTitle">Github仓库</string>
-    <string name="githubSubContent">帮我点个Star？:-)\nhttps://github.com/670848654/MoviesBox</string>
+    <string name="githubSubContent">帮我点个Star？:-)<![CDATA[<br>]]>https://github.com/670848654/MoviesBox</string>
     <string name="githubUrl">https://github.com/670848654/MoviesBox</string>
     <string name="githubApi">https://api.github.com/repos/670848654/MoviesBox/releases/latest</string>
 

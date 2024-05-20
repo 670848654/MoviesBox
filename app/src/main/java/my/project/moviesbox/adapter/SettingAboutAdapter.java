@@ -1,6 +1,7 @@
 package my.project.moviesbox.adapter;
 
 import android.content.Context;
+import android.text.Html;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
@@ -31,7 +32,7 @@ public class SettingAboutAdapter extends BaseQuickAdapter<SettingAboutBean, Base
         if (Utils.isNullOrEmpty(item.getSubTitle()))
             helper.setGone(R.id.subTitle, true);
         else {
-            helper.setText(R.id.subTitle, item.getSubTitle());
+            helper.setText(R.id.subTitle, Html.fromHtml(item.getSubTitle()));
             helper.setGone(R.id.subTitle, false);
         }
         if (item.getEndIcon() != 0) {

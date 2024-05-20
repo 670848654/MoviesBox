@@ -2,18 +2,16 @@ package my.project.moviesbox.database.manager;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.net.Uri;
+import android.os.Environment;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONWriter;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +24,7 @@ import my.project.moviesbox.database.entity.TFavorite;
 import my.project.moviesbox.database.entity.THistory;
 import my.project.moviesbox.database.entity.THistoryData;
 import my.project.moviesbox.database.entity.TVideo;
-import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.utils.SAFUtils;
 
 /**
  * @author Li
@@ -44,7 +42,8 @@ public class BackupsManager extends BaseManager {
      * 查询所有待备份数据
      * @return
      */
-    public static void createBackupsFile(String filePath) {
+    public static Map<String, Object> createBackupsFile(Context context, String filePath, String fileName) {
+        Map<String, Object> map = new HashMap<>();
         try {
             JSONObject jsonObject = new JSONObject();
             setSharedPreferences2JSONObject("appData", jsonObject);
@@ -73,8 +72,19 @@ public class BackupsManager extends BaseManager {
             appendTextToFile("]", filePath);
 
             appendTextToFile("}", filePath);
+            String path;
+            if (!filePath.contains(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath())) {
+                SAFUtils.copyConfigFileToSAF(context, filePath, "*/*", true);
+                path = SAFUtils.getUriDirectoryName()+File.separator+fileName;
+            } else
+                path = Environment.DIRECTORY_DOWNLOADS+File.separator+fileName;
+            map.put("success", true);
+            map.put("path", path);
+            return map;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            map.put("success", false);
+            return map;
         }
     }
 

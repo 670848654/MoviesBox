@@ -91,7 +91,7 @@ public class VodListActivity extends BaseActivity<VodListContract.View, VodListP
 
     public void initDefaultAdapter() {
         adapter = new VodListAdapter(parserInterface.setVodListItemType(), items);
-        setAdapterAnimation(adapter, ADAPTER_SCALE_IN_ANIMATION, true);
+        setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             VodDataBean.Item bean = (VodDataBean.Item) adapter.getItem(position);
