@@ -1,7 +1,5 @@
 package my.project.moviesbox.parser.config;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -111,24 +109,24 @@ public enum SourceEnum {
     /**
      * 在站点配置类{@link ParserInterfaceFactory}中定义
      */
-    private @NotNull int source;
+    private int source;
     /**
      * 源名称
      */
-    private @NotNull String sourceName;
+    private String sourceName;
     /**
      * 源类型
      */
-    private @NotNull String sourceType;
+    private String sourceType;
     private String sourceInfo;
     /**
      *  {@link SharedPreferencesUtils}存储名称key，能是英文
      */
-    private @NotNull String cacheTitle;
+    private String cacheTitle;
     /**
      * 源地址
      */
-    private @NotNull String domainUrl;
+    private String domainUrl;
     /**
      * 网站发布页
      */

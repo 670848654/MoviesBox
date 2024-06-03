@@ -33,9 +33,11 @@
 
     <!-- 解析相关文本 -->
     <string name="parseVodPlayUrl">解析视频地址中，请稍后&#8230;</string>
-    <string name="parseVodPlayUrlError">无法获取该视频播放地址！</string>
-    <string name="parsingErrorContent">!*解析异常*!\n%s\n%s</string>
-    <string name="errorDialogTitle">!*出错啦*!</string>
+    <string name="sniffVodPlayUrl">常规解析失败，尝试嗅探播放地址&#8230;</string>
+    <string name="parseVodPlayUrlError">无法获取该视频播放地址！\n1、可能是网站自身无播放地址。\n2、可能是网站更改了播放地址相关处理导致代码无法解析，可尝试在设置中开启视频视频嗅探。</string>
+    <string name="sniffVodPlayUrlError">在设定的超时时间内没有嗅探到任何疑似视频的资源链接！</string>
+    <string name="parsingErrorContent">!*哦豁,解析异常*!\n%s\n%s</string>
+    <string name="errorDialogTitle">!*哦豁,出错啦*!</string>
     <string name="retryBtnText">点击重试</string>
     <string name="closeBtnText">关闭</string>
     <string name="emptyData">无数据</string>
@@ -225,7 +227,7 @@
     <string name="testModelSubContent">Xiaomi 12S Ultra | XiaomiPad 5 Pro<![CDATA[<br>]]>Android 14 | 13</string>
     <string name="currentVersionTitle">当前版本</string>
     <string name="lastBuildDateTitle">最后构建日期</string>
-    <string name="lastBuildDateSubContent">2024年5月15日15:58:05</string>
+    <string name="lastBuildDateSubContent">2024年6月3日16:41:22</string>
     <string name="cacheDirectoryTitle">存储位置</string>
     <string name="cacheDirectorySubContent">%s<![CDATA[<br>]]>卸载后自行删除此目录</string>
     <string name="authorizationDirectoryTitle">外部存储授权目录</string>
@@ -255,6 +257,13 @@
         <item>http://</item>
         <item>https://</item>
     </string-array>
+
+    <string name="enableSniffTitle">是否开启视频嗅探</string>
+    <string name="enableSniffSubContent">当常规解析失败时尝试视频资源嗅探</string>
+    <string name="enableSniffDialogContent">开启后当常规解析失败时尝试视频资源嗅探，并不代表能百分之百获取到视频资源，仅供尝试！</string>
+    <string name="sniffTimeOut">嗅探超时</string>
+    <string name="sniffTimeOutSubContent">设置嗅探超时时间，超过设定时间后无论是否成功强制中断嗅探，单位为秒，范围 1~60秒。</string>
+    <string name="setSuccess">配置已保存</string>
 
     <string name="setPlayerTitle">视频播放器</string>
     <string-array name="setPlayerItems">

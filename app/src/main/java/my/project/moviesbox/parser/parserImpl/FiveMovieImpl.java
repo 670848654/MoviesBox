@@ -818,11 +818,13 @@ public class FiveMovieImpl implements ParserInterface {
      * <p>注：可能存在多个播放地址，兼容返回LIST</p>
      *
      * @param source 网页源代码
+     * @deprecated 站点获取播放地址加密方式变更，需要重新逆向JS（没时间也懒得去逆向了，你可以试试），添加了并使用资源嗅探方式要简单点（目前可用）
      * @return
      */
     @Override
+    @Deprecated
     public List<String> getPlayUrl(String source) {
-        try {
+        /*try {
             List<String> result = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements scriptTags = document.select("script");
@@ -842,7 +844,7 @@ public class FiveMovieImpl implements ParserInterface {
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("getPlayUrls error", e.getMessage());
-        }
+        }*/
         return new ArrayList<>();
     }
 

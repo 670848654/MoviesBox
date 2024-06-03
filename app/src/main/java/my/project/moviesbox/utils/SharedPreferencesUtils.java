@@ -248,6 +248,38 @@ public class SharedPreferencesUtils {
     public static void setUserSetDomain(int source, String domain) {
         setParam(SourceEnum.getCacheTitleBySource(source), domain);
     }
+
+    /**
+     * 设置是否开启视频嗅探
+     * @param enable
+     */
+    public static void setEnableSniff(boolean enable) {
+        setParam("enableSniff", enable);
+    }
+
+    /**
+     * 获取是否开启视频嗅探
+     * @return
+     */
+    public static boolean getEnableSniff() {
+        return (boolean) getParam("enableSniff", ConfigManager.getInstance().isEnableSniffing());
+    }
+
+    /**
+     * 设置视频嗅探超时时间
+     * @param time
+     */
+    public static void setSniffTimeout(int time) {
+        setParam("sniffTimeout", time);
+    }
+
+    /**
+     * 获取视频嗅探超时时间
+     * @return
+     */
+    public static int getSniffTimeout() {
+        return (int) getParam("sniffTimeout", ConfigManager.getInstance().getSniffTimeout());
+    }
     /********************************************************** 解析源相关结束 **********************************************************/
 
     /********************************************************** 播放器相关开始 **********************************************************/

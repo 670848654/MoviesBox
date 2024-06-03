@@ -37,4 +37,23 @@
         - SLIDE_IN_RIGHT # 从右侧滑入的动画
      -->
     <string name="animationDefault">ALPHA_IN</string>
+
+    <!-- 视频嗅探相关 -->
+    <!-- 是否开启嗅探 *仅在常规解析失败才会执行嗅探 -->
+    <bool name="enableSniffing">false</bool>
+    <!-- 嗅探时长（单位：秒） -->
+    <integer name="sniffTimeOut">10</integer>
+    <!-- URL配置过滤（包含以下通配符） -->
+    <string-array name="suffering">
+        <item>.jpeg</item>
+        <item>.jpg</item>
+        <item>.png</item>
+        <item>.gif</item>
+        <item>.bmp</item>
+        <item>.svg</item>
+        <item>.js</item>
+        <item>.css</item>
+        <item>.html</item>
+        <item>.min</item>
+    </string-array>
 </resources>

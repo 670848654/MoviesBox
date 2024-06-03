@@ -60,6 +60,7 @@ import my.project.moviesbox.database.manager.TVideoManager;
 import my.project.moviesbox.enums.VideoUrlChangeEnum;
 import my.project.moviesbox.event.RefreshDownloadEvent;
 import my.project.moviesbox.event.RefreshEvent;
+import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.presenter.DanmuPresenter;
 import my.project.moviesbox.presenter.Presenter;
@@ -368,7 +369,6 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
             VideoUtils.showMultipleVideoSources(this,
                     nextPlayUrl,
                     (dialog, index) -> playNetworkVideo(nextPlayUrl.get(index)),
-                    null,
                     true);
     }
 
@@ -577,6 +577,7 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
 
     @Override
     public void playing() {
+        LogUtil.logInfo("playing", "playing===================");
         if (hasPosition) {
             application.showToastMsg("已定位到上次观看位置" + JZUtils.stringForTime(userSavePosition));
             hasPosition = false;

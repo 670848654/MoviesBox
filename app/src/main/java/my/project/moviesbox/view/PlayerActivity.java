@@ -6,6 +6,8 @@ import android.os.Handler;
 import androidx.core.view.GravityCompat;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -17,6 +19,7 @@ import my.project.moviesbox.application.App;
 import my.project.moviesbox.contract.VideoContract;
 import my.project.moviesbox.enums.VideoUrlChangeEnum;
 import my.project.moviesbox.event.DramaEvent;
+import my.project.moviesbox.event.VideoSniffEvent;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.parser.config.ParserInterfaceFactory;
@@ -47,6 +50,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
 
     @Override
     protected void setBundleData(Bundle bundle) {
+        EventBus.getDefault().register(this);
         url = bundle.getString("url");
         dramaTitle = bundle.getString("dramaTitle");
         vodTitle = bundle.getString("vodTitle");
@@ -147,7 +151,6 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
                 VideoUtils.showMultipleVideoSources(this,
                         urls,
                         (dialog, index) -> playNetworkVideo(urls.get(index)),
-                        null,
                          true);
         });
     }
@@ -155,20 +158,25 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
     @Override
     public void errorPlayUrl() {
         if (isFinishing()) return;
-        //网络出错
+        //解析出错
         runOnUiThread(() -> {
             player.onStateError();
             hideNavBar();
-            Utils.showAlert(this,
-                    getString(R.string.errorDialogTitle),
-                    getString(R.string.parseVodPlayUrlError),
-                    false,
-                    getString(R.string.defaultPositiveBtnText),
-                    "",
-                    "",
-                    (dialog, which) -> dialog.dismiss(),
-                    null,
-                    null);
+            if (SharedPreferencesUtils.getEnableSniff()) {
+                alertDialog = Utils.getProDialog(this, R.string.sniffVodPlayUrl);
+                VideoUtils.startSniffing(dramaUrl, VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.PLAY);
+            } else {
+                Utils.showAlert(this,
+                        getString(R.string.errorDialogTitle),
+                        getString(R.string.parseVodPlayUrlError),
+                        false,
+                        getString(R.string.defaultPositiveBtnText),
+                        "",
+                        "",
+                        (dialog, which) -> dialog.dismiss(),
+                        null,
+                        null);
+            }
         });
     }
 
@@ -215,11 +223,17 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
     @Override
     public void errorOnlyPlayUrl() {
         if (isFinishing()) return;
+        if (nextPlayUrl.size() > 0) return;
         runOnUiThread(() -> {
             if (retryCount < MAX_RETRY_COUNT) {
                 retryCount++;
                 // 延迟指定时间后重试
-                new Handler().postDelayed(() -> getNextPlayUrl(), RETRY_DELAY_MILLIS);
+                new Handler().postDelayed(() -> {
+                    if (SharedPreferencesUtils.getEnableSniff())
+                        VideoUtils.startSniffing(dramasItems.get(clickIndex+1).getUrl(), VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.NEXT_PLAY);
+                    else
+                        getNextPlayUrl();
+                }, RETRY_DELAY_MILLIS);
             } else {
                 // 达到最大重试次数，不再执行
                 application.showToastMsg(getString(R.string.getNextEpisodeFailedMoreThan3Times));
@@ -245,5 +259,36 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
     @Override
     protected void retryListener() {
 
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onSniff(VideoSniffEvent event) {
+        if (isFinishing()) return;
+        if (event.getActivityEnum() == VideoSniffEvent.ActivityEnum.PLAYER) {
+            cancelDialog();
+            List<String> urls = event.getUrls();
+            boolean success = event.isSuccess();
+            switch (event.getSniffEnum()) {
+                case PLAY:
+                    if (success)
+                        successPlayUrl(urls);
+                    else
+                        VideoUtils.sniffErrorDialog(this);
+                    break;
+                case NEXT_PLAY:
+                    if (success) {
+                        nextPlayUrl = urls;
+                        LogUtil.logInfo("获取下一集播放地址成功", urls.toString());
+                    } else
+                        errorOnlyPlayUrl();
+                    break;
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        EventBus.getDefault().unregister(this);
+        super.onDestroy();
     }
 }

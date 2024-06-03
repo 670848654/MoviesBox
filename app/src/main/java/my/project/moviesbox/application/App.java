@@ -43,6 +43,7 @@ import my.project.moviesbox.utils.CropUtil;
 import my.project.moviesbox.utils.DarkModeUtils;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.utils.VideoUtils;
 
 /**
   * @包名: my.project.moviesbox.application
@@ -69,6 +70,7 @@ public class App extends Application {
         SharedPreferencesUtils.shouldSetDataName();
         ConfigManager.init(this);
         Utils.init(this);
+        VideoUtils.init(this);
         DarkModeUtils.init(this);
         // 让API < 29的版本支持TLSv1.3
         Security.insertProviderAt(Conscrypt.newProvider(), 1);

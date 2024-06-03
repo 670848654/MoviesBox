@@ -91,4 +91,16 @@ public class ConfigManager {
     public String getAnimationDefault() {
         return resources.getString(R.string.animationDefault);
     }
+
+    public String[] getSuffering() {
+        return resources.getStringArray(R.array.suffering);
+    }
+
+    public boolean isEnableSniffing() {
+        return resources.getBoolean(R.bool.enableSniffing);
+    }
+
+    public int getSniffTimeout() {
+        return resources.getInteger(R.integer.sniffTimeOut);
+    }
 }

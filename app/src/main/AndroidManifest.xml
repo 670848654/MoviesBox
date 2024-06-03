@@ -188,6 +188,7 @@
         <!-- 下载服务 -->
         <service android:name=".service.DownloadService"/>
         <service android:name=".service.DLNAService"/>
+        <service android:name=".service.WebViewService"/>
         <!-- 声明upnp服务实现类（服务） -->
         <service android:name=".cling.service.ClingUpnpService" />
 

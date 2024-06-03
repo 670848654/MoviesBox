@@ -523,6 +523,11 @@ public class JZPlayer extends JzvdStd {
         airplayView.setVisibility(INVISIBLE);
         preVideo.setVisibility(INVISIBLE);
         nextVideo.setVisibility(INVISIBLE);
+        playingListener.playing();
+        loadError = false;
+        if (danmakuView != null && danmakuView.isPrepared()) {
+            danmakuView.resume();
+        }
     }
 
     @Override
@@ -709,11 +714,11 @@ public class JZPlayer extends JzvdStd {
     @Override
     public void onStatePlaying() {
         super.onStatePlaying();
-        playingListener.playing();
+        /*playingListener.playing();
         loadError = false;
         if (danmakuView != null && danmakuView.isPrepared()) {
             danmakuView.resume();
-        }
+        }*/
     }
 
     @Override

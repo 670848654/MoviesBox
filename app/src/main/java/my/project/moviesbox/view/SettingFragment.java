@@ -154,6 +154,8 @@ public class SettingFragment extends BaseFragment {
             String title = list.get(position).getTitle();
             if (title.equals(getString(R.string.setDomainTitle)))
                 setDomain(position);
+            else if (title.equals(getString(R.string.enableSniffTitle)))
+                enableSniff(position);
             else if (title.equals(getString(R.string.setPlayerTitle)))
                 setDefaultPlayer(position);
             else if (title.equals(getString(R.string.setPlayerKernelTitle)))
@@ -268,6 +270,50 @@ public class SettingFragment extends BaseFragment {
         });
         builder.setCancelable(true);
         alertDialog = builder.setView(view).create();
+        alertDialog.show();
+    }
+
+    /**
+     * @方法名称: enableSniff
+     * @方法描述: 是否开启资源嗅探
+     * @日期: 2024/5/30 20:17
+     * @作者: Li Z
+     *
+     * @返回:
+     */
+    public void enableSniff(int position) {
+        AlertDialog alertDialog;
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(), R.style.DialogStyle);
+        builder.setTitle(list.get(position).getTitle());
+        View view = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_sniff, null);
+        MaterialSwitch materialSwitch = view.findViewById(R.id.enableSniff);
+        Slider setSniffTimeoutSlider = view.findViewById(R.id.setSniffTimeout);
+        boolean enable = SharedPreferencesUtils.getEnableSniff();
+        materialSwitch.setChecked(enable);
+        materialSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SharedPreferencesUtils.setEnableSniff(isChecked);
+            setSniffTimeoutSlider.setEnabled(isChecked);
+        });
+        setSniffTimeoutSlider.setEnabled(enable);
+        setSniffTimeoutSlider.setValue(SharedPreferencesUtils.getSniffTimeout());
+        setSniffTimeoutSlider.addOnChangeListener((slider, value, fromUser) -> slider.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING));
+        setSniffTimeoutSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
+            @Override
+            public void onStartTrackingTouch(@NonNull Slider slider) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(@NonNull Slider slider) {
+                int num = Math.round(slider.getValue());
+                SharedPreferencesUtils.setSniffTimeout(num);
+            }
+        });
+        builder.setPositiveButton(getString(R.string.defaultPositiveBtnText), (dialog, which) -> dialog.dismiss());
+        builder.setCancelable(true);
+        alertDialog = builder.setView(view).create();
+//        alertDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        alertDialog.setOnDismissListener(dialog -> homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setSuccess), false));
         alertDialog.show();
     }
 

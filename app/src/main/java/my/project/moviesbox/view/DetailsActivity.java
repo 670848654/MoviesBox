@@ -63,6 +63,7 @@ import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.TVideoManager;
 import my.project.moviesbox.event.DramaEvent;
 import my.project.moviesbox.event.RefreshEvent;
+import my.project.moviesbox.event.VideoSniffEvent;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.parser.config.ParserInterfaceFactory;
 import my.project.moviesbox.presenter.DetailsPresenter;
@@ -122,7 +123,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
      * dramaUrl 播放页源地址
      * dramaTitle 播放集数标题
      */
-    private String detailsTitle, detailsUrl, dramaUrl, dramaTitle;
+    private String detailsTitle, detailsUrl, dramaUrl, dramaTitle, downloadDramaUrl, downloadDramaNumber;
     private AlertDialog alertDialog;
     /**
      * 是否收藏
@@ -313,6 +314,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
                 break;
             case R.id.browser:
                 Utils.viewInChrome(DetailsActivity.this, detailsUrl);
+//                startActivity(new Intent(this, WebViewActivity.class).putExtra("url", detailsUrl));
                 break;
             case R.id.drama:
                 if (!expandListBSD.isShowing()) {
@@ -421,7 +423,9 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
             // 下载开始
             alertDialog = Utils.getProDialog(this, R.string.parseVodPlayUrl);
             createDownloadConfig();
-            downloadVideoPresenter  = new DownloadVideoPresenter(downloadBean.get(position).getUrl(), downloadBean.get(position).getTitle(), this);
+            downloadDramaUrl = downloadBean.get(position).getUrl();
+            downloadDramaNumber = downloadBean.get(position).getTitle();
+            downloadVideoPresenter  = new DownloadVideoPresenter(downloadDramaUrl, downloadDramaNumber, this);
             downloadVideoPresenter.loadData(false);
         });
         downloadListRv.setAdapter(downloadAdapter);
@@ -600,8 +604,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
                 VideoUtils.showMultipleVideoSources(this,
                         urls,
                         (dialog, index) -> playVod(urls.get(index)),
-                        null,
-                        true);
+                        false);
         });
     }
 
@@ -627,17 +630,23 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     @Override
     public void errorPlayUrl() {
         if (isFinishing()) return;
-        //网络出错
-        runOnUiThread(() -> Utils.showAlert(this,
-                getString(R.string.errorDialogTitle),
-                getString(R.string.parseVodPlayUrlError),
-                false,
-                getString(R.string.defaultPositiveBtnText),
-                "",
-                "",
-                (dialog, which) -> dialog.dismiss(),
-                null,
-                null));
+        //解析出错
+        runOnUiThread(() -> {
+            if (SharedPreferencesUtils.getEnableSniff()) {
+                alertDialog = Utils.getProDialog(this, R.string.sniffVodPlayUrl);
+                VideoUtils.startSniffing(dramaUrl, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.PLAY);
+            } else
+                Utils.showAlert(this,
+                        getString(R.string.errorDialogTitle),
+                        getString(R.string.parseVodPlayUrlError),
+                        false,
+                        getString(R.string.defaultPositiveBtnText),
+                        "",
+                        "",
+                        (dialog, which) -> dialog.dismiss(),
+                        null,
+                        null);
+        });
     }
 
     @Override
@@ -913,7 +922,41 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
         runOnUiThread(() -> {
             String msg = detailsTitle + playNumber;
             cancelDialog();
-            VideoUtils.showInfoDialog(this, String.format(getString(R.string.playUrlParserError), msg));
+            if (SharedPreferencesUtils.getEnableSniff()) {
+                alertDialog = Utils.getProDialog(this, R.string.sniffVodPlayUrl);
+                VideoUtils.startSniffing(downloadDramaUrl, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.DOWNLOAD);
+            } else {
+                Utils.showAlert(this,
+                        getString(R.string.errorDialogTitle),
+                        String.format(getString(R.string.playUrlParserError), msg),
+                        false,
+                        getString(R.string.defaultPositiveBtnText),
+                        "",
+                        "",
+                        (dialog, which) -> dialog.dismiss(),
+                        null,
+                        null);
+            }
         });
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onSniff(VideoSniffEvent event) {
+        if (isFinishing()) return;
+        if (event.getActivityEnum() == VideoSniffEvent.ActivityEnum.DETAIL) {
+            cancelDialog();
+            List<String> urls = event.getUrls();
+            if (event.isSuccess()) {
+                switch (event.getSniffEnum()) {
+                    case PLAY:
+                        successPlayUrl(urls);
+                        break;
+                    case DOWNLOAD:
+                        downloadVodUrlSuccess(urls, downloadDramaNumber);
+                        break;
+                }
+            } else
+                VideoUtils.sniffErrorDialog(this);
+        }
     }
 }

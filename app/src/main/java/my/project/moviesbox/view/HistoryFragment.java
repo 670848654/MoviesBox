@@ -35,6 +35,7 @@ import my.project.moviesbox.database.manager.TVideoManager;
 import my.project.moviesbox.event.RefreshEvent;
 import my.project.moviesbox.event.ShowProgressEvent;
 import my.project.moviesbox.event.UpdateImgEvent;
+import my.project.moviesbox.event.VideoSniffEvent;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.presenter.HistoryPresenter;
 import my.project.moviesbox.presenter.UpdateImgPresenter;
@@ -366,39 +367,49 @@ public class HistoryFragment extends BaseFragment<HistoryContract.View, HistoryP
                 VideoUtils.showMultipleVideoSources(getActivity(),
                         urls,
                         (dialog, index) -> playVod(urls.get(index)),
-                        null,
-                        true);
+                        false);
         });
     }
 
     @Override
     public void errorPlayUrl() {
         if (getActivity().isFinishing()) return;
-        getActivity().runOnUiThread(() -> Utils.showAlert(getActivity(),
-                getString(R.string.errorDialogTitle),
-                getString(R.string.parseVodPlayUrlError),
-                false,
-                getString(R.string.defaultPositiveBtnText),
-                "",
-                "",
-                (dialog, which) -> dialog.dismiss(),
-                null,
-                null));
+        getActivity().runOnUiThread(() -> {
+            cancelDialog();
+            if (SharedPreferencesUtils.getEnableSniff()) {
+                alertDialog = Utils.getProDialog(getActivity(), R.string.sniffVodPlayUrl);
+                VideoUtils.startSniffing(vodDramaUrl, VideoSniffEvent.ActivityEnum.HISTORY, VideoSniffEvent.SniffEnum.PLAY);
+            } else {
+                Utils.showAlert(getActivity(),
+                        getString(R.string.errorDialogTitle),
+                        getString(R.string.parseVodPlayUrlError),
+                        false,
+                        getString(R.string.defaultPositiveBtnText),
+                        "",
+                        null,
+                        (dialog, which) -> dialog.dismiss(),
+                        null,
+                        null);
+            }
+        });
     }
 
     @Override
     public void errorNet(String msg) {
         if (getActivity().isFinishing()) return;
-        getActivity().runOnUiThread(() -> Utils.showAlert(getActivity(),
-                getString(R.string.errorDialogTitle),
-                msg,
-                false,
-                getString(R.string.defaultPositiveBtnText),
-                "",
-                "",
-                (dialog, which) -> dialog.dismiss(),
-                null,
-                null));
+        getActivity().runOnUiThread(() -> {
+            cancelDialog();
+            Utils.showAlert(getActivity(),
+                    getString(R.string.errorDialogTitle),
+                    msg,
+                    false,
+                    getString(R.string.defaultPositiveBtnText),
+                    "",
+                    "",
+                    (dialog, which) -> dialog.dismiss(),
+                    null,
+                    null);
+        });
     }
 
     @Override
@@ -474,5 +485,18 @@ public class HistoryFragment extends BaseFragment<HistoryContract.View, HistoryP
     @Override
     public void errorImg() {
 
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onSniff(VideoSniffEvent event) {
+        if (getActivity().isFinishing()) return;
+        if (event.getActivityEnum() == VideoSniffEvent.ActivityEnum.HISTORY) {
+            cancelDialog();
+            List<String> urls = event.getUrls();
+            if (event.isSuccess())
+                successPlayUrl(urls);
+            else
+                VideoUtils.sniffErrorDialog(getActivity());
+        }
     }
 }

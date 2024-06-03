@@ -29,13 +29,16 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import cn.jzvd.JZMediaInterface;
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.config.JZExoPlayer;
 import my.project.moviesbox.config.JZMediaIjk;
 import my.project.moviesbox.database.manager.TVideoManager;
+import my.project.moviesbox.event.VideoSniffEvent;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
+import my.project.moviesbox.service.WebViewService;
 import my.project.moviesbox.view.PlayerActivity;
 
 /**
@@ -47,7 +50,12 @@ import my.project.moviesbox.view.PlayerActivity;
   * @版本: 1.0
  */
 public class VideoUtils {
+    private static Context context;
     private static AlertDialog alertDialog;
+
+    public static void init(Context context) {
+        VideoUtils.context = context.getApplicationContext();
+    }
 
     /**
      * 发现多个播放地址时弹窗 下载用
@@ -306,25 +314,62 @@ public class VideoUtils {
      */
     public static void showMultipleVideoSources(Context context,
                                                 List<String> list,
-                                                DialogInterface.OnClickListener listener, DialogInterface.OnClickListener listener2, boolean isPlayerActivity) {
+                                                DialogInterface.OnClickListener itemListener, boolean isPlayerActivity) {
         String[] items = list.toArray(new String[0]);
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context, R.style.DialogStyle);
         builder.setTitle(Utils.getString(R.string.selectVideoSource));
         builder.setCancelable(false);
-        builder.setItems(items, listener);
+        builder.setItems(items, itemListener);
         if (!isPlayerActivity)
-            builder.setNegativeButton(Utils.getString(R.string.defaultNegativeBtnText), listener2);
+            builder.setNegativeButton(Utils.getString(R.string.defaultNegativeBtnText), null);
         alertDialog = builder.create();
         alertDialog.show();
     }
 
     /**
-     * 播放器内核
+     * 获取用户设置的播放器内核类型
      * @return
      */
-    public static Class getUserPlayerKernel() {
-        if (SharedPreferencesUtils.getUserSetPlayerKernel() == 1)
+    public static Class<? extends JZMediaInterface> getUserPlayerKernel() {
+        int userSetPlayerKernel = SharedPreferencesUtils.getUserSetPlayerKernel();
+        if (userSetPlayerKernel == 1) {
             return JZMediaIjk.class;
-        return JZExoPlayer.class;
+        } else {
+            return JZExoPlayer.class;
+        }
+    }
+
+
+    /**
+     * 启动嗅探服务
+     * @param url 播放页地址
+     * @param activityEnum EventBus订阅处理判断
+     * @param sniffEnum 嗅探结果处理类型
+     */
+    public static void startSniffing(String url,
+                                     VideoSniffEvent.ActivityEnum activityEnum,
+                                     VideoSniffEvent.SniffEnum sniffEnum) {
+        Intent intent = new Intent(context, WebViewService.class);
+        intent.putExtra("url", url);
+        intent.putExtra("activityEnum", activityEnum.name());
+        intent.putExtra("sniffEnum", sniffEnum.name());
+        context.startService(intent);
+    }
+
+    /**
+     * 嗅探失败弹窗
+     * @param context
+     */
+    public static void sniffErrorDialog(Context context) {
+        Utils.showAlert(context,
+                context.getString(R.string.errorDialogTitle),
+                context.getString(R.string.sniffVodPlayUrlError),
+                false,
+                context.getString(R.string.defaultPositiveBtnText),
+                "",
+                "",
+                (dialog, which) -> dialog.dismiss(),
+                null,
+                null);
     }
 }
