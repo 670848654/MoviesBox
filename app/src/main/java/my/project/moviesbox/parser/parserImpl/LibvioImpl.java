@@ -299,10 +299,10 @@ public class LibvioImpl implements ParserInterface {
             // 获取所有播放列表
             Elements playList = document.select(".stui-pannel__bd .stui-vodlist__head");
             if (playList.size() > 0) {
+                List<DetailsDataBean.Dramas> dramasList = new ArrayList<>();
                 for (Element play : playList) {
                     if (play.select("h3").text().contains("播放")) {
                         // 解析播放列表
-                        List<DetailsDataBean.Dramas> dramasList = new ArrayList<>();
                         DetailsDataBean.Dramas dramas = new DetailsDataBean.Dramas();
                         String playListName = play.select("h3").text();
                         dramas.setListTitle(playListName);
