@@ -66,7 +66,7 @@ public enum SourceEnum {
             "https://www.anfuns.cc",
             "",
             "/search/page/%s/wd/%s.html",
-            "/show/%s.html",
+            "/type/%s.html", // /show/%s.html 2024年7月12日10:48:45发现分类检索已关闭
             "/vapi/AIRA/dmku/?ac=dm&type=xml&id=%s%s", // 弹幕参数 视频ID、集数下标
             new ArrayList<>()),
 
@@ -99,7 +99,7 @@ public enum SourceEnum {
             "",
             "fiveMovie",
             "https://5look.site",
-            "https://555app.vip",
+            "https://wu5dy.com",
             "/vodsearch/%s----------%s---.html",
             "/vodshow/%s-%s-%s-%s-%s----%s---%s.html",
             "",

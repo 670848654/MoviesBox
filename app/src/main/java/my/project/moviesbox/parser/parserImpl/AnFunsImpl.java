@@ -39,7 +39,6 @@ import my.project.moviesbox.parser.bean.WeekDataBean;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
-import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.HomeFragment;
 import my.project.moviesbox.view.PlayerActivity;
@@ -174,7 +173,7 @@ public class AnFunsImpl implements ParserInterface {
     @Override
     public int parserPageCount(String source) {
         Document document = Jsoup.parse(source);
-        Elements pageContent = document.select(".hl-page-total");
+        /*Elements pageContent = document.select(".hl-page-total");
         if (pageContent.size() > 0) {
             String regex = "/\\s*(\\d+)页";
             Pattern pattern = Pattern.compile(regex);
@@ -186,7 +185,24 @@ public class AnFunsImpl implements ParserInterface {
             } else {
                 return startPageNum();
             }
-        }
+        }*/
+        Element paginationElement = document.select("ul.hl-page-wrap").first();
+        if (paginationElement != null) {
+            // 找到包含总页码数的li元素
+            Element totalPageElement = paginationElement.select("li.hl-page-tips a").first();
+            if (totalPageElement != null) {
+                String text = totalPageElement.text();
+                String[] parts = text.split("/");
+                if (parts.length == 2) {
+                    String totalPagesStr = parts[1].trim();
+                    LogUtil.logInfo("总页码", totalPagesStr);
+                    return Integer.parseInt(totalPagesStr);
+                } else
+                    LogUtil.logInfo("无法解析总页数", "");
+            } else
+                LogUtil.logInfo("找不到包含总页码数的元素", "");
+        } else
+            LogUtil.logInfo("找不到分页元素", "");
         return startPageNum();
     }
 
@@ -486,15 +502,18 @@ public class AnFunsImpl implements ParserInterface {
                     classificationDataBeans.add(classificationDataBean);
                 }
             }
-            List<ClassificationDataBean.Item> items = new ArrayList<>();
-            items.add(new ClassificationDataBean.Item("全部", "", true));
-            items.add(new ClassificationDataBean.Item("按最新", "time", false));
-            items.add(new ClassificationDataBean.Item("按最热", "hits", false));
-            items.add(new ClassificationDataBean.Item("按评分", "score", false));
-            index += 1;
-            ClassificationDataBean classificationDataBean = new ClassificationDataBean("排序", false, index, items);
-            classificationDataBean.setItemList(items);
-            classificationDataBeans.add(classificationDataBean);
+            if (classificationDataBeans.size() > 0) {
+                // 如果存在分类检索数据才添加
+                List<ClassificationDataBean.Item> items = new ArrayList<>();
+                items.add(new ClassificationDataBean.Item("全部", "", true));
+                items.add(new ClassificationDataBean.Item("按最新", "time", false));
+                items.add(new ClassificationDataBean.Item("按最热", "hits", false));
+                items.add(new ClassificationDataBean.Item("按评分", "score", false));
+                index += 1;
+                ClassificationDataBean classificationDataBean = new ClassificationDataBean("排序", false, index, items);
+                classificationDataBean.setItemList(items);
+                classificationDataBeans.add(classificationDataBean);
+            }
             logInfo("分类列表信息", classificationDataBeans.toString());
             return classificationDataBeans;
         } catch (Exception e) {
@@ -516,7 +535,7 @@ public class AnFunsImpl implements ParserInterface {
             VodDataBean vodDataBean = new VodDataBean();
             List<VodDataBean.Item> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
-            Elements elements = document.select(".hl-list-item a.hl-lazy");
+            /*Elements elements = document.select(".hl-list-item a.hl-lazy");
             if (elements.size() > 0) {
                 for (Element item : elements) {
                     VodDataBean.Item bean = new VodDataBean.Item();
@@ -525,6 +544,20 @@ public class AnFunsImpl implements ParserInterface {
                     bean.setImg(item.attr("data-original"));
                     bean.setTopLeftTag(item.select("span.state").text());
                     bean.setEpisodesTag(item.select("span.remarks").text());
+                    items.add(bean);
+                }
+                vodDataBean.setItemList(items);
+                logInfo("分类列表数据", vodDataBean.toString());
+            }*/
+            Elements elements = document.select(".hl-vod-list li a.hl-lazy");
+            if (elements.size() > 0) {
+                for (Element a : elements) {
+                    VodDataBean.Item bean = new VodDataBean.Item();
+                    bean.setTitle(a.attr("title"));
+                    bean.setUrl(a.attr("href"));
+                    bean.setImg(a.attr("data-original"));
+                    bean.setTopLeftTag(a.select(".hl-pic-tag").text());
+                    bean.setEpisodesTag(a.select(".hl-pic-text").text());
                     items.add(bean);
                 }
                 vodDataBean.setItemList(items);
@@ -546,7 +579,30 @@ public class AnFunsImpl implements ParserInterface {
      */
     @Override
     public VodDataBean parserSearchVodList(String source) {
-        return parserClassificationVodList(source);
+        try {
+            VodDataBean vodDataBean = new VodDataBean();
+            List<VodDataBean.Item> items = new ArrayList<>();
+            Document document = Jsoup.parse(source);
+            Elements elements = document.select(".hl-list-item a.hl-lazy");
+            if (elements.size() > 0) {
+                for (Element item : elements) {
+                    VodDataBean.Item bean = new VodDataBean.Item();
+                    bean.setTitle(item.attr("title"));
+                    bean.setUrl(item.attr("href"));
+                    bean.setImg(item.attr("data-original"));
+                    bean.setTopLeftTag(item.select("span.state").text());
+                    bean.setEpisodesTag(item.select("span.remarks").text());
+                    items.add(bean);
+                }
+                vodDataBean.setItemList(items);
+                logInfo("搜索列表数据", vodDataBean.toString());
+            }
+            return vodDataBean;
+        } catch (Exception e) {
+            e.printStackTrace();
+            logInfo("parserSearchVodList error", e.getMessage());
+        }
+        return null;
     }
 
     /**
@@ -687,7 +743,7 @@ public class AnFunsImpl implements ParserInterface {
                                 decodedString = decodedString.replaceAll("%", "\\\\");
                                 logInfo("unicode转中文后", decodedString);
                                 decodedString = unicodeDecode(decodedString);
-                                logInfo("最终播放地址 - >", decodedString);
+                                logInfo("最终播放地址", decodedString);
                             } catch (UnsupportedEncodingException e) {
                                 throw new RuntimeException(e);
                             }
@@ -909,7 +965,7 @@ public class AnFunsImpl implements ParserInterface {
                               String year, String area, String by,
                               String lang, String page) {
         StringBuffer stringBuffer = new StringBuffer();
-        if (Utils.isNullOrEmpty(type)) {
+        /*if (Utils.isNullOrEmpty(type)) {
             type = "";
         }
         if (Utils.isNullOrEmpty(letter)) {
@@ -926,7 +982,8 @@ public class AnFunsImpl implements ParserInterface {
         if (!Utils.isNullOrEmpty(lang))
             stringBuffer.append(String.format(ClassificationEnum.LANG.getContent(), lang));
         if (!Utils.isNullOrEmpty(page))
-            stringBuffer.append(String.format(ClassificationEnum.PAGE.getContent(), page));
+            stringBuffer.append(String.format(ClassificationEnum.PAGE.getContent(), page));*/
+        stringBuffer.append(String.format(ClassificationEnum.TYPE.getContent(), id+"-"+page));
         LogUtil.logInfo("class url", getDefaultDomain() + String.format(SourceEnum.ANFUNS.getClassificationUrl(), stringBuffer));
         return getDefaultDomain() + String.format(SourceEnum.ANFUNS.getClassificationUrl(), stringBuffer);
     }
