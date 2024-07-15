@@ -706,19 +706,21 @@ public class JZPlayer extends JzvdStd {
     public void onCompletion() {
         super.onCompletion();
         listener.complete();
-        /*danmakuView.stop();
-        danmakuView.clear();
-        danmakuView.clearDanmakusOnScreen();*/
+        if (danmakuView != null) {
+            danmakuView.stop();
+            danmakuView.clear();
+            danmakuView.clearDanmakusOnScreen();
+        }
     }
 
     @Override
     public void onStatePlaying() {
         super.onStatePlaying();
-        /*playingListener.playing();
+//        playingListener.playing();
         loadError = false;
         if (danmakuView != null && danmakuView.isPrepared()) {
             danmakuView.resume();
-        }*/
+        }
     }
 
     @Override
