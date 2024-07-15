@@ -63,7 +63,7 @@ public enum SourceEnum {
             "[动漫]",
             "无国漫",
             "anfuns",
-            "https://www.anfuns.cc",
+            "https://www.anfuns.org",
             "",
             "/search/page/%s/wd/%s.html",
             "/type/%s.html", // /show/%s.html 2024年7月12日10:48:45发现分类检索已关闭
