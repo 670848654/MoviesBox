@@ -38,6 +38,12 @@
      -->
     <string name="animationDefault">ALPHA_IN</string>
 
+    <!-- 尝试绕过浏览器安全检测相关 -->
+    <!-- 默认是否开启 -->
+    <bool name="enableByPassCF">false</bool>
+    <!-- 超时时长（单位：秒） -->
+    <integer name="byPassCFTimeout">8</integer>
+
     <!-- 视频嗅探相关 -->
     <!-- 是否开启嗅探 *仅在常规解析失败才会执行嗅探 -->
     <bool name="enableSniffing">false</bool>

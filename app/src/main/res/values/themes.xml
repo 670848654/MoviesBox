@@ -105,11 +105,17 @@
         <item name="materialThemeOverlay">@style/TextButton</item>
         <item name="backgroundTint">@color/light_text_button_background_color_selector</item>
         <item name="rippleColor">@color/m3_text_button_ripple_color_selector</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.SmallComponent</item>
     </style>
     <style name="TextButton">
         <!-- The colors used by the color selectors -->
         <item name="colorOnContainer">@color/light_text_color</item>
         <item name="colorContainer">@android:color/transparent</item>
+    </style>
+
+    <style name="ShapeAppearance.App.SmallComponent" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
     </style>
 
     <!-- CARD 主题 -->
@@ -119,7 +125,7 @@
 
     <style name="DefaultCardView" parent="Widget.Material3.CardView.Elevated">
         <item name="cardBackgroundColor">@color/light_color_primary</item>
-        <item name="strokeColor">#bebebe</item>
+        <item name="strokeColor">@color/defaultCardStrokeColor</item>
         <item name="strokeWidth">0.5dp</item>
         <item name="cardElevation">0dp</item>
     </style>
@@ -148,6 +154,7 @@
         <item name="rippleColor">@color/m3_chip_ripple_color</item>
         <item name="checkedIconVisible">false</item>
         <item name="shapeAppearanceOverlay">@null</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.SmallComponent</item>
     </style>
 
     <style name="Widget.App.Chip.Filter" parent="Widget.Material3.Chip.Filter">
@@ -157,6 +164,7 @@
         <item name="chipSurfaceColor">?attr/colorSurface</item>
         <item name="chipBackgroundColor">@color/light_chip_background_color</item>
         <item name="rippleColor">@color/m3_chip_ripple_color</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.SmallComponent</item>
     </style>
 
     <style name="DialogStyle" parent="ThemeOverlay.Material3.MaterialAlertDialog">

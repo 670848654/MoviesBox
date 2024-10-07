@@ -3,6 +3,7 @@
     android:id="@+id/root"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/default_bg"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -57,16 +58,18 @@
                     android:visibility="visible"
                     android:layout_width="match_parent"
                     android:clipChildren="false"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp">
+                    android:layout_height="wrap_content">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
-                        android:id="@+id/img_box"
+                        android:id="@+id/pad_img_box"
+                        android:visibility="gone"
+                        android:layout_marginStart="16dp"
                         android:layout_width="wrap_content"
-                        android:layout_height="150dp">
+                        android:layout_height="220dp">
 
                         <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/card_view"
+                            android:id="@+id/img_view_type_0"
+                            android:visibility="gone"
                             android:layout_width="0dp"
                             android:layout_height="0dp"
                             app:cardBackgroundColor="@android:color/transparent"
@@ -78,7 +81,28 @@
                             style="@style/CardTransparentView">
 
                             <ImageView
-                                android:id="@+id/vod_img"
+                                android:id="@+id/vod_img_type0"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="centerCrop" />
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/img_view_type_1"
+                            android:visibility="gone"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            app:cardBackgroundColor="@android:color/transparent"
+                            app:layout_constraintDimensionRatio="W,16:9"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            style="@style/CardTransparentView">
+
+                            <ImageView
+                                android:id="@+id/vod_img_type1"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:scaleType="centerCrop" />
@@ -92,13 +116,14 @@
                         android:layout_height="match_parent"
                         android:layout_alignParentTop="true"
                         android:layout_marginStart="8dp"
-                        android:layout_toEndOf="@+id/img_box"
+                        android:layout_toEndOf="@+id/pad_img_box"
                         android:orientation="vertical">
 
                         <TextView
                             android:id="@+id/title"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
                             android:ellipsize="end"
                             android:maxLines="2"
                             android:shadowDx="1.0"
@@ -107,7 +132,7 @@
                             android:textColor="@color/white"
                             android:textSize="18sp" />
 
-                        <HorizontalScrollView
+                        <!--<HorizontalScrollView
                             android:id="@+id/scroll_view"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -120,24 +145,24 @@
                                 app:singleLine="true">
                             </com.google.android.material.chip.ChipGroup>
 
-                        </HorizontalScrollView>
+                        </HorizontalScrollView>-->
 
                         <TextView
-                            android:id="@+id/info"
+                            android:id="@+id/score_view"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="5dp"
-                            android:layout_marginBottom="5dp"
+                            android:layout_marginBottom="8dp"
                             android:gravity="start|center_vertical"
                             android:textColor="@color/white"
                             android:textSize="14sp"
                             android:visibility="gone" />
 
                         <TextView
-                            android:id="@+id/score_view"
+                            android:id="@+id/info"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="5dp"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="8dp"
                             android:gravity="start|center_vertical"
                             android:textColor="@color/white"
                             android:textSize="14sp"
@@ -147,10 +172,19 @@
                             android:id="@+id/update_time"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
                             android:gravity="start|center_vertical"
                             android:textColor="@color/white"
                             android:textSize="14sp"
                             android:visibility="gone" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/chip_group"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:clipToPadding="false"
+                            android:fadingEdge="none"
+                            android:fillViewport="true" />
 
                     </LinearLayout>
 
@@ -226,6 +260,7 @@
                         android:layout_height="wrap_content"
                         app:ep_need_link="false"
                         app:ep_need_mention="true"
+                        app:ep_need_expand="true"
                         app:ep_max_line="4"
                         android:lineSpacingExtra="4dp"
                         app:ep_need_contract="true"
@@ -254,15 +289,20 @@
                         android:layout_height="wrap_content"/>
 
                     <RelativeLayout
+                        android:id="@+id/multi_play_layout"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp">
+                        android:layout_height="wrap_content">
 
                         <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/multi_play_input"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
                             app:endIconTint="@android:color/white"
                             app:boxStrokeColor="@color/text_input_layout_stroke_color"
+                            android:hint="播放列表"
+                            app:hintTextColor="@color/white"
+                            android:textColorHint="@color/white"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
 
                             <AutoCompleteTextView
@@ -287,6 +327,7 @@
                         android:clipToPadding="false"
                         android:fadingEdge="none"
                         android:fillViewport="true"
+                        android:paddingTop="5dp"
                         android:paddingBottom="5dp" />
 
                     <RelativeLayout
@@ -330,7 +371,6 @@
                 <!-- 错误视图 -->
                 <RelativeLayout
                     android:id="@+id/error_bg"
-                    android:layout_marginTop="5dp"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="@color/translucent"
@@ -340,7 +380,9 @@
                         android:id="@+id/error_msg"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_margin="8dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginEnd="8dp"
                         android:background="@drawable/parsing_error_bg"
                         android:gravity="center"
                         android:lineSpacingExtra="10dp"
@@ -358,7 +400,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-                    <RelativeLayout
+
+                    <!--<RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:background="@drawable/desc_stroke"
@@ -367,15 +410,31 @@
                         android:padding="10dp">
 
                         <TextView
+                            android:drawableLeft="@drawable/round_playlist_play_24"
                             android:layout_centerVertical="true"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
+                            android:layout_marginBottom="10dp"
                             android:text="@string/multipleSeasons"
                             android:textSize="16sp"
                             android:textStyle="bold"/>
 
-                    </RelativeLayout>
+                    </RelativeLayout>-->
+
+                    <TextView
+                        android:drawableLeft="@drawable/round_format_list_numbered_24"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/multipleSeasons"
+                        android:drawablePadding="8dp"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:gravity="center_vertical"
+                        app:drawableTint="@color/white" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/multi_list"
@@ -396,7 +455,7 @@
                     android:padding="5dp"
                     android:visibility="gone">
 
-                    <RelativeLayout
+                    <!--<RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:background="@drawable/desc_stroke"
@@ -413,7 +472,21 @@
                             android:textSize="16sp"
                             android:textStyle="bold"/>
 
-                    </RelativeLayout>
+                    </RelativeLayout>-->
+
+                    <TextView
+                        android:drawableLeft="@drawable/round_recommend_24"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/relatedSuggestion"
+                        android:drawablePadding="8dp"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:gravity="center_vertical"
+                        app:drawableTint="@color/white"/>
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/recommend_list"

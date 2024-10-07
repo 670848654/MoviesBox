@@ -20,6 +20,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <!-- 背景图片 -->
+            <ImageView
+                android:id="@+id/backgroundImageView"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent" /> <!-- 设置约束 -->
+
             <ImageView
                 android:id="@+id/img"
                 android:layout_width="0dp"

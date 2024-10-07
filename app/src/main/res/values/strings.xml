@@ -21,6 +21,9 @@
     <string name="channelCheckServiceInfoId">checkUpdateService</string>
     <string name="channelCheckServiceInfoName">检测更新服务</string>
     <string name="channelCheckServiceInfoDescription">检测更新服务</string>
+    <string name="channelRssServiceInfoId">RssService</string>
+    <string name="channelRssServiceInfoName">RSS查询服务</string>
+    <string name="channelServiceServiceInfoDescription">RSS查询服务</string>
 
     <!-- crash -->
     <string name="exceptionType">异常类型：%s\n</string>
@@ -90,7 +93,7 @@
     <string name="downloadM3u8Tips">该视频资源类型为M3U8，可能无法正常下载成功！</string>
     <string name="downloadStart">开始下载 -> %s</string>
     <string name="episodeSize">%s [共%d集]</string>
-    <string name="noEpisode">无可播放列表</string>
+    <string name="noEpisode">!*未解析出该剧集播放列表*!\n请检查网站是否存在播放列表或尝试刷新~</string>
     <string name="playUrlParserError">%s -> 播放地址解析失败</string>
 
     <string name="loadVodDescInfo">请在影视详情加载完毕后再进行操作</string>
@@ -101,6 +104,14 @@
     <!-- 下载列表界面文本 -->
     <string name="downloadTaskOperationTitle">下载任务操作</string>
     <string name="downloadTaskOperationContent">你有%d个未完成的下载任务，是否继续下载？</string>
+
+    <string name="savePrivateDirectoryStr"> <![CDATA[<font color="#FF5722">[私有目录]<font>]]></string>
+    <string name="savePublicDirectoryStr"> <![CDATA[<font color="#31BDEC">[公共存储]<font>]]></string>
+    
+    <string name="downloadingStr"><![CDATA[<font color="#31BDEC">等待下载<font>]]></string>
+    <string name="downloadSuccessfulStr"><![CDATA[<font color="#5FB878">下载成功<font>]]></string>
+    <string name="downloadFailedStr"><![CDATA[<font color="#FF5722">下载失败<font>]]></string>
+    <string name="transcodingStr"><![CDATA[<font color="#1E9FFF">正在转码<font>]]></string>
 
     <!-- 下载子列表界面文本 -->
     <string-array name="downloadItems">
@@ -189,7 +200,7 @@
     <string name="playerOtherTitle">其他操作</string>
     <string name="playWithExternalPlayer">使用外部播放器播放</string>
     <string name="openExternalBrowser">通过浏览器访问原地址</string>
-    <string name="clickToSniffer">尝试网页嗅探解析</string>
+    <string name="change_player_kernel">切换播放器内核</string>
     <string name="selectVideoSource">选择播放源</string>
     <string name="open_drama_list">打开选集列表</string>
     <string name="tipsNotWifi">您当前正在使用移动网络，继续播放将消耗流量</string>
@@ -227,7 +238,7 @@
     <string name="testModelSubContent">Xiaomi 12S Ultra | XiaomiPad 5 Pro<![CDATA[<br>]]>Android 14 | 13</string>
     <string name="currentVersionTitle">当前版本</string>
     <string name="lastBuildDateTitle">最后构建日期</string>
-    <string name="lastBuildDateSubContent">2024年7月15日10:49:03</string>
+    <string name="lastBuildDateSubContent">2024年10月7日22:23:23</string>
     <string name="cacheDirectoryTitle">存储位置</string>
     <string name="cacheDirectorySubContent">%s<![CDATA[<br>]]>卸载后自行删除此目录</string>
     <string name="authorizationDirectoryTitle">外部存储授权目录</string>
@@ -264,6 +275,12 @@
     <string name="sniffTimeOut">嗅探超时</string>
     <string name="sniffTimeOutSubContent">设置嗅探超时时间，超过设定时间后无论是否成功强制中断嗅探，单位为秒，范围 1~60秒。</string>
     <string name="setSuccess">配置已保存</string>
+
+    <string name="enableByPassCF">尝试绕过浏览器安全检测</string>
+    <string name="enableByPassCFContent">当网站开启了安全策略时可尝试</string>
+    <string name="enableByPassCFDialogContent">如果网站能正常解析时不要开启！\n当网站出现安全检查（一般为等待几秒后进入网站这中情况）时可开启尝试！</string>
+    <string name="enableByPassCFTimeOut">超时时间</string>
+    <string name="enableByPassCFTimeOutSubContent">设置超时时间，超过设定时间后无论是否成功强制中断访问，单位为秒，范围 1~60秒。</string>
 
     <string name="setPlayerTitle">视频播放器</string>
     <string-array name="setPlayerItems">
@@ -340,7 +357,7 @@
     <string name="doNotBelieveAnyAdsInTheVideo">资源来自网站，不要相信视频中的任何广告！</string>
     <string name="reverseOrderOfList">列表反序</string>
     <string name="expandAllEpisodes">展开全部</string>
-    <string name="multipleSeasons">多季</string>
+    <string name="multipleSeasons">相关剧集</string>
     <string name="relatedSuggestion">相关推荐</string>
     <string name="clickToView">点击查看</string>
 

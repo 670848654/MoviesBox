@@ -383,7 +383,19 @@
         android:layout_height="@dimen/jz_start_button_w_h_normal"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:visibility="invisible" />
+        android:visibility="gone" />
+
+    <!--<com.google.android.material.loadingindicator.LoadingIndicator
+        android:id="@+id/progress"
+        app:indicatorColor="@color/pink800"
+        app:containerColor="@color/pink100"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:indicatorSize="@dimen/jz_start_button_w_h_fullscreen"
+        app:containerHeight="72dp"
+        app:containerWidth="72dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"/>-->
 
     <RelativeLayout
         android:id="@+id/start_layout"
@@ -497,19 +509,19 @@
             android:textColor="@android:color/white"
             android:textSize="14sp" />
 
-        <!--<TextView
-            android:id="@+id/sniffer_btn"
+        <TextView
+            android:id="@+id/change_player_kernel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="15dp"
-            android:background="@drawable/sniffer_bg"
+            android:background="@drawable/jz_retry"
             android:paddingLeft="9dp"
             android:paddingTop="4dp"
             android:paddingRight="9dp"
             android:paddingBottom="4dp"
-            android:text="@string/clickToSniffer"
+            android:text="@string/change_player_kernel"
             android:textColor="@color/orange800"
-            android:textSize="14sp" />-->
+            android:textSize="14sp" />
     </LinearLayout>
 
     <master.flame.danmaku.ui.widget.DanmakuView

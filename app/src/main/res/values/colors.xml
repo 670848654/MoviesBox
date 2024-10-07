@@ -275,6 +275,8 @@
     <color name="bluegrey800">#37474f</color>
     <color name="bluegrey900">#263238</color>
 
+    <color name="defaultCardStrokeColor">#bebebe</color>
+
     <color name="light_color_primary">#f3eaeb</color>
     <color name="night_color_primary">#303030</color>
 
@@ -290,4 +292,13 @@
     <color name="white">#FFFFFFFF</color>
     <color name="delete_color">#FF0000</color>
     <color name="sub_content_color">#8C8C8C</color>
+
+    <color name="undone">#31BDEC</color>
+    <color name="normal">#5FB878</color>
+    <color name="abnormal">#FFB800</color>
+    <color name="deprecated">#FF5722</color>
+
+    <color name="movie">#1E9FFF</color>
+    <color name="anime">#009688</color>
+    <color name="adult">#393D49</color>
 </resources>

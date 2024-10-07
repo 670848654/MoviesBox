@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:entries="@array/prefix" />-->
 
-        <com.google.android.material.textfield.TextInputLayout
+        <!--<com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/transferProtocol"
@@ -36,7 +36,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
-        </com.google.android.material.textfield.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>-->
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/domain"
@@ -58,6 +58,20 @@
                 android:layout_height="wrap_content" />
 
         </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/getDomain"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            style="@style/Button.OutlinedButton.Icon"
+            app:icon="@drawable/round_terminal_24"
+            app:iconTint="@color/white"
+            app:strokeColor="@color/pink200"
+            android:backgroundTint="@color/pink200"
+            android:text="获取最新域名"
+            android:textColor="@color/white" />
 
         <ImageView
             android:src="@drawable/round_info_24"
