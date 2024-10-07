@@ -1,5 +1,14 @@
 package my.project.moviesbox.parser.config;
 
+import static my.project.moviesbox.parser.config.SourceEnum.SourceStateEnum.ABNORMAL;
+import static my.project.moviesbox.parser.config.SourceEnum.SourceStateEnum.DEPRECATED;
+import static my.project.moviesbox.parser.config.SourceEnum.SourceStateEnum.NORMAL;
+import static my.project.moviesbox.parser.config.SourceEnum.SourceTypeEnum.ANIME;
+import static my.project.moviesbox.parser.config.SourceEnum.SourceTypeEnum.MOVIES;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.DrawableRes;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -8,8 +17,11 @@ import java.util.Map;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import my.project.moviesbox.R;
 import my.project.moviesbox.model.DownloadVideoModel;
 import my.project.moviesbox.model.VideoModel;
+import my.project.moviesbox.parser.bean.SourceDataBean;
+import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.utils.DateUtils;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
@@ -25,91 +37,140 @@ import my.project.moviesbox.utils.Utils;
 @Getter
 @AllArgsConstructor
 public enum SourceEnum {
-    TBYS(ParserInterfaceFactory.SOURCE_TBYS,
+    TBYS(SourceIndexEnum.TBYS,
             "拖布影视",
-            "[影视]",
-            "",
+            MOVIES.title,
+            MOVIES.bg,
+            "存在广告，资源一般",
             "tbys",
             "https://www.rainvi.com",
             "",
             "/index.php/vod/search/page/%s/wd/%s.html",
+            true,
             "/index.php/vod/show%s.html",
             "",
-            new ArrayList<>()),
-    SILISILI(ParserInterfaceFactory.SOURCE_SILISILI,
-            "嘶哩嘶哩",
-            "[动漫]",
             "",
+            new ArrayList<>()),
+    SILISILI(SourceIndexEnum.SILISILI,
+            "嘶哩嘶哩",
+            ANIME.title,
+            ANIME.bg,
+            "资源较好",
             "silisili",
             "https://www.silisili.link",
-            "https://weibass.github.io",
+            "",
             "/vodsearch/?wd=%s&page=%s",
+            true,
             "/vodsearch%spage/%s",
             "/static/player/AB/api.php?act=dm&m=get&id=%s%s", // 弹幕参数 视频标题、集数下标
+            "/rss.xml",
             Arrays.asList(VideoModel.class.getName(), DownloadVideoModel.class.getName())), // 该站点获取播放地址需要使用POST请求
-    I_YINGHUA(ParserInterfaceFactory.SOURCE_IYINGHUA,
+    I_YINGHUA(SourceIndexEnum.I_YINGHUA,
             "樱花动漫",
-            "[动漫]",
-            "",
+            ANIME.title,
+            ANIME.bg,
+            "资源一般，存在广告",
             "iyinghua",
             "http://www.iyinghua.io",
             "",
             "/search/%s/?page=%s",
+            true,
             "/"+ DateUtils.getNowYear() +"/",
             "",
+            "",
             new ArrayList<>()),
-    ANFUNS(ParserInterfaceFactory.SOURCE_ANFUNS,
+    ANFUNS(SourceIndexEnum.ANFUNS,
             "AnFuns",
-            "[动漫]",
-            "无国漫",
+            ANIME.title,
+            ANIME.bg,
+            "质量高，无国产动漫",
             "anfuns",
             "https://www.anfuns.org",
             "",
             "/search/page/%s/wd/%s.html",
+            true,
             "/type/%s.html", // /show/%s.html 2024年7月12日10:48:45发现分类检索已关闭
             "/vapi/AIRA/dmku/?ac=dm&type=xml&id=%s%s", // 弹幕参数 视频ID、集数下标
+            "",
             new ArrayList<>()),
-
-    LIBVIO(ParserInterfaceFactory.SOURCE_LIBVIO,
+    LIBVIO(SourceIndexEnum.LIBVIO,
             "LIBVIO",
-            "[影视]",
-            "可能存在Cloudflare",
+            MOVIES.title,
+            MOVIES.bg,
+            "质量高但并不是所有都能在线观看，可能存在Cloudflare、域名可能经常变更（可通过网站发布页查看最新域名）",
             "libvio",
             "https://www.libvio.pw",
             "https://www.libvio.app",
             "/search/%s----------%s---.html",
+            true,
             "/show/%s--------%s---.html", // 暂不实现
             "",
+            "",
             new ArrayList<>()),
-    ZXZJ(ParserInterfaceFactory.SOURCE_ZXZJ,
+    ZXZJ(SourceIndexEnum.ZXZJ,
             "在线之家",
-            "[影视]",
-            "可能存在Cloudflare",
+            MOVIES.title,
+            MOVIES.bg,
+            "质量高但只有热门电影/电视剧（无国产），无广告，可能存在Cloudflare、域名可能经常变更（可通过网站发布页查看最新域名）",
             "zxzj",
             "https://www.zxzja.com",
             "https://www.zxzj.site",
             "/vodsearch/%s----------%s---.html",
+            true,
             "/vodshow/%s--------%s---.html", // 暂不实现
             "",
-            new ArrayList<>()),
-    FIVEMOVIE(
-            ParserInterfaceFactory.SOURCE_FIVEMOVIE,
-            "555电影",
-            "[影视]",
             "",
+            new ArrayList<>()),
+    FIVEMOVIE(SourceIndexEnum.FIVE_MOVIE,
+            "555电影",
+            MOVIES.title,
+            MOVIES.bg,
+            "存在广告，资源一般，可能存在Cloudflare、域名可能经常变更（可通过网站发布页查看最新域名）",
             "fiveMovie",
             "https://5look.site",
             "https://wu5dy.com",
             "/vodsearch/%s----------%s---.html",
+            true,
             "/vodshow/%s-%s-%s-%s-%s----%s---%s.html",
             "",
-            new ArrayList<>())
+            "",
+            new ArrayList<>()),
+    YJYS(SourceIndexEnum.YJYS,
+            "缘觉影视",
+            MOVIES.title,
+            MOVIES.bg,
+            "质量高，无广告但更新随缘",
+            "yjys",
+            "https://www.yjys02.com",
+            "https://www.bdys.me",
+            "/search/%s/%s",
+            false,
+            "/s/%s/%s?type=%s&area=%s&year=%s&order=%s", // /s/dongzuo/2?type=0&area=美国&year=2024&order=0
+            "/danmu/%s",
+            "",
+            new ArrayList<>()
+    ),
+    XBYY(SourceIndexEnum.XBYY,
+            "小宝影院",
+            MOVIES.title,
+            MOVIES.bg,
+            "质量不错，貌似无法直接访问需挂代理",
+            "xbyy",
+            "https://xiaoxintv.com",
+            "",
+            "/index.php/vod/search/page/%s/wd/%s.html", // 参数1：分页 参数2：搜索内容
+            true,
+            "/index.php/vod/show/id/%s%s.html", // 第一个参数为 ID 第二个参数为拼接参数
+            "",
+            "",
+            new ArrayList<>()
+    )
     ;
 
     /**
      * 在站点配置类{@link ParserInterfaceFactory}中定义
      */
-    private int source;
+    private SourceIndexEnum sourceIndexEnum;
     /**
      * 源名称
      */
@@ -118,9 +179,14 @@ public enum SourceEnum {
      * 源类型
      */
     private String sourceType;
+    @DrawableRes
+    private int sourceTypeBg;
+    /**
+     * 源相关描述
+     */
     private String sourceInfo;
     /**
-     *  {@link SharedPreferencesUtils}存储名称key，能是英文
+     *  {@link SharedPreferencesUtils}存储名称key
      */
     private String cacheTitle;
     /**
@@ -136,6 +202,10 @@ public enum SourceEnum {
      */
     private String searchUrl;
     /**
+     * 能否搜索
+     */
+    private boolean canSearch;
+    /**
      * 分类参数地址
      */
     private String classificationUrl;
@@ -143,6 +213,10 @@ public enum SourceEnum {
      * 弹幕参数地址
      */
     private String danmuUrl;
+    /**
+     * RSS订阅地址
+     */
+    private String rss;
     /**
      *  post请求路劲集合 {@link my.project.moviesbox.model}包下类名称
      */
@@ -171,32 +245,58 @@ public enum SourceEnum {
      * key 解析源 value 站点发布页地址
      */
     private static final Map<Integer, String> WEBSITE_RELEASE_MAP = new HashMap<>();
-    /**
-     * APP支持的站点解析集合
-     * title+type拼接 如：拖布影视 [影视]
-     */
-    private static final String[] SOURCES_ARR = new String[SourceEnum.values().length];
-
-    private static final String SOURCE_NAME_HTML = "<b>%s&nbsp;&nbsp;%s</b>";
-    private static final String SOURCE_DANMU_HTML = "<br><font color='#31bdec'>[弹幕]</font>";
-    private static final String SOURCE_INFO_HTML = "<br>⚠️<font color='#ffb800'>%s</font><br>";
 
     static {
-        int index = 0;
         for (SourceEnum sourceEnum : SourceEnum.values()) {
-            TITLE_MAP.put(sourceEnum.getSource(), sourceEnum.getSourceName());
-            DOMAIN_URL_MAP.put(sourceEnum.getSource(), sourceEnum.getDomainUrl());
-            CACHE_TITLE_MAP.put(sourceEnum.getSource(), sourceEnum.getCacheTitle());
-            DANMU_MAP.put(sourceEnum.getSource(), sourceEnum.getDanmuUrl());
-            WEBSITE_RELEASE_MAP.put(sourceEnum.getSource(), sourceEnum.getWebsiteRelease());
-            // 样式
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(String.format(SOURCE_NAME_HTML, sourceEnum.sourceType, sourceEnum.sourceName));
-            stringBuilder.append(Utils.isNullOrEmpty(sourceEnum.getDanmuUrl()) ? "" : SOURCE_DANMU_HTML);
-            stringBuilder.append(Utils.isNullOrEmpty(sourceEnum.sourceInfo) ? "" : String.format(SOURCE_INFO_HTML, sourceEnum.sourceInfo));
-            SOURCES_ARR[index] = stringBuilder.toString();
-            index++;
+            int sourceIndex = sourceEnum.sourceIndexEnum.index;
+            TITLE_MAP.put(sourceIndex, sourceEnum.getSourceName());
+            DOMAIN_URL_MAP.put(sourceIndex, sourceEnum.getDomainUrl());
+            CACHE_TITLE_MAP.put(sourceIndex, sourceEnum.getCacheTitle());
+            DANMU_MAP.put(sourceIndex, sourceEnum.getDanmuUrl());
+            WEBSITE_RELEASE_MAP.put(sourceIndex, sourceEnum.getWebsiteRelease());
         }
+    }
+
+    /**
+     * 获取默认站点列表
+     * @return
+     */
+    public static List<SourceDataBean> getSourceDataBeanList() {
+        List<SourceDataBean> sourceDataBeans = new ArrayList<>();
+        for (SourceEnum sourceEnum : SourceEnum.values()) {
+            sourceDataBeans.add(new SourceDataBean(
+                    sourceEnum.getSourceName(),
+                    sourceEnum.getSourceIndexEnum(),
+                    sourceEnum.getSourceType(),
+                    sourceEnum.getSourceTypeBg(),
+                    sourceEnum.getSourceInfo(),
+                    !Utils.isNullOrEmpty(sourceEnum.getDanmuUrl()),
+                    !Utils.isNullOrEmpty(sourceEnum.getWebsiteRelease()),
+                    sourceEnum.getWebsiteRelease(),
+                    !Utils.isNullOrEmpty(sourceEnum.getRss()),
+                    sourceEnum.getRss()
+            ));
+        }
+        return sourceDataBeans;
+    }
+
+    public static List<SourceDataBean> getTurnOnHiddenFeaturesList() {
+        List<SourceDataBean> sourceDataBeans = new ArrayList<>();
+        for (SourceEnum sourceEnum : SourceEnum.values()) {
+            sourceDataBeans.add(new SourceDataBean(
+                    sourceEnum.getSourceName(),
+                    sourceEnum.getSourceIndexEnum(),
+                    sourceEnum.getSourceType(),
+                    sourceEnum.getSourceTypeBg(),
+                    sourceEnum.getSourceInfo(),
+                    !Utils.isNullOrEmpty(sourceEnum.getDanmuUrl()),
+                    !Utils.isNullOrEmpty(sourceEnum.getWebsiteRelease()),
+                    sourceEnum.getWebsiteRelease(),
+                    !Utils.isNullOrEmpty(sourceEnum.getRss()),
+                    sourceEnum.getRss()
+            ));
+        }
+        return sourceDataBeans;
     }
 
     /**
@@ -245,10 +345,87 @@ public enum SourceEnum {
     }
 
     /**
-     * 获取支持站点名称类型数组信息
-     * @return 源枚举支持的站点解析集合
+      * @包名: my.project.moviesbox.parser.config
+      * @类名: SourceEnum
+      * @描述: 源下标、状态等信息枚举
+      * @作者: Li Z
+      * @日期: 2024/8/3 22:06
+      * @版本: 1.0
      */
-    public static String[] getSourcesArr() {
-        return SOURCES_ARR;
+    @Getter
+    @AllArgsConstructor
+    public enum SourceIndexEnum {
+        // 拖布影视
+        TBYS(0, NORMAL, ""),
+        // 嘶哩嘶哩
+        SILISILI(1, NORMAL, ""),
+        // 樱花动漫
+        I_YINGHUA(2, NORMAL, ""),
+        // AnFuns动漫
+        ANFUNS(3, NORMAL, ""),
+        // LIBVIO
+        LIBVIO(4, NORMAL, ""),
+        // 在线之家
+        ZXZJ(5, NORMAL, ""),
+        // 555电影
+        FIVE_MOVIE(6, DEPRECATED, "经常更换域名、出现Cloudflare，失效后将不再维护"),
+        // 7/8/9 自用暂不开源
+        // 缘觉影视
+        YJYS(10, ABNORMAL, "影视搜索存在服务器验证请手动验证，部分视频调用接口存在二次验证（不支持），尝试支持该站的M3U8协议播放（如果存在MP4的播放地址优先使用，不可播放再尝试M3U8协议的播放地址，不一定能播放成功），测试中可能存在应用崩溃"),
+        // 小宝影院
+        XBYY(11, ABNORMAL, "仅支持但并未经过详细测试，M3U8协议播放列表尝试过滤广告")
+        ;
+        public int index;
+        public SourceStateEnum stateEnum;
+        private String msg;
+
+        public static SourceIndexEnum fromIndex(int index) {
+            for (SourceIndexEnum source : values()) {
+                if (source.index == index) {
+                    return source;
+                }
+            }
+            throw new IllegalArgumentException("Invalid index: " + index);
+        }
+    }
+
+    /**
+      * @包名: my.project.moviesbox.parser.config
+      * @类名: SourceEnum
+      * @描述: 源支持状态枚举
+      * @作者: Li Z
+      * @日期: 2024/8/3 22:06
+      * @版本: 1.0
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum SourceStateEnum {
+        UNDONE(0, R.color.undone), // 计划中，并不保证最终支持该站点
+        NORMAL(1, R.color.normal), // 解析正常
+        ABNORMAL(2, R.color.abnormal), // 部分解析异常
+        DEPRECATED(-1, R.color.deprecated) // 废弃，不再维护
+        ;
+        private int state;
+        @ColorInt
+        private int color;
+    }
+
+    /**
+      * @包名: my.project.moviesbox.parser.config
+      * @类名: SourceEnum
+      * @描述: 源类型枚举
+      * @作者: Li Z
+      * @日期: 2024/8/3 22:07
+      * @版本: 1.0
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum SourceTypeEnum {
+        MOVIES("影视", R.drawable.source_type_movie),
+        ANIME("动漫", R.drawable.source_type_anime)
+        ;
+        public String title;
+        @DrawableRes
+        private int bg;
     }
 }

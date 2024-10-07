@@ -7,12 +7,8 @@ import my.project.moviesbox.database.entity.TDownloadDataWithFields;
 import my.project.moviesbox.database.entity.TDownloadWithFields;
 import my.project.moviesbox.model.DownloadModel;
 
-public class DownloadPresenter extends Presenter<DownloadContract.View> implements BasePresenter, DownloadContract.LoadDataCallback {
+public class DownloadPresenter extends Presenter<DownloadContract.View, DownloadModel> implements BasePresenter, DownloadContract.LoadDataCallback {
     private DownloadContract.View view;
-    private DownloadModel model;
-    private int offset;
-    private int limit;
-    private String downloadId;
 
     /**
      * 构造函数
@@ -21,46 +17,30 @@ public class DownloadPresenter extends Presenter<DownloadContract.View> implemen
      */
     public DownloadPresenter(DownloadContract.View view) {
         super(view);
+        this.view = view;
+        model = new DownloadModel();
     }
 
     /**
      * 下载主目录
+     * @param isMain
      * @param offset
      * @param limit
-     * @param view
      */
-    public DownloadPresenter(int offset, int limit, DownloadContract.View view) {
-        super(view);
-        this.view = view;
-        this.offset = offset;
-        this.limit = limit;
-        model = new DownloadModel();
-    }
-
-    public void loadDownloadList(boolean isMain) {
+    public void loadDownloadList(boolean isMain, int offset, int limit) {
         if (isMain)
             view.loadingView();
         model.getDownloadList(offset, limit, this);
     }
 
-
     /**
      * 下载子级列表
+     * @param isMain
      * @param downloadId
      * @param offset
      * @param limit
-     * @param view
      */
-    public DownloadPresenter(String downloadId, int offset, int limit, DownloadContract.View view) {
-        super(view);
-        this.view = view;
-        this.downloadId = downloadId;
-        this.offset = offset;
-        this.limit = limit;
-        model = new DownloadModel();
-    }
-
-    public void loadDownloadDataList(boolean isMain) {
+    public void loadDownloadDataList(boolean isMain, String downloadId, int offset, int limit) {
         if (isMain)
             view.loadingView();
         model.getDownloadDataList(downloadId, offset, limit, this);

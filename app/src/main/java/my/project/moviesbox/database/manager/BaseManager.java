@@ -8,8 +8,8 @@ import java.util.UUID;
 
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.database.AppDatabase;
-import my.project.moviesbox.parser.config.ParserInterfaceFactory;
 import my.project.moviesbox.parser.parserService.ParserInterface;
+import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 
 /**
  * @author Li

@@ -9,23 +9,20 @@ import my.project.moviesbox.model.ParsingInterfacesModel;
  * @description: 注释
  * @date 2024/2/21 8:37
  */
-public class ParsingInterfacesPresenter extends Presenter<ParsingInterfacesContract.View> implements BasePresenter, ParsingInterfacesContract.LoadDataCallback {
-    private String url;
-    private ParsingInterfacesContract.View view;
-    private ParsingInterfacesModel model;
+public class ParsingInterfacesPresenter extends Presenter<ParsingInterfacesContract.View, ParsingInterfacesModel> implements BasePresenter, ParsingInterfacesContract.LoadDataCallback {
+    private final ParsingInterfacesContract.View view;
     /**
      * 构造函数
      *
      * @param view 需要关联的View
      */
-    public ParsingInterfacesPresenter(String url, ParsingInterfacesContract.View view) {
+    public ParsingInterfacesPresenter(ParsingInterfacesContract.View view) {
         super(view);
-        this.url = url;
         this.view = view;
         model = new ParsingInterfacesModel();
     }
 
-    public void parser() {
+    public void parser(String url) {
         view.loadingView();
         model.parser(url, this);
     }

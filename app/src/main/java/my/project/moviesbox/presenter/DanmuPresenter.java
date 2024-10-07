@@ -1,23 +1,25 @@
 package my.project.moviesbox.presenter;
 
-import com.alibaba.fastjson.JSONObject;
+import java.util.List;
 
 import my.project.moviesbox.contract.DanmuContract;
 import my.project.moviesbox.model.DanmuModel;
+import my.project.moviesbox.parser.bean.DanmuDataBean;
 
-public class DanmuPresenter extends Presenter<DanmuContract.View> implements BasePresenter, DanmuContract.LoadDataCallback {
-    private String[] params;
-    private DanmuModel model;
+public class DanmuPresenter extends Presenter<DanmuContract.View, DanmuModel> implements BasePresenter, DanmuContract.LoadDataCallback {
     private DanmuContract.View view;
 
-    public DanmuPresenter(DanmuContract.View view, String... params) {
+    public DanmuPresenter(DanmuContract.View view) {
         super(view);
         this.view = view;
-        this.params = params;
         model = new DanmuModel();
     }
 
-    public void loadDanmu() {
+    public void loadVipDanmu(String url) {
+        model.getVipDanmu(url, this);
+    }
+
+    public void loadDanmu(String... params) {
         model.getDanmu(this, params);
     }
 
@@ -32,8 +34,8 @@ public class DanmuPresenter extends Presenter<DanmuContract.View> implements Bas
     }
 
     @Override
-    public void successDanmuJson(JSONObject danmus) {
-        view.successDanmuJson(danmus);
+    public void successDanmuJson(List<DanmuDataBean> danmuDataBeanList) {
+        view.successDanmuJson(danmuDataBeanList);
     }
 
     @Override

@@ -1,7 +1,5 @@
 package my.project.moviesbox.view;
 
-import android.view.HapticFeedbackConstants;
-
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -52,7 +50,7 @@ public class OpenSourceActivity extends BaseActivity {
 
     @Override
     protected void init() {
-        initToolbar();
+        setToolbar(toolbar, getString(R.string.openSourceTitle), "");
         initSwipe();
         initAdapter();
     }
@@ -68,16 +66,6 @@ public class OpenSourceActivity extends BaseActivity {
     @Override
     protected void retryListener() {
 
-    }
-
-    public void initToolbar() {
-        toolbar.setTitle(getString(R.string.openSourceTitle));
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(view -> {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            finish();
-        });
     }
 
     public void initSwipe() {

@@ -113,7 +113,7 @@
 
         <activity
             android:name=".view.UpnpActivity"
-            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden|uiMode"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden"
             android:excludeFromRecents="true"
             android:resizeableActivity="true"
             android:screenOrientation="sensorLandscape"
@@ -138,6 +138,14 @@
         <activity
             android:name=".view.OpenSourceActivity"
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
+
+        <activity
+            android:name=".parser.sourceCustomView.yjys.YjysSearchActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
+
+        <!--<activity
+            android:name=".view.WebViewActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />-->
 
         <activity
             android:name=".view.VipParsingInterfacesActivity"
@@ -188,7 +196,9 @@
         <!-- 下载服务 -->
         <service android:name=".service.DownloadService"/>
         <service android:name=".service.DLNAService"/>
-        <service android:name=".service.WebViewService"/>
+        <service android:name=".service.SniffingVideoService"/>
+        <service android:name=".service.FuckCFService"/>
+        <service android:name=".service.RssService"/>
         <!-- 声明upnp服务实现类（服务） -->
         <service android:name=".cling.service.ClingUpnpService" />
 

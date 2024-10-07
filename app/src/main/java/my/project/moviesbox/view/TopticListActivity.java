@@ -3,12 +3,13 @@ package my.project.moviesbox.view;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.HapticFeedbackConstants;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.chad.library.adapter.base.entity.MultiItemEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +19,10 @@ import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.VodListAdapter;
 import my.project.moviesbox.contract.TopTicListContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
+import my.project.moviesbox.enums.DialogXTipEnum;
+import my.project.moviesbox.model.TopticListModel;
 import my.project.moviesbox.parser.bean.VodDataBean;
+import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.presenter.TopticListPresenter;
 import my.project.moviesbox.utils.Utils;
 
@@ -30,7 +34,7 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:13
   * @版本: 1.0
  */
-public class TopticListActivity extends BaseActivity<TopTicListContract.View, TopticListPresenter> implements TopTicListContract.View {
+public class TopticListActivity extends BaseActivity<TopticListModel, TopTicListContract.View, TopticListPresenter> implements TopTicListContract.View {
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     @BindView(R.id.rv_list)
@@ -38,21 +42,19 @@ public class TopticListActivity extends BaseActivity<TopTicListContract.View, To
     @BindView(R.id.mSwipe)
     SwipeRefreshLayout mSwipe;
     private VodListAdapter adapter;
-    private List<VodDataBean.Item> items = new ArrayList<>();
+    private final List<MultiItemEntity> multiItemEntities = new ArrayList<>();
     private String title, url;
-    private int page = parserInterface.startPageNum(); // 开始页码
-    private int pageCount = parserInterface.startPageNum();
-    private boolean isErr = true;
     private boolean isVodList; // 是否是子视频列表
 
     @Override
     protected TopticListPresenter createPresenter() {
-        return new TopticListPresenter(url, isVodList, page,this);
+        return new TopticListPresenter(this);
     }
 
     @Override
     protected void loadData() {
-        mPresenter.loadData(true);
+        multiItemEntities.clear();
+        mPresenter.loadMainData(true, url, isVodList, page);
     }
 
     @Override
@@ -66,7 +68,7 @@ public class TopticListActivity extends BaseActivity<TopTicListContract.View, To
         title = bundle.getString("title");
         url = bundle.getString("url");
         isVodList = bundle.getBoolean("isVodList");
-        initToolbar();
+        setToolbar(toolbar, title, "");
         initSwipe();
         initDefaultAdapter();
     }
@@ -76,27 +78,17 @@ public class TopticListActivity extends BaseActivity<TopTicListContract.View, To
 
     }
 
-    public void initToolbar() {
-        toolbar.setTitle(title);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(view -> {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            finish();
-        });
-    }
-
     public void initSwipe() {
         mSwipe.setColorSchemeResources(R.color.pink500, R.color.blue500, R.color.purple500);
         mSwipe.setOnRefreshListener(() -> retryListener());
     }
 
     public void initDefaultAdapter() {
-        adapter = new VodListAdapter(isVodList ? parserInterface.setVodListItemType() : parserInterface.setTopticListItemType(), items);
+        adapter = new VodListAdapter(multiItemEntities);
         setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
-            VodDataBean.Item bean = (VodDataBean.Item) adapter.getItem(position);
+            VodDataBean bean = (VodDataBean) adapter.getItem(position);
             String url = bean.getUrl();
             String title = bean.getTitle();
             openList(title, url);
@@ -107,16 +99,16 @@ public class TopticListActivity extends BaseActivity<TopTicListContract.View, To
                 if (page >= pageCount) {
                     //数据全部加载完毕
                     adapter.getLoadMoreModule().loadMoreEnd();
-                    application.showToastMsg(getString(R.string.noMoreContent));
+                    application.showToastMsg(getString(R.string.noMoreContent), DialogXTipEnum.SUCCESS);
                 } else {
                     if (isErr) {
                         //成功获取更多数据
                         page++;
-                        mPresenter = createPresenter();
-                        mPresenter.loadData(false);
-                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, page, pageCount));
+                        mPresenter.loadPageData(url, isVodList, page);
+                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, page, pageCount), DialogXTipEnum.DEFAULT);
                     } else {
                         //获取更多数据失败
+                        page--;
                         isErr = true;
                         adapter.getLoadMoreModule().loadMoreFail();
                     }
@@ -146,15 +138,10 @@ public class TopticListActivity extends BaseActivity<TopTicListContract.View, To
         }
     }
 
-    public void setLoadState(boolean loadState) {
-        isErr = loadState;
-        adapter.getLoadMoreModule().loadMoreComplete();
-    }
-
     @Override
     public void onResume() {
         super.onResume();
-        if (items.size() == 0)
+        if (multiItemEntities.size() == 0)
             setRecyclerViewEmpty();
         else
             setRecyclerViewView();
@@ -178,7 +165,14 @@ public class TopticListActivity extends BaseActivity<TopTicListContract.View, To
 
     private void setRecyclerViewView() {
         position = mRecyclerView.getLayoutManager() == null ? 0 : ((GridLayoutManager) mRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, isVodList ? parserInterface.setVodListItemSize(Utils.isPad(), isPortrait) :  parserInterface.setTopticItemListItemSize(Utils.isPad(), isPortrait)));
+        int spanCount;
+        if (multiItemEntities.size() > 0 && multiItemEntities.get(0).getItemType() == VodItemStyleEnum.STYLE_16_9.getType()) {
+            spanCount = parserInterface.setVodList16_9ItemSize(Utils.isPad(), isPortrait);
+        } else {
+            spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait);
+        }
+        mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
+        //        mRecyclerView.setLayoutManager(new GridLayoutManager(this, isVodList ? parserInterface.setVodListItemSize(Utils.isPad(), isPortrait) :  parserInterface.setTopticItemListItemSize(Utils.isPad(), isPortrait)));
         mRecyclerView.getLayoutManager().scrollToPosition(position);
     }
 
@@ -201,21 +195,21 @@ public class TopticListActivity extends BaseActivity<TopTicListContract.View, To
     }
 
     @Override
-    public void success(boolean firstTimeData, VodDataBean vodDataBean, int pageCount) {
+    public void success(boolean firstTimeData, List<VodDataBean> vodDataBeans, int pageCount) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
-            items = vodDataBean.getItemList();
             if (firstTimeData) {
+                multiItemEntities.addAll(vodDataBeans);
                 hideProgress();
                 this.pageCount = pageCount;
                 mSwipe.setRefreshing(false);
                 new Handler().postDelayed(() -> {
-                    adapter.setNewInstance(items);
+                    adapter.setNewInstance(multiItemEntities);
                     setRecyclerViewView();
                 }, 500);
             } else {
-                adapter.addData(items);
-                setLoadState(true);
+                adapter.addData(vodDataBeans);
+                setLoadState(adapter, true);
             }
         });
     }
@@ -238,8 +232,8 @@ public class TopticListActivity extends BaseActivity<TopTicListContract.View, To
                     null,
                     null);
             } else {
-                setLoadState(false);
-                application.showToastMsg(msg);
+                setLoadState(adapter, false);
+                application.showToastMsg(msg, DialogXTipEnum.ERROR);
             }
         });
     }
@@ -248,9 +242,15 @@ public class TopticListActivity extends BaseActivity<TopTicListContract.View, To
     public void empty(String msg) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
-            items.clear();
+            multiItemEntities.clear();
             setRecyclerViewEmpty();
             rvEmpty(msg);
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        emptyRecyclerView(mRecyclerView);
     }
 }

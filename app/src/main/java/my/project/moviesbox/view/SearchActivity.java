@@ -3,16 +3,16 @@ package my.project.moviesbox.view;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.HapticFeedbackConstants;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.MenuItemCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.chad.library.adapter.base.entity.MultiItemEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +20,12 @@ import java.util.List;
 import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.VodListAdapter;
-import my.project.moviesbox.application.App;
 import my.project.moviesbox.contract.SearchContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
+import my.project.moviesbox.enums.DialogXTipEnum;
+import my.project.moviesbox.model.SearchModel;
 import my.project.moviesbox.parser.bean.VodDataBean;
+import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.presenter.SearchPresenter;
 import my.project.moviesbox.utils.Utils;
 
@@ -35,29 +37,22 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:12
   * @版本: 1.0
  */
-public class SearchActivity extends BaseActivity<SearchContract.View, SearchPresenter> implements SearchContract.View {
+public class SearchActivity extends BaseActivity<SearchModel, SearchContract.View, SearchPresenter> implements SearchContract.View {
     @BindView(R.id.toolbar)
-    Toolbar toolbar;
+    protected Toolbar toolbar;
     @BindView(R.id.rv_list)
-    RecyclerView mRecyclerView;
+    protected RecyclerView mRecyclerView;
     @BindView(R.id.mSwipe)
-    SwipeRefreshLayout mSwipe;
-    private VodListAdapter adapter;
-    private List<VodDataBean.Item> items = new ArrayList<>();
-    private String title;
-    private int page = parserInterface.startPageNum(); // 开始页码
-    private int pageCount = parserInterface.startPageNum();
-    private boolean isErr = true;
-    private SearchView mSearchView;
-    private boolean isSearch = false;
+    protected SwipeRefreshLayout mSwipe;
+    protected  VodListAdapter adapter;
+    protected  final List<MultiItemEntity> multiItemEntities = new ArrayList<>();
+    protected  String title;
+    protected  SearchView mSearchView;
+    protected  boolean isSearch = false;
 
     @Override
     protected SearchPresenter createPresenter() {
-        return null;
-    }
-
-    protected SearchPresenter createSearchPresenter() {
-        return new SearchPresenter(this, title, String.valueOf(page));
+        return new SearchPresenter(this);
     }
 
     @Override
@@ -72,7 +67,7 @@ public class SearchActivity extends BaseActivity<SearchContract.View, SearchPres
 
     @Override
     protected void init() {
-        initToolbar();
+        setToolbar(toolbar, "", "");
         initSwipe();
         initDefaultAdapter();
     }
@@ -80,27 +75,18 @@ public class SearchActivity extends BaseActivity<SearchContract.View, SearchPres
     @Override
     protected void initBeforeView() {}
 
-    public void initToolbar() {
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(view -> {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            finish();
-        });
-    }
-
     public void initSwipe() {
         mSwipe.setColorSchemeResources(R.color.pink500, R.color.blue500, R.color.purple500);
         mSwipe.setEnabled(false);
-        mSwipe.setOnRefreshListener(() -> retryListener());
+        mSwipe.setOnRefreshListener(this::retryListener);
     }
 
     public void initDefaultAdapter() {
-        adapter = new VodListAdapter(parserInterface.setVodListItemType(), items);
+        adapter = new VodListAdapter(multiItemEntities);
         setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
-            VodDataBean.Item bean = (VodDataBean.Item) adapter.getItem(position);
+            VodDataBean bean = (VodDataBean) adapter.getItem(position);
             String url = bean.getUrl();
             String title = bean.getTitle();
             openVodDesc(title, url);
@@ -113,16 +99,16 @@ public class SearchActivity extends BaseActivity<SearchContract.View, SearchPres
                     //数据全部加载完毕
                     adapter.getLoadMoreModule().loadMoreEnd();
                     isSearch = false;
-                    application.showToastMsg(getString(R.string.noMoreContent));
+                    application.showToastMsg(getString(R.string.noMoreContent), DialogXTipEnum.SUCCESS);
                 } else {
                     if (isErr) {
                         //成功获取更多数据
                         page++;
-                        mPresenter = createSearchPresenter();
-                        mPresenter.loadData(false);
-                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, page, pageCount));
+                        mPresenter.loadPageData(title, String.valueOf(page));
+                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, page, pageCount), DialogXTipEnum.DEFAULT);
                     } else {
                         //获取更多数据失败
+                        page--;
                         isErr = true;
                         adapter.getLoadMoreModule().loadMoreFail();
                     }
@@ -158,7 +144,8 @@ public class SearchActivity extends BaseActivity<SearchContract.View, SearchPres
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.search_menu, menu);
         final MenuItem item = menu.findItem(R.id.search);
-        mSearchView = (SearchView) MenuItemCompat.getActionView(item);
+//        mSearchView = (SearchView) MenuItemCompat.getActionView(item);
+        mSearchView = (SearchView) item.getActionView();
         mSearchView.onActionViewExpanded();
         mSearchView.setSubmitButtonEnabled(true);
         mSearchView.setQueryHint("请输入检索关键字");
@@ -172,14 +159,14 @@ public class SearchActivity extends BaseActivity<SearchContract.View, SearchPres
             @Override
             public boolean onQueryTextSubmit(String query) {
                 if (isSearch) {
-                    application.showToastMsg(getString(R.string.searchPleaseTryAgainLater));
+                    application.showToastMsg(getString(R.string.searchPleaseTryAgainLater), DialogXTipEnum.WARNING);
                 }else {
                     title = query.trim();
                     if (!title.isEmpty()) {
                         page = parserInterface.startPageNum();
                         pageCount = parserInterface.startPageNum();
-                        mPresenter = createSearchPresenter();
-                        mPresenter.loadData(true);
+                        multiItemEntities.clear();
+                        mPresenter.loadMainData(true, title, String.valueOf(page));
                         toolbar.setTitle(title);
                         mSearchView.clearFocus();
                         Utils.hideKeyboard(mSearchView);
@@ -196,15 +183,10 @@ public class SearchActivity extends BaseActivity<SearchContract.View, SearchPres
         return true;
     }
 
-    private void setLoadState(boolean loadState) {
-        isErr = loadState;
-        adapter.getLoadMoreModule().loadMoreComplete();
-    }
-
     @Override
     public void onResume() {
         super.onResume();
-        if (items.size() == 0)
+        if (multiItemEntities.size() == 0)
             setRecyclerViewEmpty();
         else
             setRecyclerViewView();
@@ -219,7 +201,7 @@ public class SearchActivity extends BaseActivity<SearchContract.View, SearchPres
     protected void retryListener() {
         page = parserInterface.startPageNum();
         pageCount = parserInterface.startPageNum();
-        mPresenter.loadData(true);
+        mPresenter.loadMainData(true, title, String.valueOf(page));
     }
 
     private void setRecyclerViewEmpty() {
@@ -228,7 +210,13 @@ public class SearchActivity extends BaseActivity<SearchContract.View, SearchPres
 
     private void setRecyclerViewView() {
         position = mRecyclerView.getLayoutManager() == null ? 0 : ((GridLayoutManager) mRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, parserInterface.setVodListItemSize(Utils.isPad(), isPortrait)));
+        int spanCount;
+        if (multiItemEntities.size() > 0 && multiItemEntities.get(0).getItemType() == VodItemStyleEnum.STYLE_16_9.getType()) {
+            spanCount = parserInterface.setVodList16_9ItemSize(Utils.isPad(), isPortrait);
+        } else {
+            spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait);
+        }
+        mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
         mRecyclerView.getLayoutManager().scrollToPosition(position);
     }
 
@@ -254,23 +242,23 @@ public class SearchActivity extends BaseActivity<SearchContract.View, SearchPres
     }
 
     @Override
-    public void success(boolean firstTimeData, VodDataBean vodDataBean, int pageCount) {
+    public void success(boolean firstTimeData, List<VodDataBean> vodDataBeans, int pageCount) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
             isSearch = false;
             mSwipe.setEnabled(true);
-            items = vodDataBean.getItemList();
             if (firstTimeData) {
+                multiItemEntities.addAll(vodDataBeans);
                 hideProgress();
                 mSwipe.setRefreshing(false);
                 this.pageCount = pageCount;
                 new Handler().postDelayed(() -> {
-                    adapter.setNewInstance(items);
+                    adapter.setNewInstance(multiItemEntities);
                     setRecyclerViewView();
                 }, 500);
             } else {
-                adapter.addData(items);
-                setLoadState(true);
+                adapter.addData(vodDataBeans);
+                setLoadState(adapter, true);
             }
             setSubTitle();
         });
@@ -296,21 +284,31 @@ public class SearchActivity extends BaseActivity<SearchContract.View, SearchPres
                         null,
                         null);
             } else {
-                setLoadState(false);
-                App.getInstance().showToastMsg(msg);
+                setLoadState(adapter, false);
+                application.showToastMsg(msg, DialogXTipEnum.ERROR);
             }
         });
     }
 
     @Override
-    public void empty(String msg) {
+    public void empty(boolean firstTimeData,String msg) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
             isSearch = false;
             mSwipe.setEnabled(true);
-            mSwipe.setRefreshing(false);
-            setRecyclerViewEmpty();
-            rvEmpty(msg);
+            if (firstTimeData) {
+                mSwipe.setRefreshing(false);
+                rvEmpty(msg);
+            } else {
+                setLoadState(adapter, false);
+                application.showToastMsg(msg, DialogXTipEnum.ERROR);
+            }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        emptyRecyclerView(mRecyclerView);
+        super.onDestroy();
     }
 }

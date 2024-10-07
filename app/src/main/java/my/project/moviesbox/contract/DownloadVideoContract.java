@@ -2,6 +2,8 @@ package my.project.moviesbox.contract;
 
 import java.util.List;
 
+import my.project.moviesbox.parser.bean.DialogItemBean;
+
 /**
   * @包名: my.project.moviesbox.contract
   * @类名: DownloadVideoContract
@@ -16,13 +18,13 @@ public interface DownloadVideoContract {
     }
 
     interface View extends BaseView {
-        void downloadVodUrlSuccess(List<String> urls, String playNumber);
+        void downloadVodUrlSuccess(List<DialogItemBean> urls, String playNumber);
 
         void downloadVodUrlError(String playNumber);
     }
 
     interface LoadDataCallback extends BaseLoadDataCallback {
-        void downloadVodUrlSuccess(List<String> urls, String playNumber);
+        void downloadVodUrlSuccess(List<DialogItemBean> urls, String playNumber);
 
         void downloadVodUrlError(String playNumber);
     }

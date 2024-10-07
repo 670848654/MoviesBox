@@ -1,6 +1,10 @@
 package my.project.moviesbox.view;
 
 import static android.app.Activity.RESULT_OK;
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_DOWNLOAD;
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_FAVORITE;
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_HISTORY;
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_INDEX;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -20,8 +24,8 @@ import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -34,6 +38,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.arialyy.aria.core.Aria;
+import com.chad.library.adapter.base.animation.AlphaInAnimation;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.slider.Slider;
@@ -56,19 +63,24 @@ import java.util.concurrent.Executors;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import my.project.moviesbox.R;
+import my.project.moviesbox.adapter.DomainListAdapter;
 import my.project.moviesbox.adapter.SettingAboutAdapter;
 import my.project.moviesbox.bean.SettingAboutBean;
+import my.project.moviesbox.contract.DomainListContract;
 import my.project.moviesbox.database.entity.TFavorite;
 import my.project.moviesbox.database.entity.THistory;
 import my.project.moviesbox.database.entity.THistoryData;
 import my.project.moviesbox.database.entity.TVideo;
 import my.project.moviesbox.database.manager.BackupsManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
+import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.enums.SettingEnum;
 import my.project.moviesbox.event.CheckUpdateEvent;
-import my.project.moviesbox.event.RefreshEvent;
+import my.project.moviesbox.event.RefreshEnum;
+import my.project.moviesbox.model.DomainListModel;
+import my.project.moviesbox.parser.bean.DomainDataBean;
 import my.project.moviesbox.parser.config.SourceEnum;
-import my.project.moviesbox.presenter.Presenter;
+import my.project.moviesbox.presenter.DomainListPresenter;
 import my.project.moviesbox.service.CheckUpdateService;
 import my.project.moviesbox.utils.DarkModeUtils;
 import my.project.moviesbox.utils.SAFUtils;
@@ -83,13 +95,13 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/1/23 19:55
   * @版本: 1.0
  */
-public class SettingFragment extends BaseFragment {
+public class SettingFragment extends BaseFragment<DomainListModel, DomainListContract.View, DomainListPresenter> implements DomainListContract.View {
     private static final int REQUEST_DOCUMENT_TREE = 10000;
     @BindView(R.id.title)
     TextView titleView;
     private View view;
     private final int source = parserInterface.getSource();
-    private String defaultPrefix;
+//    private String defaultPrefix;
     private final String[] themeItems = Utils.getArray(R.array.theme);
     @BindView(R.id.rv_list)
     RecyclerView recyclerView;
@@ -98,6 +110,9 @@ public class SettingFragment extends BaseFragment {
     private CheckUpdateEvent checkUpdateEvent;
     private HomeActivity homeActivity;
     private int adapterItemPosition;
+    private AlertDialog alertDialog;
+    private DomainListAdapter domainListAdapter;
+    private BottomSheetDialog domainListBottomSheetDialog;
 
     @Override
     protected void setConfigurationChanged() {
@@ -154,6 +169,8 @@ public class SettingFragment extends BaseFragment {
             String title = list.get(position).getTitle();
             if (title.equals(getString(R.string.setDomainTitle)))
                 setDomain(position);
+            else if (title.equals(getString(R.string.enableByPassCF)))
+                enableByPassCF(position);
             else if (title.equals(getString(R.string.enableSniffTitle)))
                 enableSniff(position);
             else if (title.equals(getString(R.string.setPlayerTitle)))
@@ -177,6 +194,19 @@ public class SettingFragment extends BaseFragment {
         });
         if (Utils.checkHasNavigationBar(getActivity())) recyclerView.setPadding(0,0,0, Utils.getNavigationBarHeight(getActivity()) + 15);
         recyclerView.setAdapter(adapter);
+
+        domainListAdapter = new DomainListAdapter(new ArrayList<>());
+        domainListAdapter.setAnimationEnable(true);
+        domainListAdapter.setAdapterAnimation(new AlphaInAnimation());
+        domainListAdapter.setEmptyView(rvView);
+        domainListAdapter.setOnItemClickListener((adapter, view, position) -> {
+            DomainDataBean.Domain domain = (DomainDataBean.Domain) adapter.getData().get(position);
+            String url = domain.getUrl();
+            if (!Utils.isNullOrEmpty(url))
+                setDomain(domain.getUrl());
+            else
+                application.showToastMsg("错误：链接为空", DialogXTipEnum.ERROR);
+        });
     }
 
     private void setDataSubTitle(int position, String data) {
@@ -193,12 +223,12 @@ public class SettingFragment extends BaseFragment {
      */
     public void setDomain(int dataPosition) {
         String defaultDomain = parserInterface.getDefaultDomain();
-        AlertDialog alertDialog;
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(), R.style.DialogStyle);
         builder.setTitle(Html.fromHtml(getString(R.string.setDomainDialogTitle)));
         View view = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_domain, null);
         TextView websiteView = view.findViewById(R.id.website);
         String websiteReleaseHref = SourceEnum.getWebsiteReleaseBySource(source);
+        Button getDomainView = view.findViewById(R.id.getDomain);
         if (!Utils.isNullOrEmpty(websiteReleaseHref)) {
             String websiteTitle = getString(R.string.setDomainReleaseSubContent);
             StringBuilder stringBuilder = new StringBuilder();
@@ -217,14 +247,38 @@ public class SettingFragment extends BaseFragment {
             websiteView.setText(spannableString);
             websiteView.setMovementMethod(LinkMovementMethod.getInstance());
             websiteView.setVisibility(View.VISIBLE);
+            getDomainView.setVisibility(View.VISIBLE);
         }
-        AutoCompleteTextView prefixView = view.findViewById(R.id.prefix);
+        getDomainView.setOnClickListener(v -> {
+            domainListAdapter.setNewInstance(new ArrayList<>());
+            View domainListView = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_source_list, null);
+            RecyclerView sourceListRecyclerView = domainListView.findViewById(R.id.rv_list);
+
+            sourceListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+            sourceListRecyclerView.setAdapter(domainListAdapter);
+            domainListBottomSheetDialog = new BottomSheetDialog(getActivity(), R.style.BottomSheetDialogTheme);
+            domainListBottomSheetDialog.setContentView(domainListView);
+
+            // 获取 BottomSheetBehavior
+            FrameLayout bottomSheet = domainListBottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
+
+            // 设置peek height，比如设置为400像素
+            behavior.setPeekHeight(400);
+
+            domainListBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+            domainListBottomSheetDialog.show();
+            if (Utils.isNullOrEmpty(mPresenter))
+                mPresenter = new DomainListPresenter(this);
+            mPresenter.loadData();
+        });
+        /*AutoCompleteTextView prefixView = view.findViewById(R.id.prefix);
         String[] prefixArr = Utils.getArray(R.array.prefix);
         defaultPrefix = prefixArr[defaultDomain.startsWith("https") ? 1 : 0];
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), R.layout.text_list_item, prefixArr);
         prefixView.setText(adapter.getItem(defaultDomain.startsWith("https") ? 1 : 0));
         prefixView.setAdapter(adapter);
-        prefixView.setOnItemClickListener((parent, textView, position, id) -> defaultPrefix = parent.getItemAtPosition(position).toString());
+        prefixView.setOnItemClickListener((parent, textView, position, id) -> defaultPrefix = parent.getItemAtPosition(position).toString());*/
         TextInputLayout textInputLayout = view.findViewById(R.id.domain);
         textInputLayout.getEditText().addTextChangedListener(new TextWatcher() {
             @Override
@@ -242,20 +296,13 @@ public class SettingFragment extends BaseFragment {
 
             }
         });
-        textInputLayout.getEditText().setText(defaultDomain.replaceAll("https?://", ""));
+//        textInputLayout.getEditText().setText(defaultDomain.replaceAll("https?://", ""));
+        textInputLayout.getEditText().setText(defaultDomain);
         builder.setPositiveButton(getString(R.string.setDomainPositiveBtnText), (dialog, which) -> {
             String text = textInputLayout.getEditText().getText().toString();
             if (!Utils.isNullOrEmpty(text)) {
                 if (Patterns.WEB_URL.matcher(text).matches()) {
-                    if (text.endsWith("/"))
-                        text = text.substring(0, text.length() - 1);
-                    String newDomain = defaultPrefix + text;
-                    SharedPreferencesUtils.setUserSetDomain(source, newDomain);
-                    setDataSubTitle(dataPosition, newDomain);
-                    dialog.dismiss();
-                    EventBus.getDefault().post(new RefreshEvent(0));
-//                    application.showToastMsg(String.format(getString(R.string.setDomainSuccessText), newDomain));
-                    homeActivity.showBottomNavigationViewSnackbar(titleView, String.format(getString(R.string.setDomainSuccessText), newDomain), false);
+                    setDomain(text);
                 } else
                     textInputLayout.getEditText().setError(getString(R.string.setDomainErrorText2));
             }
@@ -265,11 +312,68 @@ public class SettingFragment extends BaseFragment {
         builder.setNeutralButton(getString(R.string.setDomainNeutralBtnText), (dialog, which) -> {
             SharedPreferencesUtils.setUserSetDomain(source, SourceEnum.getDomainUrlBySource(source));
             setDataSubTitle(dataPosition, SourceEnum.getDomainUrlBySource(source));
-            EventBus.getDefault().post(new RefreshEvent(0));
+            EventBus.getDefault().post(REFRESH_INDEX);
             dialog.dismiss();
         });
         builder.setCancelable(true);
         alertDialog = builder.setView(view).create();
+        alertDialog.show();
+    }
+
+    private void setDomain(String url) {
+        if (url.endsWith("/"))
+            url = url.substring(0, url.length() - 1);
+        SharedPreferencesUtils.setUserSetDomain(source, url);
+        setDataSubTitle(0, url);
+        if (!Utils.isNullOrEmpty(alertDialog))
+            alertDialog.dismiss();
+        if (!Utils.isNullOrEmpty(domainListBottomSheetDialog))
+            domainListBottomSheetDialog.dismiss();
+        EventBus.getDefault().post(REFRESH_INDEX);
+        application.showToastMsg(String.format(getString(R.string.setDomainSuccessText), url), DialogXTipEnum.SUCCESS);
+    }
+
+    /**
+     * @方法名称: enableByPassCF
+     * @方法描述: 是否开启绕过CF
+     * @日期: 2024/5/30 20:17
+     * @作者: Li Z
+     *
+     * @返回:
+     */
+    public void enableByPassCF(int position) {
+        AlertDialog alertDialog;
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(), R.style.DialogStyle);
+        builder.setTitle(list.get(position).getTitle());
+        View view = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_pass_cf, null);
+        MaterialSwitch materialSwitch = view.findViewById(R.id.enableByPassCF);
+        Slider setByPassCFTimeOutSlider = view.findViewById(R.id.setByPassCFTimeOut);
+        boolean enable = SharedPreferencesUtils.getByPassCF();
+        materialSwitch.setChecked(enable);
+        materialSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SharedPreferencesUtils.setByPassCF(isChecked);
+            setByPassCFTimeOutSlider.setEnabled(isChecked);
+        });
+        setByPassCFTimeOutSlider.setEnabled(enable);
+        setByPassCFTimeOutSlider.setValue(SharedPreferencesUtils.getByPassCFTimeout());
+        setByPassCFTimeOutSlider.addOnChangeListener((slider, value, fromUser) -> slider.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING));
+        setByPassCFTimeOutSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
+            @Override
+            public void onStartTrackingTouch(@NonNull Slider slider) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(@NonNull Slider slider) {
+                int num = Math.round(slider.getValue());
+                SharedPreferencesUtils.setByPassCFTimeout(num);
+            }
+        });
+        builder.setPositiveButton(getString(R.string.defaultPositiveBtnText), (dialog, which) -> dialog.dismiss());
+        builder.setCancelable(true);
+        alertDialog = builder.setView(view).create();
+//        alertDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        alertDialog.setOnDismissListener(dialog -> application.showToastMsg(getString(R.string.setSuccess), DialogXTipEnum.SUCCESS));
         alertDialog.show();
     }
 
@@ -313,7 +417,7 @@ public class SettingFragment extends BaseFragment {
         builder.setCancelable(true);
         alertDialog = builder.setView(view).create();
 //        alertDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        alertDialog.setOnDismissListener(dialog -> homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setSuccess), false));
+        alertDialog.setOnDismissListener(dialog -> application.showToastMsg(getString(R.string.setSuccess), DialogXTipEnum.SUCCESS));
         alertDialog.show();
     }
 
@@ -464,7 +568,7 @@ public class SettingFragment extends BaseFragment {
 //            if (removeAdTsSwitch.isChecked())
 //                SharedPreferencesUtils.setRemoveAdTsRegs(regLayout.getEditText().getText().toString());
 //            application.showToastMsg(getString(R.string.setM3u8QueueNumSuccess));
-            homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setM3u8QueueNumSuccess), false);
+            application.showToastMsg(getString(R.string.setM3u8QueueNumSuccess), DialogXTipEnum.SUCCESS);
         });
         alertDialog.show();
     }
@@ -479,7 +583,7 @@ public class SettingFragment extends BaseFragment {
     private void backups(int position) {
         if (inProgress) {
 //            application.showToastMsg(getString(R.string.setBackupsInProgress));
-            homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setBackupsInProgress), true);
+            application.showToastMsg(getString(R.string.setBackupsInProgress), DialogXTipEnum.SUCCESS);
             return;
         }
         Utils.showSingleListAlert(getActivity(), getString(R.string.setBackupsTitle), Utils.getArray(R.array.backupsItems), true, (dialogInterface, i) -> {
@@ -513,7 +617,7 @@ public class SettingFragment extends BaseFragment {
                 adapter.notifyItemChanged(position);
                 boolean success = (boolean) resultMap.get("success");
                 if (success)
-                    homeActivity.showBottomNavigationViewSnackbar(titleView, String.format(getString(R.string.setBackupsFileComplete), resultMap.get("path")), false);
+                    application.showToastMsg(String.format(getString(R.string.setBackupsFileComplete), resultMap.get("path")), DialogXTipEnum.SUCCESS);
                 else
                     SAFUtils.showUnauthorizedAlert(
                             getActivity(),
@@ -542,7 +646,7 @@ public class SettingFragment extends BaseFragment {
                 getActivity().getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 // 保存授权的目录
                 SharedPreferencesUtils.setDataSaveUri(uri.toString());
-                homeActivity.showBottomNavigationViewSnackbar(titleView, "已授权 "+ uri, false);
+                application.showToastMsg("已授权 "+ uri, DialogXTipEnum.SUCCESS);
                 createBackupsFile(adapterItemPosition);
             }
         } else if (requestCode == READ_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
@@ -554,7 +658,7 @@ public class SettingFragment extends BaseFragment {
                 } else {
                     inProgress = false;
 //                    application.showToastMsg(getString(R.string.setBackupsFileErrorMsg));
-                    homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setBackupsFileErrorMsg), true);
+                    application.showToastMsg(getString(R.string.setBackupsFileErrorMsg), DialogXTipEnum.ERROR);
                 }
             }
         }
@@ -605,7 +709,7 @@ public class SettingFragment extends BaseFragment {
                     }
                     getActivity().runOnUiThread(() -> {
 //                        application.showToastMsg(getString(R.string.setBackupsRestoredMsg));
-                        homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setBackupsRestoredMsg), false);
+                        application.showToastMsg(getString(R.string.setBackupsRestoredMsg), DialogXTipEnum.SUCCESS);
                         initData();
                         adapter.notifyDataSetChanged();
                         switch (DarkModeUtils.chooseIndex(getActivity())) {
@@ -619,22 +723,21 @@ public class SettingFragment extends BaseFragment {
                                 DarkModeUtils.applySystemMode(getActivity());
                                 break;
                         }
-                        EventBus.getDefault().post(new RefreshEvent(1));
-                        EventBus.getDefault().post(new RefreshEvent(2));
+                        EventBus.getDefault().post(REFRESH_FAVORITE);
+                        EventBus.getDefault().post(REFRESH_HISTORY);
                     });
                 } else {
                     getActivity().runOnUiThread(() -> {
                         adapter.notifyItemChanged(BACKUPS_POSITION);
 //                        application.showToastMsg(getString(R.string.setBackupsFileErrorMsg));
-                        homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setBackupsFileErrorMsg), true);
+                        application.showToastMsg(getString(R.string.setBackupsFileErrorMsg), DialogXTipEnum.ERROR);
                     });
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 getActivity().runOnUiThread(() -> {
                     adapter.notifyItemChanged(BACKUPS_POSITION);
-//                    application.showToastMsg(e.getMessage());
-                    homeActivity.showBottomNavigationViewSnackbar(titleView, e.getMessage(), true);
+                    application.showToastMsg(e.getMessage(), DialogXTipEnum.ERROR);
                 });
             }
             inProgress = false;
@@ -657,18 +760,18 @@ public class SettingFragment extends BaseFragment {
                 getString(R.string.defaultNegativeBtnText),
                 getString(R.string.setRemoveDownloadsNeutralTitle),
                 (dialogInterface, i) -> {
-                    EventBus.getDefault().post(new RefreshEvent(99));
+//                    EventBus.getDefault().post(new RefreshEnum(99));
                     Aria.download(this).removeAllTask(false);
                     TDownloadManager.deleteAllDownloads();
-                    EventBus.getDefault().post(new RefreshEvent(3));
+                    EventBus.getDefault().post(REFRESH_DOWNLOAD);
 //                    application.showToastMsg(getString(R.string.setRemoveDownloadsSuccess));
-                    homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setRemoveDownloadsSuccess), false);
+                    application.showToastMsg(getString(R.string.setRemoveDownloadsSuccess), DialogXTipEnum.SUCCESS);
                     dialogInterface.dismiss();
                 },
                 (dialogInterface, i) -> dialogInterface.dismiss(),
                 (dialogInterface, i) -> {
                     Aria.download(this).removeAllTask(false);
-                    homeActivity.showBottomNavigationViewSnackbar(titleView, getString(R.string.setRemoveDownloadsNeutralSuccess), false);
+                    application.showToastMsg(getString(R.string.setRemoveDownloadsNeutralSuccess), DialogXTipEnum.SUCCESS);
                     dialogInterface.dismiss();
                 });
     }
@@ -697,31 +800,43 @@ public class SettingFragment extends BaseFragment {
     }
 
     @Override
-    protected Presenter createPresenter() {
+    protected DomainListPresenter createPresenter() {
         return null;
     }
 
     @Override
     protected void loadData() {
-
+        if (!Utils.isNullOrEmpty(mPresenter))
+            mPresenter.loadData();
     }
 
     @Override
     protected void retryListener() {
-
+        if (Utils.isNullOrEmpty(mPresenter))
+            mPresenter = new DomainListPresenter(this);
+        mPresenter.loadData();
     }
 
     @Override
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onEvent(RefreshEvent refresh) {
-
+    public void onEvent(RefreshEnum refresh) {
+        switch (refresh) {
+            case REFRESH_PLAYER_KERNEL:
+                for (SettingAboutBean bean : list) {
+                    if (bean.getTitle().equals(getString(R.string.setPlayerKernelTitle))) {
+                        String[] items = (String[]) bean.getOption();
+                        setDataSubTitle(position, items[SharedPreferencesUtils.getUserSetPlayerKernel()]);
+                        break;
+                    }
+                }
+                break;
+        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onCheckUpdateEvent(CheckUpdateEvent checkUpdateEvent) {
         this.checkUpdateEvent = checkUpdateEvent;
-//        application.showToastMsg(checkUpdateEvent.getMsg());
-        homeActivity.showBottomNavigationViewSnackbar(titleView, checkUpdateEvent.getMsg(), false);
+        application.showToastMsg(checkUpdateEvent.getMsg(), DialogXTipEnum.DEFAULT);
         for (int i=0,size=list.size(); i<size; i++) {
             if (list.get(i).getTitle().equals(getString(R.string.currentVersionTitle))) {
                 if (checkUpdateEvent.isHasUpdate())
@@ -730,5 +845,47 @@ public class SettingFragment extends BaseFragment {
                 break;
             }
         }
+    }
+
+    /**
+     * @return
+     * @方法名称: loadingView
+     * @方法描述: 用于显示加载中视图
+     * @日期: 2024/1/22 19:52
+     * @作者: Li Z
+     */
+    @Override
+    public void loadingView() {
+        rvLoading();
+    }
+
+    /**
+     * @param msg 错误文本信息
+     * @return
+     * @方法名称: errorView
+     * @方法描述: 用于显示加载失败视图
+     * @日期: 2024/1/22 19:52
+     * @作者: Li Z
+     */
+    @Override
+    public void errorView(String msg) {
+        getActivity().runOnUiThread(() -> rvError(msg));
+    }
+
+    /**
+     * @return
+     * @方法名称: emptyView
+     * @方法描述: 用于显示空数据视图
+     * @日期: 2024/1/22 19:52
+     * @作者: Li Z
+     */
+    @Override
+    public void emptyView() {
+
+    }
+
+    @Override
+    public void success(List<DomainDataBean.Domain> domainList) {
+        getActivity().runOnUiThread(() -> domainListAdapter.setNewInstance(domainList));
     }
 }

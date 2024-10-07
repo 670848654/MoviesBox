@@ -23,17 +23,17 @@ public interface ClassificationVodListContract {
         void successClassList(List<ClassificationDataBean> classificationDataBeans);
         void errorClassList(String msg);
         void emptyClassList();
-        void successVodList(boolean firstTimeData, VodDataBean vodDataBean, int pageCount);
+        void successVodList(boolean firstTimeData, List<VodDataBean> vodDataBeans, int pageCount);
         void errorVodList(boolean firstTimeData, String msg);
-        void emptyVodList(String msg);
+        void emptyVodList(boolean firstTimeData, String msg);
     }
 
     interface LoadDataCallback extends BaseLoadDataCallback {
         void successClassList(List<ClassificationDataBean> classificationDataBeans);
         void errorClassList(String msg);
         void emptyClassList();
-        void successVodList(boolean firstTimeData, VodDataBean vodDataBean, int pageCount);
+        void successVodList(boolean firstTimeData, List<VodDataBean> vodDataBeans, int pageCount);
         void errorVodList(boolean firstTimeData, String msg);
-        void emptyVodList(String msg);
+        void emptyVodList(boolean firstTimeData, String msg);
     }
 }

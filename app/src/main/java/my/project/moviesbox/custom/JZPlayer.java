@@ -24,6 +24,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -46,7 +47,10 @@ import master.flame.danmaku.ui.widget.DanmakuView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.config.LocalVideoDLNAServer;
-import my.project.moviesbox.parser.config.SourceEnum;
+import my.project.moviesbox.enums.DialogXTipEnum;
+import my.project.moviesbox.parser.LogUtil;
+import my.project.moviesbox.parser.parserService.ParserInterface;
+import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.UpnpActivity;
@@ -61,8 +65,7 @@ import my.project.moviesbox.view.UpnpActivity;
  */
 public class JZPlayer extends JzvdStd {
     float starX, startY;
-    private Activity activity;
-    private Context context;
+    private Activity context;
     private CompleteListener listener;
     private TouchListener touchListener;
     private ShowOrHideChangeViewListener showOrHideChangeViewListener;
@@ -71,10 +74,11 @@ public class JZPlayer extends JzvdStd {
     private PauseListener pauseListener;
     private OnQueryDanmuListener onQueryDanmuListener; // 手动查询弹幕点击监听 删除
     private ActivityOrientationListener activityOrientationListener;
+//    private LoadingIndicator loadingView;
     private ImageView leftBLock, rightBlock;
     private boolean locked = false;
     public ImageView fastForward, quickRetreat;
-    public TextView openDrama, preVideo, nextVideo, displayView, tvSpeedView, selectDramaView; // queryDanmuView 手动查询弹幕View 删除
+    public TextView openDrama, preVideo, nextVideo, displayView, tvSpeedView, selectDramaView, changePlayerKernel; // queryDanmuView 手动查询弹幕View 删除
     public Button pipView, airplayView, configView;
     public int currentSpeedIndex = 1;
     public float speedRet = 1.0f;
@@ -86,7 +90,7 @@ public class JZPlayer extends JzvdStd {
     private RelativeLayout longPressBgView;
     private boolean isLongClick = false;
     // 弹幕
-    public boolean openDamuConfig;
+    public boolean openDamuConfig; // 是否开启弹幕
     public boolean hasDanmuConfig; // 站点是否支持弹幕
     public DanmakuView danmakuView;
     public DanmakuContext danmakuContext;
@@ -97,6 +101,7 @@ public class JZPlayer extends JzvdStd {
     public boolean open_danmu = true;
     public boolean loadError = false;
     private String[] speeds = Utils.getArray(R.array.speed_item);
+    private ParserInterface parserInterface = ParserInterfaceFactory.getParserInterface();
 
     public JZPlayer(Context context) { super(context); }
 
@@ -104,12 +109,11 @@ public class JZPlayer extends JzvdStd {
         super(context, attrs);
     }
 
-    public void setListener(Activity activity, Context context, CompleteListener listener,
+    public void setListener(Activity activity, CompleteListener listener,
                             TouchListener touchListener, ShowOrHideChangeViewListener showOrHideChangeViewListener,
                             OnProgressListener onProgressListener, PlayingListener playingListener, PauseListener pauseListener,
                             OnQueryDanmuListener onQueryDanmuListener, ActivityOrientationListener activityOrientationListener) {
-        this.activity = activity;
-        this.context = context;
+        this.context = activity;
         this.listener = listener;
         this.touchListener = touchListener;
         this.onProgressListener = onProgressListener;
@@ -130,6 +134,7 @@ public class JZPlayer extends JzvdStd {
         super.init(context);
         backButton.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
         // 获取自定义添加的控件
+//        loadingView = findViewById(R.id.progress);
         leftBLock = findViewById(R.id.left_lock);
         leftBLock.setOnClickListener(this);
         rightBlock = findViewById(R.id.right_lock);
@@ -143,7 +148,7 @@ public class JZPlayer extends JzvdStd {
         tvSpeedView.setOnClickListener(this);
         airplayView = findViewById(R.id.airplay);
         airplayView.setOnClickListener(this);
-//        snifferBtn = findViewById(R.id.sniffer_btn);
+        changePlayerKernel = findViewById(R.id.change_player_kernel);
         openDrama = findViewById(R.id.open_drama_list);
         preVideo = findViewById(R.id.pre_video);
         nextVideo = findViewById(R.id.next_video);
@@ -158,8 +163,6 @@ public class JZPlayer extends JzvdStd {
         queryDanmuView.setOnClickListener(this);*/
         // 弹幕相关
         // queryDanmuView.setVisibility(INVISIBLE);
-        openDamuConfig = SharedPreferencesUtils.getUserSetOpenDanmu();
-        hasDanmuConfig = SourceEnum.hasDanmuConfigBySource(SharedPreferencesUtils.getDefaultSource()); // 站点是否支持弹幕
         danmuView.setVisibility(openDamuConfig && hasDanmuConfig ? VISIBLE : INVISIBLE);
         danmuInfoView.setVisibility(openDamuConfig && hasDanmuConfig ? VISIBLE : INVISIBLE);
         danmakuView = findViewById(R.id.jz_danmu);
@@ -219,13 +222,13 @@ public class JZPlayer extends JzvdStd {
                     changeUiToPlayingShow();
                     leftBLock.setImageResource(R.drawable.player_btn_locking);
                     rightBlock.setImageResource(R.drawable.player_btn_locking);
-                    App.getInstance().showToastMsg(Utils.getString(R.string.turnOffScreenLock));
+                    App.getInstance().showToastMsg(Utils.getString(R.string.turnOffScreenLock), DialogXTipEnum.DEFAULT);
                 } else {
                     // 上锁
                     changeUiToPlayingClear();
                     leftBLock.setImageResource(R.drawable.player_btn_locking_pre);
                     rightBlock.setImageResource(R.drawable.player_btn_locking_pre);
-                    App.getInstance().showToastMsg(Utils.getString(R.string.turnOnScreenLock));
+                    App.getInstance().showToastMsg(Utils.getString(R.string.turnOnScreenLock), DialogXTipEnum.DEFAULT);
                 }
                 locked = !locked;
                 break;
@@ -258,7 +261,7 @@ public class JZPlayer extends JzvdStd {
                 break;
             case R.id.airplay:
                 if (!Utils.isWifi(context)) {
-                    App.getInstance().showToastMsg(Utils.getString(R.string.castScreenNeedWlan));
+                    App.getInstance().showToastMsg(Utils.getString(R.string.castScreenNeedWlan), DialogXTipEnum.ERROR);
                     return;
                 }
                 if (isLocalVideo) {
@@ -408,6 +411,19 @@ public class JZPlayer extends JzvdStd {
         return null;
     }
 
+    @Override
+    public void setAllControlsVisiblity(int topCon, int bottomCon, int startBtn, int loadingPro, int posterImg, int bottomPro, int retryLayout) {
+//        super.setAllControlsVisiblity(topCon, bottomCon, startBtn, loadingPro, posterImg, bottomPro, retryLayout);
+        topContainer.setVisibility(topCon);
+        bottomContainer.setVisibility(bottomCon);
+        startButton.setVisibility(startBtn);
+        loadingProgressBar.setVisibility(loadingPro);
+//        loadingView.setVisibility(loadingPro);
+        posterImageView.setVisibility(posterImg);
+        bottomProgressBar.setVisibility(bottomPro);
+        mRetryLayout.setVisibility(retryLayout);
+    }
+
     //这里是播放的时候点击屏幕出现的UI
     @Override
     public void changeUiToPlayingShow() {
@@ -523,7 +539,6 @@ public class JZPlayer extends JzvdStd {
         airplayView.setVisibility(INVISIBLE);
         preVideo.setVisibility(INVISIBLE);
         nextVideo.setVisibility(INVISIBLE);
-        playingListener.playing();
         loadError = false;
         if (danmakuView != null && danmakuView.isPrepared()) {
             danmakuView.resume();
@@ -697,6 +712,8 @@ public class JZPlayer extends JzvdStd {
     @Override
     public void setUp(JZDataSource jzDataSource, int screen, Class mediaInterfaceClass) {
         super.setUp(jzDataSource, screen, mediaInterfaceClass);
+        jzDataSource.headerMap = parserInterface.setPlayerHeaders();
+        LogUtil.logInfo("setUp", JSONObject.toJSONString(jzDataSource.headerMap));
         batteryTimeLayout.setVisibility(GONE);
     }
 
@@ -716,7 +733,7 @@ public class JZPlayer extends JzvdStd {
     @Override
     public void onStatePlaying() {
         super.onStatePlaying();
-//        playingListener.playing();
+        playingListener.playing();
         loadError = false;
         if (danmakuView != null && danmakuView.isPrepared()) {
             danmakuView.resume();

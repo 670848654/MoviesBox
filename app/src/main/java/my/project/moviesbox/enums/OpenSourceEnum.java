@@ -38,7 +38,8 @@ public enum OpenSourceEnum {
     ARIA("Aria", "AriaLyy", "下载可以很简单，aria.laoyuyu.me/aria_doc/", "https://github.com/AriaLyy/Aria"),
     NANOHTTPD("nanohttpd", "NanoHttpd", "Tiny, easily embeddable HTTP server in Java.", "https://github.com/NanoHttpd/nanohttpd"),
     DANMAKU_FLAME_MASTER("DanmakuFlameMaster", "bilibili", "Android开源弹幕引擎·烈焰弹幕使 ～", "https://github.com/bilibili/DanmakuFlameMaster"),
-    MOBILE_FFMPEG("mobile-ffmpeg", "tanersener", "FFmpeg for Android, iOS and tvOS. Not maintained anymore. Superseded by FFmpegKit.", "https://github.com/tanersener/mobile-ffmpeg");
+    MOBILE_FFMPEG("mobile-ffmpeg", "tanersener", "FFmpeg for Android, iOS and tvOS. Not maintained anymore. Superseded by FFmpegKit.", "https://github.com/tanersener/mobile-ffmpeg"),
+    DIALOG_X("DialogX", "kongzue", "\uD83D\uDCAC DialogX dialog box component library, easy to use, more customizable, more scalable, easy to achieve a variety of dialog boxes. DialogX对话框组件库，更加方便易用，可自定义程度更高，扩展性更强，轻松实现各种对话框、菜单和提示效果，更有Material You、iOS、MIUI等主题扩展可选", "https://github.com/kongzue/DialogX");
 
     private String title;
     private String author;

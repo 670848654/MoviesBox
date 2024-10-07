@@ -1,5 +1,7 @@
 package my.project.moviesbox.view;
 
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_PLAYER_KERNEL;
+
 import android.app.PictureInPictureParams;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -7,35 +9,59 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.TypedValue;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
+import org.greenrobot.eventbus.EventBus;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 
 import butterknife.BindView;
 import butterknife.OnClick;
 import cn.jzvd.Jzvd;
+import master.flame.danmaku.danmaku.loader.ILoader;
+import master.flame.danmaku.danmaku.loader.IllegalDataException;
+import master.flame.danmaku.danmaku.loader.android.DanmakuLoaderFactory;
+import master.flame.danmaku.danmaku.model.android.Danmakus;
+import master.flame.danmaku.danmaku.parser.BaseDanmakuParser;
+import master.flame.danmaku.danmaku.parser.IDataSource;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.VipVideoAdapter;
+import my.project.moviesbox.application.App;
 import my.project.moviesbox.config.JZExoPlayer;
+import my.project.moviesbox.config.JZMediaIjk;
+import my.project.moviesbox.contract.DanmuContract;
 import my.project.moviesbox.contract.ParsingInterfacesContract;
 import my.project.moviesbox.custom.AutoLineFeedLayoutManager;
+import my.project.moviesbox.custom.DanmakuJsonParser;
+import my.project.moviesbox.custom.DanmukuXmlParser;
 import my.project.moviesbox.custom.JZPlayer;
+import my.project.moviesbox.enums.DialogXTipEnum;
+import my.project.moviesbox.model.ParsingInterfacesModel;
+import my.project.moviesbox.parser.LogUtil;
+import my.project.moviesbox.parser.bean.DanmuDataBean;
 import my.project.moviesbox.parser.bean.VipVideoDataBean;
+import my.project.moviesbox.presenter.DanmuPresenter;
 import my.project.moviesbox.presenter.ParsingInterfacesPresenter;
 import my.project.moviesbox.service.DLNAService;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
@@ -50,9 +76,15 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/23 15:38
   * @版本: 1.0
  */
-public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInterfacesContract.View, ParsingInterfacesPresenter> implements
+public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInterfacesModel, ParsingInterfacesContract.View, ParsingInterfacesPresenter> implements
         JZPlayer.CompleteListener, JZPlayer.TouchListener,
-        JZPlayer.ShowOrHideChangeViewListener,  JZPlayer.OnProgressListener, JZPlayer.PlayingListener, JZPlayer.PauseListener, JZPlayer.OnQueryDanmuListener, JZPlayer.ActivityOrientationListener, ParsingInterfacesContract.View {
+        JZPlayer.ShowOrHideChangeViewListener, JZPlayer.OnProgressListener, JZPlayer.PlayingListener,
+        JZPlayer.PauseListener, JZPlayer.OnQueryDanmuListener, JZPlayer.ActivityOrientationListener, ParsingInterfacesContract.View,
+        DanmuContract.View {
+    @BindView(R.id.episodes_view)
+    LinearLayout episodesView;
+    @BindView(R.id.config_view)
+    LinearLayout configView;
     @BindView(R.id.player)
     JZPlayer player;
     protected String videoTitle, dramaTitle, url;
@@ -77,18 +109,26 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     protected int[] speedsIntItems = Utils.getIntArray(R.array.fast_forward_set_item);
     protected int userSpeed = 2;
 
-    private AlertDialog alertDialog;
     private List<VipVideoDataBean.DramasItem> dramasItems = new ArrayList<>();
+
+    protected DanmuPresenter danmuPresenter = new DanmuPresenter(this);
 
     @Override
     protected ParsingInterfacesPresenter createPresenter() {
-        return new ParsingInterfacesPresenter(url, this);
+        return new ParsingInterfacesPresenter(this);
     }
 
     @Override
     protected void loadData() {
-        if (url.endsWith("html"))
-            mPresenter.parser();
+        if (url.contains("?url")) {
+            // 需要二次解析
+            Matcher matcher = VipParsingInterfacesActivity.URL_PATTERN.matcher(url);
+            if (matcher.find()) {
+                url = matcher.group();
+                mPresenter.parser(url);
+            } else
+                mPresenter.parser(url);
+        }
         else
             play(url);
     }
@@ -132,12 +172,8 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
 
     }
 
-    protected void setActivityName() {
-        application.addDestoryActivity(this, "player");
-    }
-
-
     private void initPlayerView() {
+        App.addDestroyActivity(this, "player");
         if (dramasItems.size() == 0)
             player.selectDramaView.setVisibility(View.GONE);
         otherView.setVisibility(View.GONE);
@@ -147,7 +183,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
                 drawerLayout.closeDrawer(GravityCompat.START);
             else drawerLayout.openDrawer(GravityCompat.START);
         });
-        player.setListener(this, this, this, this, this, this, this, this, this, this);
+        player.setListener(this, this, this, this, this, this, this, this, this);
         player.backButton.setOnClickListener(v -> {
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
             finish();
@@ -162,6 +198,25 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
             changePlayUrl(clickIndex);
         });
+        player.changePlayerKernel.setOnClickListener(v -> {
+            // 切换播放器内核
+            int userSetPlayerKernel = SharedPreferencesUtils.getUserSetPlayerKernel();
+            switch (userSetPlayerKernel) {
+                case 0:
+                    // EXO 切换至 IJK
+                    SharedPreferencesUtils.setUserSetPlayerKernel(1);
+                    player.setMediaInterface(JZMediaIjk.class);
+                    application.showToastMsg("已切换至IjkPlayer内核", DialogXTipEnum.SUCCESS);
+                    break;
+                case 1:
+                    // IJK 切换至 EXO
+                    SharedPreferencesUtils.setUserSetPlayerKernel(0);
+                    player.setMediaInterface(JZExoPlayer.class);
+                    application.showToastMsg("已切换至ExoPlayer内核", DialogXTipEnum.SUCCESS);
+                    break;
+            }
+            EventBus.getDefault().post(REFRESH_PLAYER_KERNEL);
+        });
         if (gtSdk23()) player.tvSpeedView.setVisibility(View.VISIBLE);
         else player.tvSpeedView.setVisibility(View.GONE);
         player.selectDramaView.setOnClickListener(view -> {
@@ -172,6 +227,11 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
         player.pipView.setOnClickListener(view -> {
             if (gtSdk26()) startPic();
         });
+        // 默认显示弹幕属性
+        player.openDamuConfig = true;
+        player.hasDanmuConfig = true;
+        player.danmuView.setVisibility(View.VISIBLE);
+        player.danmuInfoView.setVisibility(View.VISIBLE);
         Jzvd.FULLSCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
         Jzvd.NORMAL_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
         player.playingShow();
@@ -187,6 +247,14 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
         player.setUp(playUrl, videoTitle + " - " + dramaTitle, Jzvd.SCREEN_FULLSCREEN, JZExoPlayer.class);
         player.startVideo();
         player.startButton.performClick();//响应点击事件
+    }
+
+
+    /**
+     * 获取弹幕
+     */
+    private void getDanmu(String danmuUrl) {
+        danmuPresenter.loadVipDanmu(danmuUrl);
     }
 
     private void initNavConfigView() {
@@ -381,7 +449,12 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     protected void onDestroy() {
         stopService(new Intent(this, DLNAService.class));
         player.releaseDanMu();
-        player.releaseAllVideos();
+        Jzvd.releaseAllVideos();
+        player.danmakuView = null;
+        if (danmuPresenter != null)
+            danmuPresenter.detachView();
+        App.removeDestroyActivity("player");
+        emptyRecyclerView(recyclerView);
         super.onDestroy();
     }
 
@@ -458,6 +531,9 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
                     String aes_iv = jsonObject.getString("aes_iv");
                     String videoUrl = VipParsingInterfacesActivity.getData(aes_iv, aes_key, jsonObject.getString("url"));
                     play(videoUrl);
+                    // 弹幕URL
+                    String danmuUrl = jsonObject.getString("ggdmapi");
+                    getDanmu(danmuUrl);
                 } else
                     Utils.showAlert(this,
                             getString(R.string.errorDialogTitle),
@@ -498,12 +574,12 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     @Override
     public void complete() {
         if (hasNextVideo && playNextVideo) {
-            application.showToastMsg("开始播放下一集");
+            application.showToastMsg("开始播放下一集", DialogXTipEnum.DEFAULT);
             clickIndex++;
             changePlayUrl(clickIndex);
         } else {
             player.releaseDanMu();
-            application.showToastMsg("全部播放完毕");
+            application.showToastMsg("全部播放完毕", DialogXTipEnum.SUCCESS);
             if (dramasItems.size() == 0) return;
             if (!drawerLayout.isDrawerOpen(GravityCompat.END))
                 drawerLayout.openDrawer(GravityCompat.END);
@@ -512,7 +588,8 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
 
     @Override
     public void showOrHideChangeView() {
-
+        player.preVideo.setVisibility(hasPreVideo ? View.VISIBLE : View.GONE);
+        player.nextVideo.setVisibility(hasNextVideo ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -529,7 +606,85 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     public void setOrientation(int type) {
         Handler handler = new Handler();
         handler.postDelayed(() -> {
-            setRequestedOrientation(type);
+            this.setRequestedOrientation(type);
+            ViewGroup.LayoutParams episodesViewLayoutParams = episodesView.getLayoutParams();
+            ViewGroup.LayoutParams configViewLayoutParams = configView.getLayoutParams();
+            int widthInDp = 0;
+            switch (type) {
+                case ActivityInfo.SCREEN_ORIENTATION_PORTRAIT:
+                    widthInDp = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Utils.isPad() ? 150 * 2: 200, getResources().getDisplayMetrics());
+                    break;
+                case ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE:
+                    widthInDp = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,  Utils.isPad() ? 250 * 2 : 400, getResources().getDisplayMetrics());
+                    break;
+            }
+            episodesViewLayoutParams.width = widthInDp;
+            episodesView.setLayoutParams(episodesViewLayoutParams);
+            configViewLayoutParams.width = widthInDp;
+            configView.setLayoutParams(configViewLayoutParams);
         }, 500);
+    }
+
+    private BaseDanmakuParser createParser(boolean json, InputStream stream) {
+        if (stream == null) {
+            return new BaseDanmakuParser() {
+
+                @Override
+                protected Danmakus parse() {
+                    return new Danmakus();
+                }
+            };
+        }
+        ILoader loader = DanmakuLoaderFactory.create(json ? DanmakuLoaderFactory.TAG_ACFUN : DanmakuLoaderFactory.TAG_BILI);
+        try {
+            loader.load(stream);
+        } catch (IllegalDataException e) {
+            e.printStackTrace();
+        }
+        BaseDanmakuParser parser = json ? new DanmakuJsonParser() : new DanmukuXmlParser();
+        IDataSource<?> dataSource = loader.getDataSource();
+        parser.load(dataSource);
+        return parser;
+    }
+
+    @Override
+    public void successDanmuJson(List<DanmuDataBean> danmuDataBeanList) {
+        if (isFinishing()) return;
+        runOnUiThread(() -> {
+            // JSON格式弹幕信息解析示例
+            if (player.loadError) return;
+            try {
+                player.danmuInfoView.setText("已加载"+ danmuDataBeanList.size() + "条弹幕");
+                player.danmuInfoView.setVisibility(View.VISIBLE);
+                String json = JSON.toJSONString(danmuDataBeanList);
+                LogUtil.logInfo("弹幕信息", json);
+                InputStream result = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+                player.danmakuParser = createParser(true, result);
+                player.createDanmu();
+                if (player.danmakuView.isPrepared()) {
+                    player.danmakuView.restart();
+                }
+                player.danmakuView.prepare(player.danmakuParser, player.danmakuContext);
+                if (player.seekToInAdvance > 0) {
+                    new Handler().postDelayed(() -> {
+                        // 一秒后定位弹幕时间为用户上次观看位置
+                        player.seekDanmu(player.seekToInAdvance);
+                    }, 1000);
+                }
+            } catch (Exception e) {
+                application.showToastMsg(e.getMessage(), DialogXTipEnum.ERROR);
+            }
+        });
+    }
+
+    @Override
+    public void successDanmuXml(String content) {
+
+    }
+
+    @Override
+    public void errorDanmu(String msg) {
+        if (isFinishing()) return;
+        runOnUiThread(() -> application.showToastMsg(msg, DialogXTipEnum.ERROR));
     }
 }

@@ -1,5 +1,7 @@
 package my.project.moviesbox.view;
 
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_DOWNLOAD;
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_TAB_COUNT;
 import static my.project.moviesbox.utils.Utils.DOWNLOAD_SAVE_PATH;
 import static my.project.moviesbox.utils.Utils.getArray;
 
@@ -11,7 +13,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Html;
-import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -24,6 +25,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.arialyy.annotations.Download;
 import com.arialyy.aria.core.Aria;
+import com.arialyy.aria.core.common.HttpOption;
 import com.arialyy.aria.core.download.DownloadEntity;
 import com.arialyy.aria.core.task.DownloadTask;
 
@@ -34,6 +36,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -49,9 +52,11 @@ import my.project.moviesbox.database.entity.TDownloadWithFields;
 import my.project.moviesbox.database.manager.TDownloadDataManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.database.manager.TVideoManager;
+import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.event.DownloadEvent;
+import my.project.moviesbox.event.DownloadStateEvent;
 import my.project.moviesbox.event.RefreshDownloadEvent;
-import my.project.moviesbox.event.RefreshEvent;
+import my.project.moviesbox.model.DownloadModel;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.DownloadPresenter;
 import my.project.moviesbox.service.DownloadService;
@@ -67,7 +72,7 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:10
   * @版本: 1.0
  */
-public class DownloadDataActivity extends BaseActivity<DownloadContract.View, DownloadPresenter> implements DownloadContract.View {
+public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadContract.View, DownloadPresenter> implements DownloadContract.View {
     private static final int REQUEST_DOCUMENT_TREE = 10000;
     @BindView(R.id.rv_list)
     RecyclerView mRecyclerView;
@@ -87,18 +92,19 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
     private static final String[] COMPLETE_STR = getArray(R.array.completeItems);
     private static final String[] COMPLETE_EXPORT_STR = getArray(R.array.completeExportItems);
     private static final String[] DOWNLOAD_ERROR_STR = getArray(R.array.downloadErrorItems);
-    private File downloadDir;
+    private File downloadDirOld;
+    private File downloadDirNew;
     private ExecutorService executorService;
 
     @Override
     protected DownloadPresenter createPresenter() {
-        return new DownloadPresenter(downloadId, downloadDataBeans.size(), limit, this);
+        return new DownloadPresenter(this);
     }
 
     @Override
     protected void loadData() {
         downloadDataCount = TDownloadDataManager.queryDownloadDataCount(downloadId);
-        mPresenter.loadDownloadDataList(true);
+        mPresenter.loadDownloadDataList(isMain, downloadId, downloadDataBeans.size(), limit);
     }
 
     @Override
@@ -114,20 +120,10 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
         Bundle bundle = getIntent().getExtras();
         downloadId = bundle.getString("downloadId");
         vodTitle = bundle.getString("vodTitle");
-        initToolbar();
+        setToolbar(toolbar, vodTitle, "");
         initSwipe();
         initFab();
         initAdapter();
-    }
-
-    private void initToolbar() {
-        toolbar.setTitle(vodTitle);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(view -> {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            finish();
-        });
     }
 
     private void initSwipe() {
@@ -139,6 +135,10 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
     }
 
     private void initAdapter() {
+        HttpOption httpOption = new HttpOption();
+        HashMap<String, String> headerMap = parserInterface.setPlayerHeaders();
+        if (!headerMap.isEmpty())
+            httpOption.addHeaders(headerMap);
         adapter = new DownloadDataAdapter(this, downloadDataBeans);
         setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
@@ -155,13 +155,13 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
                                 if (!Utils.isNullOrEmpty(downloadEntity)) {
                                     boolean isM3u8 = downloadEntity.getUrl().contains("m3u8");
                                     if (isM3u8)
-                                        Aria.download(this).load(taskId).m3u8VodOption(new M3U8DownloadConfig().setM3U8Option()).ignoreCheckPermissions().resume();
+                                        Aria.download(this).load(taskId).option(httpOption).m3u8VodOption(new M3U8DownloadConfig().setM3U8Option()).ignoreCheckPermissions().resume();
                                     else
-                                        Aria.download(this).load(taskId).ignoreCheckPermissions().resume();
+                                        Aria.download(this).load(taskId).option(httpOption).ignoreCheckPermissions().resume();
                                     downloadDataBeans.get(position).getTDownloadData().setComplete(0);
                                     startService(new Intent(this, DownloadService.class));
                                 } else
-                                    application.showToastMsg(getString(R.string.taskDoesNotExist));
+                                    application.showToastMsg(getString(R.string.taskDoesNotExist), DialogXTipEnum.ERROR);
                                 break;
                             case 1:
                                 // 暂停任务
@@ -171,7 +171,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
                                     adapter.notifyItemChanged(position);
                                     stopService(new Intent(this, DownloadService.class));
                                 } else
-                                    application.showToastMsg(getString(R.string.taskDoesNotExist));
+                                    application.showToastMsg(getString(R.string.taskDoesNotExist), DialogXTipEnum.ERROR);
                                 break;
                             case 2:
                                 // 删除任务
@@ -195,11 +195,11 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
                                     break;
                                 case 2:
                                     if (SAFUtils.checkHasSetDataSaveUri()) {
-                                        application.showSnackbarMsg(toolbar, videoNumber + " 开始执行导出，请稍后...");
+                                        application.showToastMsg(videoNumber + " 开始执行导出，请稍后...", DialogXTipEnum.DEFAULT);
                                         executorService.submit(() -> {
                                             SAFUtils.copyConfigFileToSAF(DownloadDataActivity.this, savePath, "video/mp4", false);
                                             Handler uiThread = new Handler(Looper.getMainLooper());
-                                            uiThread.post(() -> application.showSnackbarMsg(toolbar, videoNumber + " 已导出到 "  + SAFUtils.getUriDirectoryName()));
+                                            uiThread.post(() -> application.showToastMsg(videoNumber + " 已导出到 "  + SAFUtils.getUriDirectoryName(), DialogXTipEnum.SUCCESS));
                                         });
                                     } else
                                         SAFUtils.showUnauthorizedAlert(
@@ -238,14 +238,14 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
                                 if (!Utils.isNullOrEmpty(downloadEntity)) {
                                     boolean isM3u8 = downloadEntity.getUrl().contains("m3u8");
                                     if (isM3u8)
-                                        Aria.download(this).load(taskId).m3u8VodOption(new M3U8DownloadConfig().setM3U8Option()).ignoreCheckPermissions().resume();
+                                        Aria.download(this).load(taskId).option(httpOption).m3u8VodOption(new M3U8DownloadConfig().setM3U8Option()).ignoreCheckPermissions().resume();
                                     else
-                                        Aria.download(this).load(taskId).ignoreCheckPermissions().resume();
+                                        Aria.download(this).load(taskId).option(httpOption).ignoreCheckPermissions().resume();
                                     downloadDataBeans.get(position).getTDownloadData().setComplete(0);
-                                    TDownloadDataManager.updateDownloadState(taskId);
+                                    TDownloadDataManager.updateDownloadState(0, taskId);
                                     startService(new Intent(this, DownloadService.class));
                                 } else
-                                    application.showToastMsg(getString(R.string.taskDoesNotExist));
+                                    application.showToastMsg(getString(R.string.taskDoesNotExist), DialogXTipEnum.ERROR);
                                 break;
                             case 1:
                                 showDeleteDataDialog(downloadDataBeans.get(position), position);
@@ -266,8 +266,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
                 if (isErr) {
                     //成功获取更多数据
                     isMain = false;
-                    mPresenter = createPresenter();
-                    mPresenter.loadDownloadDataList(false);
+                    loadData();
                 } else {
                     //获取更多数据失败
                     isErr = true;
@@ -281,7 +280,8 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
 
     private void playLocalVideo(int position) {
         Bundle bundle = new Bundle();
-        bundle.putString("localFilePath",  downloadDataBeans.get(position).getTDownloadData().getSavePath());
+//        bundle.putString("localFilePath", encodeURL(downloadDataBeans.get(position).getTDownloadData().getSavePath()));
+        bundle.putString("localFilePath", downloadDataBeans.get(position).getTDownloadData().getSavePath());
         bundle.putString("vodTitle", vodTitle);
         bundle.putString("dramaTitle", downloadDataBeans.get(position).getTDownloadData().getVideoNumber());
         bundle.putSerializable("downloadDataBeans", (Serializable) downloadDataBeans);
@@ -318,7 +318,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
                 getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 // 保存授权的目录
                 SharedPreferencesUtils.setDataSaveUri(uri.toString());
-                application.showToastMsg("已授权 "+ uri);
+                application.showToastMsg("已授权 "+ uri, DialogXTipEnum.SUCCESS);
             }
         }
     }
@@ -331,16 +331,24 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
             removeAdapterByPosition(position);
             Aria.download(this).load(tDownloadDataWithFields.getTDownloadData().getAriaTaskId()).ignoreCheckPermissions().cancel(false);
         } else {
-            String downloadPath = savePath.contains("MoviesBox") ?
+            // 旧版本的路劲
+            String downloadPathOld = savePath.contains("MoviesBox") ?
                     String.format(DOWNLOAD_SAVE_PATH, SourceEnum.getTitleBySource(tDownloadDataWithFields.getVideoSource()), tDownloadDataWithFields.getVideoTitle())
                     :
                     this.getFilesDir().getAbsolutePath()+String.format("/%s/%s", SourceEnum.getTitleBySource(tDownloadDataWithFields.getVideoSource()), tDownloadDataWithFields.getVideoTitle());
-            downloadDir = new File(downloadPath);
+            downloadDirOld = new File(downloadPathOld);
+            // 新版路劲
+            String downloadPathDirName = Utils.getHashedFileName(tDownloadDataWithFields.getVideoTitle());
+            String downloadPathNew = savePath.contains("MoviesBox") ?
+                    String.format(DOWNLOAD_SAVE_PATH, SourceEnum.getTitleBySource(tDownloadDataWithFields.getVideoSource()), downloadPathDirName)
+                    :
+                    this.getFilesDir().getAbsolutePath()+String.format("/%s/%s", SourceEnum.getTitleBySource(tDownloadDataWithFields.getVideoSource()), downloadPathDirName);
+            downloadDirNew = new File(downloadPathNew);
             if (tDownloadDataWithFields.getTDownloadData().getAriaTaskId() == -1) {
                 // -1直接删除
                 removeAdapterByPosition(position);
             } else {
-                if (!downloadDir.exists()) {
+                if (!downloadDirOld.exists() && !downloadDirNew.exists()) {
                     removeAdapterByPosition(position);
                 } else {
                     // 获取所有下载任务
@@ -367,8 +375,8 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
             TDownloadManager.deleteDownload(downloadId);
             finish();
         }
-        EventBus.getDefault().post(new RefreshEvent(3));
-        EventBus.getDefault().post(new RefreshEvent(4));
+        EventBus.getDefault().post(REFRESH_DOWNLOAD);
+        EventBus.getDefault().post(REFRESH_TAB_COUNT);
     }
 
     /**
@@ -378,19 +386,25 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
      * @param position
      */
     private void deleteDownloadData(boolean removeFile, TDownloadDataWithFields tDownloadDataWithFields, int position) {
+        String imgPath = tDownloadDataWithFields.getVideoImgUrl();
         // 如果已完成的任务
         if (tDownloadDataWithFields.getTDownloadData().getComplete() == 1 && removeFile) {
             File mp4File = new File(tDownloadDataWithFields.getTDownloadData().getSavePath());
             if (mp4File.exists()) mp4File.delete();
             File m3u8File = new File(tDownloadDataWithFields.getTDownloadData().getSavePath().replaceAll("mp4", "m3u8"));
             if (m3u8File.exists()) m3u8File.delete();
+            // 删除封面
+            if (!Utils.isNullOrEmpty(imgPath) && imgPath.contains("cover_")) {
+                File imgFile = new File(imgPath);
+                if (imgFile.exists()) imgFile.delete();
+            }
         }
         removeAdapterByPosition(position);
     }
 
     private void removeAdapterByPosition(int position) {
         runOnUiThread(() -> {
-            application.showToastMsg(getString(R.string.taskDeletedMsg));
+            application.showToastMsg(getString(R.string.taskDeletedMsg), DialogXTipEnum.SUCCESS);
             adapter.removeAt(position);
         });
     }
@@ -400,8 +414,11 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
      */
     private void shouldDeleteDownloadDir() {
         try {
-            if (downloadDir.list().length == 0) // 文件夹下没有任何文件才删除主目录
-                downloadDir.delete();
+            // 文件夹下没有任何文件才删除主目录
+            if (downloadDirOld.list().length == 0)
+                downloadDirOld.delete();
+            if (downloadDirNew.list().length == 0)
+                downloadDirNew.delete();
         } catch (Exception e) {}
     }
 
@@ -474,7 +491,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
     @Download.onTaskCancel
     public void onTaskCancel(DownloadTask downloadTask) {
         shouldDeleteDownloadDir();
-        EventBus.getDefault().post(new RefreshEvent(3));
+        EventBus.getDefault().post(REFRESH_DOWNLOAD);
     }
 
     @Download.onTaskFail
@@ -491,7 +508,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
                     break;
                 }
             }
-            EventBus.getDefault().post(new RefreshEvent(3));
+            EventBus.getDefault().post(REFRESH_DOWNLOAD);
         } catch (NullPointerException e) {
             e.printStackTrace();
             Utils.showAlert(this,
@@ -559,6 +576,18 @@ public class DownloadDataActivity extends BaseActivity<DownloadContract.View, Do
                 }
             }
         }, 1000);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onDownloadStateEvent(DownloadStateEvent downloadStateEvent) {
+        for (int i = 0, size = downloadDataBeans.size(); i < size; i++) {
+            if (downloadDataBeans.get(i).getTDownloadData().getAriaTaskId() == downloadStateEvent.getTaskId() &&
+                    downloadStateEvent.getDrama().contains(downloadDataBeans.get(i).getTDownloadData().getVideoNumber())) {
+                downloadDataBeans.get(i).getTDownloadData().setComplete(3);
+                adapter.notifyItemChanged(i);
+                break;
+            }
+        }
     }
 
     @Override

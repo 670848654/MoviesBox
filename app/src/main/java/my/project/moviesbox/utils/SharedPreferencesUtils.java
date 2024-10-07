@@ -1,5 +1,9 @@
 package my.project.moviesbox.utils;
 
+import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum;
+import static my.project.moviesbox.parser.config.SourceEnum.getCacheTitleBySource;
+import static my.project.moviesbox.parser.config.SourceEnum.getDomainUrlBySource;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -7,8 +11,6 @@ import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.enums.SettingEnum;
-import my.project.moviesbox.parser.config.ParserInterfaceFactory;
-import my.project.moviesbox.parser.config.SourceEnum;
 
 /**
   * @包名: my.project.moviesbox.utils
@@ -141,8 +143,8 @@ public class SharedPreferencesUtils {
     /**
      * 显示隐藏功能
      */
-    public static void setTurnOnHiddenFeatures() {
-        setParam("turnOnHiddenFeatures", true);
+    public static void setTurnOnHiddenFeatures(boolean enable) {
+        setParam("turnOnHiddenFeatures", enable);
     }
     /********************************************************** 系统相关结束 **********************************************************/
 
@@ -228,7 +230,7 @@ public class SharedPreferencesUtils {
      * @return
      */
     public static int getDefaultSource() {
-        return (int) getParam("defaultSource", ParserInterfaceFactory.SOURCE_TBYS);
+        return (int) getParam("defaultSource", SourceIndexEnum.TBYS.index);
     }
 
     /**
@@ -237,7 +239,7 @@ public class SharedPreferencesUtils {
      * @return
      */
     public static String getUserSetDomain(int source) {
-        return (String) getParam(SourceEnum.getCacheTitleBySource(source), SourceEnum.getDomainUrlBySource(source));
+        return (String) getParam(getCacheTitleBySource(source), getDomainUrlBySource(source));
     }
 
     /**
@@ -246,7 +248,7 @@ public class SharedPreferencesUtils {
      * @param domain
      */
     public static void setUserSetDomain(int source, String domain) {
-        setParam(SourceEnum.getCacheTitleBySource(source), domain);
+        setParam(getCacheTitleBySource(source), domain);
     }
 
     /**
@@ -280,6 +282,39 @@ public class SharedPreferencesUtils {
     public static int getSniffTimeout() {
         return (int) getParam("sniffTimeout", ConfigManager.getInstance().getSniffTimeout());
     }
+
+    /**
+     * 设置开启绕过CF
+     * @param enable
+     */
+    public static void setByPassCF(boolean enable) {
+        setParam("byPassCF", enable);
+    }
+
+    /**
+     * 获取是否开启绕过CF
+     * @return
+     */
+    public static boolean getByPassCF() {
+        return (boolean) getParam("byPassCF", false);
+    }
+
+    /**
+     * 设置绕过CF超时时间
+     * @param time
+     */
+    public static void setByPassCFTimeout(int time) {
+        setParam("byPassCFTimeout", time);
+    }
+
+    /**
+     * 获取绕过CF超时时间
+     * @return
+     */
+    public static int getByPassCFTimeout() {
+        return (int) getParam("byPassCFTimeout", ConfigManager.getInstance().getByPassCFTimeout());
+    }
+
     /********************************************************** 解析源相关结束 **********************************************************/
 
     /********************************************************** 播放器相关开始 **********************************************************/

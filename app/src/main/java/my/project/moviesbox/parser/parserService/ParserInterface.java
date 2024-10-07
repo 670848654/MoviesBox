@@ -2,6 +2,8 @@ package my.project.moviesbox.parser.parserService;
 
 import androidx.annotation.LayoutRes;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,13 +11,21 @@ import my.project.moviesbox.contract.DanmuContract;
 import my.project.moviesbox.model.DanmuModel;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
+import my.project.moviesbox.parser.bean.DialogItemBean;
+import my.project.moviesbox.parser.bean.DomainDataBean;
 import my.project.moviesbox.parser.bean.MainDataBean;
 import my.project.moviesbox.parser.bean.TextDataBean;
+import my.project.moviesbox.parser.bean.TodayUpdateBean;
 import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.bean.WeekDataBean;
+import my.project.moviesbox.parser.config.FavoriteItemStyleEnum;
+import my.project.moviesbox.parser.config.ItemStyleEnum;
+import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.view.PlayerActivity;
+import my.project.moviesbox.view.SearchActivity;
+import my.project.moviesbox.view.VodListActivity;
 import okhttp3.FormBody;
 
 /**
@@ -46,7 +56,7 @@ public interface ParserInterface {
     /**
      * 站点标识
      * <p>请在站点枚举类中配置</p>
-     * @see SourceEnum#source
+     * @see SourceEnum.SourceIndexEnum#index
      * @return
      */
     int getSource();
@@ -85,6 +95,15 @@ public interface ParserInterface {
     Map<String,String> setImgHeaders();
 
     /**
+     * 播放时请求头部
+     * 某些网站播放视频需要添加请求头部
+     * @return
+     */
+    default HashMap<String, String> setPlayerHeaders() {
+        return new HashMap<>();
+    }
+
+    /**
      * 站点分页开始页码
      * @return
      */
@@ -100,23 +119,9 @@ public interface ParserInterface {
     }
 
     /**
-     * 设置影视数据列表视图样式
-     * @see VodDataBean#ITEM_TYPE_0
-     * @see VodDataBean#ITEM_TYPE_1
-     * @return {@link LayoutRes}
-     */
-    @LayoutRes
-    default int setVodListItemType() {
-        return VodDataBean.ITEM_TYPE_0;
-    }
-
-    /**
      * APP首页内容解析接口
-     * <p>{@link MainDataBean#TAG_LIST}: TAG列表内容</p>
-     * <p>{@link MainDataBean#BANNER_LIST}: 轮播列表内容</p>
-     * <p>{@link MainDataBean#ITEM_LIST}: 内容块列表内容 如：热门、推荐板块内容</p>
-     * <p>{@link MainDataBean.Item#ITEM_TYPE_0}: 影视数据列表视图样式</p>
-     * <p>{@link MainDataBean.Item#ITEM_TYPE_1}: 影视数据列表视图样式</p>
+     * <p>{@link MultiItemEnum}: 列表ITEM样式</p>
+     * <p>{@link ItemStyleEnum}: 影视数据列表视图样式</p>
      * @see MainDataBean
      * @see MainDataBean.Item
      * @param source 网页源代码
@@ -157,21 +162,29 @@ public interface ParserInterface {
      * @param source 网页源代码
      * @return {@link VodDataBean}
      */
-    VodDataBean parserClassificationVodList(String source);
+    List<VodDataBean> parserClassificationVodList(String source);
+
+    /**
+     * 是否能搜索
+     * @return
+     */
+    default Class searchOpenClass() {
+        return SearchActivity.class;
+    }
 
     /**
      * 获取剧集列表集合接口 (搜索)
      * @param source 网页源代码
      * @return {@link VodDataBean}
      */
-    VodDataBean parserSearchVodList(String source);
+    List<VodDataBean> parserSearchVodList(String source);
 
     /**
      *  拖布影视的详情TAG地址 [其他影视列表]
      * @param source 网页源代码
      * @return {@link VodDataBean}
      */
-    VodDataBean parserVodList(String source);
+    List<VodDataBean> parserVodList(String source);
 
     /**
      * 设置分类数据列表参数长度
@@ -225,12 +238,21 @@ public interface ParserInterface {
     boolean getDanmuResultJson();
 
     /**
+     * 播放地址是否需要解析
+     * 默认为true 需要解析，有些网站可能不需要解析
+     * @return
+     */
+    default boolean playUrlNeedParser() {
+        return true;
+    };
+
+    /**
      * 获取影视播放地址
      * <p>注：可能存在多个播放地址，兼容返回LIST</p>
      * @param source 网页源代码
      * @return
      */
-    List<String> getPlayUrl(String source);
+    List<DialogItemBean> getPlayUrl(String source);
 
     /**
      * 通过定义的需要POST请求的类名获取POST固定参数，自行实现
@@ -242,13 +264,23 @@ public interface ParserInterface {
 
     /****************************** 以下为通用横、竖屏列表数量接口 START ******************************/
     /**
-     * 默认视频列表一行显示几个内容
+     * 默认视频列表一行显示几个内容 1:1.4使用
      * @param isPad 是否为平板
      * @param isPortrait 是否为竖屏
      * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
      */
     default int setVodListItemSize(boolean isPad, boolean isPortrait) {
         return isPad ? (isPortrait ? 5 : 8) : (isPortrait ? 3 : 5);
+    }
+
+    /**
+     * 默认视频列表一行显示几个内容 16:9使用
+     * @param isPad 是否为平板
+     * @param isPortrait 是否为竖屏
+     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
+     */
+    default int setVodList16_9ItemSize(boolean isPad,  boolean isPortrait) {
+        return isPad ? (isPortrait ? 3 : 5) : (isPortrait ? 2 : 3);
     }
 
     /**
@@ -339,25 +371,14 @@ public interface ParserInterface {
      * @param source 网页源代码
      * @return {@link VodDataBean}
      */
-    VodDataBean parserTopticList(String source);
-
-    /**
-     * 设置动漫专题数据列表样式
-     * @see VodDataBean#ITEM_TYPE_0
-     * @see VodDataBean#ITEM_TYPE_1
-     * @return {@link LayoutRes}
-     */
-    @LayoutRes
-    default int setTopticListItemType() {
-        return VodDataBean.ITEM_TYPE_1;
-    }
+    List<VodDataBean> parserTopticList(String source);
 
     /**
      * 动漫专题视频列表接口
      * @param source
      * @return {@link VodDataBean}
      */
-    VodDataBean parserTopticVodList(String source);
+    List<VodDataBean> parserTopticVodList(String source);
 
     /**
      * 获动漫专题地址
@@ -367,16 +388,6 @@ public interface ParserInterface {
      * @return
      */
     String getTopticUrl(String url, int page);
-
-    /**
-     * 动漫专题列表一行显示几个内容
-     * @param isPad 是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    default int setTopticItemListItemSize(boolean isPad, boolean isPortrait) {
-        return isPad ? (isPortrait ? 3 : 5) : (isPortrait ? 2 : 4);
-    }
 
     /**
      * 获取文本列表地址
@@ -394,4 +405,56 @@ public interface ParserInterface {
      */
     List<TextDataBean> parserTextList(String source);
     /****************************** 以下为[动漫网站]特殊解析数据接口 END ******************************/
+
+    /**
+     * 获取订阅地址
+     * @return
+     */
+    default String getRssUrl() {
+        return "";
+    }
+
+    /**
+     * 通过站点的RSS订阅获取今日更新数据
+     * @param xml 网页源代码
+     * @return {@link List<TodayUpdateBean>}
+     */
+    default List<TodayUpdateBean> parserRss(String xml) {
+        return new ArrayList<>();
+    }
+
+    /**
+     * 收藏夹ITEM是否需要模糊背景
+     * @return
+     */
+    default boolean favoriteItemBlurBg() {
+        return false;
+    }
+
+    /**
+     * 收藏夹ITEM样式布局
+     * 默认样式为 1:1.4 需定制则重写
+     * @return
+     */
+    default @LayoutRes int favoriteItemStyleLayout() {
+        return FavoriteItemStyleEnum.STYLE_1_1_DOT_4.getLayoutId();
+    }
+
+    /**
+     * 默认详情页 TAG点击打开activity
+     * 默认打开通用列表视图 需定制则重写
+     * @return
+     */
+    default Class detailTagOpenClass() {
+        return VodListActivity.class;
+    }
+
+    /**
+     * 通过站点发布页获取最新域名
+     * @param source
+     * @return
+     */
+    default DomainDataBean parserDomain(String source) {
+        return null;
+    }
 }

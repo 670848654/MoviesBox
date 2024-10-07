@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import my.project.moviesbox.parser.bean.DialogItemBean;
 
 /**
  * @author Li
@@ -25,7 +26,7 @@ public class VideoSniffEvent {
     /**
      * 成功/失败匹配到的所有链接集合
      */
-    private List<String> urls;
+    private List<DialogItemBean> urls;
 
     /**
      * EventBus订阅处理判断枚举

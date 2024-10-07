@@ -2,6 +2,8 @@ package my.project.moviesbox.adapter;
 
 import android.widget.ImageView;
 
+import androidx.annotation.LayoutRes;
+
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.module.LoadMoreModule;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
@@ -21,16 +23,23 @@ import my.project.moviesbox.utils.Utils;
   * @版本: 1.0
  */
 public class FavoriteListAdapter extends BaseQuickAdapter<TFavoriteWithFields, BaseViewHolder> implements LoadMoreModule {
-
-    public FavoriteListAdapter(List<TFavoriteWithFields> list) {
-        super(R.layout.item_vod, list);
+    public FavoriteListAdapter(@LayoutRes int layout, List<TFavoriteWithFields> list) {
+        super(layout, list);
     }
 
     @Override
     protected void convert(BaseViewHolder helper, TFavoriteWithFields item) {
         String imgUrl = item.getTFavorite().getVideoImgUrl();
         ImageView imageView = helper.getView(R.id.img);
+        ImageView backgroundImageView = helper.getView(R.id.backgroundImageView);
         imageView.setTag(R.id.imageid, imgUrl);
+        backgroundImageView.setTag(R.id.imageid, imgUrl);
+        if (item.isBlurBg()) {
+            imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            Utils.setImgViewBlurBg(item.getTFavorite().getVideoImgUrl(), backgroundImageView);
+        }
+        else
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         Utils.setDefaultImage(item.getTFavorite().getVideoImgUrl(), item.getTFavorite().getVideoUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title));
         helper.setText(R.id.title, item.getVideoTitle());
         String lastPlayNumber = item.getTFavorite().getLastVideoUpdateNumber();

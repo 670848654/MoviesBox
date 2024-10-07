@@ -1,6 +1,7 @@
 package my.project.moviesbox.database.entity;
 
 import androidx.room.Embedded;
+import androidx.room.Ignore;
 
 import java.io.Serializable;
 
@@ -26,4 +27,14 @@ public class TFavoriteWithFields implements Serializable {
      * 影视标题
      */
     private String videoTitle;
+    /**
+     * 是否需要背景模糊
+     */
+    @Ignore
+    private boolean blurBg;
+    /**
+     * 是否已刷新封面
+     */
+    @Ignore
+    private boolean refreshCover;
 }

@@ -12,6 +12,7 @@ import com.permissionx.guolindev.PermissionX;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.enums.DialogXTipEnum;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -50,7 +51,7 @@ public class RoutingActivity extends AppCompatActivity {
                     .onExplainRequestReason((scope, deniedList) -> scope.showRequestReasonDialog(deniedList, getString(R.string.writeExternalStoragePermissionsTitle), getString(R.string.permissionsAgree), getString(R.string.permissionsDisagree)))
                     .request((allGranted, grantedList, deniedList) -> {
                         if (deniedList.size() > 0)
-                            application.showToastMsg(getString(R.string.noPermissionsContent));
+                            application.showToastMsg(getString(R.string.noPermissionsContent), DialogXTipEnum.WARNING);
                         openMain();
                     });
         } else

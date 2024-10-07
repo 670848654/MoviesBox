@@ -44,6 +44,7 @@ import my.project.moviesbox.cling.service.ClingUpnpService;
 import my.project.moviesbox.cling.service.manager.ClingManager;
 import my.project.moviesbox.cling.service.manager.DeviceManager;
 import my.project.moviesbox.cling.util.OtherUtils;
+import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.Utils;
@@ -407,7 +408,7 @@ public class UpnpActivity extends BaseActivity implements SeekBar.OnSeekBarChang
                     break;
                 case TRANSITIONING_ACTION:
                     LogUtil.logInfo("Execute TRANSITIONING_ACTION", null);
-                    application.showToastMsg("正在连接");
+                    application.showToastMsg("正在连接", DialogXTipEnum.DEFAULT);
                     break;
                 case ERROR_ACTION:
                     handleErrorAction();
@@ -448,7 +449,7 @@ public class UpnpActivity extends BaseActivity implements SeekBar.OnSeekBarChang
 
         private void handleErrorAction() {
             LogUtil.logInfo("Execute ERROR_ACTION", null);
-            application.showToastMsg("投放失败");
+            application.showToastMsg("投放失败", DialogXTipEnum.ERROR);
             postHandler.post(positionRunnable);
             postHandler.removeCallbacksAndMessages(null);
             mSeekProgress.setProgress(0);

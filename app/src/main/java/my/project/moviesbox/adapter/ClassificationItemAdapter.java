@@ -29,5 +29,6 @@ public class ClassificationItemAdapter extends BaseQuickAdapter<ClassificationDa
         Chip chip = helper.getView(R.id.chip);
         chip.setChecked(item.isSelected());
         chip.setText(item.getTitle());
+        chip.setEnsureMinTouchTargetSize(false);
     }
 }

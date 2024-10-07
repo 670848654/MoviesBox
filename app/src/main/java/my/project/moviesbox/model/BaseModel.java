@@ -1,5 +1,6 @@
 package my.project.moviesbox.model;
 
+import org.greenrobot.eventbus.EventBus;
 import org.jsoup.Jsoup;
 
 import java.io.IOException;
@@ -7,8 +8,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 import my.project.moviesbox.R;
-import my.project.moviesbox.parser.config.ParserInterfaceFactory;
+import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.parserService.ParserInterface;
+import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.utils.Utils;
 import okhttp3.Response;
 
@@ -21,6 +23,10 @@ import okhttp3.Response;
 public class BaseModel {
     protected static ParserInterface parserInterface;
     protected static String charsetName;
+
+    public BaseModel() {
+        EventBus.getDefault().register(this);
+    }
 
     static {
         parserInterface = ParserInterfaceFactory.getParserInterface();
@@ -91,5 +97,10 @@ public class BaseModel {
         }
         String networkResponse = response.networkResponse() != null ? response.networkResponse().toString() : "";
         return String.format(Utils.getString(R.string.parsingErrorContent), networkResponse, title);
+    }
+
+    public void unregister() {
+        LogUtil.logInfo(this.getClass().getName(), "EventBus unregister...");
+        EventBus.getDefault().unregister(this);
     }
 }

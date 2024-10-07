@@ -25,9 +25,10 @@ import org.greenrobot.eventbus.EventBus;
 import butterknife.Unbinder;
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
-import my.project.moviesbox.event.RefreshEvent;
-import my.project.moviesbox.parser.config.ParserInterfaceFactory;
+import my.project.moviesbox.event.RefreshEnum;
+import my.project.moviesbox.model.BaseModel;
 import my.project.moviesbox.parser.parserService.ParserInterface;
+import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.presenter.Presenter;
 
 /**
@@ -38,7 +39,7 @@ import my.project.moviesbox.presenter.Presenter;
   * @日期: 2024/2/4 17:06
   * @版本: 1.0
  */
-public abstract class BaseFragment<V, P extends Presenter<V>> extends Fragment {
+public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V, M>> extends Fragment {
     protected P mPresenter;
     protected App application;
     protected Unbinder mUnBinder;
@@ -180,5 +181,5 @@ public abstract class BaseFragment<V, P extends Presenter<V>> extends Fragment {
      */
     protected abstract void retryListener();
 
-    public abstract void onEvent(RefreshEvent refresh);
+    public abstract void onEvent(RefreshEnum refresh);
 }

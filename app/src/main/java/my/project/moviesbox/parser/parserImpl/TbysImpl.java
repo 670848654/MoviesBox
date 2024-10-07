@@ -1,10 +1,14 @@
 package my.project.moviesbox.parser.parserImpl;
 
 import static my.project.moviesbox.parser.LogUtil.logInfo;
+import static my.project.moviesbox.parser.config.ItemStyleEnum.STYLE_16_9;
+import static my.project.moviesbox.parser.config.MultiItemEnum.BANNER_LIST;
+import static my.project.moviesbox.parser.config.MultiItemEnum.ITEM_LIST;
+import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum.TBYS;
+import static my.project.moviesbox.parser.config.VodTypeEnum.M3U8;
+import static my.project.moviesbox.parser.config.VodTypeEnum.MP4;
 
 import android.util.Base64;
-
-import androidx.annotation.LayoutRes;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -29,10 +33,13 @@ import lombok.Getter;
 import my.project.moviesbox.model.DanmuModel;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
+import my.project.moviesbox.parser.bean.DialogItemBean;
 import my.project.moviesbox.parser.bean.MainDataBean;
 import my.project.moviesbox.parser.bean.TextDataBean;
 import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.bean.WeekDataBean;
+import my.project.moviesbox.parser.config.ItemStyleEnum;
+import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.utils.Utils;
@@ -80,12 +87,13 @@ public class TbysImpl implements ParserInterface {
      * <p>请在站点枚举类中配置</p>
      *
      * @return
-     * @see SourceEnum#source
+     * @see SourceEnum.SourceIndexEnum#TBYS
      */
     @Override
     public int getSource() {
-        return SourceEnum.TBYS.getSource();
+        return TBYS.index;
     }
+
 
     /**
      * 站点默认域名
@@ -165,28 +173,13 @@ public class TbysImpl implements ParserInterface {
     }
 
     /**
-     * 设置影视数据列表视图样式
-     *
-     * @return {@link LayoutRes}
-     * @see VodDataBean#ITEM_TYPE_0
-     * @see VodDataBean#ITEM_TYPE_1
-     */
-    @Override
-    public int setVodListItemType() {
-        return VodDataBean.ITEM_TYPE_0;
-    }
-
-    /**
      * APP首页内容解析接口
-     * <p>MainDataBean.TAG_LIST: TAG列表内容</p>
-     * <p>MainDataBean.BANNER_LIST: 轮播列表内容</p>
-     * <p>MainDataBean.ITEM_LIST: 内容块列表内容 如：热门、推荐板块内容</p>
-     * <p>MainDataBean.Item.ITEM_TYPE: 影视数据列表视图样式</p>
-     *
-     * @param source 网页源代码
-     * @return {@link List<MainDataBean>}
+     * <p>{@link MultiItemEnum}: 列表ITEM样式</p>
+     * <p>{@link ItemStyleEnum}: 影视数据列表视图样式</p>
      * @see MainDataBean
      * @see MainDataBean.Item
+     * @param source 网页源代码
+     * @return {@link List<MainDataBean>}
      */
     @Override
     public List<MainDataBean> parserMainData(String source) {
@@ -200,8 +193,8 @@ public class TbysImpl implements ParserInterface {
             MainDataBean bannerBean = new MainDataBean();
             bannerBean.setTitle("影视推荐");
             bannerBean.setHasMore(false);
-            bannerBean.setDataType(MainDataBean.BANNER_LIST);
-            bannerBean.setVodItemType(MainDataBean.Item.ITEM_TYPE_1);
+            bannerBean.setDataType(BANNER_LIST.getType());
+            bannerBean.setVodItemType(STYLE_16_9);
             for (Element element : bannerList) {
                 MainDataBean.Item item = new MainDataBean.Item();
                 Element a = element.getElementsByTag("a").get(0);
@@ -221,7 +214,7 @@ public class TbysImpl implements ParserInterface {
             for (int i=0,size=vodList.size(); i<size; i++) {
                 MainDataBean contentBean = new MainDataBean();
                 List<MainDataBean.Item> vodItems = new ArrayList<>();
-                contentBean.setDataType(MainDataBean.ITEM_LIST);
+                contentBean.setDataType(ITEM_LIST.getType());
                 switch (i) {
                     case 0:
                         contentBean.setTitle("热门电影");
@@ -459,15 +452,14 @@ public class TbysImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserClassificationVodList(String source) {
+    public List<VodDataBean> parserClassificationVodList(String source) {
         try {
-            VodDataBean vodDataBean = new VodDataBean();
-            List<VodDataBean.Item> items = new ArrayList<>();
+            List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".vod-list .column a");
             if (elements.size() > 0) {
                 for (Element item : elements) {
-                    VodDataBean.Item bean = new VodDataBean.Item();
+                    VodDataBean bean = new VodDataBean();
                     bean.setTitle(item.attr("title"));
                     bean.setUrl(item.attr("href"));
                     bean.setImg(getImageUrl(item.select("img").attr("data-src")));
@@ -482,10 +474,9 @@ public class TbysImpl implements ParserInterface {
                     }
                     items.add(bean);
                 }
-                vodDataBean.setItemList(items);
-                logInfo("分类列表数据", vodDataBean.toString());
+                logInfo("分类列表数据", items.toString());
             }
-            return vodDataBean;
+            return items;
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserClassificationVodList error", e.getMessage());
@@ -500,15 +491,14 @@ public class TbysImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserSearchVodList(String source) {
+    public List<VodDataBean> parserSearchVodList(String source) {
         try {
-            VodDataBean vodDataBean = new VodDataBean();
-            List<VodDataBean.Item> items = new ArrayList<>();
+            List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".search-vod-list .column .vod-detail-box");
             if (elements.size() > 0) {
                 for (Element item : elements) {
-                    VodDataBean.Item bean = new VodDataBean.Item();
+                    VodDataBean bean = new VodDataBean();
                     Elements aList = item.select(".is-multiline").select("a");
                     for (Element a : aList) {
                         if (a.hasClass("title")) {
@@ -520,10 +510,9 @@ public class TbysImpl implements ParserInterface {
                     bean.setImg(getImageUrl(item.select("img").attr("src")));
                     items.add(bean);
                 }
-                vodDataBean.setItemList(items);
-                logInfo("搜索列表数据", vodDataBean.toString());
+                logInfo("搜索列表数据", items.toString());
             }
-            return vodDataBean;
+            return items;
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserSearchVodList error", e.getMessage());
@@ -538,7 +527,7 @@ public class TbysImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserVodList(String source) {
+    public List<VodDataBean> parserVodList(String source) {
         return parserSearchVodList(source);
     }
 
@@ -640,9 +629,9 @@ public class TbysImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<String> getPlayUrl(String source) {
+    public List<DialogItemBean> getPlayUrl(String source) {
         try {
-            List<String> result = new ArrayList<>();
+            List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements scriptElements = document.select("script");
             for (Element script : scriptElements) {
@@ -664,10 +653,10 @@ public class TbysImpl implements ParserInterface {
                             } catch (UnsupportedEncodingException e) {
                                 throw new RuntimeException(e);
                             }
-                            result.add(decodedString);
+                            result.add(new DialogItemBean(decodedString, decodedString.contains("m3u8") ? M3U8 : MP4));
                             return result;
                         default:
-                            result.add(encryptUrl);
+                            result.add(new DialogItemBean(encryptUrl, encryptUrl.contains("m3u8") ? M3U8 : MP4));
                             return result;
                     }
                 }
@@ -709,7 +698,7 @@ public class TbysImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserTopticList(String source) {
+    public List<VodDataBean> parserTopticList(String source) {
         return null;
     }
 
@@ -720,7 +709,7 @@ public class TbysImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserTopticVodList(String source) {
+    public List<VodDataBean> parserTopticVodList(String source) {
         return null;
     }
 

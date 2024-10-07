@@ -76,8 +76,8 @@ public class TDownloadDataManager extends BaseManager {
      * 更新下载信息
      * @param taskId
      */
-    public static void updateDownloadState(long taskId) {
-        tDownloadDataDao.updateDownloadState(taskId);
+    public static void updateDownloadState(int complete, long taskId) {
+        tDownloadDataDao.updateDownloadState(complete, taskId);
     }
 
     /**

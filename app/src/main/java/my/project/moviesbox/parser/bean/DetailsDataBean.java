@@ -1,5 +1,7 @@
 package my.project.moviesbox.parser.bean;
 
+import static my.project.moviesbox.parser.config.ItemStyleEnum.STYLE_1_1_DOT_4;
+
 import com.alibaba.fastjson.JSONObject;
 
 import java.io.Serializable;
@@ -9,7 +11,8 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import my.project.moviesbox.parser.config.ParserInterfaceFactory;
+import my.project.moviesbox.parser.config.ItemStyleEnum;
+import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 
 /**
   * @包名: my.project.moviesbox.parser.bean
@@ -25,6 +28,7 @@ import my.project.moviesbox.parser.config.ParserInterfaceFactory;
 public class DetailsDataBean implements Serializable {
     private String title; // 标题
     private String img; // 图片
+    private ItemStyleEnum imgStyle = STYLE_1_1_DOT_4; // 图片样式
     private String url; // 详情访问地址
     private List<String> tagTitles; // 分类标题
     private List<String> tagUrls; // 分类访问地址
@@ -45,7 +49,9 @@ public class DetailsDataBean implements Serializable {
     private String vodId; // 数据库ID
     private List<Dramas> dramasList = new ArrayList<>(); // 播放列表集合
     private List<Recommend> multiList = new ArrayList<>(); // 剧集多季集合 预留
+    private ItemStyleEnum multiStyle = STYLE_1_1_DOT_4; // 多季ITEM样式
     private List<Recommend> recommendList = new ArrayList<>(); // 推荐集合
+    private ItemStyleEnum recommendStyle = STYLE_1_1_DOT_4; // 推荐ITEM样式
 
     /**
       * @包名: my.project.moviesbox.parser.bean

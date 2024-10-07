@@ -6,6 +6,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.Application;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -13,7 +14,6 @@ import android.view.View;
 import android.view.animation.BounceInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
@@ -21,6 +21,9 @@ import androidx.annotation.DrawableRes;
 import com.arialyy.aria.core.Aria;
 import com.bumptech.glide.Glide;
 import com.google.android.material.snackbar.Snackbar;
+import com.kongzue.dialogx.DialogX;
+import com.kongzue.dialogx.dialogs.PopTip;
+import com.kongzue.dialogx.style.IOSStyle;
 
 import org.conscrypt.Conscrypt;
 
@@ -28,8 +31,8 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -39,6 +42,8 @@ import javax.net.ssl.X509TrustManager;
 import my.project.moviesbox.R;
 import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.config.MyExceptionHandler;
+import my.project.moviesbox.enums.DialogXTipEnum;
+import my.project.moviesbox.service.FuckCFService;
 import my.project.moviesbox.utils.CropUtil;
 import my.project.moviesbox.utils.DarkModeUtils;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
@@ -57,6 +62,7 @@ public class App extends Application {
     private static App appContext;
     private static Map<String, Activity> destoryMap = new HashMap<>();
     public static Handler mainHandler;
+    private static Map<String, String> cookies;
 
     public static App getInstance() {
         return appContext;
@@ -84,6 +90,10 @@ public class App extends Application {
         Aria.get(this).getDownloadConfig().setConvertSpeed(true);
         // 检查更新
 //        startService(new Intent(getInstance(), CheckUpdateService.class));
+//        DialogX.globalStyle = new MaterialYouStyle();
+        DialogX.globalStyle = new IOSStyle();
+        DialogX.onlyOnePopTip = false;
+        DialogX.init(this);
     }
 
     public static void handleSSLHandshake() {
@@ -129,26 +139,21 @@ public class App extends Application {
         Glide.get(this).clearMemory();
     }
 
-    public void showToastMsg(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-    }
-
-    public void showSnackbarMsg(View view, String msg) {
-        Snackbar
-                .make(view, msg, Snackbar.LENGTH_SHORT)
-                .setTextColor(appContext.getColor(R.color.night_text_color))
-                .setBackgroundTint(appContext.getColor(R.color.pink200))
-                .show();
-    }
-
-    public void showSnackbarMsgAction(View view, String msg, String actionMsg, View.OnClickListener listener) {
-        Snackbar
-                .make(view, msg, Snackbar.LENGTH_INDEFINITE)
-                .setTextColor(appContext.getColor(R.color.night_text_color))
-                .setBackgroundTint(appContext.getColor(R.color.pink200))
-                .setActionTextColor(appContext.getColor(R.color.night_text_color))
-                .setAction(actionMsg, listener)
-                .show();
+    public void showToastMsg(String msg, DialogXTipEnum tipEnum) {
+        switch (tipEnum) {
+            case SUCCESS:
+                PopTip.show(msg).iconSuccess();
+                break;
+            case ERROR:
+                PopTip.show(msg).iconError();
+                break;
+            case WARNING:
+                PopTip.show(msg).iconWarning();
+                break;
+            default:
+                PopTip.show(msg);
+                break;
+        }
     }
 
     public void showImgSnackbarMsg(View view, @DrawableRes int iconRes, @ColorInt int iconTintColor, String msg) {
@@ -204,18 +209,38 @@ public class App extends Application {
         });
     }
 
-    public static void addDestoryActivity(Activity activity, String activityName) {
+    public static void addDestroyActivity(Activity activity, String activityName) {
         destoryMap.put(activityName, activity);
     }
 
-    public static void destoryActivity(String activityName) {
-        Set<String> keySet = destoryMap.keySet();
-        if (keySet.size() > 0) {
-            for (String key : keySet) {
-                if (activityName.equals(key)) {
-                    destoryMap.get(key).finish();
-                }
+    public static void destroyActivity(String activityName) {
+        Iterator<Map.Entry<String, Activity>> iterator = destoryMap.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Activity> entry = iterator.next();
+            if (activityName.equals(entry.getKey())) {
+                entry.getValue().finish();
+                iterator.remove();
             }
         }
+    }
+
+    public static void removeDestroyActivity(String activityName) {
+        destoryMap.remove(activityName);
+    }
+
+    public static void startMyService(String url, String type) {
+        Intent intent = new Intent(appContext, FuckCFService.class);
+        intent.putExtra("url", url);
+        intent.putExtra("type", type);
+        appContext.startService(intent);
+    }
+
+    public static void setCookies(String cookie) {
+        cookies = new HashMap<>();
+        cookies.put("Cookie", cookie);
+    }
+
+    public static Map<String, String> getCookies() {
+        return cookies;
     }
 }

@@ -3,12 +3,14 @@ package my.project.moviesbox.view;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.HapticFeedbackConstants;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.chad.library.adapter.base.entity.MultiItemEntity;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +20,11 @@ import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.VodListAdapter;
 import my.project.moviesbox.contract.VodListContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
+import my.project.moviesbox.custom.FabExtendingOnScrollListener;
+import my.project.moviesbox.enums.DialogXTipEnum;
+import my.project.moviesbox.model.VodListModel;
 import my.project.moviesbox.parser.bean.VodDataBean;
+import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.presenter.VodListPresenter;
 import my.project.moviesbox.utils.Utils;
 
@@ -30,28 +36,29 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:13
   * @版本: 1.0
  */
-public class VodListActivity extends BaseActivity<VodListContract.View, VodListPresenter> implements VodListContract.View {
+public class VodListActivity extends BaseActivity<VodListModel, VodListContract.View, VodListPresenter> implements VodListContract.View {
     @BindView(R.id.toolbar)
-    Toolbar toolbar;
+    protected Toolbar toolbar;
     @BindView(R.id.rv_list)
-    RecyclerView mRecyclerView;
+    protected RecyclerView mRecyclerView;
     @BindView(R.id.mSwipe)
     SwipeRefreshLayout mSwipe;
     private VodListAdapter adapter;
-    private List<VodDataBean.Item> items = new ArrayList<>();
-    private String title, url;
-    private int page = parserInterface.startPageNum(); // 开始页码
-    private int pageCount = parserInterface.startPageNum();
-    private boolean isErr = true;
+    private final List<MultiItemEntity> multiItemEntities = new ArrayList<>();
+    protected String title, url;
+    @BindView(R.id.classFab)
+    protected ExtendedFloatingActionButton classFab;
+    protected int fabHeight = 0;
 
     @Override
     protected VodListPresenter createPresenter() {
-        return new VodListPresenter(url, page, this);
+        return new VodListPresenter(this);
     }
 
     @Override
     protected void loadData() {
-        mPresenter.loadData(true);
+        multiItemEntities.clear();
+        mPresenter.loadMainData(true, url, page);
     }
 
     @Override
@@ -64,7 +71,7 @@ public class VodListActivity extends BaseActivity<VodListContract.View, VodListP
         Bundle bundle = getIntent().getExtras();
         title = bundle.getString("title");
         url = bundle.getString("url");
-        initToolbar();
+        setToolbar(toolbar, title, "");
         initSwipe();
         initDefaultAdapter();
     }
@@ -74,27 +81,17 @@ public class VodListActivity extends BaseActivity<VodListContract.View, VodListP
 
     }
 
-    public void initToolbar() {
-        toolbar.setTitle(title);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(view -> {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            finish();
-        });
-    }
-
     public void initSwipe() {
         mSwipe.setColorSchemeResources(R.color.pink500, R.color.blue500, R.color.purple500);
         mSwipe.setOnRefreshListener(()-> retryListener());
     }
 
     public void initDefaultAdapter() {
-        adapter = new VodListAdapter(parserInterface.setVodListItemType(), items);
+        adapter = new VodListAdapter(multiItemEntities);
         setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
-            VodDataBean.Item bean = (VodDataBean.Item) adapter.getItem(position);
+            VodDataBean bean = (VodDataBean) adapter.getItem(position);
             String url = bean.getUrl();
             String title = bean.getTitle();
             openVodDetail(title, url);
@@ -105,16 +102,16 @@ public class VodListActivity extends BaseActivity<VodListContract.View, VodListP
                 if (page >= pageCount) {
                     //数据全部加载完毕
                     adapter.getLoadMoreModule().loadMoreEnd();
-                    application.showToastMsg(getString(R.string.noMoreContent));
+                    application.showToastMsg(getString(R.string.noMoreContent), DialogXTipEnum.DEFAULT);
                 } else {
                     if (isErr) {
                         //成功获取更多数据
                         page++;
-                        mPresenter = createPresenter();
-                        mPresenter.loadData(false);
-                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, page, pageCount));
+                        mPresenter.loadPageData(url, page);
+                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, page, pageCount), DialogXTipEnum.SUCCESS);
                     } else {
                         //获取更多数据失败
+                        page--;
                         isErr = true;
                         adapter.getLoadMoreModule().loadMoreFail();
                     }
@@ -124,6 +121,8 @@ public class VodListActivity extends BaseActivity<VodListContract.View, VodListP
         if (Utils.checkHasNavigationBar(this)) mRecyclerView.setPadding(0,0,0, Utils.getNavigationBarHeight(this));
         mRecyclerView.setAdapter(adapter);
         adapter.setEmptyView(rvView);
+        // 监听 RecyclerView 的滑动事件
+        mRecyclerView.addOnScrollListener(new FabExtendingOnScrollListener(classFab));
     }
 
     private void setSubTitle() {
@@ -137,15 +136,10 @@ public class VodListActivity extends BaseActivity<VodListContract.View, VodListP
         startActivity(new Intent(VodListActivity.this, DetailsActivity.class).putExtras(bundle));
     }
 
-    public void setLoadState(boolean loadState) {
-        isErr = loadState;
-        adapter.getLoadMoreModule().loadMoreComplete();
-    }
-
     @Override
     public void onResume() {
         super.onResume();
-        if (items.size() == 0)
+        if (multiItemEntities.size() == 0)
             setRecyclerViewEmpty();
         else
             setRecyclerViewView();
@@ -169,7 +163,13 @@ public class VodListActivity extends BaseActivity<VodListContract.View, VodListP
 
     private void setRecyclerViewView() {
         position = mRecyclerView.getLayoutManager() == null ? 0 : ((GridLayoutManager) mRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, parserInterface.setVodListItemSize(Utils.isPad(), isPortrait)));
+        int spanCount;
+        if (multiItemEntities.size() > 0 && multiItemEntities.get(0).getItemType() == VodItemStyleEnum.STYLE_16_9.getType()) {
+            spanCount = parserInterface.setVodList16_9ItemSize(Utils.isPad(), isPortrait);
+        } else {
+            spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait);
+        }
+        mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
         mRecyclerView.getLayoutManager().scrollToPosition(position);
     }
 
@@ -193,21 +193,21 @@ public class VodListActivity extends BaseActivity<VodListContract.View, VodListP
     }
 
     @Override
-    public void success(boolean firstTimeData, VodDataBean vodDataBean, int pageCount) {
+    public void success(boolean firstTimeData, List<VodDataBean> vodDataBeans, int pageCount) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
-            items = vodDataBean.getItemList();
             if (firstTimeData) {
+                multiItemEntities.addAll(vodDataBeans);
                 hideProgress();
                 mSwipe.setRefreshing(false);
                 this.pageCount = pageCount;
                 new Handler().postDelayed(() -> {
-                    adapter.setNewInstance(items);
+                    adapter.setNewInstance(multiItemEntities);
                     setRecyclerViewView();
                 }, 500);
             } else {
-                adapter.addData(items);
-                setLoadState(true);
+                adapter.addData(vodDataBeans);
+                setLoadState(adapter, true);
             }
             setSubTitle();
         });
@@ -231,20 +231,29 @@ public class VodListActivity extends BaseActivity<VodListContract.View, VodListP
                     null,
                     null);
             } else {
-                setLoadState(false);
-                application.showToastMsg(msg);
+                setLoadState(adapter, false);
+                application.showToastMsg(msg, DialogXTipEnum.ERROR);
             }
         });
     }
 
     @Override
-    public void empty(String msg) {
+    public void empty(boolean firstTimeData, String msg) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
-            items.clear();
-            mSwipe.setRefreshing(false);
-            setRecyclerViewEmpty();
-            rvEmpty(msg);
+            if (firstTimeData) {
+                mSwipe.setRefreshing(false);
+                rvEmpty(msg);
+            } else {
+                setLoadState(adapter, false);
+                application.showToastMsg(msg, DialogXTipEnum.ERROR);
+            }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        emptyRecyclerView(mRecyclerView);
     }
 }

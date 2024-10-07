@@ -22,7 +22,7 @@ public class SettingAboutBean {
     private String subTitle; // 子标题
     private Object[] option; // 选项
     @DrawableRes
-    private int endIcon; // 右侧图标
+    private int endIcon; // 右侧图标z
 
     public SettingAboutBean(int icon, String title, String subTitle) {
         this.icon = icon;

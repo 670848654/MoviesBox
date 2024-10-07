@@ -3,9 +3,9 @@ package my.project.moviesbox.adapter;
 import android.widget.ImageView;
 
 import androidx.annotation.IdRes;
-import androidx.annotation.LayoutRes;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.BaseMultiItemQuickAdapter;
+import com.chad.library.adapter.base.entity.MultiItemEntity;
 import com.chad.library.adapter.base.module.LoadMoreModule;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
@@ -13,7 +13,7 @@ import java.util.List;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.parser.bean.VodDataBean;
-import my.project.moviesbox.parser.parserService.ParserInterface;
+import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.utils.Utils;
 
 /**
@@ -24,29 +24,35 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/1/22 17:15
   * @版本: 1.0
  */
-public class VodListAdapter extends BaseQuickAdapter<VodDataBean.Item, BaseViewHolder> implements LoadMoreModule {
+public class VodListAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, BaseViewHolder> implements LoadMoreModule {
     /**
      * @方法名称: VodListAdapter
      * @方法描述: 构造方法
      * @日期: 2024/1/22 17:15
      * @作者: Li Z
-     * @param layout 当前源设定的布局ID 需实现{@link ParserInterface#setVodListItemType}
-     * @param data {@link VodDataBean.Item}
+     * @param data {@link VodDataBean}
      * @返回: 
      */
-    public VodListAdapter(@LayoutRes int layout, List<VodDataBean.Item> data) {
-        super(layout, data);
+    public VodListAdapter(List<MultiItemEntity> data) {
+        super(data);
+        addItemType(VodItemStyleEnum.STYLE_1_1_DOT_4.getType(), VodItemStyleEnum.STYLE_1_1_DOT_4.getLayoutId());
+        addItemType(VodItemStyleEnum.STYLE_16_9.getType(), VodItemStyleEnum.STYLE_16_9.getLayoutId());
     }
 
     @Override
-    protected void convert(BaseViewHolder helper, VodDataBean.Item item) {
-        String imgUrl = item.getImg();
+    protected void convert(BaseViewHolder helper, MultiItemEntity item) {
+        VodDataBean vodDataBean = (VodDataBean) item;
+        String imgUrl = vodDataBean.getImg();
         ImageView imageView = helper.getView(R.id.img);
         imageView.setTag(R.id.imageid, imgUrl);
-        Utils.setDefaultImage(item.getImg(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title));
-        helper.setText(R.id.title, item.getTitle());
-        setTagInfo(helper, item.getTopLeftTag(), R.id.topLeftTag);
-        setTagInfo(helper, item.getEpisodesTag(), R.id.episodesTag);
+        /*if (item.getItemType() == VodItemStyleEnum.STYLE_16_9.getType()) {
+            Utils.setImgViewBlurBg(vodDataBean.getImg(), imageView);
+        } else*/
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        Utils.setDefaultImage(vodDataBean.getImg(), vodDataBean.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title));
+        helper.setText(R.id.title, vodDataBean.getTitle());
+        setTagInfo(helper, vodDataBean.getTopLeftTag(), R.id.topLeftTag);
+        setTagInfo(helper, vodDataBean.getEpisodesTag(), R.id.episodesTag);
     }
 
     private void setTagInfo(BaseViewHolder helper, String title, @IdRes int id) {

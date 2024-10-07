@@ -1,4 +1,5 @@
 package my.project.moviesbox.config;
+
 import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.os.Handler;
@@ -6,6 +7,8 @@ import android.os.HandlerThread;
 import android.view.Surface;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import cn.jzvd.JZMediaInterface;
 import cn.jzvd.Jzvd;
@@ -77,6 +80,7 @@ public class JZMediaIjk extends JZMediaInterface implements IMediaPlayer.OnPrepa
 //            ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "probesize", 1024 * 10);
             //1变速变调状态 0变速不变调状态
             ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "soundtouch", 1);
+            ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "protocol_whitelist", "file,http,https,tcp,tls,crypto");
 
             ijkMediaPlayer.setOnPreparedListener(JZMediaIjk.this);
             ijkMediaPlayer.setOnVideoSizeChangedListener(JZMediaIjk.this);
@@ -89,6 +93,15 @@ public class JZMediaIjk extends JZMediaInterface implements IMediaPlayer.OnPrepa
 
             try {
                 ijkMediaPlayer.setDataSource(jzvd.jzDataSource.getCurrentUrl().toString());
+                HashMap<String, String> hashMap = jzvd.jzDataSource.headerMap;
+                if (hashMap != null) {
+                    for (Map.Entry<String, String> entry : hashMap.entrySet()) {
+                        String key = entry.getKey();
+                        String value = entry.getValue();
+                        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, key, value);
+                    }
+                }
+
                 ijkMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 ijkMediaPlayer.setScreenOnWhilePlaying(true);
                 ijkMediaPlayer.prepareAsync();

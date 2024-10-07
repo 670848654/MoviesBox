@@ -9,21 +9,16 @@ import my.project.moviesbox.model.UpdateImgModel;
  * @description: 注释
  * @date 2024/2/17 20:37
  */
-public class UpdateImgPresenter extends Presenter<UpdateImgContract.View> implements BasePresenter, UpdateImgContract.LoadDataCallback  {
+public class UpdateImgPresenter extends Presenter<UpdateImgContract.View, UpdateImgModel> implements BasePresenter, UpdateImgContract.LoadDataCallback  {
     private UpdateImgContract.View view;
-    private UpdateImgModel model;
-    private String oldImgUrl;
-    private String descUrl;
 
-    public UpdateImgPresenter(String oldImgUrl, String descUrl, UpdateImgContract.View view) {
+    public UpdateImgPresenter(UpdateImgContract.View view) {
         super(view);
         this.view = view;
-        this.oldImgUrl = oldImgUrl;
-        this.descUrl = descUrl;
         model = new UpdateImgModel();
     }
 
-    public void loadData() {
+    public void loadData(String oldImgUrl, String descUrl) {
         model.getImg(oldImgUrl, descUrl, this);
     }
 

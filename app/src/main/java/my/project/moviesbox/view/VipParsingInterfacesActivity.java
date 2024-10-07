@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Patterns;
-import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -43,6 +42,8 @@ import butterknife.OnClick;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.VipVideoAdapter;
 import my.project.moviesbox.contract.ParsingInterfacesContract;
+import my.project.moviesbox.enums.DialogXTipEnum;
+import my.project.moviesbox.model.ParsingInterfacesModel;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.VipVideoDataBean;
 import my.project.moviesbox.presenter.ParsingInterfacesPresenter;
@@ -56,9 +57,9 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/23 15:37
   * @版本: 1.0
  */
-public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfacesContract.View, ParsingInterfacesPresenter> implements
+public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfacesModel, ParsingInterfacesContract.View, ParsingInterfacesPresenter> implements
         ParsingInterfacesContract.View {
-    public final static Pattern pattern = Pattern.compile("http(.*)\\.html");
+    public final static Pattern URL_PATTERN = Pattern.compile("https://[^\\']*");
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     @BindView(R.id.urlLayout)
@@ -79,19 +80,20 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
     TextView dramaIntroductionView;
     @BindView(R.id.rvList)
     RecyclerView recyclerView;
+    private String url = "";
     private VipVideoDataBean vipVideoDataBean;
     private VipVideoAdapter adapter;
     private List<VipVideoDataBean.DramasItem> dramasItemList = new ArrayList<>();
 
     @Override
     protected ParsingInterfacesPresenter createPresenter() {
-        return null;
+        return new ParsingInterfacesPresenter(this);
     }
 
     @Override
     protected void loadData() {
-        if (mPresenter != null) {
-            mPresenter.parser();
+        if (!Utils.isNullOrEmpty(url)) {
+            mPresenter.parser(url);
         }
     }
 
@@ -103,7 +105,7 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
     @Override
     protected void init() {
         getBundle();
-        initToolbar();
+        setToolbar(toolbar, getString(R.string.vipVideoParserTitle), getString(R.string.vipVideoParserSubTitle));
         initAdapter();
     }
 
@@ -149,25 +151,13 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
         if (intent != null) {
             String sharedText = getIntent().getStringExtra(Intent.EXTRA_TEXT);
             if (sharedText != null) {
-                Matcher matcher = pattern.matcher(sharedText);
+                Matcher matcher = URL_PATTERN.matcher(sharedText);
                 if (matcher.find()) {
                     textInputLayout.getEditText().setText(matcher.group());
-                    mPresenter = new ParsingInterfacesPresenter(matcher.group(), this);
-                    loadData();
+                    url = matcher.group();
                 }
             }
         }
-    }
-
-    private void initToolbar() {
-        toolbar.setTitle(getString(R.string.vipVideoParserTitle));
-        toolbar.setSubtitle(getString(R.string.vipVideoParserSubTitle));
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(view -> {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            finish();
-        });
     }
 
     private void initAdapter() {
@@ -194,7 +184,7 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
         switch (view.getId()) {
             case R.id.parser: // 视频解析
                 textInputLayout.setError(null);
-                String url = textInputLayout.getEditText().getText().toString().trim();
+                url = textInputLayout.getEditText().getText().toString().trim();
                 textInputLayout.getEditText().addTextChangedListener(new TextWatcher() {
                     @Override
                     public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -213,7 +203,6 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
                     textInputLayout.setError("请输入正确的URL");
                     return;
                 }
-                mPresenter = new ParsingInterfacesPresenter(url, this);
                 loadData();
                 break;
             case R.id.videoUrl:
@@ -254,7 +243,7 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
     public void loadingView() {
         if (isFinishing()) return;
         parser.setEnabled(false);
-        application.showSnackbarMsg(toolbar, "尝试获取影视信息");
+        application.showToastMsg("尝试获取影视信息", DialogXTipEnum.DEFAULT);
         infoView.setVisibility(View.GONE);
         videoInfoView.setVisibility(View.GONE);
         errorMsgView.setVisibility(View.GONE);
@@ -319,9 +308,7 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
                     adapter.setNewInstance(dramasItemList);
                     videoInfoView.setVisibility(View.VISIBLE);
                     infoView.setStrokeColor(getColor(R.color.green400));
-                    application.showSnackbarMsgAction(toolbar, "成功：" + jsonObject.getString("iptime"), "好", v -> {
-
-                    });
+                    application.showToastMsg( "成功：" + jsonObject.getString("iptime"), DialogXTipEnum.SUCCESS);
                 } else {
                     errorMsgView.setText(jsonObject.toJSONString());
                     errorMsgView.setVisibility(View.VISIBLE);
@@ -393,7 +380,7 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
         int i = 0;
         for (Element a : list) {
             String href = a.attr("onclick");
-            Matcher matcher = pattern.matcher(href);
+            /*Matcher matcher = pattern.matcher(href);
             if (matcher.find()) {
                 VipVideoDataBean.DramasItem dramasItem = new VipVideoDataBean.DramasItem();
                 dramasItem.setTitle(a.text());
@@ -401,7 +388,13 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
                 dramasItem.setUrl(matcher.group());
                 dramasItemList.add(dramasItem);
                 i++;
-            }
+            }*/
+            VipVideoDataBean.DramasItem dramasItem = new VipVideoDataBean.DramasItem();
+            dramasItem.setTitle(a.text());
+            dramasItem.setIndex(i);
+            dramasItem.setUrl(href);
+            dramasItemList.add(dramasItem);
+            i++;
         }
     }
 
@@ -426,5 +419,11 @@ public class VipParsingInterfacesActivity extends BaseActivity<ParsingInterfaces
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        emptyRecyclerView(recyclerView);
     }
 }

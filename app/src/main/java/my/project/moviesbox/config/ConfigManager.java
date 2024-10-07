@@ -103,4 +103,12 @@ public class ConfigManager {
     public int getSniffTimeout() {
         return resources.getInteger(R.integer.sniffTimeOut);
     }
+
+    public boolean isEnableByPassCF() {
+        return resources.getBoolean(R.bool.enableByPassCF);
+    }
+
+    public int getByPassCFTimeout() {
+        return resources.getInteger(R.integer.byPassCFTimeout);
+    }
 }

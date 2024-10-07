@@ -2,13 +2,17 @@ package my.project.moviesbox.utils;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.arialyy.aria.core.task.DownloadTask;
+import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.BufferedReader;
@@ -31,6 +35,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import cn.jzvd.JZMediaInterface;
 import my.project.moviesbox.R;
+import my.project.moviesbox.adapter.VodTypeListAdapter;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.config.JZExoPlayer;
 import my.project.moviesbox.config.JZMediaIjk;
@@ -38,7 +43,8 @@ import my.project.moviesbox.database.manager.TVideoManager;
 import my.project.moviesbox.event.VideoSniffEvent;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
-import my.project.moviesbox.service.WebViewService;
+import my.project.moviesbox.parser.bean.DialogItemBean;
+import my.project.moviesbox.service.SniffingVideoService;
 import my.project.moviesbox.view.PlayerActivity;
 
 /**
@@ -55,25 +61,6 @@ public class VideoUtils {
 
     public static void init(Context context) {
         VideoUtils.context = context.getApplicationContext();
-    }
-
-    /**
-     * 发现多个播放地址时弹窗 下载用
-     *
-     * @param context
-     * @param list
-     * @param listener
-     */
-    public static void showMultipleVideoSources4Download(Context context,
-                                                         List<String> list,
-                                                         DialogInterface.OnClickListener listener) {
-        String[] items = list.toArray(new String[0]);
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context, R.style.DialogStyle);
-        builder.setTitle(Utils.getString(R.string.downloadMultipleVideoDialogTitle));
-        builder.setCancelable(false);
-        builder.setItems(items, listener);
-        alertDialog = builder.create();
-        alertDialog.show();
     }
 
     /**
@@ -100,7 +87,7 @@ public class VideoUtils {
         bundle.putInt("clickIndex", clickIndex);
         bundle.putString("vodId", vodId);
         bundle.putInt("nowSource", nowSource);
-        App.destoryActivity("player");
+        App.destroyActivity("player");
         if (isDescActivity)
             activity.startActivityForResult(new Intent(activity, PlayerActivity.class).putExtras(bundle), 0x10);
         else {
@@ -258,13 +245,12 @@ public class VideoUtils {
      * @return
      */
     public static int getPosition (byte[] src) {
-        int position = 0;
         StringBuffer sb = new StringBuffer("");
-        if (src == null || src.length <= 0) {
-            return position;
+        if (src == null || src.length == 0) {
+            return 0;
         }
-        for (int i = 0; i < src.length; i++) {
-            int v = src[i] & 0xFF;
+        for (byte b : src) {
+            int v = b & 0xFF;
             String hv = Integer.toHexString(v).toUpperCase();
             if (hv.length() < 2) {
                 sb.append(0);
@@ -272,10 +258,7 @@ public class VideoUtils {
             sb.append(hv);
         }
         Matcher matcher = Pattern.compile("47401110").matcher(sb.toString());
-        if(matcher.find()){
-            position = matcher.start()/2;
-        }
-        return position;
+        return matcher.find() ? matcher.start() / 2 : 0;
     }
 
     /**
@@ -305,6 +288,32 @@ public class VideoUtils {
     }
 
     /**
+     * 发现多个播放地址时弹窗 下载用
+     *
+     * @param context
+     * @param list
+     * @param listener
+     */
+    public static AlertDialog showMultipleVideoSources4Download(Context context,
+                                                                List<DialogItemBean> dialogItemBeans,
+                                                                OnItemClickListener onItemClickListener) {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context, R.style.DialogStyle);
+        builder.setTitle(Utils.getString(R.string.downloadMultipleVideoDialogTitle));
+        builder.setCancelable(false);
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View dialogView = inflater.inflate(R.layout.custom_dialog_recyclerview, null);
+        RecyclerView recyclerView = dialogView.findViewById(R.id.recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(context));
+        VodTypeListAdapter adapter = new VodTypeListAdapter(dialogItemBeans);
+        adapter.setOnItemClickListener(onItemClickListener);
+        recyclerView.setAdapter(adapter);
+        builder.setView(dialogView);
+        alertDialog = builder.create();
+        alertDialog.show();
+        return alertDialog;
+    }
+
+    /**
      * 发现多个播放地址时弹窗
      *
      * @param context
@@ -312,18 +321,25 @@ public class VideoUtils {
      * @param listener
      * @param isPlayerActivity 是否是播放界面
      */
-    public static void showMultipleVideoSources(Context context,
-                                                List<String> list,
-                                                DialogInterface.OnClickListener itemListener, boolean isPlayerActivity) {
-        String[] items = list.toArray(new String[0]);
+    public static AlertDialog showMultipleVideoSources(Context context,
+                                                List<DialogItemBean> dialogItemBeans,
+                                                OnItemClickListener onItemClickListener, boolean isPlayerActivity) {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context, R.style.DialogStyle);
         builder.setTitle(Utils.getString(R.string.selectVideoSource));
         builder.setCancelable(false);
-        builder.setItems(items, itemListener);
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View dialogView = inflater.inflate(R.layout.custom_dialog_recyclerview, null);
+        RecyclerView recyclerView = dialogView.findViewById(R.id.recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(context));
+        VodTypeListAdapter adapter = new VodTypeListAdapter(dialogItemBeans);
+        adapter.setOnItemClickListener(onItemClickListener);
+        recyclerView.setAdapter(adapter);
+        builder.setView(dialogView);
         if (!isPlayerActivity)
             builder.setNegativeButton(Utils.getString(R.string.defaultNegativeBtnText), null);
         alertDialog = builder.create();
         alertDialog.show();
+        return alertDialog;
     }
 
     /**
@@ -349,7 +365,7 @@ public class VideoUtils {
     public static void startSniffing(String url,
                                      VideoSniffEvent.ActivityEnum activityEnum,
                                      VideoSniffEvent.SniffEnum sniffEnum) {
-        Intent intent = new Intent(context, WebViewService.class);
+        Intent intent = new Intent(context, SniffingVideoService.class);
         intent.putExtra("url", url);
         intent.putExtra("activityEnum", activityEnum.name());
         intent.putExtra("sniffEnum", sniffEnum.name());
@@ -360,8 +376,8 @@ public class VideoUtils {
      * 嗅探失败弹窗
      * @param context
      */
-    public static void sniffErrorDialog(Context context) {
-        Utils.showAlert(context,
+    public static void sniffErrorDialog(Activity activity) {
+        Utils.showAlert(activity,
                 context.getString(R.string.errorDialogTitle),
                 context.getString(R.string.sniffVodPlayUrlError),
                 false,

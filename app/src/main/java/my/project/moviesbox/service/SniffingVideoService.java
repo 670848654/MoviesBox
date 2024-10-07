@@ -1,5 +1,9 @@
 package my.project.moviesbox.service;
 
+import static my.project.moviesbox.parser.config.VodTypeEnum.M3U8;
+import static my.project.moviesbox.parser.config.VodTypeEnum.MP4;
+import static my.project.moviesbox.parser.config.VodTypeEnum.OTHER;
+
 import android.app.Service;
 import android.content.Intent;
 import android.os.Handler;
@@ -12,14 +16,20 @@ import android.webkit.WebViewClient;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.event.VideoSniffEvent;
-import my.project.moviesbox.parser.config.ParserInterfaceFactory;
+import my.project.moviesbox.parser.LogUtil;
+import my.project.moviesbox.parser.bean.DialogItemBean;
+import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * @author Li
@@ -27,7 +37,7 @@ import my.project.moviesbox.utils.SharedPreferencesUtils;
  * @description: 视频嗅探服务
  * @date 2024/5/30 14:15
  */
-public class WebViewService extends Service {
+public class SniffingVideoService extends Service {
     private WebView webView;
 
     @Override
@@ -44,7 +54,9 @@ public class WebViewService extends Service {
         if (intent != null) {
             String activityEnum = intent.getStringExtra("activityEnum");
             String sniffEnum = intent.getStringExtra("sniffEnum");
-            String url = ParserInterfaceFactory.getParserInterface().getDefaultDomain() + intent.getStringExtra("url");
+            String url = intent.getStringExtra("url");
+            if (!url.startsWith("http"))
+                url = ParserInterfaceFactory.getParserInterface().getDefaultDomain() + url;
             webView.setWebViewClient(new MyWebViewClient(this, activityEnum, sniffEnum));
             webView.loadUrl(url);
         } else
@@ -71,8 +83,8 @@ public class WebViewService extends Service {
         private final String activityEnum;
         private final String sniffEnum;
         private final Service service;
-        private final List<String> playUrls;
-        private final List<String> notFoundUrls;
+        private final List<DialogItemBean> playUrls;
+        private final List<DialogItemBean> notFoundUrls;
 
         private final Handler handler;
         private final Runnable timeoutRunnable;
@@ -87,7 +99,7 @@ public class WebViewService extends Service {
             this.timeoutRunnable = () -> {
                 // 如果在设定秒内没有找到匹配的URL，停止服务
                 boolean foundUrls = !playUrls.isEmpty();
-                List<String> urlsToPost = foundUrls ? playUrls : notFoundUrls;
+                List<DialogItemBean> urlsToPost = foundUrls ? playUrls : notFoundUrls;
                 EventBus.getDefault().post(setVideoSniffEvent(foundUrls, this.activityEnum, this.sniffEnum, urlsToPost));
                 this.service.stopSelf();
             };
@@ -104,27 +116,63 @@ public class WebViewService extends Service {
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
             // 获取请求的 URL
             String url = request.getUrl().toString();
+            LogUtil.logInfo("url", url);
             // 获取请求的方法（GET、POST等）
             String method = request.getMethod();
             // 获取请求的头部信息
             Map<String, String> headers = request.getRequestHeaders();
+            String contentType = headers.get("Content-Type"); // 通过请求头获取 MIME 类型
             // 忽略集合
             for (String suffering : ConfigManager.getInstance().getSuffering()) {
                 if (url.contains(suffering)) {
                     // 如果 URL 包含任何一个 suffering 字符串，直接跳过该 URL
                     continue;
                 }
-                if (url.contains("m3u8") || url.contains("mp4"))
-                    playUrls.add(url);
+                // 判断是否是 MP4 链接
+                boolean isMp4 = url.toLowerCase().contains("mp4") ||
+                        (contentType != null &&
+                                (contentType.equals("video/mp4") ||
+                                        contentType.equals("audio/mp4") ||
+                                        contentType.equals("application/octet-stream")));
+
+                if (isMp4 || url.contains("m3u8")) {
+                    // 如果 URL 是 MP4 或 M3U8 类型
+                    DialogItemBean dialogItemBean = new DialogItemBean(url, isMp4 ? MP4 : M3U8);
+                    if (!playUrls.contains(dialogItemBean))
+                        playUrls.add(dialogItemBean);
+                }
                 else
-                    notFoundUrls.add(url);
+                    notFoundUrls.add(new DialogItemBean(url, OTHER));
                 break;
             }
             return null;
         }
     }
 
-    public static VideoSniffEvent setVideoSniffEvent(boolean success, String activityEnum, String sniffEnum, List<String> urls) {
+    public static boolean isMp4Url(String url) {
+        OkHttpClient client = new OkHttpClient();
+
+        try {
+            Request request = new Request.Builder()
+                    .url(url)
+                    .head() // 发送 HEAD 请求，只获取头部信息
+                    .build();
+
+            Response response = client.newCall(request).execute();
+            String contentType = response.header("Content-Type");
+
+            // 检查 Content-Type 是否为 MP4
+            if (contentType != null && contentType.contains("video/mp4")) {
+                return true;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public static VideoSniffEvent setVideoSniffEvent(boolean success, String activityEnum, String sniffEnum, List<DialogItemBean> urls) {
         return new VideoSniffEvent(
                 VideoSniffEvent.ActivityEnum.valueOf(activityEnum),
                 VideoSniffEvent.SniffEnum.valueOf(sniffEnum),

@@ -3,6 +3,7 @@ package my.project.moviesbox.contract;
 import java.util.List;
 
 import my.project.moviesbox.parser.bean.DetailsDataBean;
+import my.project.moviesbox.parser.bean.DialogItemBean;
 
 /**
   * @包名: my.project.moviesbox.contract
@@ -19,22 +20,22 @@ public interface VideoContract {
 
     interface View extends BaseView {
         void cancelDialog();
-        void successPlayUrl(List<String> urls);
+        void successPlayUrl(List<DialogItemBean> urls);
         void errorPlayUrl();
         void errorNet(String msg);
         void successDramasList(List<DetailsDataBean.DramasItem> dramasItems);
         void errorDramasList();
-        void successOnlyPlayUrl(List<String> urls);
+        void successOnlyPlayUrl(List<DialogItemBean> urls);
         void errorOnlyPlayUrl();
     }
 
     interface LoadDataCallback extends BaseLoadDataCallback {
-        void successPlayUrl(List<String> urls);
+        void successPlayUrl(List<DialogItemBean> urls);
         void errorPlayUrl();
         void errorNet(String msg);
         void successDramasList(List<DetailsDataBean.DramasItem> dramasItems);
         void errorDramasList();
-        void successOnlyPlayUrl(List<String> urls);
+        void successOnlyPlayUrl(List<DialogItemBean> urls);
         void errorOnlyPlayUrl();
     }
 }

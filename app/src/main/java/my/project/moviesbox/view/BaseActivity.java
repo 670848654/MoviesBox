@@ -5,6 +5,7 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -13,8 +14,12 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.animation.AlphaInAnimation;
@@ -22,7 +27,6 @@ import com.chad.library.adapter.base.animation.ScaleInAnimation;
 import com.chad.library.adapter.base.animation.SlideInBottomAnimation;
 import com.chad.library.adapter.base.animation.SlideInLeftAnimation;
 import com.chad.library.adapter.base.animation.SlideInRightAnimation;
-import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Locale;
 
@@ -32,8 +36,9 @@ import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.enums.AdapterAnimationType;
-import my.project.moviesbox.parser.config.ParserInterfaceFactory;
+import my.project.moviesbox.model.BaseModel;
 import my.project.moviesbox.parser.parserService.ParserInterface;
+import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.DarkModeUtils;
 import my.project.moviesbox.utils.StatusBarUtil;
@@ -47,7 +52,7 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:06
   * @版本: 1.0
  */
-public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatActivity {
+public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V, M>> extends AppCompatActivity {
     protected P mPresenter;
     protected App application;
     private Unbinder mUnBinder;
@@ -67,6 +72,13 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
     protected TextView errorMsgView; // 错误视图文本
     private LinearLayout emptyView; // 空布局
     private TextView emptyMsg; // 空布局视图文本
+    protected int page = parserInterface.startPageNum(); // 开始页码
+    protected int pageCount = parserInterface.startPageNum();
+    protected boolean isErr = true;
+    /**
+     * 弹出窗
+     */
+    protected AlertDialog alertDialog;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -74,7 +86,6 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
         Configuration configuration = getResources().getConfiguration();
         change = configuration.orientation;
         isPortrait = change == Configuration.ORIENTATION_PORTRAIT;
-//        setDeviceOrientation();
         initBeforeView();
         setContentView(setLayoutRes());
         if (Utils.checkHasNavigationBar(this)) {
@@ -120,6 +131,23 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
     protected abstract void init();
 
     protected abstract void initBeforeView();
+
+    /**
+     * 通用设置toolbar方法
+     * @param toolbar toolbar
+     * @param title 标题
+     */
+    protected void setToolbar(Toolbar toolbar, @NonNull String title, String subTitle) {
+        toolbar.setTitle(title);
+        if (!Utils.isNullOrEmpty(subTitle))
+            toolbar.setSubtitle(subTitle);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        toolbar.setNavigationOnClickListener(view -> {
+            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            finish();
+        });
+    }
 
     /**
      * 设置视图方向
@@ -179,6 +207,11 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
                     break;
             }
         }
+    }
+
+    protected void setLoadState(BaseQuickAdapter adapter, boolean loadState) {
+        isErr = loadState;
+        adapter.getLoadMoreModule().loadMoreComplete();
     }
 
     /**
@@ -268,7 +301,15 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
         if (null != mPresenter)
             mPresenter.detachView();
         mUnBinder.unbind();
+        alertDialog = null;
         super.onDestroy();
+    }
+
+    protected void emptyRecyclerView(RecyclerView... recyclerViews) {
+        for (RecyclerView rv : recyclerViews) {
+            if (!Utils.isNullOrEmpty(rv))
+                rv.setAdapter(null);
+        }
     }
 
     protected boolean gtSdk23() {
@@ -340,13 +381,4 @@ public abstract class BaseActivity<V, P extends Presenter<V>> extends AppCompatA
      * @return
      */
     protected abstract void retryListener();
-
-    protected void showSnackbarMsg(View view, String msg, View anchorView, boolean warning) {
-        Snackbar
-                .make(view, msg, Snackbar.LENGTH_LONG)
-                .setAnchorView(anchorView)
-                .setTextColor(getColor(R.color.night_text_color))
-                .setBackgroundTint(warning ? getColor(R.color.orange500) : getColor(R.color.pink200))
-                .show();
-    }
 }

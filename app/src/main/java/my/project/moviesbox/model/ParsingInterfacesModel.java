@@ -5,6 +5,9 @@ import androidx.annotation.NonNull;
 import com.alibaba.fastjson.JSONObject;
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.codec.binary.Base64;
 
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -15,6 +18,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import my.project.moviesbox.contract.ParsingInterfacesContract;
+import my.project.moviesbox.event.HtmlSourceEvent;
 import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.LogUtil;
 import okhttp3.Call;
@@ -122,4 +126,7 @@ public class ParsingInterfacesModel extends BaseModel implements ParsingInterfac
             return null;
         }
     }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onWebViewEvent(HtmlSourceEvent event) {}
 }

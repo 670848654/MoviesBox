@@ -1,5 +1,7 @@
 package my.project.moviesbox.view;
 
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_DOWNLOAD;
+
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
@@ -35,7 +37,8 @@ import my.project.moviesbox.database.entity.TDownloadWithFields;
 import my.project.moviesbox.database.manager.TDownloadDataManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.event.DownloadEvent;
-import my.project.moviesbox.event.RefreshEvent;
+import my.project.moviesbox.event.RefreshEnum;
+import my.project.moviesbox.model.DownloadModel;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.presenter.DownloadPresenter;
 import my.project.moviesbox.presenter.UpdateImgPresenter;
@@ -50,7 +53,7 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:10
   * @版本: 1.0
  */
-public class DownloadFragment extends BaseFragment<DownloadContract.View, DownloadPresenter> implements
+public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContract.View, DownloadPresenter> implements
         DownloadContract.View {
     private View view;
     @BindView(R.id.rv_list)
@@ -88,13 +91,13 @@ public class DownloadFragment extends BaseFragment<DownloadContract.View, Downlo
 
     @Override
     protected DownloadPresenter createPresenter() {
-        return new DownloadPresenter(downloadList.size(), limit, this);
+        return new DownloadPresenter(this);
     }
 
     @Override
     protected void loadData() {
         downloadCount = TDownloadManager.queryDownloadCount();
-        mPresenter.loadDownloadList(isMain);
+        mPresenter.loadDownloadList(isMain, downloadList.size(), limit);
     }
 
     @Override
@@ -130,7 +133,7 @@ public class DownloadFragment extends BaseFragment<DownloadContract.View, Downlo
                                     else
                                         Aria.download(this).load(taskId).ignoreCheckPermissions().resume();
                                     LogUtil.logInfo("恢复下载任务，资源类型为", isM3u8 ? "M3U8" : "MP4");
-                                    TDownloadDataManager.updateDownloadState(taskId);
+                                    TDownloadDataManager.updateDownloadState(0, taskId);
                                     getActivity().startService(new Intent(getActivity(), DownloadService.class));
                                 }
                             },
@@ -162,7 +165,6 @@ public class DownloadFragment extends BaseFragment<DownloadContract.View, Downlo
             } else {
                 if (isErr) {
                     isMain = false;
-                    mPresenter = new DownloadPresenter(downloadList.size(), limit, this);
                     loadData();
                 } else {
                     isErr = true;
@@ -182,15 +184,14 @@ public class DownloadFragment extends BaseFragment<DownloadContract.View, Downlo
     private void loadDownloadData() {
         isMain = true;
         downloadList.clear();
-        mPresenter = createPresenter();
         loadData();
     }
 
     @Override
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onEvent(RefreshEvent refresh) {
+    public void onEvent(RefreshEnum refresh) {
         if (getActivity().isFinishing()) return;
-        if (refresh.getIndex() == 3)
+        if (refresh == REFRESH_DOWNLOAD)
             loadDownloadData();
     }
 

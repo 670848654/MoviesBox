@@ -50,6 +50,11 @@ public class ClassificationDataBean implements MultiItemEntity, Serializable {
         private String url; // 地址
         private boolean selected; // 默认选择
 
+        public Item(String title, String url) {
+            this.title = title;
+            this.url = url;
+        }
+
         @Override
         public String toString() {
             return JSONObject.toJSONString(this);

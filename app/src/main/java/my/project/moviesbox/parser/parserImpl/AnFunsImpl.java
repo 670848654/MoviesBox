@@ -1,10 +1,15 @@
 package my.project.moviesbox.parser.parserImpl;
 
 import static my.project.moviesbox.parser.LogUtil.logInfo;
+import static my.project.moviesbox.parser.config.ItemStyleEnum.STYLE_16_9;
+import static my.project.moviesbox.parser.config.MultiItemEnum.BANNER_LIST;
+import static my.project.moviesbox.parser.config.MultiItemEnum.ITEM_LIST;
+import static my.project.moviesbox.parser.config.MultiItemEnum.TAG_LIST;
+import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum.ANFUNS;
+import static my.project.moviesbox.parser.config.VodTypeEnum.M3U8;
+import static my.project.moviesbox.parser.config.VodTypeEnum.MP4;
 
 import android.util.Base64;
-
-import androidx.annotation.LayoutRes;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -16,6 +21,7 @@ import org.jsoup.select.Elements;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,13 +35,17 @@ import lombok.Getter;
 import lombok.NonNull;
 import my.project.moviesbox.contract.DanmuContract;
 import my.project.moviesbox.model.DanmuModel;
+import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
+import my.project.moviesbox.parser.bean.DialogItemBean;
 import my.project.moviesbox.parser.bean.MainDataBean;
 import my.project.moviesbox.parser.bean.TextDataBean;
 import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.bean.WeekDataBean;
+import my.project.moviesbox.parser.config.ItemStyleEnum;
+import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
@@ -84,11 +94,11 @@ public class AnFunsImpl implements ParserInterface {
      * <p>请在站点枚举类中配置</p>
      *
      * @return
-     * @see SourceEnum#source
+     * @see SourceEnum.SourceIndexEnum#ANFUNS
      */
     @Override
     public int getSource() {
-        return SourceEnum.ANFUNS.getSource();
+        return ANFUNS.index;
     }
 
     /**
@@ -124,6 +134,7 @@ public class AnFunsImpl implements ParserInterface {
     public Map<String, String> requestHeaders() {
         Map<String, String> headers = new HashMap<>();
         headers.put("Sec-Ch-Ua", "\"Not A(Brand\";v=\"99\", \"Microsoft Edge\";v=\"121\", \"Chromium\";v=\"121\"");
+        headers.put("Referer", getDefaultDomain());
         headers.put("Sec-Ch-Ua-Mobile", "?0");
         headers.put("Sec-Ch-Ua-Platform", "\"Windows\"");
         headers.put("Sec-Fetch-Dest", "document");
@@ -151,6 +162,24 @@ public class AnFunsImpl implements ParserInterface {
         headers.put("Sec-Fetch-Mode", "no-cors");
         headers.put("Sec-Fetch-Site", "cross-site");
         headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36 Edg/117.0.2045.60");
+        return headers;
+    }
+
+    @Override
+    public HashMap<String, String> setPlayerHeaders() {
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("accept", "*/*");
+        headers.put("accept-encoding", "gzip, deflate, br, zstd");
+        headers.put("accept-language", "zh-CN,zh;q=0.9");
+        headers.put("origin", getDefaultDomain());
+        headers.put("priority", "u=1, i");
+        headers.put("sec-ch-ua", "\"Not)A;Brand\";v=\"99\", \"Microsoft Edge\";v=\"127\", \"Chromium\";v=\"127\"");
+        headers.put("sec-ch-ua-mobile", "?0");
+        headers.put("sec-ch-ua-platform", "\"Windows\"");
+        headers.put("sec-fetch-dest", "empty");
+        headers.put("sec-fetch-mode", "cors");
+        headers.put("sec-fetch-site", "cross-site");
+        headers.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0");
         return headers;
     }
 
@@ -207,28 +236,13 @@ public class AnFunsImpl implements ParserInterface {
     }
 
     /**
-     * 设置影视数据列表视图样式
-     *
-     * @return {@link LayoutRes}
-     * @see VodDataBean#ITEM_TYPE_0
-     * @see VodDataBean#ITEM_TYPE_1
-     */
-    @Override
-    public int setVodListItemType() {
-        return VodDataBean.ITEM_TYPE_0;
-    }
-
-    /**
      * APP首页内容解析接口
-     * <p>MainDataBean.TAG_LIST: TAG列表内容</p>
-     * <p>MainDataBean.BANNER_LIST: 轮播列表内容</p>
-     * <p>MainDataBean.ITEM_LIST: 内容块列表内容 如：热门、推荐板块内容</p>
-     * <p>MainDataBean.Item.ITEM_TYPE: 影视数据列表视图样式</p>
-     *
-     * @param source 网页源代码
-     * @return {@link List<MainDataBean>}
+     * <p>{@link MultiItemEnum}: 列表ITEM样式</p>
+     * <p>{@link ItemStyleEnum}: 影视数据列表视图样式</p>
      * @see MainDataBean
      * @see MainDataBean.Item
+     * @param source 网页源代码
+     * @return {@link List<MainDataBean>}
      */
     @Override
     public List<MainDataBean> parserMainData(String source) {
@@ -238,7 +252,7 @@ public class AnFunsImpl implements ParserInterface {
             MainDataBean mainDataBean;
             // TAG
             mainDataBean = new MainDataBean();
-            mainDataBean.setDataType(MainDataBean.TAG_LIST);
+            mainDataBean.setDataType(TAG_LIST.getType());
             List<MainDataBean.Tag> tags = new ArrayList<>();
             tags.add(new MainDataBean.Tag(HomeTagEnum.WEEK.name, HomeTagEnum.WEEK.content, WeekActivity.class));
             tags.add(new MainDataBean.Tag(HomeTagEnum.XFJF.name, HomeTagEnum.XFJF.content, ClassificationVodListActivity.class));
@@ -251,8 +265,8 @@ public class AnFunsImpl implements ParserInterface {
             // 轮播
             Elements bannerElements = document.getElementById("conch-banner").select("ul.swiper-wrapper > li > a");
             mainDataBean = new MainDataBean();
-            mainDataBean.setDataType(MainDataBean.BANNER_LIST);
-            mainDataBean.setVodItemType(MainDataBean.Item.ITEM_TYPE_1);
+            mainDataBean.setDataType(BANNER_LIST.getType());
+            mainDataBean.setVodItemType(STYLE_16_9);
             List<MainDataBean.Item> items = new ArrayList<>();
             for (Element banner : bannerElements) {
                 MainDataBean.Item item = new MainDataBean.Item();
@@ -276,7 +290,7 @@ public class AnFunsImpl implements ParserInterface {
                         Elements moreA = listTitle.get(i).select("a.hl-rb-more");
                         mainDataBean = new MainDataBean();
                         mainDataBean.setTitle(title);
-                        mainDataBean.setDataType(MainDataBean.ITEM_LIST);
+                        mainDataBean.setDataType(ITEM_LIST.getType());
                         if (moreA.size() > 0) {
                             String moreUrl = moreA.attr("href");
                             mainDataBean.setHasMore(true);
@@ -530,10 +544,9 @@ public class AnFunsImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserClassificationVodList(String source) {
+    public List<VodDataBean> parserClassificationVodList(String source) {
         try {
-            VodDataBean vodDataBean = new VodDataBean();
-            List<VodDataBean.Item> items = new ArrayList<>();
+            List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             /*Elements elements = document.select(".hl-list-item a.hl-lazy");
             if (elements.size() > 0) {
@@ -552,7 +565,7 @@ public class AnFunsImpl implements ParserInterface {
             Elements elements = document.select(".hl-vod-list li a.hl-lazy");
             if (elements.size() > 0) {
                 for (Element a : elements) {
-                    VodDataBean.Item bean = new VodDataBean.Item();
+                    VodDataBean bean = new VodDataBean();
                     bean.setTitle(a.attr("title"));
                     bean.setUrl(a.attr("href"));
                     bean.setImg(a.attr("data-original"));
@@ -560,10 +573,9 @@ public class AnFunsImpl implements ParserInterface {
                     bean.setEpisodesTag(a.select(".hl-pic-text").text());
                     items.add(bean);
                 }
-                vodDataBean.setItemList(items);
-                logInfo("分类列表数据", vodDataBean.toString());
+                logInfo("分类列表数据", items.toString());
             }
-            return vodDataBean;
+            return items;
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserClassificationVodList error", e.getMessage());
@@ -578,15 +590,14 @@ public class AnFunsImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserSearchVodList(String source) {
+    public List<VodDataBean>  parserSearchVodList(String source) {
         try {
-            VodDataBean vodDataBean = new VodDataBean();
-            List<VodDataBean.Item> items = new ArrayList<>();
+            List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".hl-list-item a.hl-lazy");
             if (elements.size() > 0) {
                 for (Element item : elements) {
-                    VodDataBean.Item bean = new VodDataBean.Item();
+                    VodDataBean bean = new VodDataBean();
                     bean.setTitle(item.attr("title"));
                     bean.setUrl(item.attr("href"));
                     bean.setImg(item.attr("data-original"));
@@ -594,10 +605,9 @@ public class AnFunsImpl implements ParserInterface {
                     bean.setEpisodesTag(item.select("span.remarks").text());
                     items.add(bean);
                 }
-                vodDataBean.setItemList(items);
-                logInfo("搜索列表数据", vodDataBean.toString());
+                logInfo("搜索列表数据", items.toString());
             }
-            return vodDataBean;
+            return items;
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserSearchVodList error", e.getMessage());
@@ -612,7 +622,7 @@ public class AnFunsImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserVodList(String source) {
+    public List<VodDataBean>  parserVodList(String source) {
         return parserClassificationVodList(source);
     }
 
@@ -717,9 +727,9 @@ public class AnFunsImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<String> getPlayUrl(String source) {
+    public List<DialogItemBean> getPlayUrl(String source) {
         try {
-            List<String> result = new ArrayList<>();
+            List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements scriptElements = document.select("script");
             for (Element script : scriptElements) {
@@ -747,10 +757,31 @@ public class AnFunsImpl implements ParserInterface {
                             } catch (UnsupportedEncodingException e) {
                                 throw new RuntimeException(e);
                             }
-                            result.add(decodedString);
+                            result.add(new DialogItemBean(decodedString, decodedString.contains("m3u8") ? M3U8 : MP4));
                             return result;
+                        case 3:
+                            logInfo("encrypt为3 通过API获取", "");
+                            String api = getDefaultDomain() + "/vapi/AIRA/art.php?url=%s&next=&vid=%s&title=%s&nid=%s&uid=guest&name=guest&group=guest";
+                            String url = encryptUrl;
+                            String vid = jsonObject.getString("id");
+                            String title = URLEncoder.encode(jsonObject.getJSONObject("vod_data").getString("vod_name"), "UTF-8");
+                            int nid = jsonObject.getInteger("nid");
+                            String parseApi = String.format(api, url, vid, title, nid);
+                            logInfo("parserApi", parseApi);
+                            String apiResult = OkHttpUtils.performSyncRequestAndHeader(parseApi);
+                            logInfo("apiResult", apiResult);
+                            String regex = "url:\\s*'([^']+)'";
+                            Pattern pattern = Pattern.compile(regex);
+                            Matcher matcher = pattern.matcher(apiResult);
+                            // 查找匹配的内容
+                            if (matcher.find()) {
+                                String videoUrl = matcher.group(1);
+                                logInfo("播放地址", videoUrl);
+                                result.add(new DialogItemBean(videoUrl, videoUrl.contains("m3u8") ? M3U8 : MP4));
+                                return result;
+                            }
                         default:
-                            result.add(encryptUrl);
+                            result.add(new DialogItemBean(encryptUrl, encryptUrl.contains("m3u8") ? M3U8 : MP4));
                             return result;
                     }
                 }
@@ -819,7 +850,7 @@ public class AnFunsImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserTopticList(String source) {
+    public List<VodDataBean> parserTopticList(String source) {
         return null;
     }
 
@@ -830,7 +861,7 @@ public class AnFunsImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserTopticVodList(String source) {
+    public List<VodDataBean> parserTopticVodList(String source) {
         return null;
     }
 

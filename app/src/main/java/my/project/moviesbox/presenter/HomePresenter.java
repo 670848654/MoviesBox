@@ -12,9 +12,8 @@ import my.project.moviesbox.parser.bean.MainDataBean;
  * @description: 注释
  * @date 2023/12/30 22:58
  */
-public class HomePresenter extends Presenter<HomeContract.View> implements BasePresenter, HomeContract.LoadDataCallback {
+public class HomePresenter extends Presenter<HomeContract.View, HomeModel> implements BasePresenter, HomeContract.LoadDataCallback {
     private HomeContract.View view;
-    private HomeModel model;
     /**
      * 构造函数
      *
@@ -42,5 +41,4 @@ public class HomePresenter extends Presenter<HomeContract.View> implements BaseP
     public void success(List<MainDataBean> mainDataBeans) {
         view.success(mainDataBeans);
     }
-
 }

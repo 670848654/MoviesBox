@@ -1,6 +1,7 @@
 package my.project.moviesbox.contract;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 import my.project.moviesbox.parser.bean.VodDataBean;
 
@@ -18,17 +19,17 @@ public interface SearchContract {
     }
 
     interface View extends BaseView {
-        void success(boolean firstTimeData, VodDataBean vodDataBean, int pageCount);
+        void success(boolean firstTimeData, List<VodDataBean> vodDataBeans, int pageCount);
 
         void error(boolean firstTimeData, String msg);
 
-        void empty(String msg);
+        void empty(boolean firstTimeData, String msg);
     }
 
     interface LoadDataCallback extends BaseLoadDataCallback {
-        void success(boolean firstTimeData, VodDataBean vodDataBean, int pageCount);
+        void success(boolean firstTimeData, List<VodDataBean> vodDataBeans, int pageCount);
 
         void error(boolean firstTimeData, String msg);
-        void empty(String msg);
+        void empty(boolean firstTimeData, String msg);
     }
 }

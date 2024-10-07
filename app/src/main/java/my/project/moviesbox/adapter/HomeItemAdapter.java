@@ -12,6 +12,7 @@ import java.util.List;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.parser.bean.MainDataBean;
+import my.project.moviesbox.parser.config.ItemStyleEnum;
 import my.project.moviesbox.utils.Utils;
 
 /**
@@ -29,7 +30,7 @@ public class HomeItemAdapter extends BaseQuickAdapter<MainDataBean.Item, BaseVie
      * @方法描述: 适配器构造方法
      * @日期: 2024/1/22 16:45
      * @作者: Li Z
-     * @param layoutResId 布局ID 参考{@link MainDataBean.Item}中{@link MainDataBean.Item#ITEM_TYPE_0},{@link MainDataBean.Item#ITEM_TYPE_1}
+     * @param layoutResId 布局ID 参考{@link ItemStyleEnum}
      * @param data 列表数据{@link MainDataBean.Item}
      * @返回:
      */

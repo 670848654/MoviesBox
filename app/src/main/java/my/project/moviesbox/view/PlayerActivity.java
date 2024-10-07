@@ -1,5 +1,7 @@
 package my.project.moviesbox.view;
 
+import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum.fromIndex;
+
 import android.os.Bundle;
 import android.os.Handler;
 
@@ -17,12 +19,14 @@ import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.DramaAdapter;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.contract.VideoContract;
+import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.enums.VideoUrlChangeEnum;
 import my.project.moviesbox.event.DramaEvent;
 import my.project.moviesbox.event.VideoSniffEvent;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
-import my.project.moviesbox.parser.config.ParserInterfaceFactory;
+import my.project.moviesbox.parser.bean.DialogItemBean;
+import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.VideoPresenter;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
@@ -45,7 +49,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
 
     @Override
     protected void setActivityName() {
-        App.addDestoryActivity(this, "player");
+        App.addDestroyActivity(this, "player");
     }
 
     @Override
@@ -63,9 +67,9 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
 
     @Override
     protected void getNextPlayUrl() {
-        videoPresenter = new VideoPresenter(true, vodTitle, dramasItems.get(clickIndex+1).getUrl(),
-                nowSource, dramasItems.get(clickIndex+1).getTitle(), this);
-        videoPresenter.loadData(true);
+        LogUtil.logInfo("开始获取下一集播放地址", "");
+        videoPresenter.loadData(true, vodTitle, dramasItems.get(clickIndex+1).getUrl(),
+                nowSource, dramasItems.get(clickIndex+1).getTitle());
     }
 
     @Override
@@ -107,19 +111,24 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
         return dramaAdapter.getItem(position);
     }
 
+    protected DetailsDataBean.DramasItem getItemByPosition(int position) {
+        return dramaAdapter.getItem(position);
+    }
+
     @Override
     protected void parseVideoUrl(String dramaTitle) {
-        videoPresenter = new VideoPresenter(false, vodTitle, dramaUrl, nowSource, dramaTitle, this);
-        videoPresenter.loadData(true);
+        videoPresenter.loadData(false, vodTitle, dramaUrl, nowSource, dramaTitle);
     }
 
     @Override
     protected String[] getDanmuParams() {
-        switch (SharedPreferencesUtils.getDefaultSource()) {
-            case ParserInterfaceFactory.SOURCE_SILISILI:
+        int interfaceSource = parserInterface.getSource();
+        SourceEnum.SourceIndexEnum sourceEnum = fromIndex(interfaceSource);
+        switch (sourceEnum) {
+            case SILISILI:
                 // 嘶哩嘶哩弹幕参数 [0]:影视标题 [1]:影视集数下标
                 return new String[]{vodTitle, String.valueOf(dramasItems.get(clickIndex).getIndex())};
-            case ParserInterfaceFactory.SOURCE_ANFUNS:
+            case ANFUNS:
                 // AnFuns弹幕参数 [0]:影视播放地址url中的影视ID [1]:影视集数下标
                 String regex = "([0-9]+)";
                 Pattern pattern = Pattern.compile(regex);
@@ -128,29 +137,37 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
                 if (matcher.find())
                     stringBuilder.append(matcher.group());
                 return new String[]{stringBuilder.toString(), String.valueOf(dramasItems.get(clickIndex).getIndex())};
+            case YJYS:
+                // 缘觉影视弹幕参数 [0] 播放页地址
+                return new String[]{dramaUrl};
             default:
                 return null;
         }
     }
 
     @Override
-    protected void initCustomData() {}
+    protected void initCustomData() {
+        videoPresenter = new VideoPresenter(this);
+    }
 
     @Override
     public void cancelDialog() {Utils.cancelDialog(alertDialog);}
 
     @Override
-    public void successPlayUrl(List<String> urls) {
+    public void successPlayUrl(List<DialogItemBean> urls) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
             hideNavBar();
             cancelDialog();
             if (urls.size() == 1)
-                playNetworkVideo(urls.get(0));
+                playNetworkVideo(urls.get(0).getUrl());
             else
-                VideoUtils.showMultipleVideoSources(this,
+                alertDialog = VideoUtils.showMultipleVideoSources(this,
                         urls,
-                        (dialog, index) -> playNetworkVideo(urls.get(index)),
+                        (adapter, view, position) -> {
+                            playNetworkVideo(urls.get(position).getUrl());
+                            alertDialog.dismiss();
+                        },
                          true);
         });
     }
@@ -210,11 +227,11 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
     @Override
     public void errorDramasList() {
         if (isFinishing()) return;
-        runOnUiThread(() -> application.showToastMsg(getString(R.string.getPlaylistErrorMsg)));
+        runOnUiThread(() -> application.showToastMsg(getString(R.string.getPlaylistErrorMsg), DialogXTipEnum.ERROR));
     }
 
     @Override
-    public void successOnlyPlayUrl(List<String> urls) {
+    public void successOnlyPlayUrl(List<DialogItemBean> urls) {
         if (isFinishing()) return;
         nextPlayUrl = urls;
         LogUtil.logInfo("获取下一集播放地址成功", urls.toString());
@@ -236,7 +253,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
                 }, RETRY_DELAY_MILLIS);
             } else {
                 // 达到最大重试次数，不再执行
-                application.showToastMsg(getString(R.string.getNextEpisodeFailedMoreThan3Times));
+                application.showToastMsg(getString(R.string.getNextEpisodeFailedMoreThan3Times), DialogXTipEnum.ERROR);
             }
         });
     }
@@ -266,7 +283,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
         if (isFinishing()) return;
         if (event.getActivityEnum() == VideoSniffEvent.ActivityEnum.PLAYER) {
             cancelDialog();
-            List<String> urls = event.getUrls();
+            List<DialogItemBean> urls = event.getUrls();
             boolean success = event.isSuccess();
             switch (event.getSniffEnum()) {
                 case PLAY:

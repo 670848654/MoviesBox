@@ -2,6 +2,7 @@ package my.project.moviesbox.adapter;
 
 import android.widget.ImageView;
 
+import androidx.annotation.LayoutRes;
 import androidx.annotation.Nullable;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
@@ -23,8 +24,8 @@ import my.project.moviesbox.utils.Utils;
  */
 public class DetailsListItemAdapter extends BaseQuickAdapter<DetailsDataBean.Recommend, BaseViewHolder> {
 
-    public DetailsListItemAdapter(@Nullable List<DetailsDataBean.Recommend> data) {
-        super(R.layout.item_desc_list, data);
+    public DetailsListItemAdapter(@LayoutRes int layoutId, @Nullable List<DetailsDataBean.Recommend> data) {
+        super(layoutId, data);
     }
 
     @Override

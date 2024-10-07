@@ -130,6 +130,13 @@
     @Upload.* <methods>;
     @DownloadGroup.* <methods>;
 }
+# 保持 Zstd 库的所有类不被混淆
+-keep class com.github.luben.zstd.** { *; }
+
+# 如果你需要确保 JNI 的 native 方法不被混淆，添加以下规则
+-keepclasseswithmembers class * {
+    native <methods>;
+}
 
 -keep class tv.danmaku.ijk.** { *; }
 -dontwarn tv.danmaku.ijk.**
@@ -143,6 +150,26 @@
     public <init>(android.content.Context, java.lang.Boolean);
     public <init>(android.content.Context, android.util.AttributeSet);
     public <init>(android.content.Context, android.util.AttributeSet, int);
+}
+
+-keep class com.kongzue.dialogx.** { *; }
+-dontwarn com.kongzue.dialogx.**
+
+# 额外的，建议将 android.view 也列入 keep 范围：
+-keep class android.view.** { *; }
+
+# 若启用模糊效果，请增加如下配置：
+-dontwarn androidx.renderscript.**
+-keep public class androidx.renderscript.** { *; }
+
+-dontwarn javax.xml.stream.events.**
+-keep public class org.simpleframework.** { *; }
+-keep class org.simpleframework.xml.** { *; }
+-keep class org.simpleframework.xml.core.** { *; }
+-keep class org.simpleframework.xml.util.** { *; }
+-keepattributes ElementList, Root
+-keepclassmembers class * {
+    @org.simpleframework.xml.* *;
 }
 
 # Please add these rules to your existing keep rules in order to suppress warnings.

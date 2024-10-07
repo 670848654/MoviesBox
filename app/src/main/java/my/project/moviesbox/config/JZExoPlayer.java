@@ -14,6 +14,7 @@ import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.RenderersFactory;
@@ -34,9 +35,13 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.video.VideoListener;
 
+import java.io.File;
+import java.util.HashMap;
+
 import cn.jzvd.JZMediaInterface;
 import cn.jzvd.Jzvd;
 import my.project.moviesbox.R;
+
 /**
   * @包名: my.project.moviesbox.config
   * @类名: JZExoPlayer
@@ -106,16 +111,23 @@ public class JZExoPlayer extends JZMediaInterface implements Player.EventListene
                     15000,
                     true /* allowCrossProtocolRedirects */
             );
-
+            HashMap<String, String> hashMap = jzvd.jzDataSource.headerMap;
+            if (hashMap != null) {
+                httpDataSourceFactory.getDefaultRequestProperties().set(hashMap);
+            }
             if (currUrl.contains(".m3u8")) {
 //                videoSource = new HlsMediaSource.Factory(httpDataSourceFactory)
 //                        .createMediaSource(Uri.parse(currUrl), handler, null);
-                videoSource = new HlsMediaSource.Factory(httpDataSourceFactory)
+                if (currUrl.startsWith("file")) // 播放本地M3U8
+                    videoSource = new HlsMediaSource.Factory(dataSourceFactory)
+                            .createMediaSource(MediaItem.fromUri(Uri.fromFile(new File(currUrl.replace("file:/", "")))));
+                else // 播放网络M3U8
+                    videoSource = new HlsMediaSource.Factory(httpDataSourceFactory)
                         .createMediaSource(Uri.parse(currUrl));
-            } else {
+            } else
+                // 播放本地视频
                 videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory)
-                        .createMediaSource(Uri.parse(currUrl));
-            }
+                        .createMediaSource(currUrl.startsWith("file") ? Uri.fromFile(new File(currUrl.replace("file:/", ""))) : Uri.parse(currUrl));
             simpleExoPlayer.addVideoListener(this);
 
             Log.e(TAG, "URL Link = " + currUrl);
@@ -187,9 +199,14 @@ public class JZExoPlayer extends JZMediaInterface implements Player.EventListene
 
     @Override
     public long getCurrentPosition() {
-        if (simpleExoPlayer != null)
-            return simpleExoPlayer.getCurrentPosition();
-        else return 0;
+        try {
+            if (simpleExoPlayer != null)
+                return simpleExoPlayer.getCurrentPosition();
+            else return 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
     }
 
     @Override

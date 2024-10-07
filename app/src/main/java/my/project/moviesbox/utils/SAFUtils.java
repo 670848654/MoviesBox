@@ -1,5 +1,6 @@
 package my.project.moviesbox.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
@@ -61,9 +62,9 @@ public class SAFUtils {
      * @param context
      * @param onClickListener
      */
-    public static void showUnauthorizedAlert(Context context, DialogInterface.OnClickListener onClickListener) {
+    public static void showUnauthorizedAlert(Activity activity, DialogInterface.OnClickListener onClickListener) {
         Utils.showAlert(
-                context,
+                activity,
                 "!*操作失败*!",
                 "无法写入外部存储，请选择授权保存目录后再进行此操作！",
                 false,

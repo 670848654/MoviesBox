@@ -259,9 +259,8 @@ public class M3U8DownloadConfig {
             if (!Utils.isNullOrEmpty(keyPath)) {
                 tsKey = VideoUtils.readKeyInfo2Byte(new File(m3U8Entity.getKeyPath()));
                 tsIv = m3U8Entity.getIv() == null ? new byte[16] : m3U8Entity.getIv().getBytes();
-                LogUtil.logInfo("key", m3U8Entity.getKeyPath());
-                LogUtil.logInfo("iv", m3U8Entity.getIv());
-                LogUtil.logInfo("TsMergeHandler", "TS分片存在加密");
+                String encryptedInformation = "TS分片存在加密; key=%s; iv=%s";
+                LogUtil.logInfo("TsMergeHandler", String.format(encryptedInformation, new String(tsKey), new String(tsIv)));
             }
             OutputStream outputStream = null;
             InputStream inputStream = null;

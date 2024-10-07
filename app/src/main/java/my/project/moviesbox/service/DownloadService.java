@@ -1,5 +1,7 @@
 package my.project.moviesbox.service;
 
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_DOWNLOAD;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -21,9 +23,10 @@ import java.util.List;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.config.NotificationUtils;
+import my.project.moviesbox.database.manager.TDownloadDataManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.event.DownloadEvent;
-import my.project.moviesbox.event.RefreshEvent;
+import my.project.moviesbox.event.DownloadStateEvent;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.utils.VideoConverter;
@@ -93,20 +96,18 @@ public class DownloadService extends Service {
 
     @Download.onWait
     public void onTaskWait(DownloadTask downloadTask) {
-        EventBus.getDefault().post(new RefreshEvent(3));
+        EventBus.getDefault().post(REFRESH_DOWNLOAD);
     }
 
     @Download.onTaskResume
     public void onTaskResume(DownloadTask downloadTask) {
         Long taskId = downloadTask.getEntity().getId();
         mNotify.showDefaultNotification(taskId.intValue(), (String) VideoUtils.getVodInfo(downloadTask, 0), downloadTask.getTaskName());
-//        EventBus.getDefault().post(new Refresh(3));
     }
 
 
     @Download.onTaskStart
     public void onTaskStart(DownloadTask downloadTask) {
-//        EventBus.getDefault().post(new RefreshEvent(3));
         Long taskId = downloadTask.getEntity().getId();
         taskIds.add(taskId);
         mNotify.showDefaultNotification(taskId.intValue(), (String) VideoUtils.getVodInfo(downloadTask, 0), downloadTask.getTaskName());
@@ -114,7 +115,6 @@ public class DownloadService extends Service {
 
     @Download.onTaskStop
     public void onTaskStop(DownloadTask downloadTask) {
-//        EventBus.getDefault().post(new RefreshEvent(3));
         shouldUnRegister();
     }
 
@@ -158,7 +158,9 @@ public class DownloadService extends Service {
             String inputPath = savePath.replaceAll("m3u8", "ts");
             String outputPath = savePath.replaceAll("m3u8", "mp4");
             int notificationId = mNotify.uploadInfo(taskId.intValue(), vodTitle, vodEpisodes, Utils.getString(R.string.downloadTsSuccessMsg));
-            VideoConverter.convertTSToMP4(context, notificationId, savePath, inputPath, outputPath, taskId, vodTitle, vodEpisodes, mNotify);
+            TDownloadDataManager.updateDownloadState(3, taskId);
+            EventBus.getDefault().post(new DownloadStateEvent(taskId, vodEpisodes, 3));
+            VideoConverter.convertTSToMP4(notificationId, savePath, inputPath, outputPath, taskId, vodTitle, vodEpisodes, mNotify);
         }
         shouldUnRegister();
     }
@@ -174,7 +176,6 @@ public class DownloadService extends Service {
         if (list == null || list.size() == 0) {
             // 没有正在执行的任务
             mNotify.cancelNotification(-1);
-            EventBus.getDefault().post(new RefreshEvent(100));
         }
     }
 }

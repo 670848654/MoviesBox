@@ -1,13 +1,20 @@
 package my.project.moviesbox.view;
 
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_DOWNLOAD;
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_FAVORITE;
 import static my.project.moviesbox.utils.Utils.DOWNLOAD_SAVE_PATH;
+import static my.project.moviesbox.utils.Utils.isPad;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
@@ -15,9 +22,11 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -26,15 +35,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.arialyy.aria.core.Aria;
+import com.arialyy.aria.core.common.HttpOption;
 import com.bumptech.glide.load.DecodeFormat;
+import com.bumptech.glide.load.resource.bitmap.BitmapTransitionOptions;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.transition.Transition;
 import com.ctetin.expandabletextviewlibrary.ExpandableTextView;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -42,12 +56,15 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.OnClick;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 import my.project.moviesbox.R;
+import my.project.moviesbox.adapter.DetailTagAdapter;
 import my.project.moviesbox.adapter.DetailsListItemAdapter;
 import my.project.moviesbox.adapter.DownloadDramaAdapter;
 import my.project.moviesbox.adapter.DramaAdapter;
@@ -57,19 +74,24 @@ import my.project.moviesbox.config.M3U8DownloadConfig;
 import my.project.moviesbox.contract.DetailsContract;
 import my.project.moviesbox.contract.DownloadVideoContract;
 import my.project.moviesbox.contract.VideoContract;
+import my.project.moviesbox.custom.AutoLineFeedLayoutManager;
 import my.project.moviesbox.database.manager.TDownloadDataManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.TVideoManager;
+import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.event.DramaEvent;
-import my.project.moviesbox.event.RefreshEvent;
 import my.project.moviesbox.event.VideoSniffEvent;
+import my.project.moviesbox.model.DetailsModel;
+import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
-import my.project.moviesbox.parser.config.ParserInterfaceFactory;
+import my.project.moviesbox.parser.bean.DialogItemBean;
+import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.presenter.DetailsPresenter;
 import my.project.moviesbox.presenter.DownloadVideoPresenter;
 import my.project.moviesbox.presenter.VideoPresenter;
 import my.project.moviesbox.service.DownloadService;
+import my.project.moviesbox.utils.ImageUtils;
 import my.project.moviesbox.utils.SAFUtils;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.StatusBarUtil;
@@ -84,12 +106,8 @@ import my.project.moviesbox.utils.VideoUtils;
   * @日期: 2024/2/4 17:09
   * @版本: 1.0
  */
-public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsPresenter> implements DetailsContract.View, VideoContract.View, DownloadVideoContract.View {
-    /**
-     * appBarLayout
-     */
-    @BindView(R.id.app_bar_margin)
-    LinearLayout appBarMargin;
+public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.View, DetailsPresenter> implements DetailsContract.View,
+        VideoContract.View, DownloadVideoContract.View {
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     /**
@@ -98,10 +116,30 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     @BindView(R.id.favorite)
     MaterialButton favoriteBtn;
     /**
-     * 影视图片视图
+     * 平板图片视图
      */
-    @BindView(R.id.vod_img)
-    ImageView vodImgView;
+    @BindView(R.id.pad_img_box)
+    ConstraintLayout padImgBoxView;
+    /**
+     * 影视图片视图 (1:1.4)
+     */
+    @BindView(R.id.img_view_type_0)
+    MaterialCardView imgType0View;
+    /**
+     * 影视图片视图 (1:1.4)
+     */
+    @BindView(R.id.vod_img_type0)
+    ImageView vodImgType0View;
+    /**
+     * 影视图片视图 (16:9)
+     */
+    @BindView(R.id.img_view_type_1)
+    MaterialCardView imgType1View;
+    /**
+     * 影视图片视图 (16:9)
+     */
+    @BindView(R.id.vod_img_type1)
+    ImageView vodImgType1View;
     /**
      * 影视详情视图
      */
@@ -118,22 +156,26 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     @BindView(R.id.mSwipe)
     SwipeRefreshLayout mSwipe;
     /**
-     * detailsTitle 详情标题
-     * detailsUrl 详情源地址
-     * dramaUrl 播放页源地址
-     * dramaTitle 播放集数标题
+     * <p>detailsTitle 详情标题</p>
+     * <p>detailsUrl 详情源地址</p>
+     * <p>dramaUrl 播放页源地址</p>
+     * <p>dramaTitle 播放集数标题</p>
+     * <p>downloadDramaUrl 下载剧集集数地址</p>
+     * <p>dramaTitle 下载剧集集数标题</p>
      */
     private String detailsTitle, detailsUrl, dramaUrl, dramaTitle, downloadDramaUrl, downloadDramaNumber;
-    private AlertDialog alertDialog;
     /**
      * 是否收藏
      */
     private boolean isFavorite;
+    /**
+     * 影视详情信息
+     */
     private DetailsDataBean detailsDataBean = new DetailsDataBean();
     /**
      * 记住点击过的影视 用于手势返回时回到上一影视信息
      */
-    private List<String> vodUrlList = new ArrayList();
+    private List<String> vodUrlList = new ArrayList<>();
     /**
      * 剧集列表
      */
@@ -194,7 +236,12 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
      * TAG列表
      */
     @BindView(R.id.chip_group)
-    ChipGroup chipGroupView;
+    RecyclerView detailTagRecyclerView;
+    private RecyclerView expandTagListRv;
+    private BottomSheetDialog tagBottomSheetDialog;
+    List<ClassificationDataBean.Item> detailTags = new ArrayList<>();
+    DetailTagAdapter detailTagAdapter;
+
     @BindView(R.id.info)
     TextView infoView;
     /**
@@ -224,7 +271,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
      * 下载相关参数
      */
     private String savePath; // 下载保存路劲
-    private DownloadVideoPresenter downloadVideoPresenter; // 下载适配器
+    private final DownloadVideoPresenter downloadVideoPresenter = new DownloadVideoPresenter(this); // 下载适配器
     private RecyclerView downloadListRv;
     private BottomSheetDialog downloadBottomSheetDialog;
     private List<DownloadDramaBean> downloadBean = new ArrayList<>();
@@ -232,12 +279,16 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     /**
      * 多播放列表选择相关
      */
+    @BindView(R.id.multi_play_layout)
+    RelativeLayout multiPlayLayout;
+    @BindView(R.id.multi_play_input)
+    TextInputLayout multiPlayInput;
     @BindView(R.id.selected_text)
     AutoCompleteTextView selectedDrama;
     private List<String> dramaTitles;
     private ArrayAdapter dramaTitlesApter;
     private int sourceIndex = 0; // 所选播放列表下标
-    private VideoPresenter videoPresenter;
+    private final VideoPresenter videoPresenter = new VideoPresenter(this);
 
     @Override
     protected DetailsPresenter createPresenter() {
@@ -258,7 +309,6 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     protected void init() {
         EventBus.getDefault().register(this);
         StatusBarUtil.setTranslucentForCoordinatorLayout(this, 0);
-        expandableDescView.setNeedExpend(true);
         getBundle();
         initToolbar();
         initSwipe();
@@ -271,7 +321,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
 
     public void getBundle() {
         Bundle bundle = getIntent().getExtras();
-        if (!bundle.isEmpty()) {
+        if (!Utils.isNullOrEmpty(bundle)) {
             detailsUrl = bundle.getString("url");
             detailsTitle = bundle.getString("title");
             vodUrlList.add(detailsUrl);
@@ -279,23 +329,14 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     }
 
     private void initToolbar() {
-        toolbar.setTitle("");
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(view -> {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            finish();
-        });
-        scrollView.getViewTreeObserver().addOnScrollChangedListener(() -> {
-            if (scrollView.getScrollY() > 0) {
-                toolbar.setTitle(detailsTitle);
-            } else
-            {
-                mSwipe.setEnabled(true);
-                toolbar.setTitle("");
+       setToolbar(toolbar, "", "");
+       scrollView.post(() -> scrollView.getViewTreeObserver().addOnScrollChangedListener(() -> {
+            if (scrollView != null) {
+                boolean scrollGtZero = scrollView.getScrollY() > 0;
+                toolbar.setTitle(scrollGtZero ? detailsTitle : "");
+                mSwipe.setEnabled(!scrollGtZero);
             }
-
-        });
+        }));
     }
 
     @OnClick({R.id.order, R.id.favorite, R.id.download, R.id.browser,R.id.drama})
@@ -314,7 +355,6 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
                 break;
             case R.id.browser:
                 Utils.viewInChrome(DetailsActivity.this, detailsUrl);
-//                startActivity(new Intent(this, WebViewActivity.class).putExtra("url", detailsUrl));
                 break;
             case R.id.drama:
                 if (!expandListBSD.isShowing()) {
@@ -326,8 +366,10 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     }
 
     private void select2Download() {
-        if (downloadAdapter.getData().size() == 0)
+        if (downloadAdapter.getData().size() == 0) {
+            application.showToastMsg("无可下载列表", DialogXTipEnum.ERROR);
             return;
+        }
         if (!Utils.isWifiConnected(this)) {
             Utils.showAlert(this,
                     getString(R.string.noWifiDialogTitle),
@@ -351,12 +393,33 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
 
     private void initSwipe() {
         mSwipe.setColorSchemeResources(R.color.pink500, R.color.blue500, R.color.purple500);
-        mSwipe.setOnRefreshListener(() ->  {
-            retryListener();
-        });
+        mSwipe.setOnRefreshListener(this::retryListener);
     }
 
     private void initAdapter() {
+        detailTagAdapter = new DetailTagAdapter(detailTags);
+        detailTagAdapter.setOnItemClickListener((adapter, view, position) -> {
+            chipClick(view, position);
+        });
+        View tagView = LayoutInflater.from(this).inflate(R.layout.dialog_drama, null);
+        expandTagListRv = tagView.findViewById(R.id.drama_list);
+        expandTagListRv.setAdapter(detailTagAdapter);
+        tagBottomSheetDialog = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
+        tagBottomSheetDialog.setContentView(tagView);
+        expandTagListRv.setLayoutManager(new AutoLineFeedLayoutManager());
+        detailTagAdapter.setOnItemLongClickListener((adapter, view, position) -> {
+            tagBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+            tagBottomSheetDialog.show();
+            return true;
+        });
+//        if (Utils.isPad()) {
+//            detailTagRecyclerView.setLayoutManager(new AutoLineFeedLayoutManager());
+//        } else {
+            LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+            layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+            detailTagRecyclerView.setLayoutManager(layoutManager);
+//        }
+        detailTagRecyclerView.setAdapter(detailTagAdapter);
         dramaListAdapter = new DramaAdapter(this, dramaList);
         dramaListAdapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
@@ -366,33 +429,6 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
         dramaListRv.setLayoutManager(dramaListLayoutManager);
         dramaListRv.setAdapter(dramaListAdapter);
         dramaListRv.setNestedScrollingEnabled(false);
-
-        multiAdapter = new DetailsListItemAdapter(detailsDataBean.getMultiList());
-        multiAdapter.setOnItemClickListener((adapter, view, position) -> {
-            DetailsDataBean.Recommend bean = (DetailsDataBean.Recommend) adapter.getItem(position);
-            detailsTitle = bean.getTitle();
-            detailsUrl = bean.getUrl();
-            vodUrlList.add(detailsUrl);
-            openVodDesc();
-        });
-        multiLayoutManager = getLinearLayoutManager();
-        multiListRv.setLayoutManager(multiLayoutManager);
-        multiListRv.setAdapter(multiAdapter);
-        multiListRv.setNestedScrollingEnabled(false);
-
-        recommendAdapter = new DetailsListItemAdapter(detailsDataBean.getRecommendList());
-        recommendAdapter.setOnItemClickListener((adapter, view, position) -> {
-            DetailsDataBean.Recommend bean = (DetailsDataBean.Recommend) adapter.getItem(position);
-            detailsTitle = bean.getTitle();
-            detailsUrl = bean.getUrl();
-            vodUrlList.add(detailsUrl);
-            openVodDesc();
-        });
-        recommendLayoutManager = getLinearLayoutManager();
-        recommendRv.setLayoutManager(recommendLayoutManager);
-        if (Utils.checkHasNavigationBar(this)) recommendRv.setPadding(0,0,0, Utils.getNavigationBarHeight(this));
-        recommendRv.setAdapter(recommendAdapter);
-        recommendRv.setNestedScrollingEnabled(false);
 
         View dramaView = LayoutInflater.from(this).inflate(R.layout.dialog_drama, null);
         expandListRv = dramaView.findViewById(R.id.drama_list);
@@ -417,16 +453,19 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
         downloadAdapter.setOnItemClickListener((adapter, view, position) -> {
             DownloadDramaBean bean = downloadBean.get(position);
             if (bean.isHasDownload()) {
-                application.showToastMsg(getString(R.string.hasDownloadTask));
+                application.showToastMsg(getString(R.string.hasDownloadTask), DialogXTipEnum.WARNING);
                 return;
             }
-            // 下载开始
-            alertDialog = Utils.getProDialog(this, R.string.parseVodPlayUrl);
-            createDownloadConfig();
             downloadDramaUrl = downloadBean.get(position).getUrl();
             downloadDramaNumber = downloadBean.get(position).getTitle();
-            downloadVideoPresenter  = new DownloadVideoPresenter(downloadDramaUrl, downloadDramaNumber, this);
-            downloadVideoPresenter.loadData(false);
+            createDownloadConfig();
+            // 下载开始
+            if (!parserInterface.playUrlNeedParser()) {
+                startDownload(downloadDramaUrl, downloadDramaNumber);
+                return;
+            }
+            alertDialog = Utils.getProDialog(this, R.string.parseVodPlayUrl);
+            downloadVideoPresenter.loadData(downloadDramaUrl, downloadDramaNumber);
         });
         downloadListRv.setAdapter(downloadAdapter);
         downloadBottomSheetDialog = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
@@ -440,17 +479,21 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     }
 
     private void chipClick(View view, int position) {
+        if (tagBottomSheetDialog.isShowing())
+            tagBottomSheetDialog.dismiss();
         view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
         Bundle bundle = new Bundle();
         bundle.putString("title", detailsDataBean.getTagTitles().get(position));
         bundle.putString("url", detailsDataBean.getTagUrls().get(position));
-        startActivity(new Intent(this, VodListActivity.class).putExtras(bundle));
+        startActivity(new Intent(this, parserInterface.detailTagOpenClass()).putExtras(bundle));
     }
 
     @SuppressLint("RestrictedApi")
     public void openVodDesc() {
-        hideView(chipGroupView);
-        chipGroupView.removeAllViews();
+        detailTags.clear();
+        detailTagAdapter.setNewInstance(detailTags);
+        /*hideView(chipGroupView);
+        chipGroupView.removeAllViews();*/
         hideView(scoreView);
         setTextviewEmpty(expandableDescView);
         detailsDataBean = new DetailsDataBean();
@@ -463,16 +506,19 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     }
 
     private void playVideo(DramaAdapter adapter, int position) {
-        alertDialog = Utils.getProDialog(this, R.string.parseVodPlayUrl);
         adapter.getData().get(position).setSelected(true);
         clickIndex = position;
         dramaList.get(position).setSelected(true);
         dramaUrl = dramaList.get(position).getUrl();
         dramaTitle = dramaList.get(position).getTitle();
-        dramaListAdapter.notifyDataSetChanged();
-        expandListAdapter.notifyDataSetChanged();
-        videoPresenter = new VideoPresenter(false, detailsTitle, dramaUrl, sourceIndex, dramaTitle, this);
-        videoPresenter.loadData(true);
+        dramaListAdapter.notifyItemChanged(position);
+        expandListAdapter.notifyItemChanged(position);
+        if (!parserInterface.playUrlNeedParser()) {
+            playVod(dramaUrl);
+            return;
+        }
+        alertDialog = Utils.getProDialog(this, R.string.parseVodPlayUrl);
+        videoPresenter.loadData(false, detailsTitle, dramaUrl, sourceIndex, dramaTitle);
     }
 
     @Override
@@ -486,7 +532,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
                 openVodDesc();
             }
             else
-                application.showToastMsg(getString(R.string.loadVodDescInfo));
+                application.showToastMsg(getString(R.string.loadVodDescInfo), DialogXTipEnum.WARNING);
         }
     }
 
@@ -495,39 +541,119 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
         favoriteBtn.setIcon(ContextCompat.getDrawable(this, isFavorite ? R.drawable.round_bookmark_added_24 : R.drawable.round_bookmark_add_24));
         favoriteBtn.setText(isFavorite ? getString(R.string.removeFavoriteBtnText) : getString(R.string.addFavoriteBtnText));
         favoriteBtn.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-        EventBus.getDefault().post(new RefreshEvent(1));
-        application.showImgSnackbarMsg(favoriteBtn, isFavorite ? R.drawable.round_favorite_24 : R.drawable.round_favorite_border_24, getColor(R.color.night_text_color), isFavorite ? getString(R.string.addFavorite) : getString(R.string.removeFavorite));
+        EventBus.getDefault().post(REFRESH_FAVORITE);
+//        application.showImgSnackbarMsg(favoriteBtn, isFavorite ? R.drawable.round_favorite_24 : R.drawable.round_favorite_border_24, getColor(R.color.night_text_color), isFavorite ? getString(R.string.addFavorite) : getString(R.string.removeFavorite));
+        application.showToastMsg(isFavorite ? getString(R.string.addFavorite) : getString(R.string.removeFavorite), DialogXTipEnum.SUCCESS);
     }
 
     private void setCollapsingToolbar() {
         RequestOptions options = new RequestOptions()
                 .centerCrop()
-                .format(DecodeFormat.PREFER_RGB_565)
-                .error(R.drawable.default_bg);
-        if (Utils.isNullOrEmpty(detailsDataBean.getImg()))
-            bgView.setImageDrawable(getDrawable(R.drawable.default_bg));
-        else
-            GlideApp.with(this)
-                    .load(Utils.getGlideUrl(detailsDataBean.getImg()))
-                    .override(500)
-                    .transition(DrawableTransitionOptions.withCrossFade(500))
-                    .apply(options)
-                    .apply(RequestOptions.bitmapTransform( new BlurTransformation(15, 5)))
-                    .into(bgView);
-        vodImgView.setTag(R.id.imageid, detailsDataBean.getImg());
-        Utils.setDefaultImage(detailsDataBean.getImg(), detailsDataBean.getUrl(), vodImgView, false, null, null);
+                .format(DecodeFormat.PREFER_RGB_565);
+        String videoImgUrl = detailsDataBean.getImg();
+        if (Utils.isNullOrEmpty(videoImgUrl)) {
+            bgView.setVisibility(View.GONE);
+        } else {
+            // 获取屏幕高度
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            int screenHeight = displayMetrics.heightPixels;
+
+            // 计算高度的二分之一
+            int height = screenHeight / 2;
+
+            // 设置ImageView的高度
+            ViewGroup.LayoutParams params = bgView.getLayoutParams();
+            params.height = height;
+            bgView.setLayoutParams(params);
+            // 设置图片信息
+            if (isPad()) {
+                // 如果是平板 设置背景模糊
+                GlideApp.with(this)
+                        .load(Utils.getGlideUrl(videoImgUrl))
+                        .override(500)
+                        .transition(DrawableTransitionOptions.withCrossFade(500))
+                        .apply(options)
+                        .apply(RequestOptions.bitmapTransform(new BlurTransformation(15, 5)))
+                        .into(bgView);
+                bgView.setVisibility(View.VISIBLE);
+                GlideApp.with(this)
+                        .asBitmap()
+                        .load(Utils.getGlideUrl(videoImgUrl))
+                        .override(500)
+                        .apply(new RequestOptions()
+                                .encodeQuality(70)
+                        )
+                        .transition(BitmapTransitionOptions.withCrossFade(500))
+                        .into(new CustomTarget<Bitmap>() {
+                            @Override
+                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                // 获取图片宽高
+                                int width = resource.getWidth();
+                                int height = resource.getHeight();
+                                // 回调结果
+                                if (width > height) {
+                                    vodImgType1View.setTag(R.id.imageid, videoImgUrl);
+                                    vodImgType1View.setImageBitmap(resource);
+                                    imgType1View.setVisibility(View.VISIBLE);
+                                } else {
+                                    vodImgType0View.setTag(R.id.imageid, videoImgUrl);
+                                    vodImgType0View.setImageBitmap(resource);
+                                    imgType0View.setVisibility(View.VISIBLE);
+                                }
+                                // 显示图片
+                                padImgBoxView.setVisibility(View.VISIBLE);
+                            }
+
+                            @Override
+                            public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                            }
+
+                            @Override
+                            public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                                padImgBoxView.setVisibility(View.GONE);
+                            }
+                        });
+                /*if (detailsDataBean.getImgStyle().equals(ItemStyleEnum.STYLE_16_9)) {
+                    // 如果是16:9
+                    vodImgType1View.setTag(R.id.imageid, videoImgUrl);
+                    Utils.setDefaultImage(videoImgUrl, detailsDataBean.getUrl(), vodImgType1View, false, null, null);
+                    imgType1View.setVisibility(View.VISIBLE);
+                } else {
+                    // 1:1.4
+                    vodImgType0View.setTag(R.id.imageid, videoImgUrl);
+                    Utils.setDefaultImage(videoImgUrl, detailsDataBean.getUrl(), vodImgType0View, false, null, null);
+                    imgType0View.setVisibility(View.VISIBLE);
+                }
+                // 显示图片
+                imgBoxView.setVisibility(View.VISIBLE);*/
+            } else {
+                // 手机设备显示原图
+                GlideApp.with(this)
+                        .load(Utils.getGlideUrl(videoImgUrl))
+                        .override(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
+                        .transition(DrawableTransitionOptions.withCrossFade(500))
+                        .apply(options)
+                        .into(bgView);
+                bgView.setVisibility(View.VISIBLE);
+                // 不显示图片
+                padImgBoxView.setVisibility(View.GONE);
+                // 将标题完全显示 调整字体大小
+                titleView.setTextSize(24);
+                titleView.setMaxLines(99);
+                infoView.setTextSize(18);
+                scoreView.setTextSize(18);
+                updateTimeView.setTextSize(18);
+            }
+        }
         titleView.setText(detailsDataBean.getTitle());
         if (detailsDataBean.getTagTitles() != null) {
             for (int i=0,size=detailsDataBean.getTagTitles().size(); i<size; i++) {
-                Chip chip = new Chip(this);
-                chip.setText(detailsDataBean.getTagTitles().get(i));
-                int position = i;
-                chip.setOnClickListener(view -> chipClick(view, position));
-                chipGroupView.addView(chip);
+                detailTags.add(new ClassificationDataBean.Item(detailsDataBean.getTagTitles().get(i), detailsDataBean.getTagUrls().get(i)));
             }
-            showView(chipGroupView);
-        }else
-            hideView(chipGroupView);
+            detailTagAdapter.setNewInstance(detailTags);
+        }
         if (Utils.isNullOrEmpty(detailsDataBean.getIntroduction()))
             hideView(expandableDescView);
         else {
@@ -543,7 +669,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
         if (Utils.isNullOrEmpty(content))
             textView.setVisibility(View.GONE);
         else {
-            textView.setText("•"+content);
+            textView.setText("\uD83D\uDD38 "+content);
             textView.setVisibility(View.VISIBLE);
         }
     }
@@ -559,6 +685,10 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     }
 
     private void initTitleAdapter() {
+        if (dramaTitles.size() > 1)
+            multiPlayInput.setHint("播放列表 [共"+dramaTitles.size()+"个播放列表]");
+        else
+            multiPlayInput.setHint("播放列表");
         selectedDrama.setText(dramaTitles.get(0));
         dramaTitlesApter = new ArrayAdapter(this, R.layout.text_list_item, dramaTitles);
         selectedDrama.setAdapter(dramaTitlesApter);
@@ -594,16 +724,19 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     }
 
     @Override
-    public void successPlayUrl(List<String> urls) {
+    public void successPlayUrl(List<DialogItemBean> urls) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
            cancelDialog();
             if (urls.size() == 1)
-                playVod(urls.get(0));
+                playVod(urls.get(0).getUrl());
             else
-                VideoUtils.showMultipleVideoSources(this,
+               alertDialog = VideoUtils.showMultipleVideoSources(this,
                         urls,
-                        (dialog, index) -> playVod(urls.get(index)),
+                        (adapter, view, position) -> {
+                            playVod(urls.get(position).getUrl());
+                            alertDialog.dismiss();
+                        },
                         false);
         });
     }
@@ -676,7 +809,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     }
 
     @Override
-    public void successOnlyPlayUrl(List<String> urls) {
+    public void successOnlyPlayUrl(List<DialogItemBean> urls) {
 
     }
 
@@ -687,10 +820,14 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         if (null != downloadVideoPresenter)
             downloadVideoPresenter.detachView();
+        if (null != videoPresenter)
+            videoPresenter.detachView();
+        emptyRecyclerView(dramaListRv, expandListRv, multiListRv, recommendRv, detailTagRecyclerView, expandTagListRv, downloadListRv);
         EventBus.getDefault().unregister(this);
+        Utils.clearCache();
+        super.onDestroy();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -698,8 +835,8 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
         if (isFinishing()) return;
         clickIndex = event.getClickIndex();
         dramaList.get(clickIndex).setSelected(true);
-        dramaListAdapter.notifyDataSetChanged();
-        expandListAdapter.notifyDataSetChanged();
+        dramaListAdapter.notifyItemChanged(clickIndex);
+        expandListAdapter.notifyItemChanged(clickIndex);
     }
 
     /****************************************** 下载相关 ******************************************/
@@ -707,11 +844,12 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
      * 创建下载保存目录
      */
     private void createDownloadConfig() {
-        savePath = String.format(DOWNLOAD_SAVE_PATH, ParserInterfaceFactory.getParserInterface().getSourceName() , detailsTitle);
+        String fileName = Utils.getHashedFileName(detailsTitle);
+        savePath = String.format(DOWNLOAD_SAVE_PATH, ParserInterfaceFactory.getParserInterface().getSourceName() , fileName);
         if (SAFUtils.canReadDownloadDirectory())
             Utils.createDataFolder(savePath);
         else {
-            savePath = getFilesDir().getAbsolutePath()+String.format("/%s/%s/", ParserInterfaceFactory.getParserInterface().getSourceName() , detailsTitle);
+            savePath = getFilesDir().getAbsolutePath()+String.format(DOWNLOAD_SAVE_PATH, ParserInterfaceFactory.getParserInterface().getSourceName() , fileName);
             Utils.createDataFolder(savePath);
         }
     }
@@ -726,18 +864,22 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
             VideoUtils.showInfoDialog(this, String.format(getString(R.string.notSupportDownloadMsg), url));
             return;
         }
-        long taskId;
         String fileSavePath = savePath + playNumber;
-        boolean isM3U8 = url.endsWith("m3u8");
-        taskId = createDownloadTask(isM3U8, url, fileSavePath);
-        if (isM3U8) VideoUtils.showInfoDialog(this, getString(R.string.downloadM3u8Tips));
-        TDownloadManager.insertDownload(detailsTitle,  detailsDataBean.getImg(), detailsUrl);
-        TDownloadDataManager.insertDownloadData(detailsTitle, playNumber, 0, taskId);
-        application.showToastMsg(String.format(getString(R.string.downloadStart), playNumber));
-        // 开启下载服务
-        startService(new Intent(this, DownloadService.class));
-        EventBus.getDefault().post(new RefreshEvent(3));
-        checkHasDownload();
+        String netImg = detailsDataBean.getImg();
+        String localImgPath = savePath + "cover_" + new Date().getTime() + ".jpg";
+        ImageUtils.saveImageToLocalAsync(netImg, localImgPath, saveSuccess -> {
+            String img = saveSuccess ? localImgPath : netImg;
+            boolean isM3U8 = url.contains("m3u8");
+            long taskId = createDownloadTask(isM3U8, url, fileSavePath);
+            if (isM3U8) VideoUtils.showInfoDialog(this, getString(R.string.downloadM3u8Tips));
+            TDownloadManager.insertDownload(detailsTitle,  img, detailsUrl);
+            TDownloadDataManager.insertDownloadData(detailsTitle, playNumber, 0, taskId);
+            application.showToastMsg(String.format(getString(R.string.downloadStart), playNumber), DialogXTipEnum.SUCCESS);
+            // 开启下载服务
+            startService(new Intent(this, DownloadService.class));
+            EventBus.getDefault().post(REFRESH_DOWNLOAD);
+            checkHasDownload();
+        });
     }
 
     /**
@@ -749,11 +891,16 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
      */
     private long createDownloadTask(boolean isM3u8, String url, String savePath) {
         url = url.replaceAll("\\\\", "");
+        HttpOption httpOption = new HttpOption();
+        HashMap<String, String> headerMap = parserInterface.setPlayerHeaders();
+        if (!headerMap.isEmpty())
+            httpOption.addHeaders(headerMap);
         if (isM3u8)
             return Aria.download(this)
                     .load(url)
                     .setFilePath(savePath + ".m3u8")
                     .ignoreFilePathOccupy()
+                    .option(httpOption)
                     .m3u8VodOption(new M3U8DownloadConfig().setM3U8Option())
                     .ignoreCheckPermissions()
                     .create();
@@ -762,6 +909,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
                     .load(url)
                     .setFilePath(savePath + ".mp4")
                     .ignoreFilePathOccupy()
+                    .option(httpOption)
                     .ignoreCheckPermissions()
                     .create();
     }
@@ -782,8 +930,8 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
                     data.get(i).setHasDownload(true);
                     break;
             }
+            downloadAdapter.notifyItemChanged(i);
         }
-        downloadAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -810,7 +958,8 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     @Override
     public void loadingView() {
         if (isFinishing()) return;
-        GlideApp.with(this).load(R.drawable.default_bg).into(bgView);
+//        GlideApp.with(this).load(R.drawable.default_bg).into(bgView);
+        bgView.setVisibility(View.GONE);
         emptyView();
         dramaListRv.scrollToPosition(0);
         multiListRv.scrollToPosition(0);
@@ -824,6 +973,8 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
             mSwipe.setRefreshing(false);
             hideView(descView);
             hideView(playLinearLayout);
+            hideView(openDramaView);
+            hideView(multiPlayLayout);
             hideView(multiLinearLayout);
             hideView(recommendLinearLayout);
             errorMsgView.setText(msg);
@@ -837,6 +988,8 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
         mSwipe.setRefreshing(true);
         hideView(descView);
         hideView(playLinearLayout);
+        hideView(openDramaView);
+        hideView(multiPlayLayout);
         hideView(multiLinearLayout);
         hideView(recommendLinearLayout);
         hideView(errorBgView);
@@ -850,6 +1003,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
             detailsTitle = detailsDataBean.getTitle();
             setCollapsingToolbar();
             mSwipe.setRefreshing(false);
+            showView(playLinearLayout);
             if (isFavorite)
                 TFavoriteManager.updateFavorite(detailsDataBean.getUrl(), detailsDataBean.getImg(), detailsDataBean.getIntroduction(), vodId);
             showView(descView);
@@ -863,19 +1017,63 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
                 }
                 initTitleAdapter();
                 setAdapterData(0);
-                showView(playLinearLayout);
+                showView(multiPlayLayout);
+                showView(openDramaView);
             } else {
                 errorMsgView.setText(getString(R.string.noEpisode));
+                hideView(openDramaView);
                 showView(errorBgView);
             }
+
             if (detailsDataBean.getMultiList().size() > 0) {
-                multiAdapter.setNewInstance(detailsDataBean.getMultiList());
+                int layout = 0;
+                switch (detailsDataBean.getMultiStyle()) {
+                    case STYLE_1_1_DOT_4:
+                        layout = R.layout.item_home_data_type_0;
+                        break;
+                    case STYLE_16_9:
+                        layout = R.layout.item_home_data_type_1;
+                        break;
+                }
+                multiAdapter = new DetailsListItemAdapter(layout, detailsDataBean.getMultiList());
+                multiAdapter.setOnItemClickListener((adapter, view, position) -> {
+                    DetailsDataBean.Recommend bean = (DetailsDataBean.Recommend) adapter.getItem(position);
+                    detailsTitle = bean.getTitle();
+                    detailsUrl = bean.getUrl();
+                    vodUrlList.add(detailsUrl);
+                    openVodDesc();
+                });
+                multiLayoutManager = getLinearLayoutManager();
+                multiListRv.setLayoutManager(multiLayoutManager);
+                multiListRv.setAdapter(multiAdapter);
+                multiListRv.setNestedScrollingEnabled(false);
                 showView(multiLinearLayout);
             }
             else
                 hideView(multiLinearLayout);
             if (detailsDataBean.getRecommendList().size() > 0) {
-                recommendAdapter.setNewInstance(detailsDataBean.getRecommendList());
+                int layout = 0;
+                switch (detailsDataBean.getRecommendStyle()) {
+                    case STYLE_1_1_DOT_4:
+                        layout = R.layout.item_home_data_type_0;
+                        break;
+                    case STYLE_16_9:
+                        layout = R.layout.item_home_data_type_1;
+                        break;
+                }
+                recommendAdapter = new DetailsListItemAdapter(layout, detailsDataBean.getRecommendList());
+                recommendAdapter.setOnItemClickListener((adapter, view, position) -> {
+                    DetailsDataBean.Recommend bean = (DetailsDataBean.Recommend) adapter.getItem(position);
+                    detailsTitle = bean.getTitle();
+                    detailsUrl = bean.getUrl();
+                    vodUrlList.add(detailsUrl);
+                    openVodDesc();
+                });
+                recommendLayoutManager = getLinearLayoutManager();
+                recommendRv.setLayoutManager(recommendLayoutManager);
+                if (Utils.checkHasNavigationBar(this)) recommendRv.setPadding(0,0,0, Utils.getNavigationBarHeight(this));
+                recommendRv.setAdapter(recommendAdapter);
+                recommendRv.setNestedScrollingEnabled(false);
                 showView(recommendLinearLayout);
             }
             else
@@ -899,20 +1097,20 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
     }
 
     @Override
-    public void downloadVodUrlSuccess(List<String> urls, String playNumber) {
+    public void downloadVodUrlSuccess(List<DialogItemBean> urls, String playNumber) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
             cancelDialog();
             if (urls.size() > 1) {
-                VideoUtils.showMultipleVideoSources4Download(this,
+                alertDialog = VideoUtils.showMultipleVideoSources4Download(this,
                         urls,
-                        (dialog, index) -> {
-                            startDownload(urls.get(index), playNumber);
-                            dialog.dismiss();
+                        (adapter, view, position) -> {
+                            playVod(urls.get(position).getUrl());
+                            alertDialog.dismiss();
                         }
                 );
             } else
-                startDownload(urls.get(0), playNumber);
+                startDownload(urls.get(0).getUrl(), playNumber);
         });
     }
 
@@ -945,7 +1143,7 @@ public class DetailsActivity extends BaseActivity<DetailsContract.View, DetailsP
         if (isFinishing()) return;
         if (event.getActivityEnum() == VideoSniffEvent.ActivityEnum.DETAIL) {
             cancelDialog();
-            List<String> urls = event.getUrls();
+            List<DialogItemBean> urls = event.getUrls();
             if (event.isSuccess()) {
                 switch (event.getSniffEnum()) {
                     case PLAY:

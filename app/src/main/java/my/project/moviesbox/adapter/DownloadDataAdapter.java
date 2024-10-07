@@ -38,20 +38,23 @@ public class DownloadDataAdapter extends BaseQuickAdapter<TDownloadDataWithField
         String imgUrl = item.getVideoImgUrl();
         ImageView imageView = helper.getView(R.id.img);
         imageView.setTag(R.id.imageid, imgUrl);
-        String title = item.getTDownloadData().getVideoNumber() + (item.getTDownloadData().getSavePath().contains(context.getFilesDir().getAbsolutePath()) ? " <font color=\"#FF5722\">[私有目录]</font>" : " <font color=\"#31BDEC\">[公共存储]</font>");
+        String title = item.getTDownloadData().getVideoNumber() + (item.getTDownloadData().getSavePath().contains(context.getFilesDir().getAbsolutePath()) ? context.getString(R.string.savePrivateDirectoryStr) : context.getString(R.string.savePublicDirectoryStr));
         helper.setText(R.id.title, Html.fromHtml(title));
         helper.setText(R.id.file_size, item.getTDownloadData().getVideoFileSize() != 0 ? Utils.getNetFileSizeDescription(item.getTDownloadData().getVideoFileSize()) : "0B");
         helper.setVisible(R.id.bottom_progress, false);
         String completeText = "";
         switch (item.getTDownloadData().getComplete()) {
             case 0:
-                completeText = "<font color=\"#1E9FFF\">"+Utils.getString(R.string.waitState)+"</font>";
+                completeText = context.getString(R.string.downloadingStr);
                 break;
             case 1:
-                completeText = "<font color=\"#5FB878\">"+Utils.getString(R.string.successState)+"</font>";
+                completeText = context.getString(R.string.downloadSuccessfulStr);
                 break;
             case 2:
-                completeText = "<font color=\"#FF5722\">"+Utils.getString(R.string.errorState)+"</font>";
+                completeText = context.getString(R.string.downloadFailedStr);
+                break;
+            case 3:
+                completeText = context.getString(R.string.transcodingStr);
                 break;
         }
 //        LinearProgressIndicator linearProgressIndicator = helper.getView(R.id.show_progress);

@@ -14,19 +14,16 @@ import my.project.moviesbox.parser.bean.VodDataBean;
  * @description: 注释
  * @date 2023/12/31 22:12
  */
-public class ClassificationVodListPresenter extends Presenter<ClassificationVodListContract.View> implements BasePresenter, ClassificationVodListContract.LoadDataCallback {
+public class ClassificationVodListPresenter extends Presenter<ClassificationVodListContract.View, ClassificationVodListModel> implements BasePresenter, ClassificationVodListContract.LoadDataCallback {
     private ClassificationVodListContract.View view;
-    private ClassificationVodListModel model;
-    private String[] param;
     /**
      * 构造函数
      *
      * @param view 需要关联的View
      */
-    public ClassificationVodListPresenter(ClassificationVodListContract.View view, String... param) {
+    public ClassificationVodListPresenter(ClassificationVodListContract.View view) {
         super(view);
         this.view = view;
-        this.param = param;
         model = new ClassificationVodListModel();
     }
 
@@ -51,8 +48,8 @@ public class ClassificationVodListPresenter extends Presenter<ClassificationVodL
     }
 
     @Override
-    public void successVodList(boolean firstTimeData, VodDataBean vodDataBean, int pageCount) {
-        view.successVodList(firstTimeData, vodDataBean, pageCount);
+    public void successVodList(boolean firstTimeData, List<VodDataBean> vodDataBeans, int pageCount) {
+        view.successVodList(firstTimeData, vodDataBeans, pageCount);
     }
 
     @Override
@@ -61,18 +58,39 @@ public class ClassificationVodListPresenter extends Presenter<ClassificationVodL
     }
 
     @Override
-    public void emptyVodList(String msg) {
-        view.emptyVodList(msg);
+    public void emptyVodList(boolean firstTimeData, String msg) {
+        view.emptyVodList(firstTimeData, msg);
     }
 
     @Override
     public void loadData(boolean isMain) {
+
+    }
+
+    /**
+     * 首次调用
+     * @param isMain
+     * @param param
+     */
+    public void loadMainData(boolean isMain, String... param) {
         if (isMain) {
             view.emptyView();
             view.loadingView();
         }
         try {
             model.getData(isMain, this, param);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 分页时调用
+     * @param param
+     */
+    public void loadPageData(String... param) {
+        try {
+            model.getData(false, this, param);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }

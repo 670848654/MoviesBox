@@ -1,8 +1,11 @@
 package my.project.moviesbox.parser.parserImpl;
 
 import static my.project.moviesbox.parser.LogUtil.logInfo;
-
-import androidx.annotation.LayoutRes;
+import static my.project.moviesbox.parser.config.MultiItemEnum.ITEM_LIST;
+import static my.project.moviesbox.parser.config.MultiItemEnum.TAG_LIST;
+import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum.SILISILI;
+import static my.project.moviesbox.parser.config.VodTypeEnum.M3U8;
+import static my.project.moviesbox.parser.config.VodTypeEnum.MP4;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -13,10 +16,14 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.simpleframework.xml.Serializer;
+import org.simpleframework.xml.core.Persister;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,11 +41,17 @@ import my.project.moviesbox.model.DanmuModel;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
+import my.project.moviesbox.parser.bean.DialogItemBean;
 import my.project.moviesbox.parser.bean.MainDataBean;
 import my.project.moviesbox.parser.bean.TextDataBean;
+import my.project.moviesbox.parser.bean.TodayUpdateBean;
 import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.bean.WeekDataBean;
+import my.project.moviesbox.parser.bean.rss.SilisiliRssFeed;
+import my.project.moviesbox.parser.config.ItemStyleEnum;
+import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
+import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.utils.Utils;
@@ -89,12 +102,13 @@ public class SilisiliImpl implements ParserInterface {
      * <p>请在站点枚举类中配置</p>
      *
      * @return
-     * @see SourceEnum#source
+     * @see SourceEnum.SourceIndexEnum#SILISILI
      */
     @Override
     public int getSource() {
-        return SourceEnum.SILISILI.getSource();
+        return SILISILI.index;
     }
+
 
     /**
      * 站点默认域名
@@ -180,28 +194,13 @@ public class SilisiliImpl implements ParserInterface {
     }
 
     /**
-     * 设置影视数据列表视图样式
-     *
-     * @return {@link LayoutRes}
-     * @see VodDataBean#ITEM_TYPE_0
-     * @see VodDataBean#ITEM_TYPE_1
-     */
-    @Override
-    public int setVodListItemType() {
-        return VodDataBean.ITEM_TYPE_0;
-    }
-
-    /**
      * APP首页内容解析接口
-     * <p>MainDataBean.TAG_LIST: TAG列表内容</p>
-     * <p>MainDataBean.BANNER_LIST: 轮播列表内容</p>
-     * <p>MainDataBean.ITEM_LIST: 内容块列表内容 如：热门、推荐板块内容</p>
-     * <p>MainDataBean.Item.ITEM_TYPE: 影视数据列表视图样式</p>
-     *
-     * @param source 网页源代码
-     * @return {@link List<MainDataBean>}
+     * <p>{@link MultiItemEnum}: 列表ITEM样式</p>
+     * <p>{@link ItemStyleEnum}: 影视数据列表视图样式</p>
      * @see MainDataBean
      * @see MainDataBean.Item
+     * @param source 网页源代码
+     * @return {@link List<MainDataBean>}
      */
     @Override
     public List<MainDataBean> parserMainData(String source) {
@@ -210,7 +209,7 @@ public class SilisiliImpl implements ParserInterface {
             List<MainDataBean> mainDataBeans = new ArrayList<>();
             MainDataBean mainDataBean;
             mainDataBean = new MainDataBean();
-            mainDataBean.setDataType(MainDataBean.TAG_LIST);
+            mainDataBean.setDataType(TAG_LIST.getType());
             List<MainDataBean.Tag> tags = new ArrayList<>();
             tags.add(new MainDataBean.Tag(HomeTagEnum.WEEK.name, HomeTagEnum.WEEK.content, WeekActivity.class));
             tags.add(new MainDataBean.Tag(HomeTagEnum.XFRM.name, HomeTagEnum.XFRM.content, ClassificationVodListActivity.class));
@@ -229,7 +228,7 @@ public class SilisiliImpl implements ParserInterface {
             mainDataBean.setHasMore(false);
             // 高>宽图片建议使用列表模式而不是banner
 //        mainDataBean.setDataType(Utils.isPad() ? MainDataBean.ITEM_LIST : MainDataBean.BANNER_LIST);
-            mainDataBean.setDataType(MainDataBean.ITEM_LIST);
+            mainDataBean.setDataType(ITEM_LIST.getType());
             List<MainDataBean.Item> items = new ArrayList<>();
             for (Element recommend : recommendLi) {
                 MainDataBean.Item item = new MainDataBean.Item();
@@ -256,7 +255,7 @@ public class SilisiliImpl implements ParserInterface {
             mainDataBean = new MainDataBean();
             mainDataBean.setTitle("今日热门");
             mainDataBean.setHasMore(false);
-            mainDataBean.setDataType(MainDataBean.ITEM_LIST);
+            mainDataBean.setDataType(ITEM_LIST.getType());
             items = new ArrayList<>();
             for (Element hotToday : hotTodayLi) {
                 MainDataBean.Item homeItemBean = new MainDataBean.Item();
@@ -282,7 +281,7 @@ public class SilisiliImpl implements ParserInterface {
                 mainDataBean = new MainDataBean();
                 mainDataBean.setTitle("站内推荐");
                 mainDataBean.setHasMore(false);
-                mainDataBean.setDataType(MainDataBean.ITEM_LIST);
+                mainDataBean.setDataType(ITEM_LIST.getType());
                 items = new ArrayList<>();
                 for (Element a : recommendList) {
                     if (!a.attr("href").contains("voddetail")) continue;
@@ -305,7 +304,7 @@ public class SilisiliImpl implements ParserInterface {
             mainDataBean = new MainDataBean();
             mainDataBean.setTitle("更新动态");
             mainDataBean.setHasMore(false);
-            mainDataBean.setDataType(MainDataBean.ITEM_LIST);
+            mainDataBean.setDataType(ITEM_LIST.getType());
             items = new ArrayList<>();
             for (Element update : updateLi) {
                 MainDataBean.Item homeItemBean = new MainDataBean.Item();
@@ -344,7 +343,7 @@ public class SilisiliImpl implements ParserInterface {
         try {
             DetailsDataBean detailsDataBean = new DetailsDataBean();
             Document document = Jsoup.parse(source);
-            String title = document.select("h1.entry-title").text();
+            String title = document.select("h1.entry-title").first().ownText().trim();
             String img = getImg(getImg(document.select("div.v_sd_l > img").attr("src")));
             detailsDataBean.setTitle(title);
             //番剧图片
@@ -362,10 +361,10 @@ public class SilisiliImpl implements ParserInterface {
             }
             detailsDataBean.setTagTitles(tagTitles);
             detailsDataBean.setTagUrls(tagUrls);
-            Elements span = document.select("span.text-muted");
+            Elements span = document.select("p.data span.text-muted");
             for (Element s : span) {
-                if (s.text().contains("更新")) {
-                    detailsDataBean.setUpdateTime(s.parent().text());
+                if (s.text().contains("更新：")) {
+                        detailsDataBean.setUpdateTime(s.parent().text());
                     break;
                 }
             }
@@ -513,15 +512,14 @@ public class SilisiliImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserClassificationVodList(String source) {
+    public List<VodDataBean> parserClassificationVodList(String source) {
         try {
-            VodDataBean vodDataBean = new VodDataBean();
-            List<VodDataBean.Item> items = new ArrayList<>();
+            List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select("article.article");
             if (elements.size() > 0) {
                 for (int i = 0, size = elements.size(); i < size; i++) {
-                    VodDataBean.Item item = new VodDataBean.Item();
+                    VodDataBean item = new VodDataBean();
                     Element header = elements.get(i).getElementsByTag("header").get(0);
                     header.select("span").remove();
                     item.setTitle(header.text());
@@ -535,10 +533,9 @@ public class SilisiliImpl implements ParserInterface {
                     }
                     items.add(item);
                 }
-                vodDataBean.setItemList(items);
-                logInfo("分类列表数据", vodDataBean.toString());
+                logInfo("分类列表数据", items.toString());
             }
-            return vodDataBean;
+            return items;
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserClassificationVodList error", e.getMessage());
@@ -553,15 +550,14 @@ public class SilisiliImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserSearchVodList(String source) {
+    public List<VodDataBean> parserSearchVodList(String source) {
         try {
-            VodDataBean vodDataBean = new VodDataBean();
-            List<VodDataBean.Item> items = new ArrayList<>();
+            List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select("article.post-list");
             if (elements.size() > 0) {
                 for (Element item : elements) {
-                    VodDataBean.Item bean = new VodDataBean.Item();
+                    VodDataBean bean = new VodDataBean();
                     bean.setTitle(item.select("div.search-image").select("a").attr("title"));
                     bean.setUrl(item.select("div.search-image").select("a").attr("href"));
                     bean.setImg(getImg(item.select("div.search-image").select("img").attr("srcset")));
@@ -573,10 +569,9 @@ public class SilisiliImpl implements ParserInterface {
                     }
                     items.add(bean);
                 }
-                vodDataBean.setItemList(items);
-                logInfo("搜索列表数据", vodDataBean.toString());
+                logInfo("搜索列表数据", items.toString());
             }
-            return vodDataBean;
+            return items;
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserSearchVodList error", e.getMessage());
@@ -591,7 +586,7 @@ public class SilisiliImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserVodList(String source) {
+    public List<VodDataBean> parserVodList(String source) {
         try {
             Document document = Jsoup.parse(source);
             Elements elements = document.select("article.post-list");
@@ -698,9 +693,10 @@ public class SilisiliImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<String> getPlayUrl(String source) {
-        List<String> urls = new ArrayList<>();
-        urls.add(getJsonData(true, source));
+    public List<DialogItemBean> getPlayUrl(String source) {
+        List<DialogItemBean> urls = new ArrayList<>();
+        String url = getJsonData(true, source);
+        urls.add(new DialogItemBean(url, url.contains("m3u8") ? M3U8 : MP4));
         return urls;
     }
 
@@ -772,23 +768,22 @@ public class SilisiliImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserTopticList(String source) {
+    public List<VodDataBean> parserTopticList(String source) {
         try {
-            VodDataBean vodDataBean = new VodDataBean();
             Document document = Jsoup.parse(source);
             Elements elements = document.select("div.search-image > a");
             if (elements.size() > 0) {
-                List<VodDataBean.Item> items = new ArrayList<>();
+                List<VodDataBean> items = new ArrayList<>();
                 for (Element element : elements) {
-                    VodDataBean.Item bean = new VodDataBean.Item();
+                    VodDataBean bean = new VodDataBean();
+                    bean.setVodItemStyleType(VodItemStyleEnum.STYLE_16_9.getType());
                     bean.setTitle(element.attr("title"));
                     bean.setUrl(element.attr("href"));
                     bean.setImg(element.select("img").attr("src"));
                     items.add(bean);
                 }
-                vodDataBean.setItemList(items);
-                logInfo("动漫专题数据", vodDataBean.toString());
-                return vodDataBean;
+                logInfo("动漫专题数据", items.toString());
+                return items;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -804,23 +799,21 @@ public class SilisiliImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserTopticVodList(String source) {
+    public List<VodDataBean> parserTopticVodList(String source) {
         try {
-            VodDataBean vodDataBean = new VodDataBean();
             Document document = Jsoup.parse(source);
             Elements elements = document.select("div.topic-item").select("a");
             if (elements.size() > 0) {
-                List<VodDataBean.Item> items = new ArrayList<>();
+                List<VodDataBean> items = new ArrayList<>();
                 for (Element element : elements) {
-                    VodDataBean.Item bean = new VodDataBean.Item();
+                    VodDataBean bean = new VodDataBean();
                     bean.setTitle(element.select("div.list-body").text());
                     bean.setUrl(element.attr("href"));
                     bean.setImg(getImg(element.select("i").attr("style")));
                     items.add(bean);
                 }
-                vodDataBean.setItemList(items);
-                logInfo("动漫专题数据", vodDataBean.toString());
-                return vodDataBean;
+                logInfo("动漫专题数据", items.toString());
+                return items;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -901,6 +894,63 @@ public class SilisiliImpl implements ParserInterface {
             logInfo("parserTextList error", e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * 获取订阅地址
+     * @return
+     */
+    @Override
+    public String getRssUrl() {
+        return getDefaultDomain()+SourceEnum.SILISILI.getRss();
+    }
+
+    /**
+     * 通过站点的RSS订阅获取今日更新数据
+     *
+     * @param xml 网页源代码
+     * @return {@link List<TodayUpdateBean>}
+     */
+    @Override
+    public List<TodayUpdateBean> parserRss(String xml) {
+        List<TodayUpdateBean> todayUpdateBeans = new ArrayList<>();
+        Serializer serializer = new Persister();
+        try {
+            SilisiliRssFeed rssFeed = serializer.read(SilisiliRssFeed.class, xml);
+            if (rssFeed != null && rssFeed.getChannel() != null) {
+                // 获取今日日期
+                String nowDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+                for (SilisiliRssFeed.Item item : rssFeed.getChannel().getItems()) {
+                    String[] itemTitleArr = item.getTitle().split(" ");
+                    // 获取更新集数信息 永远是数组最后一个
+                    String info = itemTitleArr[itemTitleArr.length - 1];
+                    StringBuilder title = new StringBuilder();
+                    for (int i=0; i<itemTitleArr.length - 1; i++) {
+                        if (i != 0)
+                            title.append(" ");
+                        title.append(itemTitleArr[i]);
+                    }
+                    String url = item.getLink();
+                    // 正则表达式，用于匹配 /voddetail/8kp7777Z/
+                    String regex = "(\\/voddetail\\/[^\\/]+\\/)";
+                    // 编译正则表达式
+                    Pattern pattern = Pattern.compile(regex);
+                    // 创建匹配器对象
+                    Matcher matcher = pattern.matcher(url);
+                    if (matcher.find()) {
+                        // 输出匹配的结果
+                        url = matcher.group(1);
+                    }
+                    String pubDate = item.getPubDate();
+                    String update = pubDate.split(" ")[0];
+                    if (nowDate.equals(update))
+                        todayUpdateBeans.add(new TodayUpdateBean(title.toString(), info, pubDate, url));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return todayUpdateBeans;
     }
 
     // -------------------------------- 该解析通用方法 --------------------------------

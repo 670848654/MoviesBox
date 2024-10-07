@@ -56,4 +56,9 @@ public class THistoryWithFields implements Serializable {
      */
     @Ignore
     private long videoDuration;
+    /**
+     * 是否已经刷新封面
+     */
+    @Ignore
+    private boolean refreshCover ;
 }

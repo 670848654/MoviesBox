@@ -17,12 +17,13 @@ import my.project.moviesbox.utils.Utils;
 @AllArgsConstructor
 public enum WeekEnum {
     MONDAY(0, Utils.getString(R.string.monday)),
-    Tuesday(1, Utils.getString(R.string.tuesday)),
-    Wednesday(2, Utils.getString(R.string.wednesday)),
-    Thursday(3, Utils.getString(R.string.thursday)),
-    Friday(4, Utils.getString(R.string.friday)),
-    Saturday(5, Utils.getString(R.string.saturday)),
-    Sunday(6, Utils.getString(R.string.sunday));
+    TUESDAY(1, Utils.getString(R.string.tuesday)),
+    WEDNESDAY(2, Utils.getString(R.string.wednesday)),
+    THURSDAY(3, Utils.getString(R.string.thursday)),
+    FRIDAY(4, Utils.getString(R.string.friday)),
+    SATURDAY(5, Utils.getString(R.string.saturday)),
+    SUNDAY(6, Utils.getString(R.string.sunday));
+
     private int index;
     private String content;
 }

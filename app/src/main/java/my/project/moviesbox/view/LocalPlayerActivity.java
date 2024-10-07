@@ -33,7 +33,7 @@ public class LocalPlayerActivity extends BasePlayerActivity {
 
     @Override
     protected void setActivityName() {
-        App.addDestoryActivity(this, "player");
+        App.addDestroyActivity(this, "player");
     }
 
     @Override

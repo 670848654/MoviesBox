@@ -36,7 +36,22 @@ public class TestActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
-        checkPermission();
+//        checkPermission();
+        // 设置搜索操作的监听器
+        /*searchView.addOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                searchResult.setText("Search Result: " + query);
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                // 实时显示输入的搜索内容
+                searchResult.setText("Searching for: " + newText);
+                return true;
+            }
+        });*/
     }
 
     private void checkPermission() {

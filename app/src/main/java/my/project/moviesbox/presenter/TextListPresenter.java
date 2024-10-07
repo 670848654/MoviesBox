@@ -12,20 +12,23 @@ import my.project.moviesbox.parser.bean.TextDataBean;
  * @description: 注释
  * @date 2024/1/24 15:54
  */
-public class TextListPresenter extends Presenter<TextListContract.View> implements BasePresenter, TextListContract.LoadDataCallback {
+public class TextListPresenter extends Presenter<TextListContract.View, TextListModel> implements BasePresenter, TextListContract.LoadDataCallback {
     private TextListContract.View view;
-    private TextListModel model;
-    private String url;
     /**
      * 构造函数
      *
      * @param view 需要关联的View
      */
-    public TextListPresenter(String url, TextListContract.View view) {
+    public TextListPresenter(TextListContract.View view) {
         super(view);
-        this.url = url;
         this.view = view;
         model = new TextListModel();
+    }
+
+    public void loadData(String url) {
+        view.emptyView();
+        view.loadingView();
+        model.getData(url, this);
     }
 
     @Override
@@ -45,8 +48,5 @@ public class TextListPresenter extends Presenter<TextListContract.View> implemen
 
     @Override
     public void loadData(boolean isMain) {
-        view.emptyView();
-        view.loadingView();
-        model.getData(url, this);
     }
 }

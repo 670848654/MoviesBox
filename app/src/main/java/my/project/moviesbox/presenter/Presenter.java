@@ -2,9 +2,12 @@ package my.project.moviesbox.presenter;
 
 import java.lang.ref.WeakReference;
 
-public class Presenter<V> {
+import my.project.moviesbox.model.BaseModel;
+
+public class Presenter<V, M extends BaseModel> {
     //View的弱引用
     protected WeakReference<V> mViewRef;
+    protected M model;
 
     /**
      * 构造函数
@@ -29,9 +32,10 @@ public class Presenter<V> {
      * 取消关联的View
      */
     public void detachView() {
-        if (null != mViewRef) {
+        if (null != mViewRef)
             mViewRef.clear();
-        }
+        if (null != model)
+            model.unregister();
     }
 
     /**

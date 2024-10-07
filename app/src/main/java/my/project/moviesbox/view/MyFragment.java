@@ -26,7 +26,7 @@ import my.project.moviesbox.adapter.MyViewPageAdapter;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.THistoryManager;
-import my.project.moviesbox.event.RefreshEvent;
+import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.DarkModeUtils;
 
@@ -150,14 +150,18 @@ public class MyFragment extends BaseFragment {
 
     @Override
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onEvent(RefreshEvent refresh) {
-        switch (refresh.getIndex()) {
-            case 1:
-            case 2:
-            case 3:
-                setTabBadge(refresh.getIndex()-1);
+    public void onEvent(RefreshEnum refresh) {
+        switch (refresh) {
+            case REFRESH_FAVORITE:
+                setTabBadge(0);
                 break;
-            case 4:
+            case REFRESH_HISTORY:
+                setTabBadge(1);
+                break;
+            case REFRESH_DOWNLOAD:
+                setTabBadge(2);
+                break;
+            case REFRESH_TAB_COUNT:
                 setTabBadge(0);
                 setTabBadge(1);
                 setTabBadge(2);

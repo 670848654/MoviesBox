@@ -122,8 +122,8 @@ public interface TDownloadDataDao {
      * 更新下载信息
      * @param ariaTaskId
      */
-    @Query("update TDownloadData set complete = 0 where ariaTaskId=:ariaTaskId")
-    void updateDownloadState(long ariaTaskId);
+    @Query("update TDownloadData set complete =:complete where ariaTaskId=:ariaTaskId")
+    void updateDownloadState(int complete, long ariaTaskId);
 
     /**
      * 删除下载数据

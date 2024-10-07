@@ -18,7 +18,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.WeekAdapter;
-import my.project.moviesbox.event.RefreshEvent;
+import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.parser.bean.WeekDataBean;
 import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.Utils;
@@ -100,7 +100,7 @@ public class WeekFragment extends BaseFragment {
 
     @Override
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onEvent(RefreshEvent refresh) {
+    public void onEvent(RefreshEnum refresh) {
 
     }
 

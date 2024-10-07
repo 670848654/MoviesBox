@@ -1,8 +1,13 @@
 package my.project.moviesbox.parser.parserImpl;
 
 import static my.project.moviesbox.parser.LogUtil.logInfo;
-
-import androidx.annotation.LayoutRes;
+import static my.project.moviesbox.parser.config.ItemStyleEnum.STYLE_16_9;
+import static my.project.moviesbox.parser.config.MultiItemEnum.BANNER_LIST;
+import static my.project.moviesbox.parser.config.MultiItemEnum.ITEM_LIST;
+import static my.project.moviesbox.parser.config.MultiItemEnum.TAG_LIST;
+import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum.FIVE_MOVIE;
+import static my.project.moviesbox.parser.config.VodTypeEnum.M3U8;
+import static my.project.moviesbox.parser.config.VodTypeEnum.MP4;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -33,14 +38,20 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import my.project.moviesbox.contract.DanmuContract;
 import my.project.moviesbox.model.DanmuModel;
+import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
+import my.project.moviesbox.parser.bean.DialogItemBean;
+import my.project.moviesbox.parser.bean.DomainDataBean;
 import my.project.moviesbox.parser.bean.MainDataBean;
 import my.project.moviesbox.parser.bean.TextDataBean;
 import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.bean.WeekDataBean;
+import my.project.moviesbox.parser.config.ItemStyleEnum;
+import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
+import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.utils.Utils;
@@ -57,10 +68,12 @@ import okhttp3.FormBody;
   * @包名: my.project.moviesbox.parser.parserImpl
   * @类名: FiveMovieImpl
   * @描述: 555电影站点解析实现
+  * @deprecated: 经常换地址、出现Cloudflare，失效后不再维护
   * @作者: Li Z
   * @日期: 2024/2/8 9:39
   * @版本: 1.0
  */
+@Deprecated
 public class FiveMovieImpl implements ParserInterface {
     /**
      * 站点使用POST请求的类
@@ -91,11 +104,11 @@ public class FiveMovieImpl implements ParserInterface {
      * <p>请在站点枚举类中配置</p>
      *
      * @return
-     * @see SourceEnum#source
+     * @see SourceEnum.SourceIndexEnum#FIVE_MOVIE
      */
     @Override
     public int getSource() {
-        return SourceEnum.FIVEMOVIE.getSource();
+        return FIVE_MOVIE.index;
     }
 
     /**
@@ -197,28 +210,13 @@ public class FiveMovieImpl implements ParserInterface {
     }
 
     /**
-     * 设置影视数据列表视图样式
-     *
-     * @return {@link LayoutRes}
-     * @see VodDataBean#ITEM_TYPE_0
-     * @see VodDataBean#ITEM_TYPE_1
-     */
-    @Override
-    public int setVodListItemType() {
-        return ParserInterface.super.setVodListItemType();
-    }
-
-    /**
      * APP首页内容解析接口
-     * <p>MainDataBean.TAG_LIST: TAG列表内容</p>
-     * <p>MainDataBean.BANNER_LIST: 轮播列表内容</p>
-     * <p>MainDataBean.ITEM_LIST: 内容块列表内容 如：热门、推荐板块内容</p>
-     * <p>MainDataBean.Item.ITEM_TYPE: 影视数据列表视图样式</p>
-     *
-     * @param source 网页源代码
-     * @return {@link List< MainDataBean >}
+     * <p>{@link MultiItemEnum}: 列表ITEM样式</p>
+     * <p>{@link ItemStyleEnum}: 影视数据列表视图样式</p>
      * @see MainDataBean
      * @see MainDataBean.Item
+     * @param source 网页源代码
+     * @return {@link List<MainDataBean>}
      */
     @Override
     public List<MainDataBean> parserMainData(String source) {
@@ -226,7 +224,7 @@ public class FiveMovieImpl implements ParserInterface {
             Document document = Jsoup.parse(source);
             List<MainDataBean> mainDataBeans = new ArrayList<>();
             MainDataBean mainDataBean = new MainDataBean();
-            mainDataBean.setDataType(MainDataBean.TAG_LIST);
+            mainDataBean.setDataType(TAG_LIST.getType());
             List<MainDataBean.Tag> tags = new ArrayList<>();
             tags.add(new MainDataBean.Tag(HomeTagEnum.WEEK.name, HomeTagEnum.WEEK.content, WeekActivity.class));
             tags.add(new MainDataBean.Tag(HomeTagEnum.NETFLIX.name, HomeTagEnum.NETFLIX.content, VodListActivity.class));
@@ -246,8 +244,8 @@ public class FiveMovieImpl implements ParserInterface {
             MainDataBean bannerBean = new MainDataBean();
             bannerBean.setTitle("影视推荐");
             bannerBean.setHasMore(false);
-            bannerBean.setDataType(MainDataBean.BANNER_LIST);
-            bannerBean.setVodItemType(MainDataBean.Item.ITEM_TYPE_1);
+            bannerBean.setDataType(BANNER_LIST.getType());
+            bannerBean.setVodItemType(STYLE_16_9);
             for (Element element : bannerList) {
                 MainDataBean.Item item = new MainDataBean.Item();
                 Elements a = element.select("a.banner");
@@ -279,9 +277,9 @@ public class FiveMovieImpl implements ParserInterface {
                     boolean itemType = title.contains("本月最佳电影") || title.contains("独家专题");
                     MainDataBean contentBean = new MainDataBean();
                     if (itemType)
-                        contentBean.setVodItemType(MainDataBean.Item.ITEM_TYPE_1);
+                        contentBean.setVodItemType(STYLE_16_9);
                     List<MainDataBean.Item> vodItems = new ArrayList<>();
-                    contentBean.setDataType(MainDataBean.ITEM_LIST);
+                    contentBean.setDataType(ITEM_LIST.getType());
                     contentBean.setTitle(title);
                     Elements more = module.select(".module-heading-more");
                     boolean isTopic = false;
@@ -478,7 +476,8 @@ public class FiveMovieImpl implements ParserInterface {
             }*/
             // 通过详情界面获取播放列表
             String descUrl = document.select(".module-player-info .module-info-heading h1 a").attr("href");
-            Document descHtml = Jsoup.connect(getDefaultDomain() + descUrl).headers(requestHeaders()).ignoreContentType(true).get();
+            String responseData = OkHttpUtils.performSyncRequest(getDefaultDomain() + descUrl);
+            Document descHtml = Jsoup.parse(responseData);
             // 获取所有播放列表
             Elements playTitleList = descHtml.getElementById("y-playList").select(".module-tab-item");
             Elements ulList = descHtml.select(".module-list.sort-list.tab-list .module-play-list .module-play-list-content");
@@ -609,15 +608,14 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserClassificationVodList(String source) {
+    public List<VodDataBean>  parserClassificationVodList(String source) {
         try {
-            VodDataBean vodDataBean = new VodDataBean();
-            List<VodDataBean.Item> items = new ArrayList<>();
+            List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".module-items.module-poster-items-base a");
             if (elements.size() > 0) {
                 for (Element item : elements) {
-                    VodDataBean.Item bean = new VodDataBean.Item();
+                    VodDataBean bean = new VodDataBean();
                     bean.setTitle(item.select(".module-poster-item-title").text());
                     bean.setUrl(item.attr("href"));
                     bean.setImg(item.select("img").attr("data-original"));
@@ -625,10 +623,9 @@ public class FiveMovieImpl implements ParserInterface {
                     bean.setTopLeftTag(item.select(".module-item-douban").text());
                     items.add(bean);
                 }
-                vodDataBean.setItemList(items);
-                logInfo("分类列表数据", vodDataBean.toString());
+                logInfo("分类列表数据", items.toString());
             }
-            return vodDataBean;
+            return items;
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserClassificationVodList error", e.getMessage());
@@ -643,15 +640,14 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserSearchVodList(String source) {
+    public List<VodDataBean>  parserSearchVodList(String source) {
         try {
-            VodDataBean vodDataBean = new VodDataBean();
-            List<VodDataBean.Item> items = new ArrayList<>();
+            List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".module-items.module-card-items .module-card-item.module-item a.module-card-item-poster");
             if (elements.size() > 0) {
                 for (Element a : elements) {
-                    VodDataBean.Item bean = new VodDataBean.Item();
+                    VodDataBean bean = new VodDataBean();
                     bean.setTitle(a.parent().getElementsByTag("strong").text());
                     bean.setUrl(a.attr("href"));
                     bean.setImg(a.select("img").attr("data-original"));
@@ -665,10 +661,9 @@ public class FiveMovieImpl implements ParserInterface {
                     }
                     items.add(bean);
                 }
-                vodDataBean.setItemList(items);
-                logInfo("搜索列表数据", vodDataBean.toString());
+                logInfo("搜索列表数据", items.toString());
             }
-            return vodDataBean;
+            return items;
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserSearchVodList error", e.getMessage());
@@ -683,16 +678,15 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserVodList(String source) {
+    public List<VodDataBean>  parserVodList(String source) {
         try {
-            VodDataBean vodDataBean = new VodDataBean();
-            List<VodDataBean.Item> items = new ArrayList<>();
+            List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
 
             Elements elements = document.select(".module-items a");
             if (elements.size() > 0) {
                 for (Element item : elements) {
-                    VodDataBean.Item bean = new VodDataBean.Item();
+                    VodDataBean bean = new VodDataBean();
                     bean.setTitle(item.select(".module-poster-item-title").text());
                     bean.setUrl(item.attr("href"));
                     bean.setImg(item.select("img").attr("data-original"));
@@ -700,15 +694,14 @@ public class FiveMovieImpl implements ParserInterface {
                     bean.setTopLeftTag(item.select(".module-item-douban").text());
                     items.add(bean);
                 }
-                vodDataBean.setItemList(items);
-                logInfo("视频列表数据", vodDataBean.toString());
+                logInfo("视频列表数据", items.toString());
             }
-            return vodDataBean;
+            return items;
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserVodList error", e.getMessage());
         }
-        VodDataBean vodDataBean = parserClassificationVodList(source);
+        List<VodDataBean>  vodDataBean = parserClassificationVodList(source);
         return Utils.isNullOrEmpty(vodDataBean) ? parserSearchVodList(source) : vodDataBean;
     }
 
@@ -818,25 +811,26 @@ public class FiveMovieImpl implements ParserInterface {
      * <p>注：可能存在多个播放地址，兼容返回LIST</p>
      *
      * @param source 网页源代码
-     * @deprecated 站点获取播放地址加密方式变更，需要重新逆向JS（没时间也懒得去逆向了，你可以试试），添加了并使用资源嗅探方式要简单点（目前可用）
      * @return
      */
     @Override
-    @Deprecated
-    public List<String> getPlayUrl(String source) {
-        /*try {
-            List<String> result = new ArrayList<>();
+    public List<DialogItemBean> getPlayUrl(String source) {
+        try {
+            List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements scriptTags = document.select("script");
             for (Element script : scriptTags) {
                 String scriptHtml = script.html();
+                // 1.直接从网页源代码提取
+                // 2.也可以调用接口请求 https://s5knz.com/voddisp/id/{影视ID}/sid/{线路ID}/nid/{集数}.html
+                // 这里使用源代码的方式
                 if (scriptHtml.contains("player_aaaa") && scriptHtml.endsWith("}")) {
                     logInfo("JavaScript", scriptHtml);
                     JSONObject jsonObject = extractJsonObject(scriptHtml);
                     if (jsonObject != null) {
                         String vodPlayUrl = getVodPlayUrl(jsonObject);
                         if (!Utils.isNullOrEmpty(vodPlayUrl))
-                            result.add(vodPlayUrl);
+                            result.add(new DialogItemBean(vodPlayUrl, vodPlayUrl.contains("m3u8") ? M3U8 : MP4));
                     }
                 }
             }
@@ -844,7 +838,7 @@ public class FiveMovieImpl implements ParserInterface {
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("getPlayUrls error", e.getMessage());
-        }*/
+        }
         return new ArrayList<>();
     }
 
@@ -902,41 +896,28 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserTopticList(String source) {
+    public List<VodDataBean> parserTopticList(String source) {
         try {
-            VodDataBean vodDataBean = new VodDataBean();
-            List<VodDataBean.Item> items = new ArrayList<>();
+            List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".module-items.module-items.module-topic-items a");
             if (elements.size() > 0) {
                 for (Element a : elements) {
-                    VodDataBean.Item bean = new VodDataBean.Item();
+                    VodDataBean bean = new VodDataBean();
+                    bean.setVodItemStyleType(VodItemStyleEnum.STYLE_16_9.getType());
                     bean.setTitle(a.select(".module-poster-item-info").text());
                     bean.setUrl(a.attr("href"));
                     bean.setImg(a.select("img").attr("data-original"));
                     items.add(bean);
                 }
-                vodDataBean.setItemList(items);
             }
-            logInfo("专题列表", vodDataBean.toString());
-            return vodDataBean;
+            logInfo("专题列表", items.toString());
+            return items;
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserSearchVodList error", e.getMessage());
             return null;
         }
-    }
-
-    /**
-     * 设置动漫专题数据列表样式
-     *
-     * @return {@link LayoutRes}
-     * @see VodDataBean#ITEM_TYPE_0
-     * @see VodDataBean#ITEM_TYPE_1
-     */
-    @Override
-    public int setTopticListItemType() {
-        return ParserInterface.super.setTopticListItemType();
     }
 
     /**
@@ -946,7 +927,7 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public VodDataBean parserTopticVodList(String source) {
+    public List<VodDataBean> parserTopticVodList(String source) {
         return parserClassificationVodList(source);
     }
 
@@ -962,18 +943,6 @@ public class FiveMovieImpl implements ParserInterface {
     public String getTopticUrl(String url, int page) {
         LogUtil.logInfo("getTopticUrl", getDefaultDomain() + String.format(url, page));
         return getDefaultDomain() + String.format(url, page);
-    }
-
-    /**
-     * 动漫专题列表一行显示几个内容
-     *
-     * @param isPad      是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    @Override
-    public int setTopticItemListItemSize(boolean isPad, boolean isPortrait) {
-        return ParserInterface.super.setTopticItemListItemSize(isPad, isPortrait);
     }
 
     /**
@@ -1075,7 +1044,8 @@ public class FiveMovieImpl implements ParserInterface {
     // -------------------------------- 获取播放地址方法开始 --------------------------------
     private static final String CIPHER_ALGORITHM = "AES/CBC/PKCS5Padding";
     private static final String
-            API = "https://player.ddzyku.com:3653/getUrls",
+//            API = "https://player.ddzyku.com:3653/getUrls",
+            API = "https://player.ddzyku.com:3653/get_url_v2",
             KEY = "a67e9a3a85049339",
             IV = "86ad9b37cc9f5b9501b3cecc7dc6377c";
 
@@ -1105,7 +1075,8 @@ public class FiveMovieImpl implements ParserInterface {
         dataJson.put("next_url", urlNext);
 
         // 使用AES加密获取提交参数data
-        String encryptedData = encryptWithAES(dataJson.toJSONString());
+//        String encryptedData = encryptWithAES(dataJson.toJSONString());
+        String encryptedData = encryptWithAES(url); // v2新版接口参数变为 url
         LogUtil.logInfo("API提交参数加密后", encryptedData);
 
         encryptedData = encodeURIComponent(encryptedData);
@@ -1176,6 +1147,36 @@ public class FiveMovieImpl implements ParserInterface {
                     .replaceAll("\\%7E", "~");
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("UTF-8 encoding not supported", e);
+        }
+    }
+
+    @Override
+    public DomainDataBean parserDomain(String source) {
+        try {
+            Document document = Jsoup.parse(source);
+            List<DomainDataBean.Domain> domainList = new ArrayList<>();
+            String dataInfo = document.getElementById("domainData").attr("data-info");
+            String decodedString = new String(android.util.Base64.decode(dataInfo, android.util.Base64.DEFAULT));
+            // {"site_main":"y5tkl.com","site_1":"b5mrx.com","site_2":"s5knz.com","site_3":"p5jvy.com"}
+            JSONObject jsonObject = JSON.parseObject(decodedString);
+            int index = 0;
+            for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
+                index += 1;
+                String key = entry.getKey();
+                String value = entry.getValue().toString();
+                value = value.startsWith("http") ? value : "https://"+value;
+                if (key.equals("site_main"))
+                    domainList.add(new DomainDataBean.Domain("主用", value));
+                else
+                    domainList.add(new DomainDataBean.Domain("备用"+index, value));
+            }
+            if (domainList.size() > 0)
+                return new DomainDataBean().success(domainList);
+            else
+                return new DomainDataBean().error("未能正确获取到最新域名数据，请自行通过发布页查看");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new DomainDataBean().error("获取最新域名失败："+e.getMessage());
         }
     }
 }

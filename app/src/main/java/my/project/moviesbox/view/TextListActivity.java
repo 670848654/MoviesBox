@@ -3,7 +3,6 @@ package my.project.moviesbox.view;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -22,6 +21,7 @@ import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.TextListAdapter;
 import my.project.moviesbox.contract.TextListContract;
+import my.project.moviesbox.model.TextListModel;
 import my.project.moviesbox.parser.bean.TextDataBean;
 import my.project.moviesbox.presenter.TextListPresenter;
 import my.project.moviesbox.utils.Utils;
@@ -34,7 +34,7 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:12
   * @版本: 1.0
  */
-public class TextListActivity extends BaseActivity<TextListContract.View, TextListPresenter> implements TextListContract.View {
+public class TextListActivity extends BaseActivity<TextListModel, TextListContract.View, TextListPresenter> implements TextListContract.View {
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     @BindView(R.id.mSwipe)
@@ -55,12 +55,12 @@ public class TextListActivity extends BaseActivity<TextListContract.View, TextLi
 
     @Override
     protected TextListPresenter createPresenter() {
-        return new TextListPresenter(url, this);
+        return new TextListPresenter(this);
     }
 
     @Override
     protected void loadData() {
-       mPresenter.loadData(true);
+       mPresenter.loadData(url);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class TextListActivity extends BaseActivity<TextListContract.View, TextLi
         Bundle bundle = getIntent().getExtras();
         title = bundle.getString("title");
         url = bundle.getString("url");
-        initToolbar();
+        setToolbar(toolbar, title, "");
         initSwipe();
         initAdapter();
     }
@@ -81,16 +81,6 @@ public class TextListActivity extends BaseActivity<TextListContract.View, TextLi
     @Override
     protected void initBeforeView() {
 
-    }
-
-    public void initToolbar() {
-        toolbar.setTitle(title);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(view -> {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            finish();
-        });
     }
 
     public void initSwipe() {
@@ -186,5 +176,11 @@ public class TextListActivity extends BaseActivity<TextListContract.View, TextLi
         selectedIndex = position;
         items = textDataBeans.get(position).getItemList();
         adapter.setNewInstance(items);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        emptyRecyclerView(mRecyclerView);
     }
 }

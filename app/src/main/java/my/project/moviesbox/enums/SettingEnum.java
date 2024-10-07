@@ -24,6 +24,7 @@ import my.project.moviesbox.utils.Utils;
 @AllArgsConstructor
 public enum SettingEnum {
     SET_DOMAIN(R.drawable.round_http_24, Utils.getString(R.string.setDomainTitle), "", null),
+    FUCK_CF(R.drawable.round_airline_stops_24, Utils.getString(R.string.enableByPassCF),Utils.getString(R.string.enableByPassCFContent), null),
     SNIFF(R.drawable.round_build_circle_24, Utils.getString(R.string.enableSniffTitle), Utils.getString(R.string.enableSniffSubContent), null),
     SET_VIDEO_PLAYER(R.drawable.round_video_settings_24, Utils.getString(R.string.setPlayerTitle), "", Utils.getArray(R.array.setPlayerItems)),
     SET_PLAYER_KERNEL(R.drawable.round_video_stable_24, Utils.getString(R.string.setPlayerKernelTitle), "", Utils.getArray(R.array.setPlayerKernelItems)),

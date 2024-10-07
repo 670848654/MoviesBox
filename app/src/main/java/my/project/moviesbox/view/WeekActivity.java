@@ -2,7 +2,6 @@ package my.project.moviesbox.view;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.HapticFeedbackConstants;
 import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
@@ -19,6 +18,7 @@ import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.WeekPageAdapter;
 import my.project.moviesbox.contract.WeekContract;
+import my.project.moviesbox.model.WeekModel;
 import my.project.moviesbox.parser.bean.WeekDataBean;
 import my.project.moviesbox.presenter.WeekPresenter;
 import my.project.moviesbox.utils.DateUtils;
@@ -32,7 +32,7 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/1/26 10:22
   * @版本: 1.0
  */
-public class WeekActivity extends BaseActivity<WeekContract.View, WeekPresenter> implements WeekContract.View {
+public class WeekActivity extends BaseActivity<WeekModel, WeekContract.View, WeekPresenter> implements WeekContract.View {
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     @BindView(R.id.progress)
@@ -47,12 +47,12 @@ public class WeekActivity extends BaseActivity<WeekContract.View, WeekPresenter>
 
     @Override
     protected WeekPresenter createPresenter() {
-        return new WeekPresenter(url, this);
+        return new WeekPresenter(this);
     }
 
     @Override
     protected void loadData() {
-        mPresenter.loadData(true);
+        mPresenter.loadData(true, url);
     }
 
     @Override
@@ -65,18 +65,8 @@ public class WeekActivity extends BaseActivity<WeekContract.View, WeekPresenter>
         Bundle bundle = getIntent().getExtras();
         title = bundle.getString("title");
         url = bundle.getString("url");
-        initToolbar();
+        setToolbar(toolbar, title, "");
         initViewPage();
-    }
-
-    public void initToolbar() {
-        toolbar.setTitle(title);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(view -> {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            finish();
-        });
     }
 
     private void initViewPage() {
@@ -162,5 +152,12 @@ public class WeekActivity extends BaseActivity<WeekContract.View, WeekPresenter>
     @Override
     protected void retryListener() {
         loadData();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (viewPager2 != null)
+            viewPager2.setAdapter(null);
     }
 }

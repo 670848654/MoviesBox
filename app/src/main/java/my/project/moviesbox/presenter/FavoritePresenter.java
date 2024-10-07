@@ -12,20 +12,19 @@ import my.project.moviesbox.model.FavoriteModel;
  * @description: 注释
  * @date 2024/1/3 1:10
  */
-public class FavoritePresenter extends Presenter<FavoriteContract.View> implements BasePresenter, FavoriteContract.LoadDataCallback {
+public class FavoritePresenter extends Presenter<FavoriteContract.View, FavoriteModel> implements BasePresenter, FavoriteContract.LoadDataCallback {
     private FavoriteContract.View view;
-    private FavoriteModel model;
-    private int offset;
-    private int limit;
-    private boolean updateOrder;
 
-    public FavoritePresenter(int offset, int limit, boolean updateOrder, FavoriteContract.View view) {
+    public FavoritePresenter(FavoriteContract.View view) {
         super(view);
         this.view = view;
-        this.offset = offset;
-        this.limit = limit;
-        this.updateOrder = updateOrder;
         model = new FavoriteModel();
+    }
+
+    public void loadData(boolean isMain, int offset, int limit, boolean updateOrder) {
+        if (isMain)
+            view.loadingView();
+        model.getData(offset, limit, updateOrder, this);
     }
 
     @Override
@@ -44,9 +43,5 @@ public class FavoritePresenter extends Presenter<FavoriteContract.View> implemen
     }
 
     @Override
-    public void loadData(boolean isMain) {
-        if (isMain) 
-            view.loadingView();
-        model.getData(offset, limit, updateOrder, this);
-    }
+    public void loadData(boolean isMain) {}
 }

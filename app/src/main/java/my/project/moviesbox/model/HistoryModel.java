@@ -1,11 +1,15 @@
 package my.project.moviesbox.model;
 
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.util.List;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.contract.HistoryContract;
 import my.project.moviesbox.database.entity.THistoryWithFields;
 import my.project.moviesbox.database.manager.THistoryManager;
+import my.project.moviesbox.event.HtmlSourceEvent;
 import my.project.moviesbox.utils.Utils;
 
 /**
@@ -23,4 +27,7 @@ public class HistoryModel extends BaseModel implements HistoryContract.Model {
         else
             callback.error(Utils.getString(R.string.emptyMyList));
     }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onWebViewEvent(HtmlSourceEvent event) {}
 }

@@ -2,7 +2,6 @@ package my.project.moviesbox.view;
 
 import android.content.Intent;
 import android.os.Handler;
-import android.view.View;
 
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
@@ -19,9 +18,11 @@ import java.util.List;
 import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.HomeViewPageAdapter;
-import my.project.moviesbox.event.RefreshEvent;
+import my.project.moviesbox.enums.DialogXTipEnum;
+import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.service.DownloadService;
+import my.project.moviesbox.service.RssService;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
 
@@ -59,6 +60,7 @@ public class HomeActivity extends BaseActivity {
     @Override
     protected void init() {
         EventBus.getDefault().register(this);
+        startRssService();
         list.add(new HomeFragment());
         list.add(new MyFragment());
         list.add(new SettingFragment());
@@ -119,10 +121,22 @@ public class HomeActivity extends BaseActivity {
         }
     }
 
+    /**
+     * 开启支持RSS订阅站点获取当日更新信息的服务
+     */
+    public void startRssService() {
+        String rssUrl = parserInterface.getRssUrl();
+        if (!rssUrl.isEmpty()) {
+            Intent intent = new Intent(this, RssService.class);
+            intent.putExtra("url", rssUrl);
+            startService(intent);
+        }
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onEvent(RefreshEvent refresh) {
-        switch (refresh.getIndex()) {
-            case -1:
+    public void onEvent(RefreshEnum refresh) {
+        switch (refresh) {
+            case CHANGE_SOURCES:
 //                runOnUiThread(() -> application.showToastMsg("应用即将重启"));
                 final Intent intent = getPackageManager().getLaunchIntentForPackage(getPackageName());
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -163,11 +177,7 @@ public class HomeActivity extends BaseActivity {
             return;
         }
         this.doubleBackToExitPressedOnce = true;
-        application.showToastMsg("再按一次退出应用");
+        application.showToastMsg("再按一次退出应用", DialogXTipEnum.DEFAULT);
         new Handler().postDelayed(() -> doubleBackToExitPressedOnce = false, 2000); // 2秒内再次按下返回键生效
-    }
-
-    public void showBottomNavigationViewSnackbar(View view, String msg, boolean warning) {
-        showSnackbarMsg(view, msg, bottomNavigationView, warning);
     }
 }

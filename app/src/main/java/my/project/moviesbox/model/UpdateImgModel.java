@@ -1,8 +1,12 @@
 package my.project.moviesbox.model;
 
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.io.IOException;
 
 import my.project.moviesbox.contract.UpdateImgContract;
+import my.project.moviesbox.event.HtmlSourceEvent;
 import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.utils.Utils;
@@ -46,4 +50,7 @@ public class UpdateImgModel extends BaseModel implements UpdateImgContract.Model
             });
         }
     }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onWebViewEvent(HtmlSourceEvent event) {}
 }

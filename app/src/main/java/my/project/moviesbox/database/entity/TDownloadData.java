@@ -40,6 +40,7 @@ public class TDownloadData implements Serializable {
      * <p>0：待下载 </p>
      * <p>1：下载成功 </p>
      * <p>2：下载失败</p>
+     * <p>3：正在转码</p>
      */
     private int complete;
     /**

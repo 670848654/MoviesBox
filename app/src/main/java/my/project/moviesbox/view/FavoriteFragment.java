@@ -1,5 +1,7 @@
 package my.project.moviesbox.view;
 
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_TAB_COUNT;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,9 +29,11 @@ import my.project.moviesbox.custom.CustomLoadMoreView;
 import my.project.moviesbox.database.entity.TFavoriteWithFields;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.TVideoManager;
-import my.project.moviesbox.event.RefreshEvent;
+import my.project.moviesbox.enums.DialogXTipEnum;
+import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.event.RefreshFavoriteEvent;
 import my.project.moviesbox.event.UpdateImgEvent;
+import my.project.moviesbox.model.FavoriteModel;
 import my.project.moviesbox.presenter.FavoritePresenter;
 import my.project.moviesbox.presenter.UpdateImgPresenter;
 import my.project.moviesbox.utils.Utils;
@@ -42,7 +46,7 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:10
   * @版本: 1.0
  */
-public class FavoriteFragment extends BaseFragment<FavoriteContract.View, FavoritePresenter> implements FavoriteContract.View, UpdateImgContract.View {
+public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContract.View, FavoritePresenter> implements FavoriteContract.View, UpdateImgContract.View {
     private View view;
     @BindView(R.id.rv_list)
     RecyclerView mRecyclerView;
@@ -53,7 +57,7 @@ public class FavoriteFragment extends BaseFragment<FavoriteContract.View, Favori
     private boolean isMain = true;
     protected boolean isErr = true;
     private boolean updateOrder; //
-    private UpdateImgPresenter updateImgPresenter;
+    private final UpdateImgPresenter updateImgPresenter = new UpdateImgPresenter(this);
 
     @Override
     protected void setConfigurationChanged() {
@@ -77,7 +81,7 @@ public class FavoriteFragment extends BaseFragment<FavoriteContract.View, Favori
     }
 
     private void initAdapter() {
-        adapter = new FavoriteListAdapter(favoriteList);
+        adapter = new FavoriteListAdapter(parserInterface.favoriteItemStyleLayout(), favoriteList);
         HomeActivity homeActivity = (HomeActivity) getActivity();
         if (homeActivity != null)
             homeActivity.setAdapterAnimation(adapter);
@@ -109,7 +113,6 @@ public class FavoriteFragment extends BaseFragment<FavoriteContract.View, Favori
         } else {
             if (isErr) {
                 isMain = false;
-                mPresenter = new FavoritePresenter(favoriteList.size(), limit, updateOrder, this);
                 loadData();
             } else {
                 isErr = true;
@@ -136,10 +139,8 @@ public class FavoriteFragment extends BaseFragment<FavoriteContract.View, Favori
 //            application.showSnackbarMsg(msg, getString(R.string.checkFavoriteUpdate));
            /* mPresenter = new FavoritePresenter(0, application.animeUpdateInfoBeans, this);
             mPresenter.loadUpdateInfo();*/ // TODO
-        } else {
-            mPresenter = new FavoritePresenter(favoriteList.size(), limit, updateOrder, this);
+        } else
             loadData();
-        }
     }
 
     /**
@@ -149,22 +150,22 @@ public class FavoriteFragment extends BaseFragment<FavoriteContract.View, Favori
         TFavoriteManager.deleteFavorite(favoriteList.get(position).getVideoId());
         adapter.removeAt(position);
         favoriteCount = TFavoriteManager.queryFavoriteCount();
-        application.showToastMsg(getString(R.string.removeFavorite));
+        application.showToastMsg(getString(R.string.removeFavorite), DialogXTipEnum.SUCCESS);
         if (favoriteCount == 0) {
             setRecyclerViewEmpty();
             rvEmpty(getString(R.string.emptyMyList));
         }
-        EventBus.getDefault().post(new RefreshEvent(4));
+        EventBus.getDefault().post(REFRESH_TAB_COUNT);
     }
 
     @Override
     protected FavoritePresenter createPresenter() {
-        return null;
+        return mPresenter = new FavoritePresenter(this);
     }
 
     @Override
     protected void loadData() {
-        mPresenter.loadData(isMain);
+        mPresenter.loadData(isMain, favoriteList.size(), limit, updateOrder);
     }
 
     @Override
@@ -174,9 +175,9 @@ public class FavoriteFragment extends BaseFragment<FavoriteContract.View, Favori
 
     @Override
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onEvent(RefreshEvent refresh) {
-        switch (refresh.getIndex()) {
-            case 1:
+    public void onEvent(RefreshEnum refresh) {
+        switch (refresh) {
+            case REFRESH_FAVORITE:
                 loadFavoriteData();
                 break;
         }
@@ -222,6 +223,9 @@ public class FavoriteFragment extends BaseFragment<FavoriteContract.View, Favori
         if (getActivity().isFinishing()) return;
         setLoadState(true);
         getActivity().runOnUiThread(() -> {
+            for (TFavoriteWithFields tFavoriteWithFields : list) {
+                tFavoriteWithFields.setBlurBg(parserInterface.favoriteItemBlurBg());
+            }
             if (isMain) {
                 new Handler().postDelayed(() -> {
                     hideProgress();
@@ -258,8 +262,7 @@ public class FavoriteFragment extends BaseFragment<FavoriteContract.View, Favori
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(UpdateImgEvent updateImgEvent) {
         if (getActivity().isFinishing()) return;
-        updateImgPresenter = new UpdateImgPresenter(updateImgEvent.getOldImgUrl(), updateImgEvent.getDescUrl(), this);
-        updateImgPresenter.loadData();
+        updateImgPresenter.loadData(updateImgEvent.getOldImgUrl(), updateImgEvent.getDescUrl());
     }
 
     @Override
@@ -267,7 +270,8 @@ public class FavoriteFragment extends BaseFragment<FavoriteContract.View, Favori
         if (getActivity().isFinishing()) return;
         getActivity().runOnUiThread(() -> {
             for (int i=0,size=favoriteList.size(); i<size; i++) {
-                if (favoriteList.get(i).getTFavorite().getVideoImgUrl().equals(oldImgUrl)) {
+                // 防止图片本身就无法加载导致无限刷新
+                if (favoriteList.get(i).getTFavorite().getVideoImgUrl().equals(oldImgUrl) && !favoriteList.get(i).isRefreshCover()) {
                     favoriteList.get(i).getTFavorite().setVideoImgUrl(imgUrl);
                     adapter.notifyItemChanged(i);
                     TVideoManager.updateImg(favoriteList.get(i).getVideoId(), imgUrl, 0);

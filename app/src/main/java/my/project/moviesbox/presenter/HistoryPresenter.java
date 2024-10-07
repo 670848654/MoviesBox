@@ -12,22 +12,23 @@ import my.project.moviesbox.model.HistoryModel;
  * @description: 注释
  * @date 2024/1/3 22:49
  */
-public class HistoryPresenter extends Presenter<HistoryContract.View> implements BasePresenter, HistoryContract.LoadDataCallback {
+public class HistoryPresenter extends Presenter<HistoryContract.View, HistoryModel> implements BasePresenter, HistoryContract.LoadDataCallback {
     private HistoryContract.View view;
-    private HistoryModel model;
-    private int offset;
-    private int limit;
     /**
      * 构造函数
      *
      * @param view 需要关联的View
      */
-    public HistoryPresenter(int offset, int limit, HistoryContract.View view) {
+    public HistoryPresenter(HistoryContract.View view) {
         super(view);
         this.view = view;
-        this.offset = offset;
-        this.limit = limit;
         model = new HistoryModel();
+    }
+
+    public void loadData(boolean isMain, int offset, int limit) {
+        if (isMain)
+            view.loadingView();
+        model.getData(offset, limit, this);
     }
 
     @Override
@@ -42,8 +43,6 @@ public class HistoryPresenter extends Presenter<HistoryContract.View> implements
 
     @Override
     public void loadData(boolean isMain) {
-        if (isMain)
-            view.loadingView();
-        model.getData(offset, limit, this);
+
     }
 }

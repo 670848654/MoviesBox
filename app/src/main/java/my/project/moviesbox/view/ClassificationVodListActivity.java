@@ -31,12 +31,16 @@ import butterknife.OnClick;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.ClassificationAdapter;
 import my.project.moviesbox.adapter.VodListAdapter;
+import my.project.moviesbox.application.App;
 import my.project.moviesbox.contract.ClassificationVodListContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
 import my.project.moviesbox.custom.FabExtendingOnScrollListener;
+import my.project.moviesbox.enums.DialogXTipEnum;
+import my.project.moviesbox.model.ClassificationVodListModel;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.VodDataBean;
+import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.presenter.ClassificationVodListPresenter;
 import my.project.moviesbox.utils.Utils;
 
@@ -48,7 +52,7 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:07
   * @版本: 1.0
  */
-public class ClassificationVodListActivity extends BaseActivity<ClassificationVodListContract.View, ClassificationVodListPresenter>
+public class ClassificationVodListActivity extends BaseActivity<ClassificationVodListModel, ClassificationVodListContract.View, ClassificationVodListPresenter>
         implements ClassificationVodListContract.View, ClassificationAdapter.OnItemClick {
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -60,14 +64,11 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
     private ClassificationAdapter classificationAdapter;
     private RecyclerView classificationListRv;
     private BottomSheetDialog classificationBottomSheetDialog;
-    private List<VodDataBean.Item> items = new ArrayList<>();
+    private final List<MultiItemEntity> vodMultiItemEntities = new ArrayList<>();
     private VodListAdapter adapter;
     private String title;
     private String[] paramsTitle; // 参数标题
     private String[] paramsUrl; // 参数URL
-    private int page = parserInterface.startPageNum(); // 开始页码
-    private int pageCount = parserInterface.startPageNum();
-    private boolean isErr = true;
     private  boolean groupMultipleChoices = parserInterface.setClassificationGroupMultipleChoices(); // 分类组是否为多选联动
     private LinearLayout buttonToggleGroup;
     @BindView(R.id.classFab)
@@ -76,12 +77,13 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
 
     @Override
     protected ClassificationVodListPresenter createPresenter() {
-        return new ClassificationVodListPresenter(this, paramsUrl);
+        return new ClassificationVodListPresenter(this);
     }
 
     @Override
     protected void loadData() {
-        mPresenter.loadData(true);
+        vodMultiItemEntities.clear();
+        mPresenter.loadMainData(true, paramsUrl);
     }
 
     @Override
@@ -95,7 +97,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
         title = Utils.isNullOrEmpty(bundle.getString("title")) ? "" : bundle.getString("title");
         paramsUrl = bundle.getStringArray("params");
         paramsTitle = new String[paramsUrl.length];
-        initToolbar();
+        setToolbar(toolbar, title, "");
         initSwipe();
         initFab();
         initDefaultAdapter();
@@ -104,16 +106,6 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
     @Override
     protected void initBeforeView() {
 
-    }
-
-    public void initToolbar() {
-        toolbar.setTitle(title);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(view -> {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-            finish();
-        });
     }
 
     public void initSwipe() {
@@ -141,11 +133,11 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
     }
 
     public void initDefaultAdapter() {
-        adapter = new VodListAdapter(parserInterface.setVodListItemType(), items);
+        adapter = new VodListAdapter(vodMultiItemEntities);
         setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
-            VodDataBean.Item bean = (VodDataBean.Item) adapter.getItem(position);
+            VodDataBean bean = (VodDataBean) adapter.getItem(position);
             String url = bean.getUrl();
             String title = bean.getTitle();
             openVodDetail(title, url);
@@ -156,17 +148,17 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
                 if (page >= pageCount) {
                     //数据全部加载完毕
                     adapter.getLoadMoreModule().loadMoreEnd();
-                    application.showToastMsg(getString(R.string.noMoreContent));
+                    application.showToastMsg(getString(R.string.noMoreContent), DialogXTipEnum.SUCCESS);
                 } else {
                     if (isErr) {
                         //成功获取更多数据
                         page++;
                         paramsUrl[paramsUrl.length-1] = String.valueOf(page);
-                        mPresenter = createPresenter();
-                        mPresenter.loadData(false);
-                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, page, pageCount));
+                        mPresenter.loadPageData(paramsUrl);
+                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, page, pageCount), DialogXTipEnum.DEFAULT);
                     } else {
                         //获取更多数据失败
+                        page--;
                         isErr = true;
                         adapter.getLoadMoreModule().loadMoreFail();
                     }
@@ -216,8 +208,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
             view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
             page = parserInterface.startPageNum();
             paramsUrl[paramsUrl.length-1] = String.valueOf(page);
-            mPresenter = createPresenter();
-            mPresenter.loadData(true);
+           loadData();
             classificationBottomSheetDialog.dismiss();
         });
         Button closeButton = classificationView.findViewById(R.id.close);
@@ -246,15 +237,10 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
         startActivity(new Intent(ClassificationVodListActivity.this, DetailsActivity.class).putExtras(bundle));
     }
 
-    public void setLoadState(boolean loadState) {
-        isErr = loadState;
-        adapter.getLoadMoreModule().loadMoreComplete();
-    }
-
     @Override
     public void onResume() {
         super.onResume();
-        if (items.size() == 0)
+        if (vodMultiItemEntities.size() == 0)
             setRecyclerViewEmpty();
         else
             setRecyclerViewView();
@@ -269,6 +255,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
     protected void retryListener() {
         page = parserInterface.startPageNum();
         pageCount = parserInterface.startPageNum();
+        paramsUrl[paramsUrl.length-1] = String.valueOf(page);
         loadData();
     }
 
@@ -278,7 +265,13 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
 
     private void setRecyclerViewView() {
         position = mRecyclerView.getLayoutManager() == null ? 0 : ((GridLayoutManager) mRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, parserInterface.setVodListItemSize(Utils.isPad(), isPortrait)));
+        int spanCount;
+        if (vodMultiItemEntities.size() > 0 && vodMultiItemEntities.get(0).getItemType() == VodItemStyleEnum.STYLE_16_9.getType()) {
+            spanCount = parserInterface.setVodList16_9ItemSize(Utils.isPad(), isPortrait);
+        } else {
+            spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait);
+        }
+        mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
         mRecyclerView.getLayoutManager().scrollToPosition(position);
     }
 
@@ -306,6 +299,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
         if (isFinishing()) return;
         runOnUiThread(() -> {
             if (multiItemEntities.size() == 0) {
+                // 只有分类数据为空才赋值
                 for (ClassificationDataBean classificationDataBean : classificationDataBeans) {
                     multiItemEntities.add(classificationDataBean);
                 }
@@ -327,21 +321,21 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
     }
 
     @Override
-    public void successVodList(boolean firstTimeData, VodDataBean vodDataBean, int pageCount) {
+    public void successVodList(boolean firstTimeData, List<VodDataBean> vodDataBeans, int pageCount) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
-            items = vodDataBean.getItemList();
             if (firstTimeData) {
+                vodMultiItemEntities.addAll(vodDataBeans);
                 hideProgress();
                 mSwipe.setRefreshing(false);
                 this.pageCount = pageCount;
                 new Handler().postDelayed(() -> {
-                    adapter.setNewInstance(items);
+                    adapter.setNewInstance(vodMultiItemEntities);
                     setRecyclerViewView();
                 }, 500);
             } else {
-                adapter.addData(items);
-                setLoadState(true);
+                adapter.addData(vodDataBeans);
+                setLoadState(adapter, true);
             }
             if (fabHeight == 0) {
                 // 添加布局完成监听器
@@ -379,19 +373,23 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
                         null,
                         null);
             } else {
-                setLoadState(false);
-                application.showToastMsg(msg);
+                setLoadState(adapter, false);
+                application.showToastMsg(msg, DialogXTipEnum.ERROR);
             }
         });
     }
 
     @Override
-    public void emptyVodList(String msg) {
+    public void emptyVodList(boolean firstTimeData, String msg) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
-            mSwipe.setRefreshing(false);
-            setRecyclerViewEmpty();
-            rvEmpty(msg);
+            if (firstTimeData) {
+                mSwipe.setRefreshing(false);
+                rvEmpty(msg);
+            } else {
+                setLoadState(adapter, false);
+                App.getInstance().showToastMsg(msg, DialogXTipEnum.ERROR);
+            }
         });
     }
 
@@ -407,9 +405,10 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
                 for (int i = 0, size = classificationDataBean.getItemList().size(); i<size; i++) {
                     ClassificationDataBean.Item item = classificationDataBean.getItemList().get(i);
                     classificationDataBean.getItemList().get(i).setSelected(item.getUrl().equals(url));
+                    classificationAdapter.notifyItemChanged(i);
                 }
             }
-            classificationAdapter.notifyDataSetChanged();
+//            classificationAdapter.notifyDataSetChanged();
         }
     }
 }

@@ -1,6 +1,8 @@
 package my.project.moviesbox.contract;
 
-import com.alibaba.fastjson.JSONObject;
+import java.util.List;
+
+import my.project.moviesbox.parser.bean.DanmuDataBean;
 
 /**
   * @包名: my.project.moviesbox.contract
@@ -14,10 +16,12 @@ public interface DanmuContract {
 
     interface Model {
         void getDanmu(LoadDataCallback callback, String... params);
+
+        void getVipDanmu(String url, LoadDataCallback callback);
     }
 
     interface View extends BaseView {
-        void successDanmuJson(JSONObject danmus);
+        void successDanmuJson(List<DanmuDataBean> danmuDataBeanList);
 
         void successDanmuXml(String content);
 
@@ -25,7 +29,7 @@ public interface DanmuContract {
     }
 
     interface LoadDataCallback extends BaseLoadDataCallback {
-        void successDanmuJson(JSONObject danmus);
+        void successDanmuJson(List<DanmuDataBean> danmuDataBeanList);
 
         void successDanmuXml(String content);
 

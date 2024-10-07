@@ -3,7 +3,6 @@ package my.project.moviesbox.custom;
 import android.graphics.Color;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import master.flame.danmaku.danmaku.model.BaseDanmaku;
@@ -53,24 +52,15 @@ public class DanmakuJsonParser extends BaseDanmakuParser {
             }
             for (int i = 0, size = jsonArray.length(); i < size; i++) {
                 JSONObject danmuObj = jsonArray.getJSONObject(i);
-                long time = (long) (Float.parseFloat(danmuObj.getString("time")) * 1000); // 出现时间
+                long time = (long) (Float.parseFloat(danmuObj.getString("time"))); // 出现时间
                 int color = Color.WHITE;
                 try {
                     color = Color.parseColor(danmuObj.getString("color"));
                 } catch (Exception e) {
-
+                    e.printStackTrace();
                 }
-                int danmuType = BaseDanmaku.TYPE_SCROLL_RL;
-                switch (danmuObj.getString("type")) {
-                    case "scroll":
-                        // 滚动
-                        danmuType = BaseDanmaku.TYPE_SCROLL_RL;
-                        break;
-                    case "top":
-                        // 顶部
-                        danmuType = BaseDanmaku.TYPE_FIX_TOP;
-                        break;
-                }
+                int danmuType = Integer.parseInt(danmuObj.getString("type"));
+                int textSize = Integer.parseInt(danmuObj.getString("textSize"));
                 BaseDanmaku item = mContext.mDanmakuFactory.createDanmaku(danmuType, mContext);
                 if (item != null) {
                     item.setTime(time + 1200);
@@ -79,18 +69,18 @@ public class DanmakuJsonParser extends BaseDanmakuParser {
                     item.index = i;
                     item.flags = mContext.mGlobalFlagValues;
                     item.setTimer(mTimer);
-                    item.text = danmuObj.getString("content");
+                    item.text = danmuObj.getString("text");
 //                    item.textShadowColor = Color.GRAY;
                     item.underlineColor = Color.TRANSPARENT;
                     item.borderColor = Color.TRANSPARENT;
                     item.priority = 0;
 //                    item.textSize = Utils.dpToPx(Utils.getContext(), 14);
-                    item.textSize = 20 * (mDispDensity - 0.6f);
+                    item.textSize = textSize * (mDispDensity - 0.6f);
                     danmakus.addItem(item);
                 }
             }
-        } catch (JSONException e) {
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return danmakus;
     }

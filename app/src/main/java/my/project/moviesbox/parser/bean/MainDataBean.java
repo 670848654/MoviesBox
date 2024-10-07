@@ -11,6 +11,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import my.project.moviesbox.parser.config.ItemStyleEnum;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.DetailsActivity;
 
@@ -26,19 +27,16 @@ import my.project.moviesbox.view.DetailsActivity;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MainDataBean implements MultiItemEntity, Serializable {
-    public static final int TAG_LIST = 0; // 首页TAG
-    public static final int BANNER_LIST = 1; // 轮播
-    public static final int ITEM_LIST = 2; // 剧集列表 横向列表
-    public static final int ITEM_SINGLE_LINE_LIST = 3; // 单条数据列表 纵向
     private String title; // 标题
     private String url; // 地址
     private boolean hasMore; // 是否有更多
     private String more; // 更多跳转地址
     private Class openMoreClass = ClassificationVodListActivity.class; // 打开更多时的视图class 默认为分类视图
     private int dataType; // 布局
-    private int vodItemType = Item.ITEM_TYPE_0; // item布局类型
+    private ItemStyleEnum vodItemType = ItemStyleEnum.STYLE_1_1_DOT_4; // item布局类型
     private List<Item> items; // 子列表数据
     private List<Tag> tags; // 头部分类数据
+    private List<DropDownTag> dropDownTags; // 下拉菜单数据
 
     @Override
     public int getItemType() {
@@ -76,6 +74,61 @@ public class MainDataBean implements MultiItemEntity, Serializable {
 
     /**
       * @包名: my.project.moviesbox.parser.bean
+      * @类名: MainDataBean
+      * @描述: 用于首页下拉菜单列表实体
+      * @作者: Li Z
+      * @日期: 2024/9/27 14:08
+      * @版本: 1.0
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DropDownTag implements Serializable {
+        private String title; // 标题
+        private int img; // 图标 预留
+        private String url;
+        private Class openClass; // 打开的class
+        private boolean hasMenu = true; // 是否有列表数据，没有则不显示箭头
+        private List<DropDownMenu> dropDownMenus;
+
+        /**
+         * 用于没有下拉菜单的构造方法
+         * @param title
+         * @param url
+         * @param openClass
+         */
+        public DropDownTag(String title, String url, Class openClass) {
+            this.title = title;
+            this.url = url;
+            this.openClass = openClass;
+            this.hasMenu = false;
+        }
+
+        /**
+         * 用于有下拉菜单的构造方法
+         * @param title
+         * @param dropDownMenus
+         */
+        public DropDownTag(String title, List<DropDownMenu> dropDownMenus) {
+            this.title = title;
+            this.dropDownMenus = dropDownMenus;
+        }
+
+        /**
+         * 下拉菜单列表实体
+         */
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        public static class DropDownMenu {
+            private String title;
+            private String url;
+            private Class openClass; // 打开的class
+        }
+    }
+
+    /**
+      * @包名: my.project.moviesbox.parser.bean
       * @类名: MainDataBean.Item
       * @描述: 首页banner/视频数据列表通用实体
       * @作者: Li Z
@@ -86,10 +139,6 @@ public class MainDataBean implements MultiItemEntity, Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Item implements Serializable {
-        // 如需要更多布局类型 需要自行定义实现，默认仅提供两种
-        public static final int ITEM_TYPE_0 = 0; // 布局类型 宽<高[类似：1:1.4]
-        public static final int ITEM_TYPE_1 = 1; // 布局类型 宽>高[类似：16:9]
-        public static final int ITEM_TYPE_2 = 2; // 布局类型 宽>高[类似：2:1]
         private String title; // 剧集标题
         private String img; // 图片地址
         private String url; // 访问地址

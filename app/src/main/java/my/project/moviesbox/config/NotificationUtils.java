@@ -20,6 +20,7 @@ import java.util.Set;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.DetailsActivity;
 
 /**
   * @包名: my.project.moviesbox.config
@@ -51,6 +52,10 @@ public class NotificationUtils {
     private static final String CHANNEL_CHECK_SERVICE_INFO_ID = Utils.getString(R.string.channelCheckServiceInfoId);
     private static final CharSequence CHANNEL_CHECK_SERVICE_INFO_NAME = Utils.getString(R.string.channelCheckServiceInfoName);
     private static final String CHANNEL_CHECK_SERVICE_INFO_Description = Utils.getString(R.string.channelCheckServiceInfoDescription);
+
+    private static final String CHANNEL_RSS_SERVICE_INFO_ID = Utils.getString(R.string.channelRssServiceInfoId);
+    private static final CharSequence CHANNEL_RSS_SERVICE_INFO_NAME = Utils.getString(R.string.channelRssServiceInfoName);
+    private static final String CHANNEL_RSS_SERVICE_INFO_DESCRIPTION = Utils.getString(R.string.channelServiceServiceInfoDescription);
     private Set<Integer> generatedNumbers;
     private Random random;
 
@@ -317,5 +322,56 @@ public class NotificationUtils {
         if (notification != null)
             cancelNotification(notificationId);
         return showCheckUpdateNotification(generateUniqueRandom(), title, content, url);
+    }
+
+    /**
+     * 显示RSS订阅通知
+     * @param title
+     * @param content
+     * @param url
+     * @return
+     */
+    public int showRSSNotification(String title, String content, String url) {
+        int notificationId = generateUniqueRandom();
+        PendingIntent pendingIntent = null;
+        if (!Utils.isNullOrEmpty(url)) {
+            Intent intent = new Intent(context, DetailsActivity.class);
+            intent.putExtra("title", title);
+            intent.putExtra("url", url);
+            pendingIntent = PendingIntent.getActivity(
+                    context, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+        }
+        Notification notification = null;
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
+            oldBuilder = new Notification.Builder(context);
+            oldBuilder.setAutoCancel(true).setSmallIcon(R.drawable.round_fiber_new_24);
+            if (!Utils.isNullOrEmpty(pendingIntent))
+                oldBuilder.setContentIntent(pendingIntent);
+            notification = oldBuilder
+                    .setPriority(Notification.PRIORITY_LOW)
+                    .setContentTitle(title)
+                    .setContentText(content)
+                    .build();
+            mManager.notify(notificationId, notification);
+        } else {
+            NotificationChannel mChannel = new NotificationChannel(CHANNEL_RSS_SERVICE_INFO_ID, CHANNEL_RSS_SERVICE_INFO_NAME, NotificationManager.IMPORTANCE_LOW);
+            mChannel.setDescription(CHANNEL_RSS_SERVICE_INFO_DESCRIPTION);
+            mChannel.enableLights(true);
+            mChannel.setLightColor(Color.RED);
+            mChannel.setShowBadge(false);
+            mManager.createNotificationChannel(mChannel);
+
+            newBuilder = new NotificationCompat.Builder(context, CHANNEL_RSS_SERVICE_INFO_ID);
+            newBuilder.setAutoCancel(true).setSmallIcon(R.drawable.round_fiber_new_24);
+            if (!Utils.isNullOrEmpty(pendingIntent))
+                newBuilder.setContentIntent(pendingIntent);
+            notification = newBuilder
+                    .setContentTitle(title)
+                    .setContentText(content)
+                    .build();
+            mManager.notify(notificationId, notification);
+        }
+        return notificationId;
     }
 }

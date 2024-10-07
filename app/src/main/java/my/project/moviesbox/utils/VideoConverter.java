@@ -2,8 +2,6 @@ package my.project.moviesbox.utils;
 
 import static com.arthenica.mobileffmpeg.Config.RETURN_CODE_SUCCESS;
 
-import android.content.Context;
-
 import com.arthenica.mobileffmpeg.FFmpeg;
 
 import org.greenrobot.eventbus.EventBus;
@@ -25,7 +23,6 @@ import my.project.moviesbox.parser.LogUtil;
 public class VideoConverter {
     /**
      * TS转MP4
-     * @param context 上下文
      * @param notificationId 通知ID
      * @param m3u8Path M3U8保存地址
      * @param inputPath ts地址
@@ -35,7 +32,7 @@ public class VideoConverter {
      * @param vodEpisodes 影视集数
      * @param notificationUtils 通知
      */
-    public static void convertTSToMP4(Context context, int notificationId, String m3u8Path, String inputPath, String outputPath, Long taskId, String vodTitle, String vodEpisodes, NotificationUtils notificationUtils) {
+    public static void convertTSToMP4(int notificationId, String m3u8Path, String inputPath, String outputPath, Long taskId, String vodTitle, String vodEpisodes, NotificationUtils notificationUtils) {
         String[] cmd = {"-i", inputPath, "-acodec", "copy", "-vcodec", "copy", "-absf", "aac_adtstoasc", outputPath};
         // 执行FFmpeg命令
         FFmpeg.executeAsync(cmd, (executionId, returnCode) -> {

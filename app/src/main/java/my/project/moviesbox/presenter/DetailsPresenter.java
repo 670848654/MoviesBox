@@ -10,10 +10,9 @@ import my.project.moviesbox.parser.bean.DetailsDataBean;
  * @description: 注释
  * @date 2023/12/31 13:13
  */
-public class DetailsPresenter extends Presenter<DetailsContract.View> implements BasePresenter, DetailsContract.LoadDataCallback {
+public class DetailsPresenter extends Presenter<DetailsContract.View, DetailsModel> implements BasePresenter, DetailsContract.LoadDataCallback {
     private String url;
     private DetailsContract.View view;
-    private DetailsModel model;
     /**
      * 构造函数
      *
