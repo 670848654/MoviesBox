@@ -18,4 +18,4 @@
 | 影视 | 555电影 | https://5look.site |
 | 影视 | 缘觉影视 | https://www.yjys02.com |
 | 影视 | 小宝影院 | https://xiaoxintv.com |
-| 影视 | 纽约影院 | https://https://nycvod.com |
+| 影视 | 纽约影院 | https://nycvod.com |
