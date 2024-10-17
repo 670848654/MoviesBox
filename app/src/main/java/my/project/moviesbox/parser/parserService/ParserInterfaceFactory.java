@@ -7,6 +7,7 @@ import my.project.moviesbox.parser.parserImpl.AnFunsImpl;
 import my.project.moviesbox.parser.parserImpl.FiveMovieImpl;
 import my.project.moviesbox.parser.parserImpl.IYingHuaImpl;
 import my.project.moviesbox.parser.parserImpl.LibvioImpl;
+import my.project.moviesbox.parser.parserImpl.NyyyImpl;
 import my.project.moviesbox.parser.parserImpl.SilisiliImpl;
 import my.project.moviesbox.parser.parserImpl.TbysImpl;
 import my.project.moviesbox.parser.parserImpl.XbyyImpl;
@@ -58,6 +59,9 @@ public class ParserInterfaceFactory {
                             break;
                         case XBYY:
                             parserInterface = new XbyyImpl();
+                            break;
+                        case NYYY:
+                            parserInterface = new NyyyImpl();
                             break;
                     }
                 }

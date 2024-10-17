@@ -164,7 +164,22 @@ public enum SourceEnum {
             "",
             "",
             new ArrayList<>()
-    )
+    ),
+    NYYY(SourceIndexEnum.NYYY,
+            "纽约影院",
+            MOVIES.title,
+            MOVIES.bg,
+            "质量不错但存在广告，请勿相信视频中的博彩广告",
+            "nyyy",
+           "https://nycvod.com",
+            "",
+            "/vodsearch/%s----------%s---.html",
+            false,
+            "/vodshow/%s-%s-%s-%s-%s-%s---%s---%s.html", // 1: 影视类型 2:地区 3:排序 4:类型 5:语言 6:字母 7:分页 8:年份
+            "/index.php/danmu/art/id/%s.xml",
+            "",
+            new ArrayList<>()
+            )
     ;
 
     /**
@@ -373,7 +388,9 @@ public enum SourceEnum {
         // 缘觉影视
         YJYS(10, ABNORMAL, "影视搜索存在服务器验证请手动验证，部分视频调用接口存在二次验证（不支持），尝试支持该站的M3U8协议播放（如果存在MP4的播放地址优先使用，不可播放再尝试M3U8协议的播放地址，不一定能播放成功），测试中可能存在应用崩溃"),
         // 小宝影院
-        XBYY(11, ABNORMAL, "仅支持但并未经过详细测试，M3U8协议播放列表尝试过滤广告")
+        XBYY(11, ABNORMAL, "仅支持但并未经过详细测试，M3U8协议播放列表尝试过滤广告"),
+        // 纽约影院
+        NYYY(12, ABNORMAL, "影视搜索存在服务器验证请手动验证（无数据请刷新重试，这个网站有时返回的就是无数据~）")
         ;
         public int index;
         public SourceStateEnum stateEnum;
@@ -422,7 +439,7 @@ public enum SourceEnum {
     @AllArgsConstructor
     public enum SourceTypeEnum {
         MOVIES("影视", R.drawable.source_type_movie),
-        ANIME("动漫", R.drawable.source_type_anime)
+        ANIME("动漫", R.drawable.source_type_anime),
         ;
         public String title;
         @DrawableRes
