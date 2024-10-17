@@ -40,7 +40,8 @@ public class FavoriteListAdapter extends BaseQuickAdapter<TFavoriteWithFields, B
         }
         else
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        Utils.setDefaultImage(item.getTFavorite().getVideoImgUrl(), item.getTFavorite().getVideoUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title));
+        imgUrl = item.isRefreshCover() ? "" : imgUrl;
+        Utils.setDefaultImage(imgUrl, item.getTFavorite().getVideoUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title));
         helper.setText(R.id.title, item.getVideoTitle());
         String lastPlayNumber = item.getTFavorite().getLastVideoUpdateNumber();
         if (Utils.isNullOrEmpty(lastPlayNumber))

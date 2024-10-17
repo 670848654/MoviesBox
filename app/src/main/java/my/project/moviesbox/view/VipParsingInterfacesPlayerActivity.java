@@ -446,6 +446,20 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (danmuPresenter != null)
+            danmuPresenter.registerEventBus();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (danmuPresenter != null)
+            danmuPresenter.unregisterEventBus();
+    }
+
+    @Override
     protected void onDestroy() {
         stopService(new Intent(this, DLNAService.class));
         player.releaseDanMu();

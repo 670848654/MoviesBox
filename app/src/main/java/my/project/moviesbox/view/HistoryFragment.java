@@ -1,6 +1,7 @@
 package my.project.moviesbox.view;
 
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_TAB_COUNT;
+import static my.project.moviesbox.utils.ImageUpdateManager.UpdateImgEnum.HISTORY;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -27,7 +29,6 @@ import butterknife.ButterKnife;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.HistoryListAdapter;
 import my.project.moviesbox.contract.HistoryContract;
-import my.project.moviesbox.contract.UpdateImgContract;
 import my.project.moviesbox.contract.VideoContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
 import my.project.moviesbox.database.entity.THistoryWithFields;
@@ -42,8 +43,8 @@ import my.project.moviesbox.model.HistoryModel;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.parser.bean.DialogItemBean;
 import my.project.moviesbox.presenter.HistoryPresenter;
-import my.project.moviesbox.presenter.UpdateImgPresenter;
 import my.project.moviesbox.presenter.VideoPresenter;
+import my.project.moviesbox.utils.ImageUpdateManager;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.utils.VideoUtils;
@@ -57,7 +58,7 @@ import my.project.moviesbox.utils.VideoUtils;
   * @版本: 1.0
  */
 public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.View, HistoryPresenter> implements HistoryContract.View,
-        VideoContract.View, UpdateImgContract.View {
+        VideoContract.View {
     private View view;
     @BindView(R.id.rv_list)
     RecyclerView mRecyclerView;
@@ -79,7 +80,6 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
     private int clickIndex = 0;
     @BindView(R.id.remove_all)
     FloatingActionButton removeAllFAB;
-    private final UpdateImgPresenter updateImgPresenter = new UpdateImgPresenter(this);
 
     @Override
     protected void setConfigurationChanged() {
@@ -139,6 +139,17 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
 //                    showDeleteHistoryDialog(position, historyBeans.get(position).getTHistory().getHistoryId(), false);
                     setMenu(view, R.menu.history_menu, R.id.delete, item -> {
                         switch (item.getItemId()) {
+                            case R.id.refreshImage:
+                                ImageView imageView = (ImageView) adapter.getViewByPosition(position, R.id.img);
+                                imageView.setImageDrawable(getActivity().getDrawable(R.drawable.loading));
+//                                updateImgPresenter.loadData(historyBeans.get(position).getTHistory().getVideoImgUrl(), historyBeans.get(position).getTHistory().getVideoDescUrl());
+                                ImageUpdateManager.getInstance().addUpdateImgTask(
+                                        historyBeans.get(position).getTHistory().getVideoDescUrl(),
+                                        historyBeans.get(position).getTHistory().getVideoImgUrl(),
+                                        adapter.getData(),
+                                        adapter,
+                                        HISTORY);
+                                break;
                             case R.id.desc:
                                 Bundle bundle = new Bundle();
                                 bundle.putString("title", historyBeans.get(position).getVideoTitle());
@@ -441,15 +452,33 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        videoPresenter.registerEventBus();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        videoPresenter.unregisterEventBus();
+    }
+
+    @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (null != videoPresenter) videoPresenter.detachView();
+        videoPresenter.detachView();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(UpdateImgEvent updateImgEvent) {
         if (getActivity().isFinishing()) return;
-        updateImgPresenter.loadData(updateImgEvent.getOldImgUrl(), updateImgEvent.getDescUrl());
+//        updateImgPresenter.loadData(updateImgEvent.getOldImgUrl(), updateImgEvent.getDescUrl());
+        ImageUpdateManager.getInstance().addUpdateImgTask(
+                updateImgEvent.getDescUrl(),
+                updateImgEvent.getOldImgUrl(),
+                adapter.getData(),
+                adapter,
+                HISTORY);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -465,27 +494,6 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
             linearProgressIndicator.setMax((int) videoDuration);
             linearProgressIndicator.setProgress((int) watchProgress);
         }*/
-    }
-
-    @Override
-    public void successImg(String oldImgUrl, String imgUrl) {
-        if (getActivity().isFinishing()) return;
-        getActivity().runOnUiThread(() -> {
-            for (int i=0,size=historyBeans.size(); i<size; i++) {
-                // 防止图片本身就无法加载导致无限刷新
-                if (historyBeans.get(i).getTHistory().getVideoImgUrl().equals(oldImgUrl) && !historyBeans.get(i).isRefreshCover()) {
-                    historyBeans.get(i).getTHistory().setVideoImgUrl(imgUrl);
-                    adapter.notifyItemChanged(i);
-                    TVideoManager.updateImg(historyBeans.get(i).getVideoId(), imgUrl, 1);
-                    break;
-                }
-            }
-        });
-    }
-
-    @Override
-    public void errorImg() {
-
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

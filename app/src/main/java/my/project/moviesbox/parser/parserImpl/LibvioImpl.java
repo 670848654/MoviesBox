@@ -301,12 +301,12 @@ public class LibvioImpl implements ParserInterface {
                         String playListName = play.select("h3").text();
                         dramas.setListTitle(playListName);
                         List<DetailsDataBean.DramasItem> dramasItems = new ArrayList<>();
+                        int index = 0;
                         for (Element element : play.select("ul li a")) {
-                            int index = 0;
                             String name = element.select("a").text();
                             String watchUrl = element.select("a").attr("href");
 //                    Log.e("dramaStr - > " , dramaStr + "- > " + watchUrl);
-                            dramasItems.add(new DetailsDataBean.DramasItem(index, name, watchUrl, false));
+                            dramasItems.add(new DetailsDataBean.DramasItem(index++, name, watchUrl, false));
                         }
                         dramas.setDramasItemList(dramasItems);
                         dramasList.add(dramas);
@@ -369,10 +369,9 @@ public class LibvioImpl implements ParserInterface {
                         if (playing != null) {
                             int index = 0;
                             for (Element element : playing) {
-                                index += 1;
                                 String dramaTitle = element.text();
                                 String dramaUrl = element.select("a").attr("href");
-                                dramasItemList.add(new DetailsDataBean.DramasItem(index, dramaTitle, dramaUrl, false));
+                                dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, false));
                             }
                         }
                     }

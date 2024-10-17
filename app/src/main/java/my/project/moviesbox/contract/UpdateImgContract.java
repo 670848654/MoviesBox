@@ -14,12 +14,12 @@ public interface UpdateImgContract {
     }
 
     interface View extends BaseView {
-        void successImg(String oldImgUrl, String imgUrl);
-        void errorImg();
+        void successImg(String descUrl, String imgUrl);
+        void errorImg(String descUrl);
     }
 
     interface LoadDataCallback extends BaseLoadDataCallback {
-        void successImg(String oldImgUrl, String imgUrl);
-        void errorImg();
+        void successImg(String descUrl, String imgUrl);
+        void errorImg(String descUrl);
     }
 }

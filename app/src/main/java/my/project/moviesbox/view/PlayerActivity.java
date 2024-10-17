@@ -122,6 +122,8 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
 
     @Override
     protected String[] getDanmuParams() {
+        if (Utils.isNullOrEmpty(dramasItems))
+            return null;
         int interfaceSource = parserInterface.getSource();
         SourceEnum.SourceIndexEnum sourceEnum = fromIndex(interfaceSource);
         switch (sourceEnum) {
@@ -138,7 +140,8 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
                     stringBuilder.append(matcher.group());
                 return new String[]{stringBuilder.toString(), String.valueOf(dramasItems.get(clickIndex).getIndex())};
             case YJYS:
-                // 缘觉影视弹幕参数 [0] 播放页地址
+            case NYYY:
+                // 缘觉影视 | 纽约影视 弹幕参数 [0] 播放页地址
                 return new String[]{dramaUrl};
             default:
                 return null;

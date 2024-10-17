@@ -11,26 +11,28 @@ import my.project.moviesbox.parser.bean.DetailsDataBean;
  * @date 2023/12/31 13:13
  */
 public class DetailsPresenter extends Presenter<DetailsContract.View, DetailsModel> implements BasePresenter, DetailsContract.LoadDataCallback {
-    private String url;
     private DetailsContract.View view;
     /**
      * 构造函数
      *
      * @param view 需要关联的View
      */
-    public DetailsPresenter(String url, DetailsContract.View view) {
+    public DetailsPresenter(DetailsContract.View view) {
         super(view);
-        this.url = url;
         this.view = view;
         model = new DetailsModel();
     }
 
     @Override
     public void loadData(boolean isMain) {
+    }
+
+    public void loadData(boolean isMain, String url) {
         if (isMain)
             view.loadingView();
         model.getData(url, this);
     }
+
 
     @Override
     public void error(String msg) {

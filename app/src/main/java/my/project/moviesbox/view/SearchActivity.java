@@ -201,6 +201,7 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
     protected void retryListener() {
         page = parserInterface.startPageNum();
         pageCount = parserInterface.startPageNum();
+        multiItemEntities.clear();
         mPresenter.loadMainData(true, title, String.valueOf(page));
     }
 

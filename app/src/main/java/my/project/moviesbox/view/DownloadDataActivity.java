@@ -427,12 +427,6 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
         adapter.getLoadMoreModule().loadMoreComplete();
     }
 
-    private void loadDownloadData() {
-        isMain = true;
-        mPresenter = createPresenter();
-        loadData();
-    }
-
     @Download.onTaskRunning
     protected void running(DownloadTask downloadTask) {
         for (int i = 0, size = downloadDataBeans.size(); i < size; i++) {

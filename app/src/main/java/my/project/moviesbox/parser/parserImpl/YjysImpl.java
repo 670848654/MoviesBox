@@ -347,10 +347,9 @@ public class YjysImpl implements ParserInterface {
             if (dataElement.size() > 0) {
                 int index = 0;
                 for (Element element : dataElement) {
-                    index += 1;
                     String dramaUrl = element.select("a").attr("href");
                     String dramaTitle = element.select("a").text();
-                    dramasItemList.add(new DetailsDataBean.DramasItem(index, dramaTitle, dramaUrl, dramaStr.contains(dramaUrl)));
+                    dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, dramaStr.contains(dramaUrl)));
                 }
             }
             logInfo("播放列表[播放界面]内容", dramasItemList.toString());

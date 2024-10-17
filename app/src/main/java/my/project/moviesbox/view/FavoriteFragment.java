@@ -1,6 +1,7 @@
 package my.project.moviesbox.view;
 
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_TAB_COUNT;
+import static my.project.moviesbox.utils.ImageUpdateManager.UpdateImgEnum.FAVORITE;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -24,18 +26,16 @@ import butterknife.ButterKnife;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.FavoriteListAdapter;
 import my.project.moviesbox.contract.FavoriteContract;
-import my.project.moviesbox.contract.UpdateImgContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
 import my.project.moviesbox.database.entity.TFavoriteWithFields;
 import my.project.moviesbox.database.manager.TFavoriteManager;
-import my.project.moviesbox.database.manager.TVideoManager;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.event.RefreshFavoriteEvent;
 import my.project.moviesbox.event.UpdateImgEvent;
 import my.project.moviesbox.model.FavoriteModel;
 import my.project.moviesbox.presenter.FavoritePresenter;
-import my.project.moviesbox.presenter.UpdateImgPresenter;
+import my.project.moviesbox.utils.ImageUpdateManager;
 import my.project.moviesbox.utils.Utils;
 
 /**
@@ -46,7 +46,7 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:10
   * @版本: 1.0
  */
-public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContract.View, FavoritePresenter> implements FavoriteContract.View, UpdateImgContract.View {
+public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContract.View, FavoritePresenter> implements FavoriteContract.View {
     private View view;
     @BindView(R.id.rv_list)
     RecyclerView mRecyclerView;
@@ -57,7 +57,6 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
     private boolean isMain = true;
     protected boolean isErr = true;
     private boolean updateOrder; //
-    private final UpdateImgPresenter updateImgPresenter = new UpdateImgPresenter(this);
 
     @Override
     protected void setConfigurationChanged() {
@@ -98,6 +97,17 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
             if (!Utils.isFastClick()) return false;
             setMenu(view, R.menu.favorite_menu, R.id.remove, item -> {
                 switch (item.getItemId()) {
+                    case R.id.refreshImage:
+                        ImageView imageView = (ImageView) adapter.getViewByPosition(position, R.id.img);
+                        imageView.setImageDrawable(getActivity().getDrawable(R.drawable.loading));
+//                        updateImgPresenter.loadData(favoriteList.get(position).getTFavorite().getVideoImgUrl(), favoriteList.get(position).getTFavorite().getVideoUrl());
+                        ImageUpdateManager.getInstance().addUpdateImgTask(
+                                favoriteList.get(position).getTFavorite().getVideoUrl(),
+                                favoriteList.get(position).getTFavorite().getVideoImgUrl(),
+                                adapter.getData(),
+                                adapter,
+                                FAVORITE);
+                        break;
                     case R.id.remove:
                         removeFavorite(position);
                         break;
@@ -253,36 +263,15 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
 
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (null != updateImgPresenter) updateImgPresenter.detachView();
-    }
-
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(UpdateImgEvent updateImgEvent) {
         if (getActivity().isFinishing()) return;
-        updateImgPresenter.loadData(updateImgEvent.getOldImgUrl(), updateImgEvent.getDescUrl());
-    }
-
-    @Override
-    public void successImg(String oldImgUrl, String imgUrl) {
-        if (getActivity().isFinishing()) return;
-        getActivity().runOnUiThread(() -> {
-            for (int i=0,size=favoriteList.size(); i<size; i++) {
-                // 防止图片本身就无法加载导致无限刷新
-                if (favoriteList.get(i).getTFavorite().getVideoImgUrl().equals(oldImgUrl) && !favoriteList.get(i).isRefreshCover()) {
-                    favoriteList.get(i).getTFavorite().setVideoImgUrl(imgUrl);
-                    adapter.notifyItemChanged(i);
-                    TVideoManager.updateImg(favoriteList.get(i).getVideoId(), imgUrl, 0);
-                    break;
-                }
-            }
-        });
-    }
-
-    @Override
-    public void errorImg() {
-
+//        updateImgPresenter.loadData(updateImgEvent.getOldImgUrl(), updateImgEvent.getDescUrl());
+        ImageUpdateManager.getInstance().addUpdateImgTask(
+                updateImgEvent.getDescUrl(),
+                updateImgEvent.getOldImgUrl(),
+                adapter.getData(),
+                adapter,
+                FAVORITE);
     }
 }

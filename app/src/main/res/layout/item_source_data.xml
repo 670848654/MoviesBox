@@ -112,7 +112,6 @@
     <TextView
         android:id="@+id/info"
         android:textSize="16sp"
-        android:text="可能存在Cloudflare、大陆需挂代理且非日本节点"
         android:textColor="@color/orange600"
         android:layout_margin="3dp"
         android:layout_width="match_parent"

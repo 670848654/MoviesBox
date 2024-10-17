@@ -296,6 +296,20 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (null != mPresenter)
+            mPresenter.registerEventBus();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (null != mPresenter)
+            mPresenter.unregisterEventBus();
+    }
+
+    @Override
     protected void onDestroy() {
         //取消View的关联
         if (null != mPresenter)

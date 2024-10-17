@@ -292,12 +292,12 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
 
     @Override
     protected DetailsPresenter createPresenter() {
-        return new DetailsPresenter(detailsUrl, this);
+        return new DetailsPresenter(this);
     }
 
     @Override
     protected void loadData() {
-        mPresenter.loadData(true);
+        mPresenter.loadData(true, detailsUrl);
     }
 
     @Override
@@ -425,6 +425,11 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
             if (!Utils.isFastClick()) return;
             playVideo(dramaListAdapter, position);
         });
+        dramaListAdapter.setOnItemLongClickListener((adapter, view, position) -> {
+            expandListBSD.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+            expandListBSD.show();
+            return true;
+        });
         dramaListLayoutManager = getLinearLayoutManager();
         dramaListRv.setLayoutManager(dramaListLayoutManager);
         dramaListRv.setAdapter(dramaListAdapter);
@@ -497,8 +502,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         hideView(scoreView);
         setTextviewEmpty(expandableDescView);
         detailsDataBean = new DetailsDataBean();
-        mPresenter = new DetailsPresenter(detailsUrl, this);
-        mPresenter.loadData(true);
+        retryListener();
     }
 
     private void setTextviewEmpty(AppCompatTextView appCompatTextView) {
@@ -819,6 +823,24 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (null != downloadVideoPresenter)
+            downloadVideoPresenter.registerEventBus();
+        if (null != videoPresenter)
+            videoPresenter.registerEventBus();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (null != downloadVideoPresenter)
+            downloadVideoPresenter.unregisterEventBus();
+        if (null != videoPresenter)
+            videoPresenter.unregisterEventBus();
+    }
+
+    @Override
     protected void onDestroy() {
         if (null != downloadVideoPresenter)
             downloadVideoPresenter.detachView();
@@ -947,7 +969,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     @Override
     protected void retryListener() {
         sourceIndex = 0;
-        mPresenter.loadData(true);
+        mPresenter.loadData(true, detailsUrl);
     }
 
     private void setRecyclerViewView() {

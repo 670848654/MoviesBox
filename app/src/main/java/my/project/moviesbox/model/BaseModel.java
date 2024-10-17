@@ -1,5 +1,7 @@
 package my.project.moviesbox.model;
 
+import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum.fromIndex;
+
 import org.greenrobot.eventbus.EventBus;
 import org.jsoup.Jsoup;
 
@@ -9,8 +11,10 @@ import java.net.URLEncoder;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.parser.LogUtil;
+import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
+import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
 import okhttp3.Response;
 
@@ -23,14 +27,13 @@ import okhttp3.Response;
 public class BaseModel {
     protected static ParserInterface parserInterface;
     protected static String charsetName;
-
-    public BaseModel() {
-        EventBus.getDefault().register(this);
-    }
+    protected static SourceEnum.SourceIndexEnum sourceEnum;
 
     static {
         parserInterface = ParserInterfaceFactory.getParserInterface();
         charsetName = Utils.isNullOrEmpty(parserInterface.setCharset()) ? "UTF-8" : parserInterface.setCharset();
+        int interfaceSource = parserInterface.getSource();
+        sourceEnum = fromIndex(interfaceSource);
     }
     /**
      * 解码方式
@@ -99,8 +102,19 @@ public class BaseModel {
         return String.format(Utils.getString(R.string.parsingErrorContent), networkResponse, title);
     }
 
+    public void register() {
+        if (SharedPreferencesUtils.getByPassCF()) {
+            // 只有开启绕过CF验证才绑定EventBus
+            LogUtil.logInfo(this.getClass().getName(), "EventBus register...");
+            EventBus.getDefault().register(this);
+        }
+    }
+
     public void unregister() {
-        LogUtil.logInfo(this.getClass().getName(), "EventBus unregister...");
-        EventBus.getDefault().unregister(this);
+        if (SharedPreferencesUtils.getByPassCF()) {
+            // 只有开启绕过CF验证才解绑EventBus
+            LogUtil.logInfo(this.getClass().getName(), "EventBus unregister...");
+            EventBus.getDefault().unregister(this);
+        }
     }
 }

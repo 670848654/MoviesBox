@@ -113,7 +113,7 @@
 
         <activity
             android:name=".view.UpnpActivity"
-            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden|uiMode"
             android:excludeFromRecents="true"
             android:resizeableActivity="true"
             android:screenOrientation="sensorLandscape"

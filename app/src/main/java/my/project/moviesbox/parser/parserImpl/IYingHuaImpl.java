@@ -301,10 +301,9 @@ public class IYingHuaImpl implements ParserInterface {
             List<DetailsDataBean.DramasItem> dramasItems = new ArrayList<>();
             int index = 0;
             for (Element drama : dramaElements) {
-                index += 1;
                 String name = drama.select("a").text();
                 String watchUrl = drama.select("a").attr("href");
-                dramasItems.add(new DetailsDataBean.DramasItem(index, name, watchUrl, false));
+                dramasItems.add(new DetailsDataBean.DramasItem(index++, name, watchUrl, false));
             }
             dramas.setDramasItemList(dramasItems);
             dramasList.add(dramas);
@@ -359,10 +358,9 @@ public class IYingHuaImpl implements ParserInterface {
             if (dataElement.size() > 0) {
                 int index = 0;
                 for (Element element : dataElement) {
-                    index += 1;
                     String dramaUrl = element.select("a").attr("href");
                     String dramaTitle = element.select("a").text();
-                    dramasItemList.add(new DetailsDataBean.DramasItem(index, dramaTitle, dramaUrl, dramaStr.contains(dramaUrl)));
+                    dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, dramaStr.contains(dramaUrl)));
                 }
             }
             logInfo("播放列表[播放界面]内容", dramasItemList.toString());

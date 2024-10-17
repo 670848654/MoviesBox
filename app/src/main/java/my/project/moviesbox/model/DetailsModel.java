@@ -14,7 +14,6 @@ import my.project.moviesbox.database.manager.TVideoManager;
 import my.project.moviesbox.enums.FuckCFEnum;
 import my.project.moviesbox.event.HtmlSourceEvent;
 import my.project.moviesbox.net.OkHttpUtils;
-import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
@@ -35,7 +34,6 @@ public class DetailsModel extends BaseModel implements DetailsContract.Model {
     @Override
     public void getData(String url, DetailsContract.LoadDataCallback callback) {
         url = getHttpUrl(url);
-        LogUtil.logInfo("DetailsModel", url);
         finalUrl = url;
         this.callback = callback;
         if (SharedPreferencesUtils.getByPassCF()) {

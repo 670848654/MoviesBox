@@ -78,6 +78,7 @@ import my.project.moviesbox.enums.SettingEnum;
 import my.project.moviesbox.event.CheckUpdateEvent;
 import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.model.DomainListModel;
+import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.DomainDataBean;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.DomainListPresenter;
@@ -99,6 +100,8 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
     private static final int REQUEST_DOCUMENT_TREE = 10000;
     @BindView(R.id.title)
     TextView titleView;
+    @BindView(R.id.saveParserLogs)
+    MaterialSwitch saveParserLogsSwitch;
     private View view;
     private final int source = parserInterface.getSource();
 //    private String defaultPrefix;
@@ -158,6 +161,13 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
                 bean.setSubTitle(Utils.getASVersionName());
             }
         }
+//        saveParserLogsSwitch.setVisibility(View.VISIBLE);
+        saveParserLogsSwitch.setChecked(SharedPreferencesUtils.getSaveParserLogs());
+        saveParserLogsSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SharedPreferencesUtils.setSaveParserLogs(isChecked);
+            application.showToastMsg(isChecked ? "开启保存记录解析日志" : "关闭保存记录解析日志", DialogXTipEnum.SUCCESS);
+            if (isChecked) LogUtil.deleteLogFile();
+        });
     }
 
     private void initAdapter() {

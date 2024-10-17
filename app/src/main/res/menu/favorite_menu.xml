@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/refreshImage"
+        android:title="@string/refreshImageText"
+        android:icon="@drawable/round_image_24"/>
     <item android:id="@+id/remove"
         android:title="@string/removeFavoriteBtnText"
         android:icon="@drawable/round_bookmark_remove_24"/>

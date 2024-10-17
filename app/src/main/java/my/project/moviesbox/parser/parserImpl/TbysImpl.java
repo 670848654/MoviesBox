@@ -790,8 +790,7 @@ public class TbysImpl implements ParserInterface {
             String dramaTitle = a.text();
             String dramaUrl = a.attr("href");
             if (dramaUrl.contains("vod/play")) {
-                index += 1;
-                dramasItemList.add(new DetailsDataBean.DramasItem(index, dramaTitle, dramaUrl, false));
+                dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, false));
             }
         }
     }

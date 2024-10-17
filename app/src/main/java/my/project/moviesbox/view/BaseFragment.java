@@ -72,6 +72,20 @@ public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        if (null != mPresenter)
+            mPresenter.registerEventBus();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (null != mPresenter)
+            mPresenter.unregisterEventBus();
+    }
+
+    @Override
     public void onDestroyView() {
         super.onDestroyView();
         //取消View的关联

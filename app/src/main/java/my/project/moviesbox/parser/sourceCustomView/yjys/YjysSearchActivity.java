@@ -1,5 +1,7 @@
 package my.project.moviesbox.parser.sourceCustomView.yjys;
 
+import android.os.Bundle;
+import android.view.Menu;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
@@ -25,6 +27,17 @@ import my.project.moviesbox.view.SearchActivity;
  */
 public class YjysSearchActivity extends SearchActivity {
     private String cookies = "";
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+        Bundle bundle = getIntent().getExtras();
+        if (!Utils.isNullOrEmpty(bundle)) {
+            title = bundle.getString("title");
+            mSearchView.setQuery(title, true);
+        }
+        return true;
+    }
 
     @Override
     public void error(boolean firstTimeData, String msg) {

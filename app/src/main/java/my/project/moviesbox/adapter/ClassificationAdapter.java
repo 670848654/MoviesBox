@@ -9,11 +9,13 @@ import com.chad.library.adapter.base.BaseMultiItemQuickAdapter;
 import com.chad.library.adapter.base.entity.MultiItemEntity;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.custom.AutoLineFeedLayoutManager;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
+import my.project.moviesbox.utils.Utils;
 
 /**
   * @包名: my.project.moviesbox.adapter
@@ -49,8 +51,8 @@ public class ClassificationAdapter extends BaseMultiItemQuickAdapter<MultiItemEn
                     boolean selected = items.get(position).isSelected();
                     String title = items.get(position).getTitle();
                     String url = items.get(position).getUrl();
-                    StringBuilder titleSb = new StringBuilder();
-                    StringBuilder urlSb = new StringBuilder();
+                    List<String> titleSb = new ArrayList<>();
+                    List<String> urlSb = new ArrayList<>();
                     if (multipleChoices) {
                         // 多选
                         if (position == 0) {
@@ -62,6 +64,8 @@ public class ClassificationAdapter extends BaseMultiItemQuickAdapter<MultiItemEn
                                 }
                             }
                             items.get(0).setSelected(true);
+                            if (!Utils.isNullOrEmpty(url))
+                                urlSb.add(url);
                             adapter.notifyItemChanged(0);
                         } else {
                             // 如果选择的不是“全部”
@@ -79,17 +83,9 @@ public class ClassificationAdapter extends BaseMultiItemQuickAdapter<MultiItemEn
                             // 获取选中的数据
                             for (ClassificationDataBean.Item ci : items) {
                                 if (ci.isSelected()) {
-                                    titleSb.append(ci.getTitle()).append(",");
-                                    urlSb.append(ci.getUrl()).append(",");
+                                    titleSb.add(ci.getTitle());
+                                    urlSb.add(ci.getUrl());
                                 }
-                            }
-
-                            // 删除最后一个逗号
-                            if (titleSb.length() > 0) {
-                                titleSb.deleteCharAt(titleSb.length() - 1);
-                            }
-                            if (urlSb.length() > 0) {
-                                urlSb.deleteCharAt(urlSb.length() - 1);
                             }
                         }
                     } else {
@@ -103,6 +99,8 @@ public class ClassificationAdapter extends BaseMultiItemQuickAdapter<MultiItemEn
                         }
                         if (position == 0) {
                             items.get(0).setSelected(true);
+                            if (!Utils.isNullOrEmpty(url))
+                                urlSb.add(url);
                             adapter.notifyItemChanged(0);
                         } else {
                             items.get(0).setSelected(false); // 取消“全部”的选择
@@ -112,19 +110,20 @@ public class ClassificationAdapter extends BaseMultiItemQuickAdapter<MultiItemEn
                             adapter.notifyItemChanged(position);
                             if (!selected) {
                                 // 更新选中的标题和URL
-                                titleSb.append(title);
-                                urlSb.append(url);
+                                titleSb.add(title);
+                                urlSb.add(url);
                             }
-
                             // 检查是否没有任何项被选中，如果是则选择“全部”
                             if (!checkHasSelected(items)) {
                                 items.get(0).setSelected(true);
+                                if (!Utils.isNullOrEmpty(url))
+                                    urlSb.add(url);
                                 adapter.notifyItemChanged(0);
                             }
                         }
                     }
                     view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-                    onItemClick.onChipClick(classificationDataBean.getIndex(), titleSb.toString(), urlSb.toString());
+                    onItemClick.onChipClick(classificationDataBean.getIndex(), String.join(",", titleSb),  String.join(",", urlSb));
                 });
                 recyclerView.setPadding(0,0,0, 10);
                 recyclerView.setAdapter(classificationItemAdapter);

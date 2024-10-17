@@ -40,13 +40,17 @@ import androidx.cardview.widget.CardView;
 import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.DecodeFormat;
+import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.load.resource.bitmap.BitmapTransitionOptions;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -115,6 +119,7 @@ public class Utils {
     public static final String APP_DOWNLOAD_PATH = APP_DATA_PATH + File.separator + "Downloads";
     public final static String DOWNLOAD_SAVE_PATH = APP_DOWNLOAD_PATH + "/%s/%s/";
     public static final String APP_CRASH_LOGS_PATH = APP_DATA_PATH + File.separator + "CrashLogs";
+    public static final String APP_PARSER_LOGS_PATH = APP_DATA_PATH + File.separator + "ParserLogs";
 
     /**
      * 创建缓存目录
@@ -123,6 +128,7 @@ public class Utils {
         createDataFolder(APP_DATA_PATH);
         createDataFolder(APP_DOWNLOAD_PATH);
         createDataFolder(APP_CRASH_LOGS_PATH);
+        createDataFolder(APP_PARSER_LOGS_PATH);
     }
 
     /**
@@ -329,6 +335,8 @@ public class Utils {
             imageView.setImageDrawable(context.getDrawable(R.drawable.default_bg));
             return;
         }
+        if (!isNullOrEmpty(imageView))
+            clearImageView(imageView);
         RequestOptions options = new RequestOptions()
 //                .override(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL);
                 .encodeQuality(70);
@@ -356,6 +364,8 @@ public class Utils {
             imageView.setImageDrawable(context.getDrawable(R.drawable.default_bg));
             return;
         }
+        if (!isNullOrEmpty(imageView))
+            clearImageView(imageView);
         if (imgUrl.contains("http")) {
             imageView.setImageDrawable(context.getDrawable(R.drawable.loading));
             GlideApp.with(context)
@@ -366,10 +376,27 @@ public class Utils {
                             .encodeQuality(70)
                     )
                     .transition(BitmapTransitionOptions.withCrossFade(500))
+                    .listener(new RequestListener<>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
+                            imageView.setImageDrawable(context.getDrawable(R.drawable.default_bg));
+                            if (!SharedPreferencesUtils.getByPassCF()) // 当开启绕过CF时不更新图片（效率低成功率不高，建议手动刷新）
+                            {
+                                imageView.setImageDrawable(context.getDrawable(R.drawable.loading));
+                                EventBus.getDefault().post(new UpdateImgEvent(imgUrl, descUrl));
+                            }
+                            return true;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(Bitmap resource, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
+                            return false;
+                        }
+                    })
                     .into(new CustomTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                            if (imgUrl == imageView.getTag(R.id.imageid)) {
+                            if (imgUrl.equals(imageView.getTag(R.id.imageid))) {
                                 imageView.setImageBitmap(resource);
                                 if (setPalette && !DarkModeUtils.isDarkMode(context)) {
                                     // 设置Palette
@@ -398,8 +425,7 @@ public class Utils {
 
                         @Override
                         public void onLoadFailed(@Nullable Drawable errorDrawable) {
-                            imageView.setImageDrawable(context.getDrawable(R.drawable.default_bg));
-                            EventBus.getDefault().post(new UpdateImgEvent(imgUrl, descUrl));
+
                         }
                     });
         } else {
@@ -417,6 +443,8 @@ public class Utils {
      * @param imageView
      */
     public static void setImgViewBlurBg(String imgUrl, ImageView imageView) {
+        if (!isNullOrEmpty(imageView))
+            clearImageView(imageView);
         Glide.with(context)
                 .load(imgUrl)
                 .centerCrop()
@@ -430,6 +458,8 @@ public class Utils {
             imageView.setImageDrawable(context.getDrawable(R.drawable.default_bg));
             return;
         }
+        if (!isNullOrEmpty(imageView))
+            clearImageView(imageView);
         if (imgUrl.contains("http")) {
             imageView.setImageDrawable(context.getDrawable(R.drawable.loading));
             GlideApp.with(context)
@@ -441,7 +471,7 @@ public class Utils {
                     .into(new CustomTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                            if (imgUrl == imageView.getTag(R.id.imageid))
+                            if (imgUrl.equals(imageView.getTag(R.id.imageid)))
                                 imageView.setImageBitmap(resource);
                         }
 
@@ -494,6 +524,10 @@ public class Utils {
                         GlideApp.with(context).load(defaultImg).apply(RequestOptions.bitmapTransform(new BlurTransformation(15, 5))).into(imageView);
                     }
                 });
+    }
+
+    private static void clearImageView(ImageView imageView) {
+        GlideApp.with(context).clear(imageView);
     }
 
     /**
@@ -795,7 +829,7 @@ public class Utils {
             fos = new FileOutputStream(file);
             fos.write(processedData);
             fos.flush();
-            LogUtil.logInfo("File written", file.getAbsolutePath());
+            LogUtil.logInfo("写入文件到私有目录", file.getAbsolutePath());
             return file.getAbsolutePath();
         } catch (IOException e) {
             e.printStackTrace();

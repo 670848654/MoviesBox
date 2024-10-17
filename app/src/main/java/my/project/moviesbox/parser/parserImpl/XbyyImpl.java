@@ -19,12 +19,9 @@ import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -34,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.zip.GZIPInputStream;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -55,7 +51,6 @@ import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.HomeFragment;
-import my.project.moviesbox.view.PlayerActivity;
 import okhttp3.FormBody;
 
 /**
@@ -390,10 +385,9 @@ public class XbyyImpl implements ParserInterface {
                 if (playing != null) {
                     int index = 0;
                     for (Element element : playing) {
-                        index += 1;
                         String dramaTitle = element.text();
                         String dramaUrl = element.attr("href");
-                        dramasItemList.add(new DetailsDataBean.DramasItem(index, dramaTitle, dramaUrl, false));
+                        dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, false));
                     }
                 }
             }
@@ -641,10 +635,7 @@ public class XbyyImpl implements ParserInterface {
      */
     @Override
     public String getClassificationUrl(String[] params) {
-        String lx = "";
-        if (!Utils.isNullOrEmpty(params[0])) {
-            lx = params[0].contains("index.php") ? getClassificationContent(params[0], false, "id/") : params[0];
-        }
+        String lx = params[0];
         String fl = Utils.isNullOrEmpty(params[1]) ? "" : params[1];
         String dq = Utils.isNullOrEmpty(params[2]) ? "" : params[2];
         String nf = Utils.isNullOrEmpty(params[3]) ? "" : params[3];
@@ -772,7 +763,7 @@ public class XbyyImpl implements ParserInterface {
         return null;
     }
 
-    private String saveLocalM3U8Path(String url) throws Exception {
+    private String saveLocalM3U8Path(String url) {
         HttpURLConnection connection = null;
         BufferedReader reader = null;
 
@@ -816,33 +807,6 @@ public class XbyyImpl implements ParserInterface {
             if (connection != null) {
                 connection.disconnect();
             }
-        }
-    }
-
-    private static byte[] readBytes(InputStream inputStream) throws IOException {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        byte[] chunk = new byte[16384];
-        int bytesRead;
-        while ((bytesRead = inputStream.read(chunk)) != -1) {
-            buffer.write(chunk, 0, bytesRead);
-        }
-        return buffer.toByteArray();
-    }
-
-    private static byte[] processData(byte[] data) throws IOException {
-        byte[] slicedData = new byte[data.length - 3354];
-        System.arraycopy(data, 3354, slicedData, 0, slicedData.length);
-
-        // 解压缩数据
-        try (GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(slicedData))) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            byte[] buffer = new byte[16384];
-            int len;
-            while ((len = gis.read(buffer)) != -1) {
-                out.write(buffer, 0, len);
-            }
-            String decompressedString = new String(out.toByteArray(), StandardCharsets.UTF_8);
-            return decompressedString.getBytes(StandardCharsets.UTF_8);
         }
     }
 

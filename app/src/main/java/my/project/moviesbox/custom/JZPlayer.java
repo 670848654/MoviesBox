@@ -102,6 +102,8 @@ public class JZPlayer extends JzvdStd {
     public boolean loadError = false;
     private String[] speeds = Utils.getArray(R.array.speed_item);
     private ParserInterface parserInterface = ParserInterfaceFactory.getParserInterface();
+    public int videoWidth, videoHeight;
+    private boolean isPortrait = false; // 是否是竖屏
 
     public JZPlayer(Context context) { super(context); }
 
@@ -858,13 +860,7 @@ public class JZPlayer extends JzvdStd {
                         }
                     } else {
                         //如果y轴滑动距离超过设置的处理范围，那么进行滑动事件处理
-                        float halfLength = mScreenHeight * 0.5f;
-                        if (Jzvd.FULLSCREEN_ORIENTATION == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                                || Jzvd.FULLSCREEN_ORIENTATION == ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT
-                                || Jzvd.FULLSCREEN_ORIENTATION == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
-                                || Jzvd.FULLSCREEN_ORIENTATION == ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT) {
-                            halfLength = mScreenWidth * 0.5f;
-                        }
+                        float halfLength = isPortrait ? mScreenWidth * 0.5f : mScreenHeight * 0.5f;
                         if (mDownX < halfLength) {//左侧改变亮度
                             mChangeBrightness = true;
                             WindowManager.LayoutParams lp = JZUtils.getWindow(getContext()).getAttributes();
@@ -938,18 +934,19 @@ public class JZPlayer extends JzvdStd {
     @Override
     public void onVideoSizeChanged(int width, int height) {
         super.onVideoSizeChanged(width, height);
-        if (height > 0 && height > 0) {
-            if (height > width) {
-                Log.e("PORTRAIT", "SCREEN_ORIENTATION_PORTRAIT");
-                Jzvd.FULLSCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
-                Jzvd.NORMAL_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
-                activityOrientationListener.setOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-            } else {
-                Log.e("LANDSCAPE", "SCREEN_ORIENTATION_SENSOR_LANDSCAPE");
-                Jzvd.FULLSCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
-                Jzvd.NORMAL_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
-                activityOrientationListener.setOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-            }
+        videoWidth = width;
+        videoHeight = height;
+        isPortrait = height > width;
+        if (isPortrait) {
+            Log.e("PORTRAIT", "SCREEN_ORIENTATION_PORTRAIT");
+            Jzvd.FULLSCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            Jzvd.NORMAL_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            activityOrientationListener.setOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        } else {
+            Log.e("LANDSCAPE", "SCREEN_ORIENTATION_SENSOR_LANDSCAPE");
+            Jzvd.FULLSCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+            Jzvd.NORMAL_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+            activityOrientationListener.setOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         }
     }
 }

@@ -16,7 +16,10 @@ import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.FrameLayout;
 
 import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -115,7 +118,7 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
         );
     }
 
-    @OnClick({R.id.search, R.id.change_source})
+    @OnClick({R.id.search, R.id.change_source, R.id.open_web_view})
     public void viewClick(View view) {
         switch (view.getId()) {
             case R.id.search:
@@ -126,6 +129,12 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
                 view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
                 sourceListBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
                 sourceListBottomSheetDialog.show();
+                break;
+            case R.id.open_web_view:
+                if (SharedPreferencesUtils.getByPassCF())
+                    openWebView();
+                else
+                    application.showToastMsg("仅开启尝试绕过浏览器安全检测时可用", DialogXTipEnum.WARNING);
                 break;
         }
     }
@@ -184,6 +193,45 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
         sourceListRecyclerView.setAdapter(sourceListAdapter);
         sourceListBottomSheetDialog = new BottomSheetDialog(getActivity(), R.style.BottomSheetDialogTheme);
         sourceListBottomSheetDialog.setContentView(sourceListView);
+    }
+
+    private void openWebView() {
+        BottomSheetDialog webviewBottomSheetDialog = new BottomSheetDialog(getActivity());
+        FrameLayout view= (FrameLayout) getLayoutInflater().inflate(R.layout.dialog_webview, null);
+        WebView webView= view.findViewById(R.id.webView);
+        Button getCookie = view.findViewById(R.id.getCookie);
+        getCookie.setOnClickListener(v -> {
+            webviewBottomSheetDialog.dismiss();
+            retryListener();
+        });
+        // 配置 WebView
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+            }
+        });
+
+        webviewBottomSheetDialog.setOnDismissListener(dialog -> {
+            // 销毁 WebView
+            webView.stopLoading();
+            webView.destroy();
+        });
+
+        // 加载 URL
+        webView.loadUrl(parserInterface.getDefaultDomain());
+
+        webviewBottomSheetDialog.setContentView(view);
+        // 获取 BottomSheet 并设置为全屏高度
+        FrameLayout bottomSheet = webviewBottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+        if (bottomSheet != null) {
+            BottomSheetBehavior<FrameLayout> behavior = BottomSheetBehavior.from(bottomSheet);
+            bottomSheet.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT; // 强制全屏高度
+            behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            behavior.setSkipCollapsed(true); // 避免回到折叠状态
+        }
+        webviewBottomSheetDialog.show();
     }
 
     @Override

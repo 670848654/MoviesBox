@@ -115,6 +115,7 @@ public class OkHttpUtils {
      * @param callback
      */
     public void doGet(String url, Headers headers, Callback callback) {
+        LogUtil.logInfo("GET请求", url);
         Request request;
         request =new Request.Builder()
                 .url(url)
@@ -132,6 +133,7 @@ public class OkHttpUtils {
      * @throws IOException
      */
     public static String performSyncRequest(String url) throws IOException {
+        LogUtil.logInfo("GET请求", url);
         // 创建请求
         Request request = new Request.Builder()
                 .url(url)
@@ -148,6 +150,7 @@ public class OkHttpUtils {
     }
 
     public static String performSyncRequestAndHeader(String url) throws IOException {
+        LogUtil.logInfo("GET请求", url);
         Headers.Builder builder = new Headers.Builder();
         Map<String,String> headerMap = parserInterface.requestHeaders();
         if (headerMap != null && headerMap.size() > 0) {
@@ -215,6 +218,7 @@ public class OkHttpUtils {
      * @throws IOException
      */
     public static InputStream performSyncRequestIs(String url) throws IOException {
+        LogUtil.logInfo("GET请求", url);
         // 创建请求
         Request request = new Request.Builder()
                 .url(url)
@@ -249,6 +253,7 @@ public class OkHttpUtils {
      * @param callback
      */
     public void doPost(String url, FormBody body, Callback callback) {
+        LogUtil.logInfo("POST请求", url);
         Headers.Builder builder = new Headers.Builder();
         Map<String,String> headerList = parserInterface.requestHeaders();
         if (headerList != null && headerList.size() > 0) {
@@ -276,6 +281,7 @@ public class OkHttpUtils {
      * @param callback
      */
     public void doPostDefault(String url, Headers headers, FormBody body, Callback callback) {
+        LogUtil.logInfo("POST请求", url);
         Request request = new Request.Builder()
                 .url(url)
                 .headers(headers)
@@ -286,6 +292,7 @@ public class OkHttpUtils {
     }
 
     public Response doPostDefault(String url, Headers headers, FormBody body) throws IOException {
+        LogUtil.logInfo("POST请求", url);
         Request request = new Request.Builder()
                 .url(url)
                 .headers(headers)
@@ -304,6 +311,7 @@ public class OkHttpUtils {
      * @throws IOException  请求失败时抛出的异常
      */
     public String post(String url, String json) throws IOException {
+        LogUtil.logInfo("POST请求", url);
         // 创建 RequestBody，指定媒体类型为 JSON
         RequestBody body = RequestBody.create(json, MediaType.get("application/json; charset=utf-8"));
 

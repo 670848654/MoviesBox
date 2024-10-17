@@ -9,6 +9,15 @@
         android:layout_centerVertical="true"
         android:layout_width="36dp"
         android:layout_height="36dp"/>
+    <!--<com.google.android.material.loadingindicator.LoadingIndicator
+        android:id="@+id/progress"
+        app:indicatorColor="@color/pink800"
+        app:containerColor="@color/pink100"
+        app:indicatorSize="18dp"
+        app:containerWidth="28dp"
+        app:containerHeight="28dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"/>-->
 
     <TextView
         android:id="@+id/msg"

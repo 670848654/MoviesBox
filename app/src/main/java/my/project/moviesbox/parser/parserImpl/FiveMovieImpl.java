@@ -403,11 +403,11 @@ public class FiveMovieImpl implements ParserInterface {
                     String playListName = playTitleList.get(i).select("span").text();
                     dramas.setListTitle(playListName);
                     List<DetailsDataBean.DramasItem> dramasItems = new ArrayList<>();
+                    int index = 0;
                     for (Element a : ulList.get(i).select("a.module-play-list-link")) {
-                        int index = 0;
                         String name = a.select("span").text();
                         String watchUrl = a.attr("href");
-                        dramasItems.add(new DetailsDataBean.DramasItem(index, name, watchUrl, false));
+                        dramasItems.add(new DetailsDataBean.DramasItem(index++, name, watchUrl, false));
                     }
                     dramas.setDramasItemList(dramasItems);
                     dramasList.add(dramas);
@@ -498,10 +498,9 @@ public class FiveMovieImpl implements ParserInterface {
                 if (playing != null) {
                     int index = 0;
                     for (Element a : playing) {
-                        index += 1;
                         String dramaTitle = a.select("span").text();
                         String dramaUrl = a.attr("href");
-                        dramasItemList.add(new DetailsDataBean.DramasItem(index, dramaTitle, dramaUrl, false));
+                        dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, false));
                     }
                 }
             }

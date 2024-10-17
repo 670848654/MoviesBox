@@ -315,6 +315,14 @@ public class SharedPreferencesUtils {
         return (int) getParam("byPassCFTimeout", ConfigManager.getInstance().getByPassCFTimeout());
     }
 
+    public static void setSaveParserLogs(boolean enable) {
+        setParam("saveParserLogs", enable);
+    }
+
+    public static boolean getSaveParserLogs() {
+        return (boolean) getParam("saveParserLogs", ConfigManager.getInstance().isSaveParserLogs());
+    }
+
     /********************************************************** 解析源相关结束 **********************************************************/
 
     /********************************************************** 播放器相关开始 **********************************************************/

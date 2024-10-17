@@ -34,6 +34,14 @@ public class Presenter<V, M extends BaseModel> {
     public void detachView() {
         if (null != mViewRef)
             mViewRef.clear();
+    }
+
+    public void registerEventBus() {
+        if (null != model)
+            model.register();
+    }
+
+    public void unregisterEventBus() {
         if (null != model)
             model.unregister();
     }

@@ -111,4 +111,8 @@ public class ConfigManager {
     public int getByPassCFTimeout() {
         return resources.getInteger(R.integer.byPassCFTimeout);
     }
+
+    public boolean isSaveParserLogs() {
+        return resources.getBoolean(R.bool.saveParserLogs);
+    }
 }

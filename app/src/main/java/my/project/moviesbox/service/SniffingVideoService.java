@@ -16,7 +16,6 @@ import android.webkit.WebViewClient;
 
 import org.greenrobot.eventbus.EventBus;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,9 +26,6 @@ import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.DialogItemBean;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 /**
  * @author Li
@@ -116,7 +112,6 @@ public class SniffingVideoService extends Service {
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
             // 获取请求的 URL
             String url = request.getUrl().toString();
-            LogUtil.logInfo("url", url);
             // 获取请求的方法（GET、POST等）
             String method = request.getMethod();
             // 获取请求的头部信息
@@ -137,6 +132,7 @@ public class SniffingVideoService extends Service {
 
                 if (isMp4 || url.contains("m3u8")) {
                     // 如果 URL 是 MP4 或 M3U8 类型
+                    LogUtil.logInfo("嗅探到的视频地址", url);
                     DialogItemBean dialogItemBean = new DialogItemBean(url, isMp4 ? MP4 : M3U8);
                     if (!playUrls.contains(dialogItemBean))
                         playUrls.add(dialogItemBean);
@@ -147,29 +143,6 @@ public class SniffingVideoService extends Service {
             }
             return null;
         }
-    }
-
-    public static boolean isMp4Url(String url) {
-        OkHttpClient client = new OkHttpClient();
-
-        try {
-            Request request = new Request.Builder()
-                    .url(url)
-                    .head() // 发送 HEAD 请求，只获取头部信息
-                    .build();
-
-            Response response = client.newCall(request).execute();
-            String contentType = response.header("Content-Type");
-
-            // 检查 Content-Type 是否为 MP4
-            if (contentType != null && contentType.contains("video/mp4")) {
-                return true;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return false;
     }
 
     public static VideoSniffEvent setVideoSniffEvent(boolean success, String activityEnum, String sniffEnum, List<DialogItemBean> urls) {

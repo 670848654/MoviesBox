@@ -60,5 +60,5 @@ public class THistoryWithFields implements Serializable {
      * 是否已经刷新封面
      */
     @Ignore
-    private boolean refreshCover ;
+    private boolean refreshCover;
 }

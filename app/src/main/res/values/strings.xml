@@ -37,7 +37,7 @@
     <!-- 解析相关文本 -->
     <string name="parseVodPlayUrl">解析视频地址中，请稍后&#8230;</string>
     <string name="sniffVodPlayUrl">常规解析失败，尝试嗅探播放地址&#8230;</string>
-    <string name="parseVodPlayUrlError">无法获取该视频播放地址！\n1、可能是网站自身无播放地址。\n2、可能是网站更改了播放地址相关处理导致代码无法解析，可尝试在设置中开启视频视频嗅探。</string>
+    <string name="parseVodPlayUrlError">无法获取该视频播放地址！\n1、可能是网站自身无播放地址。\n2、可能是网站开启了CloudFlare等反爬虫安全策略，可尝试在设置中开启绕过浏览器安全检测（建议与视频嗅探同时开启）\n3、可能是网站更改了播放地址相关处理导致代码无法解析，可尝试在设置中开启视频嗅探。</string>
     <string name="sniffVodPlayUrlError">在设定的超时时间内没有嗅探到任何疑似视频的资源链接！</string>
     <string name="parsingErrorContent">!*哦豁,解析异常*!\n%s\n%s</string>
     <string name="errorDialogTitle">!*哦豁,出错啦*!</string>
@@ -65,6 +65,8 @@
     <string name="failedToLoad">加载失败</string>
     <string name="noMoreData">无更多数据</string>
     <string name="noMoreContent">没有更多内容</string>
+
+    <string name="refreshImageText">刷新封面</string>
 
     <!-- 收藏相关文本 -->
     <string name="favoriteTabTitle">收藏夹</string>
@@ -238,7 +240,7 @@
     <string name="testModelSubContent">Xiaomi 12S Ultra | XiaomiPad 5 Pro<![CDATA[<br>]]>Android 14 | 13</string>
     <string name="currentVersionTitle">当前版本</string>
     <string name="lastBuildDateTitle">最后构建日期</string>
-    <string name="lastBuildDateSubContent">2024年10月7日22:23:23</string>
+    <string name="lastBuildDateSubContent">2024年10月17日16:23:52</string>
     <string name="cacheDirectoryTitle">存储位置</string>
     <string name="cacheDirectorySubContent">%s<![CDATA[<br>]]>卸载后自行删除此目录</string>
     <string name="authorizationDirectoryTitle">外部存储授权目录</string>

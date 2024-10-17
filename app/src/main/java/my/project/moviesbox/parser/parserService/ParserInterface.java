@@ -23,6 +23,7 @@ import my.project.moviesbox.parser.config.ItemStyleEnum;
 import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
+import my.project.moviesbox.view.BaseActivity;
 import my.project.moviesbox.view.PlayerActivity;
 import my.project.moviesbox.view.SearchActivity;
 import my.project.moviesbox.view.VodListActivity;
@@ -168,7 +169,7 @@ public interface ParserInterface {
      * 是否能搜索
      * @return
      */
-    default Class searchOpenClass() {
+    default Class<? extends BaseActivity> searchOpenClass() {
         return SearchActivity.class;
     }
 
@@ -180,7 +181,7 @@ public interface ParserInterface {
     List<VodDataBean> parserSearchVodList(String source);
 
     /**
-     *  拖布影视的详情TAG地址 [其他影视列表]
+     *  详情TAG点击跳转视频列表 [其他影视列表]
      * @param source 网页源代码
      * @return {@link VodDataBean}
      */
@@ -441,11 +442,11 @@ public interface ParserInterface {
     }
 
     /**
-     * 默认详情页 TAG点击打开activity
-     * 默认打开通用列表视图 需定制则重写
+     * <p>默认详情页 TAG点击打开activity</p>
+     * <p>默认打开通用列表视图 需定制则重写</p>
      * @return
      */
-    default Class detailTagOpenClass() {
+    default Class<? extends BaseActivity> detailTagOpenClass() {
         return VodListActivity.class;
     }
 

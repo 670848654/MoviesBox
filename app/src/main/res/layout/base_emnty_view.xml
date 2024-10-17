@@ -30,6 +30,8 @@
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:gravity="center"
+            android:ellipsize="end"
+            android:maxLines="5"
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
             android:lineSpacingExtra="10dp"

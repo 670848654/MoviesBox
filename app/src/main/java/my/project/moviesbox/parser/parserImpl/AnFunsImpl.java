@@ -391,10 +391,9 @@ public class AnFunsImpl implements ParserInterface {
                     for (Element drama : playAList) {
                         if (drama.select("a").select("i").size() > 0)
                             continue;
-                        index += 1;
                         String name = drama.select("a").text();
                         String watchUrl = drama.select("a").attr("href");
-                        dramasItems.add(new DetailsDataBean.DramasItem(index, name, watchUrl, false));
+                        dramasItems.add(new DetailsDataBean.DramasItem(index++, name, watchUrl, false));
                     }
                     dramas.setDramasItemList(dramasItems);
                     dramasList.add(dramas);
@@ -460,10 +459,9 @@ public class AnFunsImpl implements ParserInterface {
                     for (Element element : playing) {
                         if (element.select("a").select("i").size() > 0)
                             continue;
-                        index += 1;
                         String dramaTitle = element.text();
                         String dramaUrl = element.select("a").attr("href");
-                        dramasItemList.add(new DetailsDataBean.DramasItem(index, dramaTitle, dramaUrl, false));
+                        dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, false));
                     }
                 }
             }
@@ -738,7 +736,7 @@ public class AnFunsImpl implements ParserInterface {
                     logInfo("javaScript", html);
                     String jsonText = html.substring(html.indexOf("{"), html.lastIndexOf("}") + 1);
                     JSONObject jsonObject = JSON.parseObject(jsonText);
-                    String encryptUrl = jsonObject.getString("url");
+                    String encryptUrl = jsonObject.getString("url").replace("\\/", "/");;
                     logInfo("播放地址加密字符串", encryptUrl);
                     switch (jsonObject.getInteger("encrypt")) {
                         case 2:
@@ -761,12 +759,16 @@ public class AnFunsImpl implements ParserInterface {
                             return result;
                         case 3:
                             logInfo("encrypt为3 通过API获取", "");
-                            String api = getDefaultDomain() + "/vapi/AIRA/art.php?url=%s&next=&vid=%s&title=%s&nid=%s&uid=guest&name=guest&group=guest";
+                            String api = getDefaultDomain() + "/vapi/AIRA/art.php?url=%s&next=%s&vid=%s&title=%s&nid=%s&uid=guest&name=guest&group=guest";
                             String url = encryptUrl;
                             String vid = jsonObject.getString("id");
-                            String title = URLEncoder.encode(jsonObject.getJSONObject("vod_data").getString("vod_name"), "UTF-8");
+                            String vod_name = jsonObject.getJSONObject("vod_data").getString("vod_name");
+                            vod_name = unicodeDecode(vod_name);
+                            logInfo("vod_name", vod_name);
+                            String title = URLEncoder.encode(vod_name, "UTF-8");
+                            title = title.replace("+", "%20");
                             int nid = jsonObject.getInteger("nid");
-                            String parseApi = String.format(api, url, vid, title, nid);
+                            String parseApi = String.format(api, url, getDefaultDomain().replace("https:", ""), vid, title, nid);
                             logInfo("parserApi", parseApi);
                             String apiResult = OkHttpUtils.performSyncRequestAndHeader(parseApi);
                             logInfo("apiResult", apiResult);

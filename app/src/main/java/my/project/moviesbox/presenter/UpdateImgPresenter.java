@@ -28,13 +28,13 @@ public class UpdateImgPresenter extends Presenter<UpdateImgContract.View, Update
     }
 
     @Override
-    public void successImg(String oldImgUrl, String imgUrl) {
-        view.successImg(oldImgUrl, imgUrl);
+    public void successImg(String descUrl, String imgUrl) {
+        view.successImg(descUrl, imgUrl);
     }
 
     @Override
-    public void errorImg() {
-        view.errorImg();
+    public void errorImg(String descUrl) {
+        view.errorImg(descUrl);
     }
 
     @Override

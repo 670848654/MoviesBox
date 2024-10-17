@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Rational;
 import android.util.TypedValue;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
@@ -600,6 +601,10 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     protected void onStop() {
         saveProgress();
         super.onStop();
+        if (danmuPresenter != null)
+            danmuPresenter.unregisterEventBus();
+        if (null != videoPresenter)
+            videoPresenter.unregisterEventBus();
     }
 
     public void startPic() {
@@ -612,8 +617,9 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
      */
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void enterPicInPic() {
-        PictureInPictureParams builder = new PictureInPictureParams.Builder().build();
-        enterPictureInPictureMode(builder);
+        PictureInPictureParams.Builder pipBuilder = new PictureInPictureParams.Builder();
+        pipBuilder.setAspectRatio(new Rational(player.videoWidth, player.videoHeight));
+        enterPictureInPictureMode(pipBuilder.build());
     }
 
     @Override
@@ -666,13 +672,6 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     @Override
     public void touch() {
         hideNavBar();
-    }
-
-    @Override
-    public void finish() {
-        if (null != videoPresenter) videoPresenter.detachView();
-        player.releaseAllVideos();
-        super.finish();
     }
 
     @Override
@@ -779,6 +778,15 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (danmuPresenter != null)
+            danmuPresenter.registerEventBus();
+        if (null != videoPresenter)
+            videoPresenter.registerEventBus();
+    }
+
+    @Override
     protected void onDestroy() {
         stopService(new Intent(this, DLNAService.class));
         if (!isLocalVideo()) {
@@ -790,6 +798,8 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         player.danmakuView = null;
         if (danmuPresenter != null)
             danmuPresenter.detachView();
+        if (null != videoPresenter)
+            videoPresenter.detachView();
         App.removeDestroyActivity("player");
         emptyRecyclerView(recyclerView);
         super.onDestroy();

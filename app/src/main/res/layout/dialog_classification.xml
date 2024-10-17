@@ -9,10 +9,10 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-    <com.google.android.material.bottomsheet.BottomSheetDragHandleView
-        android:id="@+id/drag_handle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+            android:id="@+id/drag_handle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_list"
@@ -32,7 +32,50 @@
         android:layout_margin="8dp"
         android:layout_gravity="bottom|right">
 
-        <Button
+        <com.google.android.material.button.MaterialButtonGroup
+            android:id="@+id/buttonGroup"
+            style="@style/Widget.Material3.MaterialButtonGroup.Connected"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <Button
+                style="?attr/materialButtonOutlinedStyle"
+                android:id="@+id/rest"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:icon="@drawable/round_filter_list_24"
+                android:backgroundTint="@color/orange600"
+                app:strokeColor="@color/orange600"
+                app:iconTint="@color/white"
+                android:textColor="@color/white"
+                android:text="@string/resetCondition"
+                />
+            <Button
+                style="?attr/materialButtonOutlinedStyle"
+                android:id="@+id/done"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:icon="@drawable/round_done_all_24"
+                android:backgroundTint="@color/pink200"
+                app:strokeColor="@color/pink200"
+                app:iconTint="@color/white"
+                android:textColor="@color/white"
+                android:text="@string/classificationQuery"
+                />
+            <Button
+                style="?attr/materialButtonOutlinedStyle"
+                android:id="@+id/close"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:icon="@drawable/round_close_24"
+                android:backgroundTint="@color/red600"
+                app:strokeColor="@color/red600"
+                app:iconTint="@color/white"
+                android:textColor="@color/white"
+                android:text="@string/closeBtnText"
+                />
+        </com.google.android.material.button.MaterialButtonGroup>
+
+        <!--<Button
             android:id="@+id/rest"
             style="@style/Button.OutlinedButton.Icon"
             android:layout_marginEnd="4dp"
@@ -65,7 +108,7 @@
             android:textColor="@color/red600"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/closeBtnText"/>
+            android:text="@string/closeBtnText"/>-->
     </LinearLayout>
 
 </FrameLayout>
