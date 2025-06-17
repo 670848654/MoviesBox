@@ -11,11 +11,11 @@
 | --- | --- | --- |
 | 影视 | 拖布影视 | https://www.rainvi.com |
 | 动漫 | 嘶哩嘶哩 | https://www.silisili.link |
-| 动漫 | 樱花动漫 | http://www.iyinghua.io |
-| 动漫 | AnFuns | https://www.anfuns.org |
+| 动漫 | 樱花动漫 | http://www.iyinghua.com |
+| 动漫 | ~~AnFuns（站点关闭）~~ | ~~https://www.anfuns.vip~~ |
 | 影视 | LIBVIO | https://www.libvio.pw |
 | 影视 | 在线之家 | https://www.zxzja.com |
-| 影视 | 555电影 | https://5look.site |
-| 影视 | 缘觉影视 | https://www.yjys02.com |
+| 影视 | ~~555电影（不再支持）~~ | ~~https://5look.site~~ |
+| 影视 | 修罗影视（原哔嘀影视） | https://v.xlys.ltd.ua|
 | 影视 | 小宝影院 | https://xiaoxintv.com |
 | 影视 | 纽约影院 | https://nycvod.com |
