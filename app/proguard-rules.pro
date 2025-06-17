@@ -172,6 +172,35 @@
     @org.simpleframework.xml.* *;
 }
 
+# 保留 Cling 的核心包不被混淆
+-keep class org.fourthline.cling.** { *; }
+-dontwarn org.fourthline.cling.**
+
+# 保留 Cling 使用的反射类（通常包括 JavaBean）
+-keepnames class org.fourthline.cling.** { *; }
+
+# 保留 Cling 中的内部类
+-keepclassmembers class org.fourthline.cling.** {
+    public *;
+}
+
+# 保留与投屏协议相关的字段（XML 或 JSON 序列化可能会用到）
+-keepclassmembers class ** {
+    @org.fourthline.cling.model.meta.** *;
+    @org.fourthline.cling.model.action.** *;
+}
+
+# 保持 com.android.cast 包完整
+-keep class com.android.cast.** { *; }
+-dontwarn com.android.cast.**
+
+# 保留 UpnpActivity 完整性
+-keep class my.project.moviesbox.view.UpnpActivity { *; }
+
+# 避免混淆动态代理类（Cling 可能使用动态代理）
+-keepattributes Signature, EnclosingMethod
+-keep class * extends java.lang.reflect.Proxy { *; }
+
 # Please add these rules to your existing keep rules in order to suppress warnings.
 # This is generated automatically by the Android Gradle plugin.
 -dontwarn com.google.j2objc.annotations.RetainedWith

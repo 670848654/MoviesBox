@@ -240,6 +240,8 @@ public class FiveMovieImpl implements ParserInterface {
             mainDataBeans.add(mainDataBean);
             /*************************** 解析banner内容开始 ***************************/
             Elements bannerList = document.select(".main .content .container-slide .swiper .swiper-wrapper .swiper-slide");
+            if (bannerList.size() == 0)
+                return null;
             List<MainDataBean.Item> bannerItems = new ArrayList<>();
             MainDataBean bannerBean = new MainDataBean();
             bannerBean.setTitle("影视推荐");
@@ -256,12 +258,13 @@ public class FiveMovieImpl implements ParserInterface {
                     // 地址
                     item.setUrl(a.attr("href"));
                     // 图片
-                    String patternString = "url\\(([^\\)]+)\\)";
+                   /* String patternString = "url\\(([^\\)]+)\\)";
                     Pattern pattern = Pattern.compile(patternString);
                     Matcher matcher = pattern.matcher(a.attr("style"));
                     while (matcher.find()) {
                         item.setImg(matcher.group(1));
-                    }
+                    }*/
+                    item.setImg(a.attr("data-bg").replaceAll("&amp;", "&"));
                     bannerItems.add(item);
                 }
             }
@@ -476,7 +479,7 @@ public class FiveMovieImpl implements ParserInterface {
             }*/
             // 通过详情界面获取播放列表
             String descUrl = document.select(".module-player-info .module-info-heading h1 a").attr("href");
-            String responseData = OkHttpUtils.performSyncRequest(getDefaultDomain() + descUrl);
+            String responseData = OkHttpUtils.getInstance().performSyncRequest(getDefaultDomain() + descUrl);
             Document descHtml = Jsoup.parse(responseData);
             // 获取所有播放列表
             Elements playTitleList = descHtml.getElementById("y-playList").select(".module-tab-item");
@@ -813,7 +816,7 @@ public class FiveMovieImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source) {
+    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
         try {
             List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);

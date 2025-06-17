@@ -21,19 +21,18 @@
 
     </LinearLayout>
 
-    <Button
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/getCookie"
-        style="@style/Button.OutlinedButton.Icon"
-        app:icon="@drawable/round_done_24"
-        app:iconTint="@color/light_color_primary"
-        app:strokeColor="@color/normal"
-        android:textColor="@color/light_color_primary"
-        android:backgroundTint="@color/normal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_margin="8dp"
         android:layout_gravity="bottom|right"
-        android:text="已完成校验"/>
+        android:text="已完成校验"
+        app:layout_anchor="@id/mSwipe"
+        android:textColor="@color/white"
+        app:iconTint="@color/white"
+        app:backgroundTint="@color/pink200"
+        app:icon="@drawable/round_done_24"/>
+
 
 </FrameLayout>

@@ -71,7 +71,7 @@ public enum SourceEnum {
             ANIME.bg,
             "资源一般，存在广告",
             "iyinghua",
-            "http://www.iyinghua.io",
+            "http://www.iyinghua.com",
             "",
             "/search/%s/?page=%s",
             true,
@@ -79,13 +79,14 @@ public enum SourceEnum {
             "",
             "",
             new ArrayList<>()),
+    //  网站关闭废弃
     ANFUNS(SourceIndexEnum.ANFUNS,
             "AnFuns",
             ANIME.title,
             ANIME.bg,
             "质量高，无国产动漫",
             "anfuns",
-            "https://www.anfuns.org",
+            "https://www.anfuns.vip",
             "",
             "/search/page/%s/wd/%s.html",
             true,
@@ -121,14 +122,15 @@ public enum SourceEnum {
             "",
             "",
             new ArrayList<>()),
+//    存在Cloudflare无法绕过 废弃
     FIVEMOVIE(SourceIndexEnum.FIVE_MOVIE,
             "555电影",
             MOVIES.title,
             MOVIES.bg,
             "存在广告，资源一般，可能存在Cloudflare、域名可能经常变更（可通过网站发布页查看最新域名）",
             "fiveMovie",
-            "https://5look.site",
-            "https://wu5dy.com",
+            "https://www.555zxdy.com",
+            "https://5wuga.com",
             "/vodsearch/%s----------%s---.html",
             true,
             "/vodshow/%s-%s-%s-%s-%s----%s---%s.html",
@@ -136,13 +138,13 @@ public enum SourceEnum {
             "",
             new ArrayList<>()),
     YJYS(SourceIndexEnum.YJYS,
-            "缘觉影视",
+            "修罗影视", // 原 哔嘀影视->缘觉影视->修罗影视
             MOVIES.title,
             MOVIES.bg,
             "质量高，无广告但更新随缘",
             "yjys",
-            "https://www.yjys02.com",
-            "https://www.bdys.me",
+            "https://v.xlys.ltd.ua",
+            "",
             "/search/%s/%s",
             false,
             "/s/%s/%s?type=%s&area=%s&year=%s&order=%s", // /s/dongzuo/2?type=0&area=美国&year=2024&order=0
@@ -156,7 +158,7 @@ public enum SourceEnum {
             MOVIES.bg,
             "质量不错，貌似无法直接访问需挂代理",
             "xbyy",
-            "https://xiaoxintv.com",
+            "https://xiaoxintv.cc",
             "",
             "/index.php/vod/search/page/%s/wd/%s.html", // 参数1：分页 参数2：搜索内容
             true,
@@ -169,7 +171,7 @@ public enum SourceEnum {
             "纽约影院",
             MOVIES.title,
             MOVIES.bg,
-            "质量不错但存在广告，请勿相信视频中的博彩广告",
+            "质量不错，请勿相信视频中的博彩广告",
             "nyyy",
            "https://nycvod.com",
             "",
@@ -179,7 +181,7 @@ public enum SourceEnum {
             "/index.php/danmu/art/id/%s.xml",
             "",
             new ArrayList<>()
-            )
+            ),
     ;
 
     /**
@@ -377,7 +379,7 @@ public enum SourceEnum {
         // 樱花动漫
         I_YINGHUA(2, NORMAL, ""),
         // AnFuns动漫
-        ANFUNS(3, NORMAL, ""),
+        ANFUNS(3, DEPRECATED, "2025年6月16日访问显示网站已关闭，估计是无了"),
         // LIBVIO
         LIBVIO(4, NORMAL, ""),
         // 在线之家
@@ -385,12 +387,12 @@ public enum SourceEnum {
         // 555电影
         FIVE_MOVIE(6, DEPRECATED, "经常更换域名、出现Cloudflare，失效后将不再维护"),
         // 7/8/9 自用暂不开源
-        // 缘觉影视
+        // 缘觉影视 2024年12月5日14:03:55发现站长回归 更名为修罗影视
         YJYS(10, ABNORMAL, "影视搜索存在服务器验证请手动验证，部分视频调用接口存在二次验证（不支持），尝试支持该站的M3U8协议播放（如果存在MP4的播放地址优先使用，不可播放再尝试M3U8协议的播放地址，不一定能播放成功），测试中可能存在应用崩溃"),
         // 小宝影院
         XBYY(11, ABNORMAL, "仅支持但并未经过详细测试，M3U8协议播放列表尝试过滤广告"),
         // 纽约影院
-        NYYY(12, ABNORMAL, "影视搜索存在服务器验证请手动验证（无数据请刷新重试，这个网站有时返回的就是无数据~）")
+        NYYY(12, ABNORMAL, "影视搜索存在服务器验证请手动验证（无数据请刷新重试，这个网站有时返回的就是无数据~）"),
         ;
         public int index;
         public SourceStateEnum stateEnum;
@@ -439,8 +441,7 @@ public enum SourceEnum {
     @AllArgsConstructor
     public enum SourceTypeEnum {
         MOVIES("影视", R.drawable.source_type_movie),
-        ANIME("动漫", R.drawable.source_type_anime),
-        ;
+        ANIME("动漫", R.drawable.source_type_anime);
         public String title;
         @DrawableRes
         private int bg;

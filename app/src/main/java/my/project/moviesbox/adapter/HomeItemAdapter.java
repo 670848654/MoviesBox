@@ -42,6 +42,7 @@ public class HomeItemAdapter extends BaseQuickAdapter<MainDataBean.Item, BaseVie
     protected void convert(BaseViewHolder helper, MainDataBean.Item item) {
         String imgUrl = item.getImg();
         ImageView imageView = helper.getView(R.id.img);
+        String base64 = item.getBase64Img();
         imageView.setTag(R.id.imageid, imgUrl);
         String episodes = item.getEpisodes();
         if (Utils.isNullOrEmpty(episodes))
@@ -50,7 +51,7 @@ public class HomeItemAdapter extends BaseQuickAdapter<MainDataBean.Item, BaseVie
             helper.getView(R.id.episodes).setVisibility(View.VISIBLE);
             helper.setText(R.id.update_time, item.getEpisodes());
         }
-        Utils.setDefaultImage(item.getImg(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title));
+        Utils.setDefaultImage(Utils.isNullOrEmpty(base64) ? imgUrl : base64, item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), false);
         helper.setText(R.id.title, item.getTitle());
     }
 }

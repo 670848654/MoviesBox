@@ -93,7 +93,7 @@ public class DownloadVideoModel extends BaseModel implements DownloadVideoContra
      */
     private void parserHtml(String html) {
         try {
-            List<DialogItemBean> urls = parserInterface.getPlayUrl(html);
+            List<DialogItemBean> urls = parserInterface.getPlayUrl(html, true);
             if (!Utils.isNullOrEmpty(urls))
                 callback.downloadVodUrlSuccess(urls, playNumber);
             else

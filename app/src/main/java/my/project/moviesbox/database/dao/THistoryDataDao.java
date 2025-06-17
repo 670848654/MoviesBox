@@ -77,4 +77,16 @@ public interface THistoryDataDao {
      */
     @Query("select * from THISTORYDATA where linkId =:historyId order by updateTime DESC LIMIT 1")
     THistoryData querySingleData(String historyId);
+
+    /**
+     * 变更域名时更新相关域名
+     * @param oldDomain 旧域名
+     * @param newDomain 新域名
+     */
+    @Query("UPDATE THistoryData\n" +
+            "SET \n" +
+            "    videoUrl = REPLACE(videoUrl, :oldDomain, :newDomain)\n" +
+            "WHERE \n" +
+            "    videoUrl LIKE :oldDomain || '%'")
+    void updateUrlByChangeDomain(String oldDomain, String newDomain);
 }

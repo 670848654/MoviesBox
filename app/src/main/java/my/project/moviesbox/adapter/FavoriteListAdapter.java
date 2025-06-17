@@ -27,8 +27,13 @@ public class FavoriteListAdapter extends BaseQuickAdapter<TFavoriteWithFields, B
         super(layout, list);
     }
 
+    public boolean isHeader(int position) {
+        return position == 0;
+    }
+
     @Override
     protected void convert(BaseViewHolder helper, TFavoriteWithFields item) {
+//        item.setRefreshCover(false);
         String imgUrl = item.getTFavorite().getVideoImgUrl();
         ImageView imageView = helper.getView(R.id.img);
         ImageView backgroundImageView = helper.getView(R.id.backgroundImageView);
@@ -40,8 +45,8 @@ public class FavoriteListAdapter extends BaseQuickAdapter<TFavoriteWithFields, B
         }
         else
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        imgUrl = item.isRefreshCover() ? "" : imgUrl;
-        Utils.setDefaultImage(imgUrl, item.getTFavorite().getVideoUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title));
+        imgUrl = item.isRefreshCover() ? null : imgUrl;
+        Utils.setDefaultImage(imgUrl, item.getTFavorite().getVideoUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), true);
         helper.setText(R.id.title, item.getVideoTitle());
         String lastPlayNumber = item.getTFavorite().getLastVideoUpdateNumber();
         if (Utils.isNullOrEmpty(lastPlayNumber))

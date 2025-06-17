@@ -43,8 +43,8 @@ public class VodListActivity extends BaseActivity<VodListModel, VodListContract.
     protected RecyclerView mRecyclerView;
     @BindView(R.id.mSwipe)
     SwipeRefreshLayout mSwipe;
-    private VodListAdapter adapter;
-    private final List<MultiItemEntity> multiItemEntities = new ArrayList<>();
+    protected VodListAdapter adapter;
+    protected List<MultiItemEntity> multiItemEntities = new ArrayList<>();
     protected String title, url;
     @BindView(R.id.classFab)
     protected ExtendedFloatingActionButton classFab;
@@ -108,7 +108,7 @@ public class VodListActivity extends BaseActivity<VodListModel, VodListContract.
                         //成功获取更多数据
                         page++;
                         mPresenter.loadPageData(url, page);
-                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, page, pageCount), DialogXTipEnum.SUCCESS);
+                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, (parserInterface.startPageNum() == 0 ? page+1 : page), pageCount), DialogXTipEnum.DEFAULT);
                     } else {
                         //获取更多数据失败
                         page--;
@@ -126,7 +126,7 @@ public class VodListActivity extends BaseActivity<VodListModel, VodListContract.
     }
 
     private void setSubTitle() {
-        toolbar.setSubtitle(String.format(PAGE_AND_ALL_PAGE, page, pageCount));
+        toolbar.setSubtitle(String.format(PAGE_AND_ALL_PAGE, (parserInterface.startPageNum() == 0 ? page+1 : page), pageCount));
     }
 
     public void openVodDetail(String title, String url) {
@@ -165,9 +165,9 @@ public class VodListActivity extends BaseActivity<VodListModel, VodListContract.
         position = mRecyclerView.getLayoutManager() == null ? 0 : ((GridLayoutManager) mRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
         int spanCount;
         if (multiItemEntities.size() > 0 && multiItemEntities.get(0).getItemType() == VodItemStyleEnum.STYLE_16_9.getType()) {
-            spanCount = parserInterface.setVodList16_9ItemSize(Utils.isPad(), isPortrait);
+            spanCount = parserInterface.setVodList16_9ItemSize(Utils.isPad(), isPortrait, false);
         } else {
-            spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait);
+            spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait, false);
         }
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
         mRecyclerView.getLayoutManager().scrollToPosition(position);
@@ -204,10 +204,12 @@ public class VodListActivity extends BaseActivity<VodListModel, VodListContract.
                 new Handler().postDelayed(() -> {
                     adapter.setNewInstance(multiItemEntities);
                     setRecyclerViewView();
+                    lazyLoadImg();
                 }, 500);
             } else {
                 adapter.addData(vodDataBeans);
                 setLoadState(adapter, true);
+                lazyLoadImg();
             }
             setSubTitle();
         });

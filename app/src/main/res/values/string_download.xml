@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 下载列表界面文本 -->
+    <string name="downloadTaskOperationTitle">下载任务操作</string>
+    <string name="downloadTaskOperationContent">你有%d个未完成的下载任务，是否继续下载？</string>
+
+    <string name="savePrivateDirectoryStr"> <![CDATA[<font color="#FF5722">[私有目录]<font>]]></string>
+    <string name="savePublicDirectoryStr"> <![CDATA[<font color="#31BDEC">[公共存储]<font>]]></string>
+
+    <string name="downloadingStr"><![CDATA[<font color="#31BDEC">等待下载<font>]]></string>
+    <string name="downloadSuccessfulStr"><![CDATA[<font color="#5FB878">下载成功<font>]]></string>
+    <string name="downloadFailedStr"><![CDATA[<font color="#FF5722">下载失败<font>]]></string>
+    <string name="transcodingStr"><![CDATA[<font color="#1E9FFF">正在转码<font>]]></string>
+
+    <!-- 下载子列表界面文本 -->
+    <string-array name="downloadItems">
+        <item>继续任务</item>
+        <item>暂停任务</item>
+        <item><![CDATA[<font color="#ff0000">删除任务<font>]]></item>
+    </string-array>
+
+    <string-array name="completeItems">
+        <item>使用内置播放器播放</item>
+        <item>使用外部播放器播放</item>
+        <item><![CDATA[<font color="#ff0000">删除任务<font>]]></item>
+    </string-array>
+
+    <string-array name="completeExportItems">
+        <item>使用内置播放器播放</item>
+        <item>使用外部播放器播放</item>
+        <item>导出到外部存储授权目录</item>
+        <item><![CDATA[<font color="#ff0000">删除任务<font>]]></item>
+    </string-array>
+
+    <string-array name="downloadErrorItems">
+        <item>尝试重新下载</item>
+        <item><![CDATA[<font color="#ff0000">删除任务<font>]]></item>
+    </string-array>
+
+    <string name="taskDoesNotExist">操作出错，任务ID不存在！</string>
+    <string name="taskOperationFailedTitle">任务操作失败</string>
+    <string name="taskOperationFailedContent">任务ID不存在，无法执行下载，请删除该下载任务！</string>
+
+    <!-- 下载相关文本 -->
+    <string name="downloadTabTitle">下载列表</string>
+
+    <string name="deleteSingleDownloadDialogSubContent">请选择执行操作</string>
+    <string name="deleteSingleDownloadDialogPositiveBtnText">仅数据</string>
+    <string name="deleteSingleDownloadDialogNeutralBtnText">和文件一起</string>
+    <string name="taskDeletedMsg">已删除该剧集任务</string>
+
+    <string name="resumeDownloadDialogSubPositiveBtnText">继续下载</string>
+    <string name="resumeDownloadDialogSubNegativeBtnText">忽略</string>
+
+    <string name="downloadVodNotCompleteListContent">其中有 %s 个未完成</string>
+    <string name="downloadVodListContent">共 %s 个内容</string>
+    <string name="downloadFileSize">存储占用约: %s</string>
+
+    <string name="waitState">等待下载</string>
+    <string name="downloadingState">下载中</string>
+    <string name="successState">下载成功</string>
+    <string name="errorState">下载失败</string>
+
+    <string name="downloadErrorMsg">❌下载失败 →%s</string>
+    <string name="downloadDefaultErrorMsg">未知错误，可能下载的资源不存在或文件路劲不可写！</string>
+    <string name="downloadSuccessMsg">下载成功</string>
+    <string name="downloadTsSuccessMsg">下载成功&amp;合并TS完成，开始转换为MP4格式</string>
+    <string name="convertTSToMP4SuccessMsg">🎉🎉🎉 TS转MP4完成</string>
+    <string name="convertTSToMP4ErrorMsg">❌转换出错，错误代码：%s</string>
+</resources>

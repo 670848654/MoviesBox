@@ -143,7 +143,7 @@ public class VideoModel extends BaseModel implements VideoContract.Model {
                 if (decodeData.isEmpty())
                     callback.errorPlayUrl();
                 else {
-                    List<DialogItemBean> urls = parserInterface.getPlayUrl(decodeData);
+                    List<DialogItemBean> urls = parserInterface.getPlayUrl(decodeData, false);
                     if (onlyGetPlayUrl) {
                         if (!Utils.isNullOrEmpty(urls))
                             callback.successOnlyPlayUrl(urls);
@@ -170,7 +170,7 @@ public class VideoModel extends BaseModel implements VideoContract.Model {
                 }
                 break;
             default:
-                List<DialogItemBean> urls = parserInterface.getPlayUrl(html);
+                List<DialogItemBean> urls = parserInterface.getPlayUrl(html, false);
                 if (!onlyGetPlayUrl) {
                     List<DetailsDataBean.DramasItem> dramasItems = parserInterface.parserNowSourcesDramas(html, listSource, dramaStr);
                     if (!Utils.isNullOrEmpty(dramasItems)) {

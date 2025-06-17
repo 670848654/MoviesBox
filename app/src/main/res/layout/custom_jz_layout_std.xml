@@ -156,6 +156,16 @@
                     android:src="@drawable/round_subtitles_24"
                     android:clickable="true" />
 
+                <ImageView
+                    android:id="@+id/flip"
+                    android:layout_toRightOf="@+id/danmu"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="20dp"
+                    android:src="@drawable/round_flip_24"
+                    android:clickable="true" />
+
                 <!--<TextView
                     android:id="@+id/query_danmu"
                     android:layout_toRightOf="@+id/danmu"
@@ -169,7 +179,7 @@
 
                 <TextView
                     android:id="@+id/display"
-                    android:layout_toEndOf="@+id/danmu"
+                    android:layout_toEndOf="@+id/flip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
@@ -478,6 +488,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/video_loading_failed"
+            android:textColor="@android:color/white"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:text="可尝试切换播放器内核，不可播放时可能为资源自身问题或服务器存在验证！"
             android:textColor="@android:color/white"
             android:textSize="14sp" />
 

@@ -3,6 +3,9 @@
     <item android:id="@+id/refreshImage"
         android:title="@string/refreshImageText"
         android:icon="@drawable/round_image_24"/>
+    <item android:id="@+id/moveDirectory"
+        android:title="@string/moveDirectory"
+        android:icon="@drawable/round_drive_file_move_24"/>
     <item android:id="@+id/remove"
         android:title="@string/removeFavoriteBtnText"
         android:icon="@drawable/round_bookmark_remove_24"/>

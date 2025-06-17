@@ -12,8 +12,8 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
+import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -28,7 +28,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 
-import java.io.IOException;
 import java.util.HashMap;
 
 import cn.jzvd.JZDataSource;
@@ -72,12 +71,13 @@ public class JZPlayer extends JzvdStd {
     private OnProgressListener onProgressListener;
     private PlayingListener playingListener;
     private PauseListener pauseListener;
+    private FlipListener flipListener;
     private OnQueryDanmuListener onQueryDanmuListener; // 手动查询弹幕点击监听 删除
     private ActivityOrientationListener activityOrientationListener;
 //    private LoadingIndicator loadingView;
     private ImageView leftBLock, rightBlock;
     private boolean locked = false;
-    public ImageView fastForward, quickRetreat;
+    public ImageView fastForward, quickRetreat, flip;
     public TextView openDrama, preVideo, nextVideo, displayView, tvSpeedView, selectDramaView, changePlayerKernel; // queryDanmuView 手动查询弹幕View 删除
     public Button pipView, airplayView, configView;
     public int currentSpeedIndex = 1;
@@ -88,7 +88,6 @@ public class JZPlayer extends JzvdStd {
     public int displayIndex = 1;
     private boolean longPressing = false;
     private RelativeLayout longPressBgView;
-    private boolean isLongClick = false;
     // 弹幕
     public boolean openDamuConfig; // 是否开启弹幕
     public boolean hasDanmuConfig; // 站点是否支持弹幕
@@ -104,6 +103,9 @@ public class JZPlayer extends JzvdStd {
     private ParserInterface parserInterface = ParserInterfaceFactory.getParserInterface();
     public int videoWidth, videoHeight;
     private boolean isPortrait = false; // 是否是竖屏
+    public TextureView getCustomTextureView() {
+        return textureView;
+    }
 
     public JZPlayer(Context context) { super(context); }
 
@@ -114,7 +116,8 @@ public class JZPlayer extends JzvdStd {
     public void setListener(Activity activity, CompleteListener listener,
                             TouchListener touchListener, ShowOrHideChangeViewListener showOrHideChangeViewListener,
                             OnProgressListener onProgressListener, PlayingListener playingListener, PauseListener pauseListener,
-                            OnQueryDanmuListener onQueryDanmuListener, ActivityOrientationListener activityOrientationListener) {
+                            OnQueryDanmuListener onQueryDanmuListener, ActivityOrientationListener activityOrientationListener,
+                            FlipListener flipListener) {
         this.context = activity;
         this.listener = listener;
         this.touchListener = touchListener;
@@ -124,6 +127,7 @@ public class JZPlayer extends JzvdStd {
         this.showOrHideChangeViewListener = showOrHideChangeViewListener;
         this.onQueryDanmuListener = onQueryDanmuListener;
         this.activityOrientationListener = activityOrientationListener;
+        this.flipListener = flipListener;
     }
 
     @Override
@@ -134,7 +138,7 @@ public class JZPlayer extends JzvdStd {
     @Override
     public void init(Context context) {
         super.init(context);
-        backButton.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+        Utils.setVibration(backButton);
         // 获取自定义添加的控件
 //        loadingView = findViewById(R.id.progress);
         leftBLock = findViewById(R.id.left_lock);
@@ -161,6 +165,8 @@ public class JZPlayer extends JzvdStd {
         pipView = findViewById(R.id.pip);
         danmuView = findViewById(R.id.danmu);
         danmuView.setOnClickListener(this);
+        flip = findViewById(R.id.flip);
+        flip.setOnClickListener(this);
         /*queryDanmuView = findViewById(R.id.query_danmu);
         queryDanmuView.setOnClickListener(this);*/
         // 弹幕相关
@@ -189,9 +195,8 @@ public class JZPlayer extends JzvdStd {
             @Override
             public void onLongClick(View v) {
                 if (loadError || state != STATE_PLAYING) return;
-                isLongClick = true;
                 //震动反馈
-                v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                Utils.setVibration(v);
                 if (mediaInterface != null) {
                     mediaInterface.setSpeed(2.0f);
                     longPressBgView.setVisibility(VISIBLE);
@@ -262,11 +267,11 @@ public class JZPlayer extends JzvdStd {
                 showSpeedDialog();
                 break;
             case R.id.airplay:
-                if (!Utils.isWifi(context)) {
+                if (!Utils.isWifi()) {
                     App.getInstance().showToastMsg(Utils.getString(R.string.castScreenNeedWlan), DialogXTipEnum.ERROR);
                     return;
                 }
-                if (isLocalVideo) {
+                /*if (isLocalVideo) {
                     // 本地投屏
                     if (localVideoDLNAServer != null) localVideoDLNAServer.stop();
                     localVideoDLNAServer = new LocalVideoDLNAServer(8080, localVideoPath);
@@ -275,10 +280,10 @@ public class JZPlayer extends JzvdStd {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                }
+                }*/
                 Bundle bundle = new Bundle();
                 String videoUrl = jzDataSource.getCurrentUrl().toString().replaceAll("\\\\", "");
-                bundle.putString("playUrl", isLocalVideo ? Utils.getLocalIpAddress(context) : videoUrl);
+                bundle.putString("playUrl", isLocalVideo ? localVideoPath : videoUrl);
                 bundle.putLong("duration", getDuration());
                 context.startActivity(new Intent(context, UpnpActivity.class).putExtras(bundle));
                 break;
@@ -301,6 +306,9 @@ public class JZPlayer extends JzvdStd {
                     danmuView.setImageDrawable(context.getDrawable(R.drawable.round_subtitles_24));
                     showDanmmu();
                 }
+                break;
+            case R.id.flip:
+                flipListener.setFlip();
                 break;
             /*case R.id.query_danmu:
                 // 手动查询弹幕
@@ -354,7 +362,7 @@ public class JZPlayer extends JzvdStd {
 
     public void showSpeedDialog() {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context, R.style.DialogStyle);
-        builder.setTitle("倍速设置");
+        builder.setTitle(Utils.getString(R.string.speedSetting));
         builder.setSingleChoiceItems(speeds, currentSpeedIndex, (dialog, which) -> {
             currentSpeedIndex = which;
             mediaInterface.setSpeed(getSpeedFromIndex(currentSpeedIndex));
@@ -495,9 +503,8 @@ public class JZPlayer extends JzvdStd {
     @Override
     public void onClickUiToggle() {
         super.onClickUiToggle();
-        if (isLongClick) {
+        if (longPressing) {
             changeUiToPlayingClear();
-            isLongClick = false;
         }
         if (!locked) {
             if (bottomContainer.getVisibility() == View.VISIBLE) {
@@ -711,6 +718,10 @@ public class JZPlayer extends JzvdStd {
         void setOrientation(int type);
     }
 
+    public interface FlipListener {
+        void setFlip();
+    }
+
     @Override
     public void setUp(JZDataSource jzDataSource, int screen, Class mediaInterfaceClass) {
         super.setUp(jzDataSource, screen, mediaInterfaceClass);
@@ -724,6 +735,19 @@ public class JZPlayer extends JzvdStd {
     @Override
     public void onCompletion() {
         super.onCompletion();
+        post(() -> {
+            bottomContainer.setVisibility(View.INVISIBLE);
+            leftBLock.setVisibility(View.INVISIBLE);
+            rightBlock.setVisibility(INVISIBLE);
+            fastForward.setVisibility(INVISIBLE);
+            quickRetreat.setVisibility(INVISIBLE);
+            pipView.setVisibility(INVISIBLE);
+            configView.setVisibility(INVISIBLE);
+            airplayView.setVisibility(INVISIBLE);
+            preVideo.setVisibility(INVISIBLE);
+            nextVideo.setVisibility(INVISIBLE);
+            bottomProgressBar.setVisibility(View.INVISIBLE);
+        });
         listener.complete();
         if (danmakuView != null) {
             danmakuView.stop();

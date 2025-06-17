@@ -38,12 +38,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.DownloadDataAdapter;
+import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.config.M3U8DownloadConfig;
 import my.project.moviesbox.contract.DownloadContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
@@ -84,7 +86,6 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
     private DownloadDataAdapter adapter;
     private String downloadId;
     private String vodTitle;
-    private int limit = 10;
     private int downloadDataCount = 0;
     private boolean isMain = true;
     protected boolean isErr = true;
@@ -104,7 +105,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
     @Override
     protected void loadData() {
         downloadDataCount = TDownloadDataManager.queryDownloadDataCount(downloadId);
-        mPresenter.loadDownloadDataList(isMain, downloadId, downloadDataBeans.size(), limit);
+        mPresenter.loadDownloadDataList(isMain, downloadId, downloadDataBeans.size(), ConfigManager.getInstance().getDownloadDataQueryLimit());
     }
 
     @Override
@@ -137,7 +138,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
     private void initAdapter() {
         HttpOption httpOption = new HttpOption();
         HashMap<String, String> headerMap = parserInterface.setPlayerHeaders();
-        if (!headerMap.isEmpty())
+        if (!Utils.isNullOrEmpty(headerMap))
             httpOption.addHeaders(headerMap);
         adapter = new DownloadDataAdapter(this, downloadDataBeans);
         setAdapterAnimation(adapter);
@@ -297,15 +298,9 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
                 getString(R.string.deleteSingleDownloadDialogPositiveBtnText),
                 getString(R.string.defaultNegativeBtnText),
                 getString(R.string.deleteSingleDownloadDialogNeutralBtnText),
-                (dialog, which) -> {
-                    deleteData(false, tDownloadDataWithFields, position);
-                },
-                (dialog, which) -> {
-                    dialog.dismiss();
-                },
-                (dialog, which) -> {
-                    deleteData(true, tDownloadDataWithFields, position);
-                }
+                (dialog, which) -> deleteData(false, tDownloadDataWithFields, position),
+                (dialog, which) -> dialog.dismiss(),
+                (dialog, which) -> deleteData(true, tDownloadDataWithFields, position)
         );
     }
 
@@ -396,7 +391,8 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
             // 删除封面
             if (!Utils.isNullOrEmpty(imgPath) && imgPath.contains("cover_")) {
                 File imgFile = new File(imgPath);
-                if (imgFile.exists()) imgFile.delete();
+                if (imgFile.exists())
+                    imgFile.delete();
             }
         }
         removeAdapterByPosition(position);
@@ -415,9 +411,9 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
     private void shouldDeleteDownloadDir() {
         try {
             // 文件夹下没有任何文件才删除主目录
-            if (downloadDirOld.list().length == 0)
+            if (Objects.requireNonNull(downloadDirOld.list()).length == 0)
                 downloadDirOld.delete();
-            if (downloadDirNew.list().length == 0)
+            if (Objects.requireNonNull(downloadDirNew.list()).length == 0)
                 downloadDirNew.delete();
         } catch (Exception e) {}
     }

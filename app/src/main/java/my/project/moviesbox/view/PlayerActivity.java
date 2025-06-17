@@ -111,10 +111,6 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
         return dramaAdapter.getItem(position);
     }
 
-    protected DetailsDataBean.DramasItem getItemByPosition(int position) {
-        return dramaAdapter.getItem(position);
-    }
-
     @Override
     protected void parseVideoUrl(String dramaTitle) {
         videoPresenter.loadData(false, vodTitle, dramaUrl, nowSource, dramaTitle);
@@ -184,7 +180,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
             hideNavBar();
             if (SharedPreferencesUtils.getEnableSniff()) {
                 alertDialog = Utils.getProDialog(this, R.string.sniffVodPlayUrl);
-                VideoUtils.startSniffing(dramaUrl, VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.PLAY);
+                VideoUtils.startSniffing(this, dramaUrl, VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.PLAY);
             } else {
                 Utils.showAlert(this,
                         getString(R.string.errorDialogTitle),
@@ -250,16 +246,16 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
                 // 延迟指定时间后重试
                 new Handler().postDelayed(() -> {
                     if (SharedPreferencesUtils.getEnableSniff())
-                        VideoUtils.startSniffing(dramasItems.get(clickIndex+1).getUrl(), VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.NEXT_PLAY);
+                        VideoUtils.startSniffing(this, dramasItems.get(clickIndex+1).getUrl(), VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.NEXT_PLAY);
                     else
-                        getNextPlayUrl();
-                }, RETRY_DELAY_MILLIS);
-            } else {
-                // 达到最大重试次数，不再执行
-                application.showToastMsg(getString(R.string.getNextEpisodeFailedMoreThan3Times), DialogXTipEnum.ERROR);
-            }
-        });
-    }
+                    getNextPlayUrl();
+            }, RETRY_DELAY_MILLIS);
+        } else {
+            // 达到最大重试次数，不再执行
+            application.showToastMsg(getString(R.string.getNextEpisodeFailedMoreThan3Times), DialogXTipEnum.ERROR);
+        }
+    });
+}
 
     @Override
     public void loadingView() {

@@ -49,6 +49,7 @@ import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
+import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.HomeFragment;
 import my.project.moviesbox.view.PlayerActivity;
@@ -64,6 +65,7 @@ import okhttp3.FormBody;
   * @日期: 2024/1/26 13:37
   * @版本: 1.0
  */
+@Deprecated
 public class AnFunsImpl implements ParserInterface {
     /**
      * 站点使用POST请求的类
@@ -264,66 +266,75 @@ public class AnFunsImpl implements ParserInterface {
             mainDataBeans.add(mainDataBean);
             // 轮播
             Elements bannerElements = document.getElementById("conch-banner").select("ul.swiper-wrapper > li > a");
-            mainDataBean = new MainDataBean();
-            mainDataBean.setDataType(BANNER_LIST.getType());
-            mainDataBean.setVodItemType(STYLE_16_9);
             List<MainDataBean.Item> items = new ArrayList<>();
-            for (Element banner : bannerElements) {
-                MainDataBean.Item item = new MainDataBean.Item();
-                item.setTitle(banner.attr("title"));
-                item.setUrl(banner.attr("href"));
-                item.setImg(banner.attr("data-original"));
-                item.setEpisodes(banner.select("div.hl-br-sub").text());
-                items.add(item);
+            if (!Utils.isNullOrEmpty(bannerElements))
+            {
+                mainDataBean = new MainDataBean();
+                mainDataBean.setDataType(BANNER_LIST.getType());
+                mainDataBean.setVodItemType(STYLE_16_9);
+                for (Element banner : bannerElements) {
+                    MainDataBean.Item item = new MainDataBean.Item();
+                    item.setTitle(banner.attr("title"));
+                    item.setUrl(banner.attr("href"));
+                    item.setImg(banner.attr("data-original"));
+                    item.setEpisodes(banner.select("div.hl-br-sub").text());
+                    items.add(item);
+                }
+                mainDataBean.setItems(items);
+                mainDataBeans.add(mainDataBean);
             }
-            mainDataBean.setItems(items);
-            mainDataBeans.add(mainDataBean);
+
             // 热播推荐
             Element conchContent = document.getElementById("conch-content");
-            Elements listTitle = conchContent.select("div.conch-ctwrap div.container div.hl-row-box div.hl-rb-vod div.hl-rb-head");
-            if (listTitle.size() > 0) {
-                for (int i=0,size=listTitle.size(); i<size; i++) {
-                    if (!listTitle.get(i).parent().hasClass("hl-week-item")) {
-                        String title = listTitle.get(i).select("h2.hl-rb-title").text();
-                        if (title.contains("排行榜"))
-                            continue;
-                        Elements moreA = listTitle.get(i).select("a.hl-rb-more");
-                        mainDataBean = new MainDataBean();
-                        mainDataBean.setTitle(title);
-                        mainDataBean.setDataType(ITEM_LIST.getType());
-                        if (moreA.size() > 0) {
-                            String moreUrl = moreA.attr("href");
-                            mainDataBean.setHasMore(true);
-                            if (moreUrl.contains("/map")) {
-                                mainDataBean.setOpenMoreClass(TextListActivity.class);
-                                mainDataBean.setMore("%s"+moreUrl);
+            if (!Utils.isNullOrEmpty(bannerElements))
+            {
+                Elements listTitle = conchContent.select("div.conch-ctwrap div.container div.hl-row-box div.hl-rb-vod div.hl-rb-head");
+                if (listTitle.size() > 0) {
+                    for (int i=0,size=listTitle.size(); i<size; i++) {
+                        if (!listTitle.get(i).parent().hasClass("hl-week-item")) {
+                            String title = listTitle.get(i).select("h2.hl-rb-title").text();
+                            if (title.contains("排行榜"))
+                                continue;
+                            Elements moreA = listTitle.get(i).select("a.hl-rb-more");
+                            mainDataBean = new MainDataBean();
+                            mainDataBean.setTitle(title);
+                            mainDataBean.setDataType(ITEM_LIST.getType());
+                            if (moreA.size() > 0) {
+                                String moreUrl = moreA.attr("href");
+                                mainDataBean.setHasMore(true);
+                                if (moreUrl.contains("/map")) {
+                                    mainDataBean.setOpenMoreClass(TextListActivity.class);
+                                    mainDataBean.setMore("%s"+moreUrl);
+                                }
+                                else if (moreUrl.contains("/type/")) {
+                                    String regex = "([0-9]+)";
+                                    Pattern pattern = Pattern.compile(regex);
+                                    Matcher matcher = pattern.matcher(moreUrl);
+                                    if (matcher.find())
+                                        mainDataBean.setMore(matcher.group());
+                                }
+                            } else
+                                mainDataBean.setHasMore(false);
+                            Elements aList = listTitle.get(i).parent().select("div.row div.hl-list-wrap ul li a.hl-lazy");
+                            items = new ArrayList<>();
+                            for (Element a : aList) {
+                                MainDataBean.Item homeItemBean = new MainDataBean.Item();
+                                homeItemBean.setTitle(a.attr("title"));
+                                homeItemBean.setUrl(a.attr("href"));
+                                homeItemBean.setImg(a.attr("data-original"));
+                                homeItemBean.setEpisodes(a.select("span.remarks").text());
+                                items.add(homeItemBean);
                             }
-                            else if (moreUrl.contains("/type/")) {
-                                String regex = "([0-9]+)";
-                                Pattern pattern = Pattern.compile(regex);
-                                Matcher matcher = pattern.matcher(moreUrl);
-                                if (matcher.find())
-                                    mainDataBean.setMore(matcher.group());
+                            if (items.size() > 0) {
+                                mainDataBean.setItems(items);
+                                mainDataBeans.add(mainDataBean);
                             }
-                        } else
-                            mainDataBean.setHasMore(false);
-                        Elements aList = listTitle.get(i).parent().select("div.row div.hl-list-wrap ul li a.hl-lazy");
-                        items = new ArrayList<>();
-                        for (Element a : aList) {
-                            MainDataBean.Item homeItemBean = new MainDataBean.Item();
-                            homeItemBean.setTitle(a.attr("title"));
-                            homeItemBean.setUrl(a.attr("href"));
-                            homeItemBean.setImg(a.attr("data-original"));
-                            homeItemBean.setEpisodes(a.select("span.remarks").text());
-                            items.add(homeItemBean);
-                        }
-                        if (items.size() > 0) {
-                            mainDataBean.setItems(items);
-                            mainDataBeans.add(mainDataBean);
                         }
                     }
                 }
             }
+            if (Utils.isNullOrEmpty(mainDataBeans))
+                return null;
             logInfo("首页内容", mainDataBeans.toString());
             return mainDataBeans;
         } catch (Exception e) {
@@ -725,7 +736,7 @@ public class AnFunsImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source) {
+    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
         try {
             List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);
@@ -770,7 +781,7 @@ public class AnFunsImpl implements ParserInterface {
                             int nid = jsonObject.getInteger("nid");
                             String parseApi = String.format(api, url, getDefaultDomain().replace("https:", ""), vid, title, nid);
                             logInfo("parserApi", parseApi);
-                            String apiResult = OkHttpUtils.performSyncRequestAndHeader(parseApi);
+                            String apiResult = OkHttpUtils.getInstance().performSyncRequestAndHeader(parseApi);
                             logInfo("apiResult", apiResult);
                             String regex = "url:\\s*'([^']+)'";
                             Pattern pattern = Pattern.compile(regex);

@@ -18,9 +18,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -38,10 +35,8 @@ import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.parser.bean.DialogItemBean;
-import my.project.moviesbox.parser.bean.DomainDataBean;
 import my.project.moviesbox.parser.bean.MainDataBean;
 import my.project.moviesbox.parser.bean.TextDataBean;
-import my.project.moviesbox.parser.bean.TodayUpdateBean;
 import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.bean.WeekDataBean;
 import my.project.moviesbox.parser.config.ItemStyleEnum;
@@ -49,6 +44,7 @@ import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.utils.VideoUtils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.HomeFragment;
 import okhttp3.FormBody;
@@ -56,7 +52,7 @@ import okhttp3.FormBody;
 /**
  * @author Li
  * @version 1.0
- * @description: 注释
+ * @description: 小宝影院站点解析实现
  * @date 2024/9/30 15:45
  */
 public class XbyyImpl implements ParserInterface {
@@ -558,9 +554,12 @@ public class XbyyImpl implements ParserInterface {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
-            Elements elements = document.select(".myui-vodlist__media li");
-            if (elements.size() > 0) {
-                for (Element li : elements) {
+            Element searchUl = document.getElementById("searchList");
+            if (Utils.isNullOrEmpty(searchUl))
+                return null;
+            Elements lis = searchUl.select("li");
+            if (lis.size() > 0) {
+                for (Element li : lis) {
                     VodDataBean bean = new VodDataBean();
                     bean.setTitle(li.select("h4").text());
                     bean.setUrl(li.select(".thumb a").attr("href"));
@@ -636,6 +635,9 @@ public class XbyyImpl implements ParserInterface {
     @Override
     public String getClassificationUrl(String[] params) {
         String lx = params[0];
+        if (lx.contains("id")) {
+            lx = getClassificationContent(lx, false, "id/");
+        }
         String fl = Utils.isNullOrEmpty(params[1]) ? "" : params[1];
         String dq = Utils.isNullOrEmpty(params[2]) ? "" : params[2];
         String nf = Utils.isNullOrEmpty(params[3]) ? "" : params[3];
@@ -728,7 +730,7 @@ public class XbyyImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source) {
+    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
         try {
             List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);
@@ -742,14 +744,18 @@ public class XbyyImpl implements ParserInterface {
                     String url = jsonObject.getString("url");
                     boolean isM3U8 = url.contains("m3u8");
                     if (isM3U8) {
-                        // 尝试过滤里面的广告
-                        String localPath = saveLocalM3U8Path(url);
-                        if (!Utils.isNullOrEmpty(localPath)) {
-                            removeAd(localPath);
-                            result.add(new DialogItemBean("file:/" + localPath, M3U8));
-                        }
-                        else
+                        if (isDownload)
                             result.add(new DialogItemBean(url, M3U8));
+                        else {
+                            // 尝试过滤里面的广告
+                            String localPath = saveLocalM3U8Path(url);
+                            if (!Utils.isNullOrEmpty(localPath)) {
+                                boolean hasAd = VideoUtils.removeLocalM3U8Ad(localPath);
+                                result.add(new DialogItemBean(hasAd ? "file:/" + localPath : url, M3U8));
+                            }
+                            else
+                                result.add(new DialogItemBean(url, M3U8));
+                        }
                     }
                     else
                         result.add(new DialogItemBean(url, MP4));
@@ -810,42 +816,6 @@ public class XbyyImpl implements ParserInterface {
         }
     }
 
-    private static void removeAd(String filePath) {
-        try {
-            String targetExtinf = "#EXTINF:3.366667,";
-            List<String> lines = new ArrayList<>();
-            BufferedReader reader = new BufferedReader(new FileReader(filePath));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                lines.add(line);
-            }
-            reader.close();
-
-            // 处理文件内容
-            List<String> modifiedLines = new ArrayList<>();
-            for (int i = 0; i < lines.size(); i++) {
-                if (lines.get(i).startsWith(targetExtinf)) {
-                    // 跳过当前EXTINF和它下一行的URL
-                    i++; // 跳过URL
-                } else {
-                    // 保留其他行
-                    modifiedLines.add(lines.get(i));
-                }
-            }
-
-            // 写回文件
-            BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
-            for (String modifiedLine : modifiedLines) {
-                writer.write(modifiedLine);
-                writer.newLine();
-            }
-            writer.close();
-            LogUtil.logInfo("广告分片删除成功！", "");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     /**
      * 通过定义的需要POST请求的类名获取POST固定参数，自行实现
      *
@@ -855,103 +825,6 @@ public class XbyyImpl implements ParserInterface {
     @Override
     public FormBody getPostFormBodyByClassName(String className) {
         return null;
-    }
-
-    /**
-     * 默认视频列表一行显示几个内容 1:1.4使用
-     *
-     * @param isPad      是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    @Override
-    public int setVodListItemSize(boolean isPad, boolean isPortrait) {
-        return ParserInterface.super.setVodListItemSize(isPad, isPortrait);
-    }
-
-    /**
-     * 默认视频列表一行显示几个内容 16:9使用
-     *
-     * @param isPad      是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    @Override
-    public int setVodList16_9ItemSize(boolean isPad, boolean isPortrait) {
-        return ParserInterface.super.setVodList16_9ItemSize(isPad, isPortrait);
-    }
-
-    /**
-     * 默认收藏列表一行显示几个内容
-     *
-     * @param isPad      是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    @Override
-    public int setFavoriteListItemSize(boolean isPad, boolean isPortrait) {
-        return ParserInterface.super.setFavoriteListItemSize(isPad, isPortrait);
-    }
-
-    /**
-     * 默认历史记录列表一行显示几个内容
-     *
-     * @param isPad      是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    @Override
-    public int setHistoryListItemSize(boolean isPad, boolean isPortrait) {
-        return ParserInterface.super.setHistoryListItemSize(isPad, isPortrait);
-    }
-
-    /**
-     * 默认下载列表一行显示几个内容
-     *
-     * @param isPad      是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    @Override
-    public int setDownloadListItemSize(boolean isPad, boolean isPortrait) {
-        return ParserInterface.super.setDownloadListItemSize(isPad, isPortrait);
-    }
-
-    /**
-     * 默认下载子列表一行显示几个内容
-     *
-     * @param isPad      是否为平板
-     * @param isPortrait 是否为竖屏
-     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
-     */
-    @Override
-    public int setDownloadDataListItemSize(boolean isPad, boolean isPortrait) {
-        return ParserInterface.super.setDownloadDataListItemSize(isPad, isPortrait);
-    }
-
-    /**
-     * 默认详情剧集展开列表一行显示几个内容
-     *
-     * @param isPad 是否为平板
-     * @return 返回不能为0！！！
-     */
-    @Override
-    public int setDetailExpandListItemSize(boolean isPad) {
-        return ParserInterface.super.setDetailExpandListItemSize(isPad);
-    }
-
-    /**
-     * 设置时间表数据列表样式
-     *
-     * @return {@link LayoutRes}
-     * @return
-     * @see WeekDataBean#ITEM_TYPE_0
-     * @see WeekDataBean#ITEM_TYPE_1
-     * @see WeekDataBean#ITEM_TYPE_2
-     */
-    @Override
-    public int setWeekItemType() {
-        return ParserInterface.super.setWeekItemType();
     }
 
     /**
@@ -1034,70 +907,6 @@ public class XbyyImpl implements ParserInterface {
     @Override
     public List<TextDataBean> parserTextList(String source) {
         return null;
-    }
-
-    /**
-     * 获取订阅地址
-     *
-     * @return
-     */
-    @Override
-    public String getRssUrl() {
-        return ParserInterface.super.getRssUrl();
-    }
-
-    /**
-     * 通过站点的RSS订阅获取今日更新数据
-     *
-     * @param xml 网页源代码
-     * @return {@link List< TodayUpdateBean >}
-     */
-    @Override
-    public List<TodayUpdateBean> parserRss(String xml) {
-        return ParserInterface.super.parserRss(xml);
-    }
-
-    /**
-     * 收藏夹ITEM是否需要模糊背景
-     *
-     * @return
-     */
-    @Override
-    public boolean favoriteItemBlurBg() {
-        return ParserInterface.super.favoriteItemBlurBg();
-    }
-
-    /**
-     * 收藏夹ITEM样式布局
-     * 默认样式为 1:1.4 需定制则重写
-     *
-     * @return
-     */
-    @Override
-    public int favoriteItemStyleLayout() {
-        return ParserInterface.super.favoriteItemStyleLayout();
-    }
-
-    /**
-     * 默认详情页 TAG点击打开activity
-     * 默认打开通用列表视图 需定制则重写
-     *
-     * @return
-     */
-    @Override
-    public Class detailTagOpenClass() {
-        return ParserInterface.super.detailTagOpenClass();
-    }
-
-    /**
-     * 通过站点发布页获取最新域名
-     *
-     * @param source
-     * @return
-     */
-    @Override
-    public DomainDataBean parserDomain(String source) {
-        return ParserInterface.super.parserDomain(source);
     }
 
     /**

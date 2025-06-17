@@ -77,6 +77,18 @@ public interface THistoryDao {
     List<String> queryAllVideoUrlByVideoId(String videoId);
 
     /**
+     * 变更域名时更新相关域名
+     * @param oldDomain 旧域名
+     * @param newDomain 新域名
+     */
+    @Query("UPDATE THistory\n" +
+            "SET \n" +
+            "    videoDescUrl = REPLACE(videoDescUrl, :oldDomain, :newDomain)\n" +
+            "WHERE \n" +
+            "    videoDescUrl LIKE :oldDomain || '%'")
+    void updateUrlByChangeDomain(String oldDomain, String newDomain);
+
+    /**
      * 获取所有有效历史记录
      * @param limit
      * @param offset

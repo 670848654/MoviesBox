@@ -27,10 +27,10 @@ public class DownloadPresenter extends Presenter<DownloadContract.View, Download
      * @param offset
      * @param limit
      */
-    public void loadDownloadList(boolean isMain, int offset, int limit) {
+    public void loadDownloadList(boolean isMain, String directoryId, int offset, int limit) {
         if (isMain)
             view.loadingView();
-        model.getDownloadList(offset, limit, this);
+        model.getDownloadList(directoryId, offset, limit, this);
     }
 
     /**

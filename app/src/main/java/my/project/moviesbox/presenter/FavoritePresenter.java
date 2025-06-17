@@ -21,10 +21,10 @@ public class FavoritePresenter extends Presenter<FavoriteContract.View, Favorite
         model = new FavoriteModel();
     }
 
-    public void loadData(boolean isMain, int offset, int limit, boolean updateOrder) {
+    public void loadData(boolean isMain, String directoryId, int offset, int limit, boolean updateOrder) {
         if (isMain)
             view.loadingView();
-        model.getData(offset, limit, updateOrder, this);
+        model.getData(directoryId, offset, limit, updateOrder, this);
     }
 
     @Override

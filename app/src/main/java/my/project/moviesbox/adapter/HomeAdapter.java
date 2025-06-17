@@ -4,7 +4,6 @@ import static my.project.moviesbox.parser.config.ItemStyleEnum.STYLE_16_9;
 
 import android.content.Context;
 import android.text.Html;
-import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 
@@ -94,7 +93,7 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                 String newStr = "<font color='#f48fb1'><strong>"+firstChar+"</strong></font>" + title.substring(1);
                 chip.setText(Html.fromHtml(newStr));
                 chip.setOnClickListener(view -> {
-                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                    Utils.setVibration(view);
                     onItemClick.onTagClick(tag);
                 });
                 chipGroup.addView(chip);
@@ -119,7 +118,7 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                 String newStr = "<font color='#f48fb1'><strong>"+firstChar+"</strong></font>" + title.substring(1);
                 chip.setText(Html.fromHtml(newStr));
                 chip.setOnClickListener(view -> {
-                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                    Utils.setVibration(view);
                     if (hasMenu)
                         onItemClick.onDropDownTagClick(dropDownTag.getDropDownMenus(), chip);
                     else
@@ -173,9 +172,9 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                 // 纵向列表
                 int spanCount;
                 if (mainDataBean.getVodItemType() == STYLE_16_9) {
-                    spanCount = ParserInterfaceFactory.getParserInterface().setVodList16_9ItemSize(Utils.isPad(), isPortrait);
+                    spanCount = ParserInterfaceFactory.getParserInterface().setVodList16_9ItemSize(Utils.isPad(), isPortrait, false);
                 } else {
-                    spanCount = ParserInterfaceFactory.getParserInterface().setVodListItemSize(Utils.isPad(), isPortrait);
+                    spanCount = ParserInterfaceFactory.getParserInterface().setVodListItemSize(Utils.isPad(), isPortrait, false);
                 }
                 recyclerView.setLayoutManager(new GridLayoutManager(context, spanCount));
                 switch (mainDataBean.getVodItemType()) {
@@ -190,6 +189,7 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
             homeItemAdapter.setOnItemClickListener((adapter, view, position) ->
                         onItemClick.onVideoClick(items.get(position))
             );
+            mainDataBean.setHomeItemAdapter(homeItemAdapter);
             recyclerView.setPadding(0,0,0, 10);
             recyclerView.setAdapter(homeItemAdapter);
         }

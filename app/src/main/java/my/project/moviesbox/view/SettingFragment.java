@@ -20,10 +20,10 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.util.Patterns;
-import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -34,9 +34,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSONReader;
+import com.alibaba.fastjson.TypeReference;
 import com.arialyy.aria.core.Aria;
 import com.chad.library.adapter.base.animation.AlphaInAnimation;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -54,31 +53,36 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.DomainListAdapter;
 import my.project.moviesbox.adapter.SettingAboutAdapter;
 import my.project.moviesbox.bean.SettingAboutBean;
 import my.project.moviesbox.contract.DomainListContract;
+import my.project.moviesbox.database.entity.TDirectory;
 import my.project.moviesbox.database.entity.TFavorite;
 import my.project.moviesbox.database.entity.THistory;
 import my.project.moviesbox.database.entity.THistoryData;
 import my.project.moviesbox.database.entity.TVideo;
 import my.project.moviesbox.database.manager.BackupsManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
+import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.enums.SettingEnum;
 import my.project.moviesbox.event.CheckUpdateEvent;
 import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.model.DomainListModel;
-import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.DomainDataBean;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.DomainListPresenter;
@@ -100,10 +104,9 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
     private static final int REQUEST_DOCUMENT_TREE = 10000;
     @BindView(R.id.title)
     TextView titleView;
-    @BindView(R.id.saveParserLogs)
-    MaterialSwitch saveParserLogsSwitch;
     private View view;
     private final int source = parserInterface.getSource();
+    private String defaultDomain;
 //    private String defaultPrefix;
     private final String[] themeItems = Utils.getArray(R.array.theme);
     @BindView(R.id.rv_list)
@@ -161,13 +164,17 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
                 bean.setSubTitle(Utils.getASVersionName());
             }
         }
-//        saveParserLogsSwitch.setVisibility(View.VISIBLE);
-        saveParserLogsSwitch.setChecked(SharedPreferencesUtils.getSaveParserLogs());
+        /*saveParserLogsSwitch.setChecked(SharedPreferencesUtils.getSaveParserLogs());
         saveParserLogsSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             SharedPreferencesUtils.setSaveParserLogs(isChecked);
             application.showToastMsg(isChecked ? "开启保存记录解析日志" : "关闭保存记录解析日志", DialogXTipEnum.SUCCESS);
             if (isChecked) LogUtil.deleteLogFile();
-        });
+        });*/
+    }
+
+    @OnClick(R.id.parser_log)
+    public void openParserLogView() {
+        startActivity(new Intent(getActivity(), ParserLogActivity.class));
     }
 
     private void initAdapter() {
@@ -232,7 +239,7 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
      * @返回:
      */
     public void setDomain(int dataPosition) {
-        String defaultDomain = parserInterface.getDefaultDomain();
+        defaultDomain = parserInterface.getDefaultDomain();
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(), R.style.DialogStyle);
         builder.setTitle(Html.fromHtml(getString(R.string.setDomainDialogTitle)));
         View view = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_domain, null);
@@ -308,6 +315,10 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         });
 //        textInputLayout.getEditText().setText(defaultDomain.replaceAll("https?://", ""));
         textInputLayout.getEditText().setText(defaultDomain);
+        textInputLayout.getEditText().setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus)
+                Objects.requireNonNull(alertDialog.getWindow()).clearFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+        });
         builder.setPositiveButton(getString(R.string.setDomainPositiveBtnText), (dialog, which) -> {
             String text = textInputLayout.getEditText().getText().toString();
             if (!Utils.isNullOrEmpty(text)) {
@@ -323,11 +334,26 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
             SharedPreferencesUtils.setUserSetDomain(source, SourceEnum.getDomainUrlBySource(source));
             setDataSubTitle(dataPosition, SourceEnum.getDomainUrlBySource(source));
             EventBus.getDefault().post(REFRESH_INDEX);
+            updateUrlByChangeDomain(defaultDomain, SourceEnum.getDomainUrlBySource(source));
             dialog.dismiss();
         });
         builder.setCancelable(true);
         alertDialog = builder.setView(view).create();
         alertDialog.show();
+    }
+
+    /**
+     * 变更域名时更新相关域名
+     * @param oldDomain
+     * @param newDomain
+     */
+    private void updateUrlByChangeDomain(String oldDomain, String newDomain) {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.submit(() -> {
+            TFavoriteManager.updateUrlByChangeDomain(oldDomain, newDomain);
+            EventBus.getDefault().post(REFRESH_FAVORITE);
+            EventBus.getDefault().post(REFRESH_HISTORY);
+        });
     }
 
     private void setDomain(String url) {
@@ -340,6 +366,7 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         if (!Utils.isNullOrEmpty(domainListBottomSheetDialog))
             domainListBottomSheetDialog.dismiss();
         EventBus.getDefault().post(REFRESH_INDEX);
+        updateUrlByChangeDomain(defaultDomain, url);
         application.showToastMsg(String.format(getString(R.string.setDomainSuccessText), url), DialogXTipEnum.SUCCESS);
     }
 
@@ -366,7 +393,7 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         });
         setByPassCFTimeOutSlider.setEnabled(enable);
         setByPassCFTimeOutSlider.setValue(SharedPreferencesUtils.getByPassCFTimeout());
-        setByPassCFTimeOutSlider.addOnChangeListener((slider, value, fromUser) -> slider.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING));
+        setByPassCFTimeOutSlider.addOnChangeListener((slider, value, fromUser) -> Utils.setVibration(slider));
         setByPassCFTimeOutSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
             @Override
             public void onStartTrackingTouch(@NonNull Slider slider) {
@@ -382,7 +409,6 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         builder.setPositiveButton(getString(R.string.defaultPositiveBtnText), (dialog, which) -> dialog.dismiss());
         builder.setCancelable(true);
         alertDialog = builder.setView(view).create();
-//        alertDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         alertDialog.setOnDismissListener(dialog -> application.showToastMsg(getString(R.string.setSuccess), DialogXTipEnum.SUCCESS));
         alertDialog.show();
     }
@@ -410,7 +436,7 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         });
         setSniffTimeoutSlider.setEnabled(enable);
         setSniffTimeoutSlider.setValue(SharedPreferencesUtils.getSniffTimeout());
-        setSniffTimeoutSlider.addOnChangeListener((slider, value, fromUser) -> slider.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING));
+        setSniffTimeoutSlider.addOnChangeListener((slider, value, fromUser) -> Utils.setVibration(slider));
         setSniffTimeoutSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
             @Override
             public void onStartTrackingTouch(@NonNull Slider slider) {
@@ -426,7 +452,6 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         builder.setPositiveButton(getString(R.string.defaultPositiveBtnText), (dialog, which) -> dialog.dismiss());
         builder.setCancelable(true);
         alertDialog = builder.setView(view).create();
-//        alertDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         alertDialog.setOnDismissListener(dialog -> application.showToastMsg(getString(R.string.setSuccess), DialogXTipEnum.SUCCESS));
         alertDialog.show();
     }
@@ -541,7 +566,7 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         materialSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> SharedPreferencesUtils.setIgnoreTs(isChecked));
         Slider setM3u8QueueNumSlider = view.findViewById(R.id.setM3u8QueueNumSlider);
         setM3u8QueueNumSlider.setValue(SharedPreferencesUtils.getMaxTsQueueNum());
-        setM3u8QueueNumSlider.addOnChangeListener((slider, value, fromUser) -> slider.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING));
+        setM3u8QueueNumSlider.addOnChangeListener((slider, value, fromUser) -> Utils.setVibration(slider));
         setM3u8QueueNumSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
             @Override
             public void onStartTrackingTouch(@NonNull Slider slider) {
@@ -592,7 +617,6 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
      */
     private void backups(int position) {
         if (inProgress) {
-//            application.showToastMsg(getString(R.string.setBackupsInProgress));
             application.showToastMsg(getString(R.string.setBackupsInProgress), DialogXTipEnum.SUCCESS);
             return;
         }
@@ -667,7 +691,6 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
                     readTextFromUri(uri);
                 } else {
                     inProgress = false;
-//                    application.showToastMsg(getString(R.string.setBackupsFileErrorMsg));
                     application.showToastMsg(getString(R.string.setBackupsFileErrorMsg), DialogXTipEnum.ERROR);
                 }
             }
@@ -682,43 +705,53 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
                 ParcelFileDescriptor parcelFileDescriptor =
                         getActivity().getContentResolver().openFileDescriptor(uri, "r");
                 if (parcelFileDescriptor != null) {
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(parcelFileDescriptor.getFileDescriptor())))) {
-                        String line;
-                        StringBuilder stringBuilder = new StringBuilder();
-                        while ((line = reader.readLine()) != null) {
-                            stringBuilder.append(line).append("\n");
-                        }
-                        JSONObject jsonObject = JSON.parseObject(stringBuilder.toString());
-                        List<TVideo> tVideoList = new ArrayList<>();
-                        List<TFavorite> tFavorites = new ArrayList<>();
-                        List<THistory> tHistories = new ArrayList<>();
-                        List<THistoryData> tHistoryData = new ArrayList<>();
-                        for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
-                            String key = entry.getKey();
-                            Object value = entry.getValue();
-                            if (key.equals("white_night_mode_sp")) {
-                                DarkModeUtils.setNightModel(getActivity(), (Integer) value);
-                            } else if (key.equals("videoList")) {
-                                JSONArray array = (JSONArray) value;
-                                tVideoList = JSONObject.parseArray(array.toJSONString(), TVideo.class);
-                            } else if (key.equals("favoriteList")) {
-                                JSONArray array = (JSONArray) value;
-                                tFavorites = JSONObject.parseArray(array.toJSONString(), TFavorite.class);
-                            } else if (key.equals("historyList")) {
-                                JSONArray array = (JSONArray) value;
-                                tHistories = JSONObject.parseArray(array.toJSONString(), THistory.class);
-                            } else if (key.equals("historyDataList")) {
-                                JSONArray array = (JSONArray) value;
-                                tHistoryData = JSONObject.parseArray(array.toJSONString(), THistoryData.class);
-                            } else
-                            {
-                                SharedPreferencesUtils.setParam(key, value);
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                            new FileInputStream(parcelFileDescriptor.getFileDescriptor()), StandardCharsets.UTF_8))) {
+                        JSONReader jsonReader = new JSONReader(reader);
+                        jsonReader.startObject(); // 开始读取 JSON 对象
+
+                        List<TVideo> tVideoList = null;
+                        List<TFavorite> tFavorites = null;
+                        List<THistory> tHistories = null;
+                        List<THistoryData> tHistoryData = null;
+                        List<TDirectory> tDirectories = null;
+
+                        while (jsonReader.hasNext()) {
+                            String key = jsonReader.readString(); // 读取 JSON 的 key
+                            switch (key) {
+                                case "videoList":
+                                    tVideoList = jsonReader.readObject(new TypeReference<List<TVideo>>() {});
+                                    break;
+                                case "favoriteList":
+                                    tFavorites = jsonReader.readObject(new TypeReference<List<TFavorite>>() {});
+                                    break;
+                                case "historyList":
+                                    tHistories = jsonReader.readObject(new TypeReference<List<THistory>>() {});
+                                    break;
+                                case "historyDataList":
+                                    tHistoryData = jsonReader.readObject(new TypeReference<List<THistoryData>>() {});
+                                    break;
+                                case "tDirectories":
+                                    tDirectories = jsonReader.readObject(new TypeReference<List<TDirectory>>() {});
+                                    break;
+                                case "white_night_mode_sp":
+                                    int darkMode = jsonReader.readInteger();
+                                    DarkModeUtils.setNightModel(getActivity(), darkMode);
+                                    break;
+                                default:
+                                    Object value = jsonReader.readObject();
+                                    SharedPreferencesUtils.setParam(key, value);
+                                    break;
                             }
                         }
-                        BackupsManager.restoreBackup(tVideoList, tFavorites, tHistories, tHistoryData);
+                        jsonReader.endObject(); // 结束 JSON 读取
+
+                        // 处理解析后的数据
+                        BackupsManager.restoreBackup(tVideoList, tFavorites, tHistories, tHistoryData, tDirectories);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                     getActivity().runOnUiThread(() -> {
-//                        application.showToastMsg(getString(R.string.setBackupsRestoredMsg));
                         application.showToastMsg(getString(R.string.setBackupsRestoredMsg), DialogXTipEnum.SUCCESS);
                         initData();
                         adapter.notifyDataSetChanged();
@@ -739,7 +772,6 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
                 } else {
                     getActivity().runOnUiThread(() -> {
                         adapter.notifyItemChanged(BACKUPS_POSITION);
-//                        application.showToastMsg(getString(R.string.setBackupsFileErrorMsg));
                         application.showToastMsg(getString(R.string.setBackupsFileErrorMsg), DialogXTipEnum.ERROR);
                     });
                 }
@@ -770,11 +802,9 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
                 getString(R.string.defaultNegativeBtnText),
                 getString(R.string.setRemoveDownloadsNeutralTitle),
                 (dialogInterface, i) -> {
-//                    EventBus.getDefault().post(new RefreshEnum(99));
                     Aria.download(this).removeAllTask(false);
                     TDownloadManager.deleteAllDownloads();
                     EventBus.getDefault().post(REFRESH_DOWNLOAD);
-//                    application.showToastMsg(getString(R.string.setRemoveDownloadsSuccess));
                     application.showToastMsg(getString(R.string.setRemoveDownloadsSuccess), DialogXTipEnum.SUCCESS);
                     dialogInterface.dismiss();
                 },
@@ -832,10 +862,12 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
     public void onEvent(RefreshEnum refresh) {
         switch (refresh) {
             case REFRESH_PLAYER_KERNEL:
-                for (SettingAboutBean bean : list) {
+                for (int index = 0; index < list.size(); index++) {
+                    SettingAboutBean bean = list.get(index);
                     if (bean.getTitle().equals(getString(R.string.setPlayerKernelTitle))) {
                         String[] items = (String[]) bean.getOption();
-                        setDataSubTitle(position, items[SharedPreferencesUtils.getUserSetPlayerKernel()]);
+                        bean.setSubTitle(items[SharedPreferencesUtils.getUserSetPlayerKernel()]);
+                        adapter.notifyItemChanged(index);
                         break;
                     }
                 }

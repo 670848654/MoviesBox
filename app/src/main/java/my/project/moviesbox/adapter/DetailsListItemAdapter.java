@@ -33,7 +33,7 @@ public class DetailsListItemAdapter extends BaseQuickAdapter<DetailsDataBean.Rec
         String imgUrl = item.getImg();
         ImageView imageView = helper.getView(R.id.img);
         imageView.setTag(R.id.imageid, imgUrl);
-        Utils.setDefaultImage(item.getImg(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title));
+        Utils.setDefaultImage(item.getImg(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), false);
         helper.setText(R.id.title, item.getTitle());
     }
 }

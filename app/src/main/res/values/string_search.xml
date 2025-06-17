@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 搜索界面文本 -->
+    <string name="searchPleaseTryAgainLater">正在执行搜索操作，请稍后再试！</string>
+
+</resources>

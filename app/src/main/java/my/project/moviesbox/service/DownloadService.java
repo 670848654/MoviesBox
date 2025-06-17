@@ -129,6 +129,8 @@ public class DownloadService extends Service {
     @Download.onTaskFail
     public void onTaskFail(DownloadTask downloadTask, Exception e) {
         Long taskId = downloadTask.getEntity().getId();
+        if (Utils.isNullOrEmpty(taskId))
+            return;
         String vodEpisodes = downloadTask.getTaskName();
         String savePath = downloadTask.getFilePath();
         String vodTitle = (String) VideoUtils.getVodInfo(downloadTask, 0);

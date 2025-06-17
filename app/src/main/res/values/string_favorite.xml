@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 收藏相关文本 -->
+    <string name="favoriteTabTitle">收藏夹</string>
+    <string name="addFavoriteBtnText">加入收藏</string>
+    <string name="removeFavoriteBtnText">移除收藏</string>
+    <string name="addFavorite">已加入收藏夹</string>
+    <string name="removeFavorite">已从收藏夹移除</string>
+    <string name="checkFavoriteUpdate">检测影视是否有更新</string>
+</resources>

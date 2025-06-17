@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 支持站点相关文本 -->
+    <string name="notSupported">暂不支持</string>
+    <string name="currentLocation">当前所在</string>
+    <string name="change2ThisDataSource">切换至此数据源</string>
+    <string name="siteParserStatus">站点解析状态\n%s</string>
+    <string name="noDescription">无相关描述</string>
+    <string name="secondaryDomainHasBeenSwitched">已切换二级域名</string>
+</resources>

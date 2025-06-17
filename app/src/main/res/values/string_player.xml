@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 播放相关文本 -->
+    <string name="turnOffScreenLock">屏幕锁定关闭</string>
+    <string name="turnOnScreenLock">屏幕锁定开启</string>
+    <string name="castScreenNeedWlan">投屏需要连接WLAN，确保与投屏设备网络环境一致!</string>
+    <string name="selectEpisodes">选集</string>
+    <string name="playingAt2xSpeed">2倍速播放中</string>
+    <string name="doubleSpeed">倍速</string>
+    <string name="doubleSpeedX">倍速×</string>
+    <string name="adaptiveScale">自适应比例</string>
+    <string name="stretchFullScreen">拉伸全屏</string>
+    <string name="cropFullScreen">裁剪全屏</string>
+    <string name="originalSize">原始大小</string>
+
+    <string name="preEpisode">上一集 %s</string>
+    <string name="nextEpisode">下一集 %s</string>
+    <string name="neverWatched">从未观看</string>
+    <string name="watchTo">观看至%s</string>
+    <string name="finishedReading">已看完</string>
+    <string name="playbackError">播放错误</string>
+    <string name="playSource">%s | 播放源%s</string>
+
+    <string name="getPlaylistErrorMsg">获取播放列表时出错</string>
+    <string name="getNextEpisodeFailedMoreThan3Times">获取下一集播放地址失败已超过3次，已终止尝试</string>
+
+    <string name="setUserSpeed">设置快进/快退时长</string>
+    <string-array name="fast_forward_item">
+        <item>5s</item>
+        <item>10s</item>
+        <item>15s</item>
+        <item>30s</item>
+    </string-array>
+    <integer-array name="fast_forward_set_item">
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+        <item>30</item>
+    </integer-array>
+    <string name="playerSettingTitle">播放器设置</string>
+    <string name="hideProgress">播放时隐藏底部进度</string>
+    <string name="playNextVideo">自动播放下一集</string>
+    <string name="playerOtherTitle">其他操作</string>
+    <string name="playWithExternalPlayer">使用外部播放器播放</string>
+    <string name="openExternalBrowser">通过浏览器访问原地址</string>
+    <string name="change_player_kernel">切换播放器内核</string>
+    <string name="selectVideoSource">选择播放源</string>
+    <string name="open_drama_list">打开选集列表</string>
+    <string name="tipsNotWifi">您当前正在使用移动网络，继续播放将消耗流量</string>
+    <string name="tipsNotWifiCancel">停止播放</string>
+    <string name="tipsNotWifiConfirm">继续播放</string>
+    <string name="speedSetting">倍速设置</string>
+    <string-array name="speed_item">
+        <item>0.5x</item>
+        <item>1.0x</item>
+        <item>1.25x</item>
+        <item>1.5x</item>
+        <item>1.75x</item>
+        <item>2.0x</item>
+        <item>2.5x</item>
+        <item>3.0x</item>
+    </string-array>
+
+    <!-- 投屏面文本 -->
+    <string name="upnpDevice">设备列表</string>
+    <string name="upnpVideoUrl">播放地址：%s</string>
+    <string name="upnpNotice">请选择连接设备，连接设备后才可播放</string>
+    <string name="upnpDeviceSelected">已选中: %s</string>
+    <string name="upnpProgress">进度</string>
+    <string name="upnpVolume">音量</string>
+    <string name="upnpPlayBtn">播放</string>
+    <string name="upnpPauseBtn">暂停</string>
+    <string name="upnpStopBtn">停止</string>
+    <string name="upnpExitBtn">退出</string>
+</resources>

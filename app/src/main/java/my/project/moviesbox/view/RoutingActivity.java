@@ -65,6 +65,8 @@ public class RoutingActivity extends AppCompatActivity {
     private void openMain() {
         // Keep the splash screen visible for this Activity.
         splashScreen.setKeepOnScreenCondition(() -> true );
+        // 测试源
+//        SharedPreferencesUtils.setDefaultSource(SourceEnum.SourceIndexEnum.NYYY.index);
         startActivity(new Intent(this, HomeActivity.class));
         finish();
     }

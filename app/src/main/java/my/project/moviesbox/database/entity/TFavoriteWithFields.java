@@ -3,9 +3,12 @@ package my.project.moviesbox.database.entity;
 import androidx.room.Embedded;
 import androidx.room.Ignore;
 
+import com.chad.library.adapter.base.entity.MultiItemEntity;
+
 import java.io.Serializable;
 
 import lombok.Data;
+import my.project.moviesbox.parser.config.VodItemStyleEnum;
 
 /**
   * @包名: my.project.moviesbox.database.entity
@@ -16,7 +19,7 @@ import lombok.Data;
   * @版本: 1.0
  */
 @Data
-public class TFavoriteWithFields implements Serializable {
+public class TFavoriteWithFields implements MultiItemEntity, Serializable {
     @Embedded
     private TFavorite tFavorite;
     /**
@@ -37,4 +40,15 @@ public class TFavoriteWithFields implements Serializable {
      */
     @Ignore
     private boolean refreshCover;
+    /**
+     * @see VodItemStyleEnum
+     * 默认为竖屏样式
+     */
+    @Ignore
+    private int vodItemStyleType = VodItemStyleEnum.STYLE_1_1_DOT_4.getType();
+
+    @Override
+    public int getItemType() {
+        return vodItemStyleType;
+    }
 }

@@ -1,5 +1,6 @@
 package my.project.moviesbox.utils;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.ActivityNotFoundException;
@@ -21,6 +22,7 @@ import android.text.Html;
 import android.text.Spanned;
 import android.util.DisplayMetrics;
 import android.view.Display;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
@@ -36,7 +38,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.browser.customtabs.CustomTabsIntent;
-import androidx.cardview.widget.CardView;
 import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
@@ -52,6 +53,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.greenrobot.eventbus.EventBus;
@@ -332,7 +334,7 @@ public class Utils {
      */
     public static void setDefaultImage(String imgUrl, ImageView imageView) {
         if (isNullOrEmpty(imgUrl)) {
-            imageView.setImageDrawable(context.getDrawable(R.drawable.default_bg));
+            imageView.setImageDrawable(context.getDrawable(R.drawable.loading_failed));
             return;
         }
         if (!isNullOrEmpty(imageView))
@@ -345,7 +347,7 @@ public class Utils {
 //                .override(500)
                 .apply(options)
                 .placeholder(context.getDrawable(R.drawable.loading))
-                .error(context.getDrawable(R.drawable.default_bg))
+                .error(context.getDrawable(R.drawable.loading_failed))
                 .transition(DrawableTransitionOptions.withCrossFade(500))
                 .into(imageView);
     }
@@ -359,9 +361,9 @@ public class Utils {
      * @param cardView
      * @param textView
      */
-    public static void setDefaultImage(String imgUrl, String descUrl, ImageView imageView, boolean setPalette, CardView cardView, TextView textView) {
+    public static void setDefaultImage(String imgUrl, String descUrl, ImageView imageView, boolean setPalette, MaterialCardView cardView, TextView textView, boolean isFavorite) {
         if (isNullOrEmpty(imgUrl)) {
-            imageView.setImageDrawable(context.getDrawable(R.drawable.default_bg));
+            imageView.setImageDrawable(context.getDrawable(R.drawable.loading_failed));
             return;
         }
         if (!isNullOrEmpty(imageView))
@@ -379,8 +381,8 @@ public class Utils {
                     .listener(new RequestListener<>() {
                         @Override
                         public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
-                            imageView.setImageDrawable(context.getDrawable(R.drawable.default_bg));
-                            if (!SharedPreferencesUtils.getByPassCF()) // 当开启绕过CF时不更新图片（效率低成功率不高，建议手动刷新）
+                            imageView.setImageDrawable(context.getDrawable(R.drawable.loading_failed));
+                            if (!SharedPreferencesUtils.getByPassCF() && isFavorite) // 当开启绕过CF时不更新图片（效率低成功率不高，建议手动刷新）
                             {
                                 imageView.setImageDrawable(context.getDrawable(R.drawable.loading));
                                 EventBus.getDefault().post(new UpdateImgEvent(imgUrl, descUrl));
@@ -401,16 +403,28 @@ public class Utils {
                                 if (setPalette && !DarkModeUtils.isDarkMode(context)) {
                                     // 设置Palette
                                     Palette.from(resource).generate(palette -> {
-                                        Palette.Swatch swatch = palette.getDarkVibrantSwatch();
-                                        /*if (swatch != null) {
-                                            cardView.setCardBackgroundColor(swatch.getRgb());
-                                            textView.setTextColor(swatch.getBodyTextColor());
-                                        }*/
+                                        Palette.Swatch swatch = palette.getDominantSwatch();
                                         if (swatch != null) {
-                                            // 使用 Material3 中的 CardView
-                                            cardView.setCardBackgroundColor(ColorStateList.valueOf(swatch.getRgb()));
-                                            // 使用 Material3 中的 TextView
-                                            textView.setTextColor(swatch.getBodyTextColor());
+                                            int startColor = cardView.getCardBackgroundColor().getDefaultColor();
+                                            int endColor = swatch.getRgb();
+                                            ValueAnimator colorAnimator = ValueAnimator.ofArgb(startColor, endColor);
+                                            colorAnimator.setDuration(500);
+                                            colorAnimator.addUpdateListener(animator -> {
+                                                int animatedColor = (int) animator.getAnimatedValue();
+                                                cardView.setCardBackgroundColor(ColorStateList.valueOf(animatedColor));
+                                                cardView.setStrokeColor(ColorStateList.valueOf(animatedColor));
+                                            });
+                                            colorAnimator.start();
+
+                                            int startTextColor = textView.getCurrentTextColor();
+                                            int endTextColor = swatch.getTitleTextColor();
+                                            ValueAnimator textColorAnimator = ValueAnimator.ofArgb(startTextColor, endTextColor);
+                                            textColorAnimator.setDuration(500);
+                                            textColorAnimator.addUpdateListener(animator -> {
+                                                int animatedTextColor = (int) animator.getAnimatedValue();
+                                                textView.setTextColor(animatedTextColor);
+                                            });
+                                            textColorAnimator.start();
                                         }
                                     });
                                 }
@@ -428,6 +442,11 @@ public class Utils {
 
                         }
                     });
+        } else if (imgUrl.contains("base64")) {
+            Glide.with(context)
+                    .load(imgUrl)
+                    .transition(DrawableTransitionOptions.withCrossFade(500))
+                    .into(imageView);
         } else {
             File file = new File(imgUrl);
             Glide.with(context)
@@ -455,7 +474,7 @@ public class Utils {
 
     public static void setImgViewBg(String imgUrl, String descUrl, ImageView imageView) {
         if (isNullOrEmpty(imgUrl)) {
-            imageView.setImageDrawable(context.getDrawable(R.drawable.default_bg));
+            imageView.setImageDrawable(context.getDrawable(R.drawable.loading_failed));
             return;
         }
         if (!isNullOrEmpty(imageView))
@@ -680,7 +699,7 @@ public class Utils {
      * @param context
      * @return
      */
-    public static boolean isWifi(Context context) {
+    public static boolean isWifi() {
         ConnectivityManager connectivityManager =(ConnectivityManager) context
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo =connectivityManager.getActiveNetworkInfo();
@@ -696,7 +715,7 @@ public class Utils {
      * @param context
      * @return
      */
-    public static String getLocalIpAddress(Context context) {
+    public static String getLocalIpAddress() {
         try {
             WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
             WifiInfo wifiInfo = wifiManager.getConnectionInfo();
@@ -780,7 +799,7 @@ public class Utils {
      * @param context
      * @return
      */
-    public static boolean isWifiConnected(Context context) {
+    public static boolean isWifiConnected() {
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivityManager != null) {
             NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
@@ -857,5 +876,10 @@ public class Utils {
                 }
             }
         }
+    }
+
+    public static void setVibration(View view) {
+        if (!isNullOrEmpty(view))
+            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
     }
 }

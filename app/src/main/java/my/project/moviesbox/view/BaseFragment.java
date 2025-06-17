@@ -2,6 +2,8 @@ package my.project.moviesbox.view;
 
 import android.annotation.SuppressLint;
 import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -9,8 +11,10 @@ import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -19,17 +23,25 @@ import androidx.annotation.MenuRes;
 import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.util.List;
+
 import butterknife.Unbinder;
 import my.project.moviesbox.R;
+import my.project.moviesbox.adapter.DirectoryAdapter;
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.database.entity.TDirectory;
 import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.model.BaseModel;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.presenter.Presenter;
+import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.lazyLoadImage.LazyLoadImgListener;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -40,6 +52,9 @@ import my.project.moviesbox.presenter.Presenter;
   * @版本: 1.0
  */
 public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V, M>> extends Fragment {
+    protected static final int DIRECTORY_REQUEST_CODE = 0x10010;
+    protected static final int DIRECTORY_CONFIG_RESULT_CODE = 0x10011;
+    protected DirectoryPopupWindowAdapterClickListener directoryPopupWindowAdapterClickListener;
     protected P mPresenter;
     protected App application;
     protected Unbinder mUnBinder;
@@ -55,6 +70,13 @@ public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V
     protected TextView errorMsgView; // 错误视图文本
     private LinearLayout emptyView; // 空布局
     private TextView emptyMsg; // 空布局视图文本
+    protected PopupWindow popupWindow;
+
+    protected LazyLoadImgListener lazyLoadImgListener;
+
+    protected void setLazyLoadImgListener(LazyLoadImgListener lazyLoadImgListener) {
+        this.lazyLoadImgListener = lazyLoadImgListener;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -72,8 +94,8 @@ public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
+    public void onResume() {
+        super.onResume();
         if (null != mPresenter)
             mPresenter.registerEventBus();
     }
@@ -170,15 +192,25 @@ public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V
     protected void setMenu(View view, @MenuRes int menuRes, int menuId, PopupMenu.OnMenuItemClickListener listener) {
         final PopupMenu popupMenu = new PopupMenu(getActivity(), view);
         popupMenu.getMenuInflater().inflate(menuRes, popupMenu.getMenu());
-        SpannableString ss = new SpannableString(popupMenu.getMenu().findItem(menuId).getTitle());
-        ForegroundColorSpan foregroundColorSpan = new ForegroundColorSpan(getActivity().getColor(R.color.delete_color));
-        ss.setSpan(foregroundColorSpan, 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        popupMenu.getMenu().findItem(menuId).setTitle(ss);
+        if (menuId != -1) {
+            SpannableString ss = new SpannableString(popupMenu.getMenu().findItem(menuId).getTitle());
+            ForegroundColorSpan foregroundColorSpan = new ForegroundColorSpan(getActivity().getColor(R.color.delete_color));
+            ss.setSpan(foregroundColorSpan, 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            popupMenu.getMenu().findItem(menuId).setTitle(ss);
+        }
         MenuBuilder menuBuilder = (MenuBuilder) popupMenu.getMenu();
         menuBuilder.setOptionalIconsVisible(true);
         popupMenu.setOnMenuItemClickListener(listener);
         popupMenu.show();
         registerForContextMenu(view);
+    }
+
+    /**
+     * 图片懒加载
+     */
+    protected void lazyLoadImg() {
+        if (!Utils.isNullOrEmpty(lazyLoadImgListener))
+            lazyLoadImgListener.loadImg();
     }
 
     protected abstract void setConfigurationChanged();
@@ -196,4 +228,48 @@ public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V
     protected abstract void retryListener();
 
     public abstract void onEvent(RefreshEnum refresh);
+
+    /**
+     * 目录清单列表适配器点击接口
+     */
+    public interface DirectoryPopupWindowAdapterClickListener {
+        void onItemClickListener(TDirectory tDirectory);
+    }
+
+    public void setDirectoryPopupWindowAdapterClickListener(DirectoryPopupWindowAdapterClickListener listener) {
+        this.directoryPopupWindowAdapterClickListener = listener;
+    }
+
+    /**
+     * 显示目录清单PopupWindow
+     * @param tDirectories
+     * @param showAsView
+     */
+    protected void showDirectoryPopupWindow(List<TDirectory> tDirectories, View showAsView) {
+        View popupView = LayoutInflater.from(getActivity()).inflate(R.layout.popup_directory_selection, null);
+        RecyclerView recyclerView = popupView.findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        DirectoryAdapter directoryAdapter = new DirectoryAdapter(false, tDirectories);
+        recyclerView.setAdapter(directoryAdapter);
+        popupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        // 设置 PopupWindow 背景变暗
+        WindowManager.LayoutParams layoutParams = getActivity().getWindow().getAttributes();
+        layoutParams.alpha = 0.5f; // 设置透明度，值越小背景越暗
+        getActivity().getWindow().setAttributes(layoutParams);
+        // 当 PopupWindow 消失时恢复背景亮度
+        popupWindow.setOnDismissListener(() -> {
+            WindowManager.LayoutParams lp = getActivity().getWindow().getAttributes();
+            lp.alpha = 1.0f; // 恢复透明度
+            getActivity().getWindow().setAttributes(lp);
+        });
+        popupWindow.setFocusable(true);
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setAnimationStyle(R.style.PopupTopAnim);
+        // 显示 PopupWindow
+        popupWindow.showAsDropDown(showAsView);
+        directoryAdapter.setOnItemClickListener((adapter, view, position) -> {
+            directoryPopupWindowAdapterClickListener.onItemClickListener(tDirectories.get(position));
+        });
+    }
 }

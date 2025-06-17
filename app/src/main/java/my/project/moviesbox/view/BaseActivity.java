@@ -5,8 +5,8 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.HapticFeedbackConstants;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -19,6 +19,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.WindowCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
@@ -27,6 +28,7 @@ import com.chad.library.adapter.base.animation.ScaleInAnimation;
 import com.chad.library.adapter.base.animation.SlideInBottomAnimation;
 import com.chad.library.adapter.base.animation.SlideInLeftAnimation;
 import com.chad.library.adapter.base.animation.SlideInRightAnimation;
+import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
 import java.util.Locale;
 
@@ -35,7 +37,7 @@ import butterknife.Unbinder;
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.config.ConfigManager;
-import my.project.moviesbox.enums.AdapterAnimationType;
+import my.project.moviesbox.enums.AdapterAnimationTypeEnum;
 import my.project.moviesbox.model.BaseModel;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
@@ -43,6 +45,7 @@ import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.DarkModeUtils;
 import my.project.moviesbox.utils.StatusBarUtil;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.lazyLoadImage.LazyLoadImgListener;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -53,6 +56,8 @@ import my.project.moviesbox.utils.Utils;
   * @版本: 1.0
  */
 public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V, M>> extends AppCompatActivity {
+    protected static final int DIRECTORY_REQUEST_CODE = 0x10010;
+    protected static final int DIRECTORY_CONFIG_RESULT_CODE = 0x10011;
     protected P mPresenter;
     protected App application;
     private Unbinder mUnBinder;
@@ -72,13 +77,19 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
     protected TextView errorMsgView; // 错误视图文本
     private LinearLayout emptyView; // 空布局
     private TextView emptyMsg; // 空布局视图文本
-    protected int page = parserInterface.startPageNum(); // 开始页码
-    protected int pageCount = parserInterface.startPageNum();
+    protected int page =  parserInterface.startPageNum(); // 开始页码
+    protected int pageCount = parserInterface.startPageNum(); // 结束页码
     protected boolean isErr = true;
     /**
      * 弹出窗
      */
     protected AlertDialog alertDialog;
+
+    protected LazyLoadImgListener lazyLoadImgListener;
+
+    protected void setLazyLoadImgListener(LazyLoadImgListener lazyLoadImgListener) {
+        this.lazyLoadImgListener = lazyLoadImgListener;
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -94,27 +105,27 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
                         WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                         WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                 );*/
-            getWindow().setNavigationBarColor(Color.TRANSPARENT);
+            Window window = getWindow();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                getWindow().setNavigationBarDividerColor(Color.TRANSPARENT);
+                window.setNavigationBarDividerColor(Color.TRANSPARENT);
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                getWindow().setNavigationBarContrastEnforced(false);
-                getWindow().setStatusBarContrastEnforced(false);
+                window.setNavigationBarContrastEnforced(false);
+                window.setStatusBarContrastEnforced(false);
             } else {
-                getWindow().getDecorView().setSystemUiVisibility(
+                window.getDecorView().setSystemUiVisibility(
                         View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
-                getWindow().setFlags(
+                window.setFlags(
                         WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
                         WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION
                 );
-                getWindow().setNavigationBarColor(Color.TRANSPARENT);
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                getWindow().setDecorFitsSystemWindows(false);
+                WindowCompat.setDecorFitsSystemWindows(window, false);
             }
+            window.setNavigationBarColor(Color.TRANSPARENT);
         }
         mUnBinder = ButterKnife.bind(this);
         if (application == null)
@@ -144,7 +155,7 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         toolbar.setNavigationOnClickListener(view -> {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            Utils.setVibration(view);
             finish();
         });
     }
@@ -181,14 +192,14 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
      * 设置rvlist动画
      * @param adapter
      */
-    protected void setAdapterAnimation(BaseQuickAdapter adapter) {
+    protected <T, VH extends BaseViewHolder> void setAdapterAnimation(BaseQuickAdapter<T, VH> adapter) {
         ConfigManager configManager = ConfigManager.getInstance();
         boolean enableAnimation = configManager.isAnimationEnable();
         if (enableAnimation) {
             adapter.setAnimationEnable(true);
             adapter.setAnimationFirstOnly(configManager.isAnimationFirstOnly());
             String animationDefaultStr = configManager.getAnimationDefault();
-            AdapterAnimationType animationDefault = AdapterAnimationType.valueOf(animationDefaultStr.toUpperCase(Locale.US));
+            AdapterAnimationTypeEnum animationDefault = AdapterAnimationTypeEnum.valueOf(animationDefaultStr.toUpperCase(Locale.US));
             switch (animationDefault) {
                 case ALPHA_IN:
                     adapter.setAdapterAnimation(new AlphaInAnimation());
@@ -209,7 +220,7 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
         }
     }
 
-    protected void setLoadState(BaseQuickAdapter adapter, boolean loadState) {
+    protected <T, VH extends BaseViewHolder> void setLoadState(BaseQuickAdapter<T, VH> adapter, boolean loadState) {
         isErr = loadState;
         adapter.getLoadMoreModule().loadMoreComplete();
     }
@@ -340,6 +351,14 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
 
     protected boolean gtSdk33() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU;
+    }
+
+    /**
+     * 图片懒加载
+     */
+    protected void lazyLoadImg() {
+        if (!Utils.isNullOrEmpty(lazyLoadImgListener))
+            lazyLoadImgListener.loadImg();
     }
 
     private String getRunningActivityName() {

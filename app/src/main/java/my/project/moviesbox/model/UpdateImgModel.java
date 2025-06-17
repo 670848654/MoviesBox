@@ -42,7 +42,7 @@ public class UpdateImgModel extends BaseModel implements UpdateImgContract.Model
             OkHttpUtils.getInstance().doGet(url, new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    callback.error(e.getMessage());
+                    callback.errorImg(url);
                 }
 
                 @Override
@@ -52,7 +52,7 @@ public class UpdateImgModel extends BaseModel implements UpdateImgContract.Model
                         parserData(source);
                     } catch (Exception e) {
                         e.printStackTrace();
-                        callback.error(e.getMessage());
+                        callback.errorImg(url);
                     }
                 }
             });

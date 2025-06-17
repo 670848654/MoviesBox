@@ -14,7 +14,7 @@ import my.project.moviesbox.database.entity.TFavoriteWithFields;
  */
 public interface FavoriteContract {
     interface Model {
-        void getData(int offset, int limit, boolean updateOrder, LoadDataCallback callback);
+        void getData(String directoryId, int offset, int limit, boolean updateOrder, LoadDataCallback callback);
     }
 
     interface View extends BaseView {

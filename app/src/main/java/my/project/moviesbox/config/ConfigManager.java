@@ -112,7 +112,20 @@ public class ConfigManager {
         return resources.getInteger(R.integer.byPassCFTimeout);
     }
 
-    public boolean isSaveParserLogs() {
-        return resources.getBoolean(R.bool.saveParserLogs);
+    public int getFavoriteQueryLimit() {
+        return resources.getInteger(R.integer.favoriteQueryLimit);
     }
+
+    public int getHistoryQueryLimit() {
+        return resources.getInteger(R.integer.historyQueryLimit);
+    }
+
+    public int getDownloadQueryLimit() {
+        return resources.getInteger(R.integer.downloadQueryLimit);
+    }
+
+    public int getDownloadDataQueryLimit() {
+        return resources.getInteger(R.integer.downloadDataQueryLimit);
+    }
+
 }

@@ -1,6 +1,5 @@
 package my.project.moviesbox.adapter;
 
-import android.content.Context;
 import android.text.Html;
 import android.widget.ImageView;
 
@@ -23,11 +22,13 @@ import my.project.moviesbox.utils.Utils;
  * @版本: 1.0
  */
 public class DownloadAdapter extends BaseQuickAdapter<TDownloadWithFields, BaseViewHolder> implements LoadMoreModule {
-    private Context context;
 
-    public DownloadAdapter(Context context, List<TDownloadWithFields> list) {
+    public DownloadAdapter(List<TDownloadWithFields> list) {
         super(Utils.isPad() ? R.layout.item_download_pad : R.layout.item_download, list);
-        this.context = context;
+    }
+
+    public boolean isHeader(int position) {
+        return position == 0;
     }
 
     @Override
@@ -40,7 +41,7 @@ public class DownloadAdapter extends BaseQuickAdapter<TDownloadWithFields, BaseV
         if (item.getNoCompleteSize() > 0)
             imgContent += "<br><font color=\"RED\">" + String.format(Utils.getString(R.string.downloadVodNotCompleteListContent), item.getNoCompleteSize()) + "</font>";
         helper.setText(R.id.number, Html.fromHtml(imgContent));
-        Utils.setDefaultImage(item.getTDownload().getVideoImgUrl(), item.getTDownload().getVideoDescUrl(), imageView, false, null, null);
+        Utils.setDefaultImage(item.getTDownload().getVideoImgUrl(), item.getTDownload().getVideoDescUrl(), imageView, false, null, null, false);
         helper.setVisible(R.id.file_size, false);
         helper.setVisible(R.id.bottom_progress, false);
         helper.setText(R.id.all_size, String.format(Utils.getString(R.string.downloadFileSize), item.getFilesSize()));

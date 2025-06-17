@@ -91,6 +91,7 @@ public class ImageUpdateManager implements UpdateImgContract.View {
     public void successImg(String descUrl, String imgUrl) {
         LogUtil.logInfo("获取 " + descUrl + " 封面成功", imgUrl);
         uiHandler.post(() -> {
+            BaseQuickAdapter<?, ? extends BaseViewHolder> adapter = task.getAdapter();
             switch (task.getUpdateImgEnum()) {
                 case FAVORITE:
                     List<TFavoriteWithFields> tFavoriteWithFields = (List<TFavoriteWithFields>) task.getData();
@@ -98,7 +99,9 @@ public class ImageUpdateManager implements UpdateImgContract.View {
                         if (task.getDescUrl().contains(tFavoriteWithFields.get(i).getTFavorite().getVideoUrl())) {
                             tFavoriteWithFields.get(i).getTFavorite().setVideoImgUrl(imgUrl);
                             tFavoriteWithFields.get(i).setRefreshCover(false);
-                            task.getAdapter().notifyItemChanged(i);
+                            LogUtil.logInfo("title", tFavoriteWithFields.get(i).getVideoTitle());
+                            LogUtil.logInfo("index", i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0) + "");
+                            adapter.notifyItemChanged(i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0));
                             TVideoManager.updateImg(tFavoriteWithFields.get(i).getVideoId(), imgUrl, 0);
                             break;
                         }
@@ -110,7 +113,9 @@ public class ImageUpdateManager implements UpdateImgContract.View {
                         if (task.getDescUrl().contains(tHistoryWithFields.get(i).getTHistory().getVideoDescUrl())) {
                             tHistoryWithFields.get(i).getTHistory().setVideoImgUrl(imgUrl);
                             tHistoryWithFields.get(i).setRefreshCover(false);
-                            task.getAdapter().notifyItemChanged(i);
+                            LogUtil.logInfo("title", tHistoryWithFields.get(i).getVideoTitle());
+                            LogUtil.logInfo("index", i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0) + "");
+                            adapter.notifyItemChanged(i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0));
                             TVideoManager.updateImg(tHistoryWithFields.get(i).getVideoId(), imgUrl, 1);
                             break;
                         }
@@ -127,13 +132,14 @@ public class ImageUpdateManager implements UpdateImgContract.View {
     public void errorImg(String descUrl) {
         LogUtil.logInfo("获取 " + descUrl + " 封面失败", "");
         uiHandler.post(() -> {
+            BaseQuickAdapter<?, ? extends BaseViewHolder> adapter = task.getAdapter();
             switch (task.getUpdateImgEnum()) {
                 case FAVORITE:
                     List<TFavoriteWithFields> tFavoriteWithFields = (List<TFavoriteWithFields>) task.getData();
                     for (int i=0,size=tFavoriteWithFields.size(); i<size; i++) {
                         if (task.getDescUrl().contains(tFavoriteWithFields.get(i).getTFavorite().getVideoUrl())) {
                             tFavoriteWithFields.get(i).setRefreshCover(true);
-                            task.getAdapter().notifyItemChanged(i);
+                            adapter.notifyItemChanged(i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0));
                             break;
                         }
                     }
@@ -143,7 +149,7 @@ public class ImageUpdateManager implements UpdateImgContract.View {
                     for (int i=0,size=tHistoryWithFields.size(); i<size; i++) {
                         if (task.getDescUrl().contains(tHistoryWithFields.get(i).getTHistory().getVideoDescUrl())) {
                             tHistoryWithFields.get(i).setRefreshCover(true);
-                            task.getAdapter().notifyItemChanged(i);
+                            adapter.notifyItemChanged(i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0));
                             break;
                         }
                     }
@@ -186,6 +192,7 @@ public class ImageUpdateManager implements UpdateImgContract.View {
                 updateImgPresenter.unregisterEventBus();
                 isEventBusRegistered = false;
             }
+            updateImgPresenter.detachView();
             LogUtil.logInfo("No Tasks", "");
             return;
         }

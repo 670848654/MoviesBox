@@ -11,6 +11,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import my.project.moviesbox.adapter.HomeItemAdapter;
 import my.project.moviesbox.parser.config.ItemStyleEnum;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.DetailsActivity;
@@ -37,6 +38,7 @@ public class MainDataBean implements MultiItemEntity, Serializable {
     private List<Item> items; // 子列表数据
     private List<Tag> tags; // 头部分类数据
     private List<DropDownTag> dropDownTags; // 下拉菜单数据
+    private HomeItemAdapter homeItemAdapter;
 
     @Override
     public int getItemType() {
@@ -141,6 +143,7 @@ public class MainDataBean implements MultiItemEntity, Serializable {
     public static class Item implements Serializable {
         private String title; // 剧集标题
         private String img; // 图片地址
+        private String base64Img; // 图片解密后Base64字符串数组
         private String url; // 访问地址
         private String episodes; // 集数
         private String episodesUrl; // 集数跳转地址 -> 一般为播放地址

@@ -9,7 +9,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import my.project.moviesbox.R;
 import my.project.moviesbox.bean.SettingAboutBean;
-import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
 
 /**
@@ -27,7 +26,6 @@ public enum AboutEnum {
     CACHE_DIRECTORY(R.drawable.round_snippet_folder_24, Utils.getString(R.string.cacheDirectoryTitle), ""),
     AUTHORIZATION_DIRECTORY(R.drawable.round_folder_shared_24, Utils.getString(R.string.authorizationDirectoryTitle), ""),
     LAST_BUILD_DATE(R.drawable.round_code_24, Utils.getString(R.string.lastBuildDateTitle), Utils.getString(R.string.lastBuildDateSubContent)),
-    VIP_VIDEO_PARSER(R.drawable.vip_url, Utils.getString(R.string.vipVideoParserTitle), Utils.getString(R.string.vipVideoParserSubTitle)),
     GITHUB(R.drawable.star, Utils.getString(R.string.githubTitle), Utils.getString(R.string.githubSubContent)),
     OPEN_SOURCE(R.drawable.github, Utils.getString(R.string.openSourceTitle), "");
     @DrawableRes
@@ -36,19 +34,6 @@ public enum AboutEnum {
     private String subTitle;
 
     public static List<SettingAboutBean> getSettingAboutBeanList() {
-        boolean turnOnHiddenFeatures = SharedPreferencesUtils.getTurnOnHiddenFeatures();
-        List<SettingAboutBean> settingAboutBeans = new ArrayList<>();
-        for (AboutEnum aboutEnum : AboutEnum.values()) {
-            if (turnOnHiddenFeatures
-                    ||
-                    !aboutEnum.getTitle().equals(Utils.getString(R.string.vipVideoParserTitle))
-            )
-                settingAboutBeans.add(new SettingAboutBean(aboutEnum.getIcon(), aboutEnum.getTitle(), aboutEnum.getSubTitle()));
-        }
-        return settingAboutBeans;
-    }
-
-    public static List<SettingAboutBean> getTurnOnHiddenFeaturesList() {
         List<SettingAboutBean> settingAboutBeans = new ArrayList<>();
         for (AboutEnum aboutEnum : AboutEnum.values()) {
             settingAboutBeans.add(new SettingAboutBean(aboutEnum.getIcon(), aboutEnum.getTitle(), aboutEnum.getSubTitle()));

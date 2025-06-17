@@ -41,6 +41,7 @@ import java.util.HashMap;
 import cn.jzvd.JZMediaInterface;
 import cn.jzvd.Jzvd;
 import my.project.moviesbox.R;
+import my.project.moviesbox.utils.Utils;
 
 /**
   * @包名: my.project.moviesbox.config
@@ -175,6 +176,8 @@ public class JZExoPlayer extends JZMediaInterface implements Player.EventListene
 
     @Override
     public void seekTo(long time) {
+        if (Utils.isNullOrEmpty(simpleExoPlayer))
+            return;
         if (time != previousSeek) {
             simpleExoPlayer.seekTo(time);
             previousSeek = time;

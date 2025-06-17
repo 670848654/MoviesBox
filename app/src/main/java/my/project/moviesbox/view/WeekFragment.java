@@ -64,13 +64,14 @@ public class WeekFragment extends BaseFragment {
 
     public void initAdapter() {
         if (adapter == null) {
-            adapter = new WeekAdapter(getActivity(), parserInterface.setWeekItemType(), weekItems);
+            adapter = new WeekAdapter(parserInterface.setWeekItemType(), weekItems);
             WeekActivity weekActivity = (WeekActivity) getActivity();
             if (weekActivity != null)
                 weekActivity.setAdapterAnimation(adapter);
             adapter.setEmptyView(rvView);
             adapter.setOnItemClickListener((adapter, view, position) -> {
                 if (!Utils.isFastClick()) return;
+                Utils.setVibration(view);
                 Bundle bundle = new Bundle();
                 bundle.putString("title", weekItems.get(position).getTitle());
                 bundle.putString("url", weekItems.get(position).getUrl());

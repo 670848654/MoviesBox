@@ -16,6 +16,10 @@ import my.project.moviesbox.R;
 @AllArgsConstructor
 public enum VodItemStyleEnum {
     /**
+     * 清单列表头部布局
+     */
+    STYLE_DIRECTORY_HEADER(-1, R.layout.base_header_view),
+    /**
      * 布局类型 宽<高[类似：1:1.4]
      */
     STYLE_1_1_DOT_4(0, R.layout.item_list_vod_1_4_1),

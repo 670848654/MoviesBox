@@ -78,6 +78,22 @@ public interface TFavoriteDao {
     void updateLastPlayNumberUrlByVideoId(String voidId, String videoUrl);
 
     /**
+     * 变更域名时更新相关域名
+     * @param oldDomain 旧域名
+     * @param newDomain 新域名
+     */
+    @Query("UPDATE TFavorite\n" +
+            "SET \n" +
+            "    videoUrl = REPLACE(videoUrl, :oldDomain, :newDomain),\n" +
+            "    lastVideoPlayNumberUrl = REPLACE(lastVideoPlayNumberUrl, :oldDomain, :newDomain),\n" +
+            "    videoDesc = REPLACE(videoDesc, :oldDomain, :newDomain)\n" +
+            "WHERE \n" +
+            "    videoUrl LIKE :oldDomain || '%' OR\n" +
+            "    lastVideoPlayNumberUrl LIKE :oldDomain || '%' OR\n" +
+            "    videoDesc LIKE :oldDomain || '%'")
+    void updateUrlByChangeDomain(String oldDomain, String newDomain);
+
+    /**
      * 分页查询用户收藏的影视
      * @param videoSource
      * @param offset
@@ -91,9 +107,24 @@ public interface TFavoriteDao {
             "       INNER JOIN\n" +
             "       TVideo t2 ON t1.linkId = t2.videoId AND \n" +
             "       t2.videoSource =:videoSource\n" +
+            " WHERE (t1.directoryId IS NULL AND :directoryId = '') OR (t1.directoryId = :directoryId AND :directoryId != '')" +
             " ORDER BY t1.`index` DESC\n" +
             " LIMIT :limit OFFSET :offset")
-    List<TFavoriteWithFields> queryFavorite(int videoSource, int offset, int limit);
+    List<TFavoriteWithFields> queryFavorite(int videoSource, String directoryId, int offset, int limit);
+
+    /**
+     * 根据目录id查询目录下数据总数
+     * @param videoSource
+     * @param directoryId
+     * @return
+     */
+    @Query("SELECT count(t1.favoriteId) \n" +
+            "  FROM TFavorite t1\n" +
+            "       INNER JOIN\n" +
+            "       TVideo t2 ON t1.linkId = t2.videoId AND \n" +
+            "       t2.videoSource =:videoSource\n" +
+            " WHERE (t1.directoryId IS NULL AND :directoryId = '') OR (t1.directoryId = :directoryId AND :directoryId != '')")
+    int queryFavoriteCountByDirectoryId(int videoSource, String directoryId);
 
     /**
      * 查询收藏表总数
@@ -102,4 +133,11 @@ public interface TFavoriteDao {
      */
     @Query("select count(t1.favoriteId) from TFavorite t1 INNER JOIN TVideo t2 ON t1.linkId = t2.videoId AND t2.videoSource =:videoSource")
     int queryFavoriteCount(int videoSource);
+
+    /**
+     * 更新到默认清单
+     * @param directoryId
+     */
+    @Query("update TFavorite set directoryId = null where directoryId =:directoryId")
+    void updateDirectoryId2Null(String directoryId);
 }

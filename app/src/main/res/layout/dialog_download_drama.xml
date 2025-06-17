@@ -15,7 +15,6 @@
         android:id="@+id/info"
         android:layout_marginLeft="12dp"
         android:layout_marginRight="12dp"
-        android:layout_marginBottom="12dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="12sp"
@@ -27,6 +26,20 @@
         app:ep_need_animation="true"
         app:ep_expand_text="@string/clickToView"
         app:ep_expand_color="@color/pink200" />
+
+    <Button
+        android:id="@+id/selectDirectory"
+        style="@style/Button.OutlinedButton.Icon"
+        app:icon="@drawable/round_playlist_add_24"
+        app:iconTint="@color/icon_tint_selector"
+        app:strokeColor="@color/stroke_color_selector"
+        android:textColor="@color/text_color_selector"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/download_list"

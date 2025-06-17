@@ -15,7 +15,7 @@ import my.project.moviesbox.database.entity.TDownloadWithFields;
  */
 public interface DownloadContract {
     interface Model {
-        void getDownloadList(int offset, int limit, DownloadContract.LoadDataCallback callback);
+        void getDownloadList(String directoryId, int offset, int limit, DownloadContract.LoadDataCallback callback);
 
         void getDownloadDataList(String downloadId, int offset, int limit, DownloadContract.LoadDataCallback callback);
     }

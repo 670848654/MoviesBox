@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 历史记录相关 -->
+    <string name="historyTabTitle">历史记录</string>
+    <string name="deleteSingleHistory">是否删除该历史记录？</string>
+    <string name="deleteAllHistory">是否清空所有历史记录？清空之后就什么都没有了哦~</string>
+    <string name="historyDescMenuText">影视详情</string>
+    <string name="historyDeleteMenuText">删除</string>
+</resources>

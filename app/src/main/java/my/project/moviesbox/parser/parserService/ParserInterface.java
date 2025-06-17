@@ -239,21 +239,23 @@ public interface ParserInterface {
     boolean getDanmuResultJson();
 
     /**
-     * 播放地址是否需要解析
-     * 默认为true 需要解析，有些网站可能不需要解析
+     * <p>播放地址是否需要解析</p>
+     * <p>默认为true需要解析，大部分网站都是点击跳转对应集数地址页面才能获取到播放地址</p>
+     * <p>有些网站播放地址与详情页面暴露在同一页面上不需要解析，这种情况应返回 false</p>
      * @return
      */
     default boolean playUrlNeedParser() {
         return true;
-    };
+    }
 
     /**
      * 获取影视播放地址
      * <p>注：可能存在多个播放地址，兼容返回LIST</p>
      * @param source 网页源代码
+     * @param isDownload 是否为下载
      * @return
      */
-    List<DialogItemBean> getPlayUrl(String source);
+    List<DialogItemBean> getPlayUrl(String source, boolean isDownload);
 
     /**
      * 通过定义的需要POST请求的类名获取POST固定参数，自行实现
@@ -268,20 +270,28 @@ public interface ParserInterface {
      * 默认视频列表一行显示几个内容 1:1.4使用
      * @param isPad 是否为平板
      * @param isPortrait 是否为竖屏
+     * @param inBottomSheetDialog 是否在BottomSheetDialog中显示
      * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
      */
-    default int setVodListItemSize(boolean isPad, boolean isPortrait) {
-        return isPad ? (isPortrait ? 5 : 8) : (isPortrait ? 3 : 5);
+    default int setVodListItemSize(boolean isPad, boolean isPortrait, boolean inBottomSheetDialog) {
+        if (inBottomSheetDialog)
+            return isPortrait ? 3 : 5;
+        else
+            return isPad ? (isPortrait ? 5 : 8) : (isPortrait ? 3 : 5);
     }
 
     /**
      * 默认视频列表一行显示几个内容 16:9使用
      * @param isPad 是否为平板
      * @param isPortrait 是否为竖屏
+     * @param inBottomSheetDialog 是否在BottomSheetDialog中显示
      * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
      */
-    default int setVodList16_9ItemSize(boolean isPad,  boolean isPortrait) {
-        return isPad ? (isPortrait ? 3 : 5) : (isPortrait ? 2 : 3);
+    default int setVodList16_9ItemSize(boolean isPad,  boolean isPortrait, boolean inBottomSheetDialog) {
+        if (inBottomSheetDialog)
+            return isPortrait ? 2 : 3;
+        else
+            return isPad ? (isPortrait ? 3 : 5) : (isPortrait ? 2 : 3);
     }
 
     /**
@@ -364,7 +374,7 @@ public interface ParserInterface {
         if (setWeekItemType() == WeekDataBean.ITEM_TYPE_2)
             return isPad ? (isPortrait ? 4 : 6) : (isPortrait ? 2 : 3);
         else
-            return setVodListItemSize(isPad, isPortrait);
+            return setVodListItemSize(isPad, isPortrait, false);
     }
 
     /**
@@ -451,6 +461,26 @@ public interface ParserInterface {
     }
 
     /**
+     * 默认视频列表一行显示几个内容 1:1.4使用
+     * @param isPad 是否为平板
+     * @param isPortrait 是否为竖屏
+     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
+     */
+    default int setCategoryNoImgListItemSize(boolean isPad, boolean isPortrait) {
+        return 1;
+    }
+
+    /**
+     * 默认视频列表一行显示几个内容 16:9使用
+     * @param isPad 是否为平板
+     * @param isPortrait 是否为竖屏
+     * @return 返回不能为0！！！ 需自己实现 平板、手机横竖屏显示数量
+     */
+    default int setCategoryImgListItemSize(boolean isPad,  boolean isPortrait) {
+        return isPad ? (isPortrait ? 4 : 6) : (isPortrait ? 2 : 3);
+    }
+
+    /**
      * 通过站点发布页获取最新域名
      * @param source
      * @return
@@ -458,4 +488,14 @@ public interface ParserInterface {
     default DomainDataBean parserDomain(String source) {
         return null;
     }
+
+    /**
+     * 网站发布页是否需要访问
+     * 有些网站可以直接通过JS获取最新域名 这种情况就不需要访问
+     * @return
+     */
+    default boolean needParserDomain() {
+        return true;
+    }
+
 }

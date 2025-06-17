@@ -289,7 +289,7 @@ public class SilisiliImpl implements ParserInterface {
                     String title = a.select("span").text();
                     String url = a.attr("href");
                     String imgSrc = a.select("img").attr("src");
-                    String img = getImg(imgSrc.isEmpty() ? a.select("img").attr("data-url") : imgSrc);
+                    String img = getImg((imgSrc.isEmpty() || imgSrc.contains("load")) ? a.select("img").attr("data-url") : imgSrc);
                     homeItemBean.setTitle(title);
                     homeItemBean.setUrl(url);
                     homeItemBean.setImg(img);
@@ -693,7 +693,7 @@ public class SilisiliImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source) {
+    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
         List<DialogItemBean> urls = new ArrayList<>();
         String url = getJsonData(true, source);
         urls.add(new DialogItemBean(url, url.contains("m3u8") ? M3U8 : MP4));

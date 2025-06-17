@@ -626,7 +626,7 @@ public class IYingHuaImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source) {
+    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
         try {
             List<DialogItemBean> urls = new ArrayList<>();
             Document document = Jsoup.parse(source);

@@ -1,8 +1,10 @@
 package my.project.moviesbox.utils;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Base64;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.FutureTarget;
@@ -28,7 +30,6 @@ public class ImageUtils {
         executorService.submit(() -> {
             boolean saveSuccess = saveImageToLocal(imageUrl, localImgPath);
 
-            // 使用 Handler 回到主线程
             new Handler(Looper.getMainLooper()).post(() -> {
                 if (callback != null) {
                     callback.onResult(saveSuccess);
@@ -38,37 +39,62 @@ public class ImageUtils {
     }
 
     /**
-     * 保存图片到本地
-     * @param imageUrl
-     * @param savePath
+     * 保存图片到本地，支持网络 URL 和 Base64 编码
+     * @param imageUrl 图片地址（URL 或 Base64）
+     * @param savePath 保存路径
+     * @return 是否保存成功
      */
     private static boolean saveImageToLocal(String imageUrl, String savePath) {
         if (Utils.isNullOrEmpty(imageUrl))
             return false;
-        File file = new File(savePath);
-        // 使用 Glide 加载图片
-        FutureTarget<Bitmap> futureTarget = Glide.with(Utils.getContext())
-                .asBitmap()
-                .load(Utils.getGlideUrl(imageUrl))
-                .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL);
-        try {
-            // 获取 Bitmap 对象
-            Bitmap bitmap = futureTarget.get();
 
-            // 将 Bitmap 写入文件
-            FileOutputStream out = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
-            out.flush();
-            out.close();
-            return true;
-        } catch (ExecutionException | InterruptedException | IOException e) {
-            e.printStackTrace();
-            return false;
-        } finally {
-            // 清除 Glide 缓存
-            Glide.with(Utils.getContext()).clear(futureTarget);
+        File file = new File(savePath);
+
+        if (imageUrl.startsWith("data:image/")) {
+            // Base64 编码处理
+            try {
+                // 截取 base64 数据
+                String base64Data = imageUrl.substring(imageUrl.indexOf(",") + 1);
+                byte[] decodedBytes = Base64.decode(base64Data, Base64.DEFAULT);
+
+                // 转 Bitmap
+                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+                if (bitmap == null) return false;
+
+                // 写入文件
+                FileOutputStream out = new FileOutputStream(file);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                out.flush();
+                out.close();
+                return true;
+            } catch (IOException | IllegalArgumentException e) {
+                e.printStackTrace();
+                return false;
+            }
+        } else {
+            // 网络图片处理
+            FutureTarget<Bitmap> futureTarget = Glide.with(Utils.getContext())
+                    .asBitmap()
+                    .load(Utils.getGlideUrl(imageUrl))
+                    .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL);
+
+            try {
+                Bitmap bitmap = futureTarget.get();
+
+                FileOutputStream out = new FileOutputStream(file);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                out.flush();
+                out.close();
+                return true;
+            } catch (ExecutionException | InterruptedException | IOException e) {
+                e.printStackTrace();
+                return false;
+            } finally {
+                Glide.with(Utils.getContext()).clear(futureTarget);
+            }
         }
     }
+
     public interface SaveImageCallback {
         void onResult(boolean success);
     }

@@ -57,6 +57,11 @@
 
         <activity
             android:name=".view.HomeActivity"
+            android:windowSoftInputMode="adjustPan|stateHidden"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
+
+        <activity
+            android:name=".view.WebViewActivity"
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
 
         <activity
@@ -65,6 +70,10 @@
 
         <activity
             android:name=".view.DetailsActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
+
+        <activity
+            android:name=".view.lazyLoadImage.DetailsLazyImgActivity"
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
 
         <activity android:name=".view.PlayerActivity"
@@ -86,21 +95,20 @@
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.MoviesBox.FullScreenTheme"/>
 
-        <activity android:name=".view.VipParsingInterfacesPlayerActivity"
-            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden|uiMode"
-            android:excludeFromRecents="true"
-            android:resizeableActivity="true"
-            android:launchMode="singleTask"
-            android:supportsPictureInPicture="true"
-            android:screenOrientation="sensorLandscape"
-            android:theme="@style/Theme.MoviesBox.FullScreenTheme" />
-
         <activity
             android:name=".view.SearchActivity"
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
 
         <activity
+            android:name=".view.lazyLoadImage.SearchLazyImgActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
+
+        <activity
             android:name=".view.VodListActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
+
+        <activity
+            android:name=".view.lazyLoadImage.VodListLazyImgActivity"
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
 
         <activity
@@ -140,56 +148,31 @@
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
 
         <activity
-            android:name=".parser.sourceCustomView.yjys.YjysSearchActivity"
+            android:name=".view.ParserLogActivity"
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
 
+        <activity
+            android:name=".view.DirectoryActivity"
+            android:windowSoftInputMode="adjustPan|stateHidden"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
+
+        <activity
+            android:name=".view.DirectoryChangeActivity"
+            android:windowSoftInputMode="adjustPan|stateHidden"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
+
+        <activity
+            android:name=".view.DirectoryConfigActivity"
+            android:windowSoftInputMode="adjustPan|stateHidden"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
+
+        <activity
+            android:name=".parser.sourceCustomView.VerifySearchActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
+        
         <!--<activity
             android:name=".view.WebViewActivity"
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />-->
-
-        <activity
-            android:name=".view.VipParsingInterfacesActivity"
-            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden"
-            android:exported="true"
-            android:launchMode="singleTop">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="http"/>
-                <data android:scheme="https"/>
-                <data android:scheme="about"/>
-                <data android:scheme="javascript"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:scheme="http"/>
-                <data android:scheme="https"/>
-                <data android:scheme="inline"/>
-                <data android:scheme="file"/>
-                <data android:scheme="content"/>
-                <data android:mimeType="text/html"/>
-                <data android:mimeType="text/plain"/>
-                <data android:mimeType="application/xhtml+xml"/>
-                <data android:mimeType="application/vnd.wap.xhtml+xml"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.WEB_SEARCH"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.SEND"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="text/plain"/>
-            </intent-filter>
-        </activity>
 
         <!-- 检查更新服务 -->
         <service android:name=".service.CheckUpdateService"/>
@@ -199,8 +182,8 @@
         <service android:name=".service.SniffingVideoService"/>
         <service android:name=".service.FuckCFService"/>
         <service android:name=".service.RssService"/>
-        <!-- 声明upnp服务实现类（服务） -->
-        <service android:name=".cling.service.ClingUpnpService" />
+        <!-- upnp服务 -->
+        <service android:name="com.android.cast.dlna.dmc.DLNACastService" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

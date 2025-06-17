@@ -1,5 +1,6 @@
 package my.project.moviesbox.database.dao;
 
+import androidx.annotation.Nullable;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
@@ -36,6 +37,14 @@ public interface TDownloadDao {
     void update(TDownload... tDownload);
 
     /**
+     * 根据ID查询下载信息
+     * @param downloadId
+     * @return
+     */
+    @Query("select * from TDownload where downloadId=:downloadId")
+    TDownload queryByDownloadId(String downloadId);
+
+    /**
      * 通过影视ID查询下载信息
      * @param videoId
      * @return
@@ -62,13 +71,26 @@ public interface TDownloadDao {
             "       TVideo t2 ON t1.linkId = t2.videoId\n" +
             "       LEFT JOIN\n" +
             "       TDownloadData T3 ON t1.downloadId = T3.linkId\n" +
+            " WHERE (t1.directoryId IS NULL AND :directoryId = '') OR (t1.directoryId = :directoryId AND :directoryId != '')" +
             "       GROUP BY \n" +
             "       t1.downloadId,\n" +
             "       t1.videoImgUrl,\n" +
             "       t1.videoDescUrl,\n" +
             "       t2.videoTitle\n" +
             " ORDER BY t1.createTime DESC limit :limit offset :offset")
-    List<TDownloadWithFields> queryAllDownloads(int limit, int offset);
+    List<TDownloadWithFields> queryAllDownloads(@Nullable String directoryId, int limit, int offset);
+
+    /**
+     * 根据目录id查询目录下数据总数
+     * @param directoryId
+     * @return
+     */
+    @Query("SELECT count(t1.downloadId) \n" +
+            "  FROM TDownload t1\n" +
+            "       INNER JOIN\n" +
+            "       TVideo t2 ON t1.linkId = t2.videoId \n" +
+            " WHERE (t1.directoryId IS NULL AND :directoryId = '') OR (t1.directoryId = :directoryId AND :directoryId != '')")
+    int queryDownloadCountByDirectoryId(String directoryId);
 
     /**
      * 删除下载数据
@@ -96,4 +118,11 @@ public interface TDownloadDao {
      */
     @Query("delete from TDownload")
     void deleteAllDownload();
+
+    /**
+     * 更新到默认清单
+     * @param directoryId
+     */
+    @Query("update TDownload set directoryId = null where directoryId =:directoryId")
+    void updateDirectoryId2Null(String directoryId);
 }

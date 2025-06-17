@@ -12,6 +12,7 @@ import java.util.Map;
 
 import cn.jzvd.JZMediaInterface;
 import cn.jzvd.Jzvd;
+import my.project.moviesbox.utils.Utils;
 import tv.danmaku.ijk.media.player.IMediaPlayer;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 import tv.danmaku.ijk.media.player.IjkTimedText;
@@ -126,7 +127,8 @@ public class JZMediaIjk extends JZMediaInterface implements IMediaPlayer.OnPrepa
 
     @Override
     public void seekTo(long time) {
-        ijkMediaPlayer.seekTo(time);
+        if (!Utils.isNullOrEmpty(ijkMediaPlayer))
+            ijkMediaPlayer.seekTo(time);
     }
 
     @Override

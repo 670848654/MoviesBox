@@ -16,8 +16,8 @@ import my.project.moviesbox.utils.Utils;
 
 public class DownloadModel extends BaseModel implements DownloadContract.Model {
     @Override
-    public void getDownloadList(int offset, int limit, DownloadContract.LoadDataCallback callback) {
-        List<TDownloadWithFields> list = TDownloadManager.queryAllDownloads(limit, offset);
+    public void getDownloadList(String directoryId, int offset, int limit, DownloadContract.LoadDataCallback callback) {
+        List<TDownloadWithFields> list = TDownloadManager.queryAllDownloads(directoryId, limit, offset);
         if (list.size() > 0)
             callback.downloadList(list);
         else

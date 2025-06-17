@@ -49,7 +49,7 @@ public class VodListAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, B
             Utils.setImgViewBlurBg(vodDataBean.getImg(), imageView);
         } else*/
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        Utils.setDefaultImage(vodDataBean.getImg(), vodDataBean.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title));
+        Utils.setDefaultImage(vodDataBean.getImg(), vodDataBean.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), false);
         helper.setText(R.id.title, vodDataBean.getTitle());
         setTagInfo(helper, vodDataBean.getTopLeftTag(), R.id.topLeftTag);
         setTagInfo(helper, vodDataBean.getEpisodesTag(), R.id.episodesTag);

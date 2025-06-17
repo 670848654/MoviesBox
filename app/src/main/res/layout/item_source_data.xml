@@ -28,7 +28,6 @@
 
         <TextView
             android:id="@+id/sourceType"
-            android:text="影视"
             android:textColor="@color/white"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
@@ -45,7 +44,6 @@
             android:id="@+id/title"
             android:layout_toRightOf="@+id/sourceType"
             android:layout_marginStart="4dp"
-            android:text="asdasd"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_centerVertical="true"
@@ -99,6 +97,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="3dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:fadingEdge="none" />
 
     <!--<TextView
         android:id="@+id/danmu"

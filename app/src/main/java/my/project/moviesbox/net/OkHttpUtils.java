@@ -132,7 +132,7 @@ public class OkHttpUtils {
      * @return
      * @throws IOException
      */
-    public static String performSyncRequest(String url) throws IOException {
+    public String performSyncRequest(String url) throws IOException {
         LogUtil.logInfo("GET请求", url);
         // 创建请求
         Request request = new Request.Builder()
@@ -149,7 +149,7 @@ public class OkHttpUtils {
         }
     }
 
-    public static String performSyncRequestAndHeader(String url) throws IOException {
+    public String performSyncRequestAndHeader(String url) throws IOException {
         LogUtil.logInfo("GET请求", url);
         Headers.Builder builder = new Headers.Builder();
         Map<String,String> headerMap = parserInterface.requestHeaders();
@@ -176,7 +176,18 @@ public class OkHttpUtils {
         }
     }
 
-    public static String performSyncRequestAndHeaderTest(String url) throws IOException {
+    public Response performSyncRequestAndHeader(String url, Headers headers) throws IOException {
+        LogUtil.logInfo("GET请求", url);
+        // 创建请求
+        Request request = new Request.Builder()
+                .url(url)
+                .headers(headers)
+                .build();
+        Call call = getOkHttpClient().newCall(request);
+        return call.execute();
+    }
+
+    public String performSyncRequestAndHeaderTest(String url) throws IOException {
         Headers.Builder builder = new Headers.Builder();
         builder.add("Accept", "*/*");
         builder.add("Connection", "keep-alive");
@@ -217,7 +228,7 @@ public class OkHttpUtils {
      * @return
      * @throws IOException
      */
-    public static InputStream performSyncRequestIs(String url) throws IOException {
+    public InputStream performSyncRequestIs(String url) throws IOException {
         LogUtil.logInfo("GET请求", url);
         // 创建请求
         Request request = new Request.Builder()

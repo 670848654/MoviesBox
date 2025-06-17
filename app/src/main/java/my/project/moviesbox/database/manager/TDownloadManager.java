@@ -27,8 +27,8 @@ public class TDownloadManager extends BaseManager {
      * @param offset
      * @return
      */
-    public static List<TDownloadWithFields> queryAllDownloads(int limit, int offset) {
-        List<TDownloadWithFields> tDownloadWithFields = tDownloadDao.queryAllDownloads(limit, offset);
+    public static List<TDownloadWithFields> queryAllDownloads(String directoryId, int limit, int offset) {
+        List<TDownloadWithFields> tDownloadWithFields = tDownloadDao.queryAllDownloads(directoryId, limit, offset);
         for (TDownloadWithFields withFields : tDownloadWithFields) {
             withFields.setFilesSize(Utils.getNetFileSizeDescription(Long.parseLong(withFields.getFilesSize())));
         }
@@ -61,12 +61,22 @@ public class TDownloadManager extends BaseManager {
     }
 
     /**
+     * 通过影视名称获取下载记录
+     * @param videoTitle
+     * @return
+     */
+    public static TDownload queryByVideoTitle(String videoTitle) {
+        String videoId = tVideoDao.queryId(videoTitle, source);
+        return tDownloadDao.queryByVideoId(videoId);
+    }
+
+    /**
      * 新增下载信息
      * @param videoTitle
      * @param imgUrl
      * @param descUrl
      */
-    public static void insertDownload(String videoTitle, String imgUrl, String descUrl) {
+    public static void insertDownload(String videoTitle, String imgUrl, String descUrl, String directoryId) {
         String videoId = tVideoDao.queryId(videoTitle, source);
         TDownload tDownload = tDownloadDao.queryByVideoId(videoId);
         if (Utils.isNullOrEmpty(tDownload)) {
@@ -77,9 +87,23 @@ public class TDownloadManager extends BaseManager {
             tDownload.setVideoDescUrl(descUrl);
             tDownload.setCreateTime(getDateTimeStr());
             tDownload.setUpdateTime(getDateTimeStr());
+            tDownload.setDirectoryId(Utils.isNullOrEmpty(directoryId) ? null : directoryId);
             tDownloadDao.insert(tDownload);
         } else {
             tDownload.setUpdateTime(getDateTimeStr());
+            tDownloadDao.update(tDownload);
+        }
+    }
+
+    /**
+     * 更新下载清单位置
+     * @param downloadId
+     * @param directoryId
+     */
+    public static void updateDownloadDirectoryId(String downloadId, String directoryId) {
+        TDownload tDownload = tDownloadDao.queryByDownloadId(downloadId);
+        if (!Utils.isNullOrEmpty(tDownload)) {
+            tDownload.setDirectoryId(Utils.isNullOrEmpty(directoryId) ? null : directoryId);
             tDownloadDao.update(tDownload);
         }
     }
@@ -102,6 +126,15 @@ public class TDownloadManager extends BaseManager {
      */
     public static void deleteDownload(String id) {
         tDownloadDao.deleteDownload(id);
+    }
+
+    /**
+     * 根据目录id查询目录下数据总数
+     * @param directoryId
+     * @return
+     */
+    public static int queryDownloadCountByDirectoryId(String directoryId) {
+        return tDownloadDao.queryDownloadCountByDirectoryId(directoryId);
     }
 
     /**

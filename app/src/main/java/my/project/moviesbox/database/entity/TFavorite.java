@@ -56,4 +56,8 @@ public class TFavorite implements Serializable {
      */
     @Deprecated
     public int state;
+    /**
+     * 目录ID
+     */
+    public String directoryId;
 }

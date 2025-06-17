@@ -19,9 +19,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -30,6 +27,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,8 +50,9 @@ import my.project.moviesbox.parser.config.ItemStyleEnum;
 import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
-import my.project.moviesbox.parser.sourceCustomView.yjys.YjysSearchActivity;
+import my.project.moviesbox.parser.sourceCustomView.VerifySearchActivity;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.utils.VideoUtils;
 import my.project.moviesbox.view.BaseActivity;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.HomeFragment;
@@ -63,7 +62,7 @@ import okhttp3.FormBody;
 /**
  * @author Li
  * @version 1.0
- * @description: 注释
+ * @description: 纽约影视站点解析实现
  * @date 2024/10/10 14:19
  */
 public class NyyyImpl implements ParserInterface {
@@ -123,6 +122,11 @@ public class NyyyImpl implements ParserInterface {
     @Override
     public Map<String, String> setImgHeaders() {
         return null;
+    }
+
+    @Override
+    public HashMap<String, String> setPlayerHeaders() {
+        return ParserInterface.super.setPlayerHeaders();
     }
 
     /**
@@ -359,7 +363,7 @@ public class NyyyImpl implements ParserInterface {
 
     @Override
     public Class<? extends BaseActivity> detailTagOpenClass() {
-        return YjysSearchActivity.class;
+        return VerifySearchActivity.class;
     }
 
     /**
@@ -548,7 +552,7 @@ public class NyyyImpl implements ParserInterface {
 
     @Override
     public Class<? extends BaseActivity> searchOpenClass() {
-        return YjysSearchActivity.class;
+        return VerifySearchActivity.class;
     }
 
     /**
@@ -699,7 +703,7 @@ public class NyyyImpl implements ParserInterface {
             String url = params[0];
             if (!url.startsWith("http"))
                 url = getDefaultDomain() + url;
-            String source = OkHttpUtils.performSyncRequestAndHeader(url);
+            String source = OkHttpUtils.getInstance().performSyncRequestAndHeader(url);
             // 提取ID
             Document doc = Jsoup.parse(source);
             Element element = doc.getElementById("blibliId");
@@ -734,7 +738,7 @@ public class NyyyImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source) {
+    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
         try {
             List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);
@@ -781,14 +785,18 @@ public class NyyyImpl implements ParserInterface {
                     }
                     boolean isM3U8 = url.contains("m3u8");
                     if (isM3U8) {
-                        // 尝试过滤里面的广告
-                        String localPath = saveLocalM3U8Path(url);
-                        if (!Utils.isNullOrEmpty(localPath)) {
-                            removeAd(localPath);
-                            result.add(new DialogItemBean("file:/" + localPath, M3U8));
-                        }
-                        else
+                        if (isDownload)
                             result.add(new DialogItemBean(url, M3U8));
+                        else {
+                            // 尝试过滤里面的广告
+                            String localPath = saveLocalM3U8Path(url);
+                            if (!Utils.isNullOrEmpty(localPath)) {
+                                boolean hasAd = VideoUtils.removeLocalM3U8Ad(localPath);
+                                result.add(new DialogItemBean(hasAd ? "file:/" + localPath : url, M3U8));
+                            }
+                            else
+                                result.add(new DialogItemBean(url, M3U8));
+                        }
                     }
                     else
                         result.add(new DialogItemBean(url, MP4));
@@ -862,42 +870,6 @@ public class NyyyImpl implements ParserInterface {
             if (connection != null) {
                 connection.disconnect();
             }
-        }
-    }
-
-    private static void removeAd(String filePath) {
-        try {
-            String targetExtinf = "#EXTINF:3.366667,";
-            List<String> lines = new ArrayList<>();
-            BufferedReader reader = new BufferedReader(new FileReader(filePath));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                lines.add(line);
-            }
-            reader.close();
-
-            // 处理文件内容
-            List<String> modifiedLines = new ArrayList<>();
-            for (int i = 0; i < lines.size(); i++) {
-                if (lines.get(i).startsWith(targetExtinf)) {
-                    // 跳过当前EXTINF和它下一行的URL
-                    i++; // 跳过URL
-                } else {
-                    // 保留其他行
-                    modifiedLines.add(lines.get(i));
-                }
-            }
-
-            // 写回文件
-            BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
-            for (String modifiedLine : modifiedLines) {
-                writer.write(modifiedLine);
-                writer.newLine();
-            }
-            writer.close();
-            LogUtil.logInfo("广告分片删除成功！", "");
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 

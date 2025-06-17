@@ -58,4 +58,21 @@ public class SourceDataBean {
      * RSS订阅地址
      */
     private String rssUrl;
+
+    /**
+      * @包名: my.project.moviesbox.parser.bean
+      * @类名: SourceDataBean
+      * @描述: 子域名
+      * @作者: Li Z
+      * @日期: 2024/10/24 16:53
+      * @版本: 1.0
+     */
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Subdomain {
+        private boolean selected;
+        private String title;
+        private String subUrl;
+    }
 }

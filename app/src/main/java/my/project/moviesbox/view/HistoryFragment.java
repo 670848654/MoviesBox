@@ -28,6 +28,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.HistoryListAdapter;
+import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.contract.HistoryContract;
 import my.project.moviesbox.contract.VideoContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
@@ -63,8 +64,6 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
     @BindView(R.id.rv_list)
     RecyclerView mRecyclerView;
     private HistoryListAdapter adapter;
-    private List<THistoryWithFields> historyBeans = new ArrayList<>();
-    private int limit = 10;
     private int historyCount = 0;
     private boolean isMain = true;
     protected boolean isErr = true;
@@ -104,7 +103,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
     }
 
     private void initAdapter() {
-        adapter = new HistoryListAdapter(getActivity(), historyBeans);
+        adapter = new HistoryListAdapter(getActivity(), new ArrayList<>());
         HomeActivity homeActivity = (HomeActivity) getActivity();
         if (homeActivity != null)
             homeActivity.setAdapterAnimation(adapter);
@@ -112,12 +111,13 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
         adapter.addChildClickViewIds(R.id.option);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
-            vodId = historyBeans.get(position).getVideoId();
-            vodTitle = historyBeans.get(position).getVideoTitle();
-            vodDramaUrl = historyBeans.get(position).getVideoUrl();
-            vodDramaTitle = historyBeans.get(position).getVideoNumber();
-            vodPlaySource = historyBeans.get(position).getVideoPlaySource();
-            vodSource = historyBeans.get(position).getVideoSource();
+            THistoryWithFields tHistoryWithField = (THistoryWithFields) adapter.getData().get(position);
+            vodId = tHistoryWithField.getVideoId();
+            vodTitle = tHistoryWithField.getVideoTitle();
+            vodDramaUrl = tHistoryWithField.getVideoUrl();
+            vodDramaTitle = tHistoryWithField.getVideoNumber();
+            vodPlaySource = tHistoryWithField.getVideoPlaySource();
+            vodSource = tHistoryWithField.getVideoSource();
             if (!parserInterface.playUrlNeedParser()) {
                 dramasItems.add(new DetailsDataBean.DramasItem(0, vodDramaTitle, vodDramaUrl, true));
                 playVod(vodDramaUrl);
@@ -128,6 +128,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
         });
         adapter.setOnItemChildClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            THistoryWithFields tHistoryWithField = (THistoryWithFields) adapter.getData().get(position);
             switch (view.getId()) {
                 /*case R.id.desc_view:
                     Bundle bundle = new Bundle();
@@ -140,24 +141,24 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
                     setMenu(view, R.menu.history_menu, R.id.delete, item -> {
                         switch (item.getItemId()) {
                             case R.id.refreshImage:
-                                ImageView imageView = (ImageView) adapter.getViewByPosition(position, R.id.img);
+                                ImageView imageView = (ImageView) adapter.getViewByPosition(position+adapter.getHeaderLayoutCount(), R.id.img);
                                 imageView.setImageDrawable(getActivity().getDrawable(R.drawable.loading));
 //                                updateImgPresenter.loadData(historyBeans.get(position).getTHistory().getVideoImgUrl(), historyBeans.get(position).getTHistory().getVideoDescUrl());
                                 ImageUpdateManager.getInstance().addUpdateImgTask(
-                                        historyBeans.get(position).getTHistory().getVideoDescUrl(),
-                                        historyBeans.get(position).getTHistory().getVideoImgUrl(),
+                                        tHistoryWithField.getTHistory().getVideoDescUrl(),
+                                        tHistoryWithField.getTHistory().getVideoImgUrl(),
                                         adapter.getData(),
                                         adapter,
                                         HISTORY);
                                 break;
                             case R.id.desc:
                                 Bundle bundle = new Bundle();
-                                bundle.putString("title", historyBeans.get(position).getVideoTitle());
-                                bundle.putString("url", historyBeans.get(position).getTHistory().getVideoDescUrl());
+                                bundle.putString("title", tHistoryWithField.getVideoTitle());
+                                bundle.putString("url", tHistoryWithField.getTHistory().getVideoDescUrl());
                                 startActivityForResult(new Intent(getActivity(), DetailsActivity.class).putExtras(bundle), 3000);
                                 break;
                             case R.id.delete:
-                                showDeleteHistoryDialog(position, historyBeans.get(position).getTHistory().getHistoryId(), false);
+                                showDeleteHistoryDialog(position, tHistoryWithField.getTHistory().getHistoryId(), false);
                                 break;
                         }
                         return true;
@@ -186,7 +187,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
         });*/
         adapter.getLoadMoreModule().setLoadMoreView(new CustomLoadMoreView());
         adapter.getLoadMoreModule().setOnLoadMoreListener(() -> mRecyclerView.postDelayed(() -> {
-            if (historyBeans.size() >= historyCount) {
+            if (adapter.getData().size() >= historyCount) {
                 adapter.getLoadMoreModule().loadMoreEnd();
             } else {
                 if (isErr) {
@@ -221,7 +222,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
 
     private void loadHistoryData() {
         isMain = true;
-        historyBeans.clear();
+        adapter.setNewInstance(new ArrayList<>());
         setRecyclerViewView();
         loadData();
     }
@@ -257,7 +258,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
         if (!isAll)
             adapter.removeAt(position);
         else
-            historyBeans.clear();
+            adapter.setNewInstance(new ArrayList<>());
         if (historyCount == 0) {
             removeAllFAB.setVisibility(View.GONE);
             setRecyclerViewEmpty();
@@ -293,7 +294,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
 
     @Override
     protected void loadData() {
-        mPresenter.loadData(isMain, historyBeans.size(), limit);
+        mPresenter.loadData(isMain, adapter.getData().size(), ConfigManager.getInstance().getHistoryQueryLimit());
     }
 
     @Override
@@ -340,9 +341,8 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
             if (isMain) {
                 new Handler().postDelayed(() -> {
                     hideProgress();
-                    historyBeans = list;
                     removeAllFAB.setVisibility(View.VISIBLE);
-                    adapter.setNewInstance(historyBeans);
+                    adapter.setNewInstance(list);
                     setRecyclerViewView();
                 }, 500);
             } else
@@ -390,7 +390,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
             cancelDialog();
             if (SharedPreferencesUtils.getEnableSniff()) {
                 alertDialog = Utils.getProDialog(getActivity(), R.string.sniffVodPlayUrl);
-                VideoUtils.startSniffing(vodDramaUrl, VideoSniffEvent.ActivityEnum.HISTORY, VideoSniffEvent.SniffEnum.PLAY);
+                VideoUtils.startSniffing(getContext(), vodDramaUrl, VideoSniffEvent.ActivityEnum.HISTORY, VideoSniffEvent.SniffEnum.PLAY);
             } else {
                 Utils.showAlert(getActivity(),
                         getString(R.string.errorDialogTitle),
@@ -466,6 +466,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        alertDialog = null;
         videoPresenter.detachView();
     }
 

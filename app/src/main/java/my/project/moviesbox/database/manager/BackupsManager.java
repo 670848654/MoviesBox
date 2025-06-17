@@ -16,10 +16,12 @@ import java.util.List;
 import java.util.Map;
 
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.database.dao.TDirectoryDao;
 import my.project.moviesbox.database.dao.TFavoriteDao;
 import my.project.moviesbox.database.dao.THistoryDao;
 import my.project.moviesbox.database.dao.THistoryDataDao;
 import my.project.moviesbox.database.dao.TVideoDao;
+import my.project.moviesbox.database.entity.TDirectory;
 import my.project.moviesbox.database.entity.TFavorite;
 import my.project.moviesbox.database.entity.THistory;
 import my.project.moviesbox.database.entity.THistoryData;
@@ -37,6 +39,7 @@ public class BackupsManager extends BaseManager {
     public static TFavoriteDao tFavoriteDao = getInstance().tFavoriteDao();
     public static THistoryDao tHistoryDao = getInstance().tHistoryDao();
     public static THistoryDataDao tHistoryDataDao = getInstance().tHistoryDataDao();
+    public static TDirectoryDao tDirectoryDao = getInstance().tDirectoryDao();
 
     /**
      * 查询所有待备份数据
@@ -69,6 +72,11 @@ public class BackupsManager extends BaseManager {
             List<THistoryData> tHistoryData = tHistoryDataDao.queryAll();
             appendTextToFile("\"historyDataList\":[", filePath);
             appendJSONObjectToFile(tHistoryData, filePath);
+            appendTextToFile("],", filePath);
+
+            List<TDirectory> tDirectories = tDirectoryDao.queryAll();
+            appendTextToFile("\"tDirectories\":[", filePath);
+            appendJSONObjectToFile(tDirectories, filePath);
             appendTextToFile("]", filePath);
 
             appendTextToFile("}", filePath);
@@ -155,15 +163,22 @@ public class BackupsManager extends BaseManager {
      * @param tFavorites
      * @param tHistories
      * @param tHistoryData
+     * @param tDirectories
      */
-    public static void restoreBackup(List<TVideo> tVideoList, List<TFavorite> tFavorites, List<THistory> tHistories, List<THistoryData> tHistoryData) {
+    public static void restoreBackup(List<TVideo> tVideoList,
+                                     List<TFavorite> tFavorites,
+                                     List<THistory> tHistories,
+                                     List<THistoryData> tHistoryData,
+                                     List<TDirectory> tDirectories) {
         tVideoDao.deleteAll();
         tFavoriteDao.deleteAll();
         tHistoryDao.deleteAll();
         tHistoryDataDao.deleteAll();
+        tDirectoryDao.deleteAll();
         tVideoDao.insertVideos(tVideoList);
         tFavoriteDao.insertFavorites(tFavorites);
         tHistoryDao.insertHistories(tHistories);
         tHistoryDataDao.insertHistoryDatas(tHistoryData);
+        tDirectoryDao.insertDirectories(tDirectories);
     }
 }

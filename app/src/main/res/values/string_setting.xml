@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 设置界面文本 -->
+    <string name="settingTitle">设置</string>
+
+    <string name="transferProtocol">传输协议</string>
+    <string name="siteDomainName">站点域名</string>
+    <string name="setDomainTitle">网站域名配置</string>
+    <string name="setDomainDialogTitle">设置域名&lt;font color=\'red\'&gt;*PC端*&lt;/font&gt;</string>
+    <string name="setDomainDialogSubContent">该功能在网站域名变更后导致无法通过旧域名访问从而获取数据异常时使用。\n如果网站仅变更域名，网页布局无变动，你可在此输入相关站点的新域名保存即可。</string>
+    <string name="setDomainReleaseSubContent">🚩站点发布页：</string>
+    <string name="setDomainSuccessText">已修改域名为：%s</string>
+    <string name="setDomainErrorText1">域名不能为空</string>
+    <string name="setDomainErrorText2">域名格式错误</string>
+    <string name="setDomainPositiveBtnText">修改域名</string>
+    <string name="setDomainNeutralBtnText">恢复默认</string>
+    <string-array name="prefix">
+        <item>http://</item>
+        <item>https://</item>
+    </string-array>
+
+    <string name="enableSniffTitle">是否开启视频嗅探</string>
+    <string name="enableSniffSubContent">当常规解析失败时尝试视频资源嗅探</string>
+    <string name="enableSniffDialogContent">开启后当常规解析失败时尝试视频资源嗅探，并不代表能百分之百获取到视频资源，仅供尝试！</string>
+    <string name="sniffTimeOut">嗅探超时</string>
+    <string name="sniffTimeOutSubContent">设置嗅探超时时间，超过设定时间后无论是否成功强制中断嗅探，单位为秒，范围 1~60秒。</string>
+    <string name="setSuccess">配置已保存</string>
+
+    <string name="enableByPassCF">尝试绕过浏览器安全检测</string>
+    <string name="enableByPassCFContent">当网站开启了安全策略时可尝试</string>
+    <string name="enableByPassCFDialogContent">如果网站能正常解析时不要开启！\n当网站出现安全检查（一般为等待几秒后进入网站这中情况）时可开启尝试！</string>
+    <string name="enableByPassCFTimeOut">超时时间</string>
+    <string name="enableByPassCFTimeOutSubContent">设置超时时间，超过设定时间后无论是否成功强制中断访问，单位为秒，范围 1~60秒。</string>
+    <string name="onlyEnableByPassCF">仅开启尝试绕过浏览器安全检测时可用</string>
+
+    <string name="setPlayerTitle">视频播放器</string>
+    <string-array name="setPlayerItems">
+        <item>内置</item>
+        <item>外置</item>
+    </string-array>
+
+    <string name="setPlayerKernelTitle">播放器内核</string>
+    <string-array name="setPlayerKernelItems">
+        <item>ExoPlayer</item>
+        <item>IjkPlayer</item>
+    </string-array>
+
+    <string name="setDanmuTitle">播放器弹幕开关</string>
+    <string-array name="setDanmuItems">
+        <item>开启</item>
+        <item>关闭</item>
+    </string-array>
+
+    <string name="setThemeTitle">主题设置</string>
+    <string-array name="theme">
+        <item>明亮主题</item>
+        <item>黑暗主题</item>
+        <item>跟随系统（Android 10+）</item>
+    </string-array>
+
+    <string name="setM3u8QueueIgnoreTsTitle">忽略下载失败的ts切片，即使有失败的切片，下载完成后也要合并所有切片，但会丢失下载失败的片段，可能存在某个或多个切片一直下载失败，这种情况如果非要下载该视频时，请开启忽略！</string>
+    <string name="setM3u8QueueIgnoreTs">忽略失败的切片</string>
+    <string name="setM3u8Title">M3U8协议下载相关配置</string>
+    <string name="setM3u8QueueNumDialogSubContent">︎滑动设置同时下载的ts分片数量，根据网络带宽自行配置，加速M3U8类型资源下载速度。</string>
+    <string name="setM3u8QueueNumSuccess">配置已保存，将在下次任务中生效</string>
+    <string name="setM3u8RegRemoveAd">尝试移除广告切片</string>
+    <string name="setM3u8RegRemoveAdTitle">正则规则</string>
+    <string name="setM3u8RegRemoveAdDefaultConfig">(.*ad)+.*</string>
+    <string name="setM3u8RegRemoveAdRegsReset">恢复默认</string>
+    <string name="setM3u8RemoveAdRegs">广告切片匹配正则配置，仅针对某些ts列表插入了广告ts切片而不是广告内容内嵌在正常视频中的情况，多个使用|分割\n*不懂配置则不要修改，否则可能影响正常切片下载！</string>
+    <string name="setM3u8RemoveAdInfo">通过一些规则尝试过滤M3U8文件ts列表中的广告切片。\n*注意：开启后可能会出现M3U8协议资源无法下载、移除了正常的视频切片导致视频不完整等异常！</string>
+
+    <string name="setBackupsTitle">备份•恢复</string>
+    <string name="setBackupsSubContent">用于备份/恢复应用设置、收藏夹及历史记录数据</string>
+    <string name="setBackupsFileErrorMsg">请选择正确的备份文件！</string>
+    <string name="setBackupsRestoredMsg">已从备份文件中恢复数据</string>
+    <string name="setBackupsInProgress">任务正在执行中，请等待&#8230;</string>
+    <string name="setBackupsFileComplete">已生成备份文件%s</string>
+    <string-array name="backupsItems">
+        <item>创建数据备份</item>
+        <item>恢复数据备份</item>
+    </string-array>
+
+    <string name="setRemoveDownloadsTitle">清除所有下载记录</string>
+    <string name="setRemoveDownloadsSubContent">当下载功能出现异常时可尝试该操作</string>
+    <string name="setRemoveDownloadsDialogSubContent">是否清空所有下载记录？\n执行后将清空所有下载记录，但不会删除文件。</string>
+    <string name="setRemoveDownloadsNeutralTitle">仅删除Aria数据</string>
+    <string name="setRemoveDownloadsNeutralSuccess">已删除Aria全部下载任务</string>
+    <string name="setRemoveDownloadsSuccess">已删除所有下载记录</string>
+
+    <string name="checkUpdateTitle">检测更新</string>
+    <string name="checkForUpdates">正在检查是否有更新</string>
+    <string name="alreadyTheLatestVersion">已是最新版本</string>
+    <string name="connection2GithubTimedOut">检查更新失败，当前网络无法连接到GitHub</string>
+    <string name="checkUpdateError">检查更新失败，%s</string>
+    <string name="newVersionFound">发现新版本 %s %s</string>
+    <string name="go2TheReleasePage">，点击前往发布页查看</string>
+    <string name="go2TheReleasePageBtnText">前往发布页</string>
+</resources>

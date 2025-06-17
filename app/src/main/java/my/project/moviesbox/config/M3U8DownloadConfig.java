@@ -2,7 +2,6 @@ package my.project.moviesbox.config;
 
 import androidx.annotation.Nullable;
 
-import com.alibaba.fastjson.JSONObject;
 import com.arialyy.aria.core.download.M3U8Entity;
 import com.arialyy.aria.core.download.m3u8.M3U8VodOption;
 import com.arialyy.aria.core.processor.IBandWidthUrlConverter;
@@ -15,7 +14,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -25,7 +23,6 @@ import java.util.List;
 
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
-import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.utils.VideoUtils;
 /**
   * @包名: my.project.moviesbox.config
@@ -171,9 +168,6 @@ public class M3U8DownloadConfig {
                         newTsList.add(domainLastSlash + tsUrl);
                 }
             }
-            if (removeAdTsConfig)
-                LogUtil.logInfo("匹配到广告切片，移除ts切片下载列表", JSONObject.toJSONString(adTsUrl));
-            LogUtil.logInfo("tsList", JSONObject.toJSONString(newTsList));
             return newTsList; // 返回有效的ts文件url集合
         }
 
@@ -217,25 +211,24 @@ public class M3U8DownloadConfig {
             if (keyUrl.startsWith("http")) {
                 LogUtil.logInfo("keyUrl", keyUrl);
                 return keyUrl;
-            } else if (keyUrl.startsWith("/")) {
-                try {
-                    URL url = new URL(m3u8Url);
-                    String protocol = url.getProtocol();
-                    String hostname = url.getHost();
-                    m3u8Url = protocol + "://" + hostname;
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
+            }
+
+            try {
+                URL baseUrl = new URL(m3u8Url);
+                if (keyUrl.startsWith("/")) {
+                    // 绝对路径相对 host，例如：/videos/xxx.key
+                    String resolved = baseUrl.getProtocol() + "://" + baseUrl.getHost() + keyUrl;
+                    LogUtil.logInfo("keyUrl", resolved);
+                    return resolved;
+                } else {
+                    // 相对路径相对 m3u8 的路径
+                    String basePath = m3u8Url.substring(0, m3u8Url.lastIndexOf("/") + 1);
+                    String resolved = basePath + keyUrl;
+                    LogUtil.logInfo("keyUrl", resolved);
+                    return resolved;
                 }
-                keyUrl = m3u8Url + keyUrl;
-                LogUtil.logInfo("keyUrl", keyUrl);
-                return keyUrl;
-            } else {
-                int lastSlashIndex = m3u8Url.lastIndexOf("/");
-                if (lastSlashIndex != -1) {
-                    m3u8Url = m3u8Url.substring(0, lastSlashIndex + 1);
-                }
-                keyUrl = m3u8Url + keyUrl;
-                LogUtil.logInfo("keyUrl", keyUrl);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
                 return keyUrl;
             }
         }
@@ -253,23 +246,23 @@ public class M3U8DownloadConfig {
         public boolean merge(@Nullable M3U8Entity m3U8Entity, List<String> tsPath) {
             LogUtil.logInfo("TsMergeHandler", "开始合并TS....");
 //            String tsKey = m3U8Entity.getKeyPath() == null ? "" : VideoUtils.readKeyInfo2String(new File(m3U8Entity.getKeyPath()));
-            String keyPath = m3U8Entity.getKeyPath();
-            byte[] tsKey = null;
-            byte[] tsIv = null;
-            if (!Utils.isNullOrEmpty(keyPath)) {
-                tsKey = VideoUtils.readKeyInfo2Byte(new File(m3U8Entity.getKeyPath()));
-                tsIv = m3U8Entity.getIv() == null ? new byte[16] : m3U8Entity.getIv().getBytes();
-                String encryptedInformation = "TS分片存在加密; key=%s; iv=%s";
-                LogUtil.logInfo("TsMergeHandler", String.format(encryptedInformation, new String(tsKey), new String(tsIv)));
-            }
-            OutputStream outputStream = null;
+//            String keyPath = m3U8Entity.getKeyPath();
+            String keyPath = replaceWithKeyExtension(m3U8Entity.getFilePath());
+            File keyFile = new File(keyPath);
+//            OutputStream outputStream = null;
             InputStream inputStream = null;
             FileOutputStream fileOutputStream = null;
             List<File> finishedFiles = new ArrayList<>();
             for (String path : tsPath) {
                 try {
                     File pathFile = new File(path);
-                    if (!Utils.isNullOrEmpty(keyPath)) {
+                    if (keyFile.exists()) {
+                        byte[] tsKey = null;
+                        byte[] tsIv = null;
+//            tsKey = VideoUtils.readKeyInfo2Byte(new File(m3U8Entity.getKeyPath()));
+                        tsKey = VideoUtils.readKeyInfo2Byte(new File(keyPath));
+                        tsIv = m3U8Entity.getIv() == null ? new byte[16] : m3U8Entity.getIv().getBytes();
+                        LogUtil.logInfo("TsMergeHandler", String.format("TS分片存在加密; key=%s; iv=%s", new String(tsKey), new String(tsIv)));
                         // 存在加密
                         inputStream= new FileInputStream(pathFile);
                         byte[] bytes = new byte[inputStream.available()];
@@ -283,7 +276,7 @@ public class M3U8DownloadConfig {
                     e.printStackTrace();
                 } finally {
                     try {
-                        if (outputStream != null) outputStream.close();
+//                        if (outputStream != null) outputStream.close();
                         if (inputStream != null) inputStream.close();
                         if (fileOutputStream != null) fileOutputStream.close();
                     } catch (IOException e) {
@@ -293,5 +286,18 @@ public class M3U8DownloadConfig {
             }
             return VideoUtils.merge(m3U8Entity.getFilePath(), finishedFiles);
         }
+    }
+
+    public static String replaceWithKeyExtension(String filePath) {
+        if (filePath == null || filePath.isEmpty()) return null;
+
+        File file = new File(filePath);
+        String fileName = file.getName();
+        int dotIndex = fileName.lastIndexOf('.');
+
+        String baseName = (dotIndex > 0) ? fileName.substring(0, dotIndex) : fileName;
+        String parentPath = file.getParent();
+
+        return new File(parentPath, baseName + ".key").getAbsolutePath();
     }
 }

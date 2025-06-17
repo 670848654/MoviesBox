@@ -57,6 +57,10 @@ public class WeekDataBean implements Serializable {
          */
         private String title;
         /**
+         * 剧集标题占用行数
+         */
+        private int titleLines = 2;
+        /**
          * 剧集图片
          */
         private String imgUrl;
@@ -72,6 +76,14 @@ public class WeekDataBean implements Serializable {
          * 集数地址 暂未支持跳转
          */
         private String episodesUrl;
+
+        public WeekItem(String title, String imgUrl, String url, String episodes, String episodesUrl) {
+            this.title = title;
+            this.imgUrl = imgUrl;
+            this.url = url;
+            this.episodes = episodes;
+            this.episodesUrl = episodesUrl;
+        }
 
         @Override
         public String toString() {

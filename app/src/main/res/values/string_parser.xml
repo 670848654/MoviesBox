@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 解析相关文本 -->
+    <string name="parseVodPlayUrl">解析视频地址中，请稍后&#8230;</string>
+    <string name="sniffVodPlayUrl">常规解析失败，尝试嗅探播放地址&#8230;</string>
+    <string name="parseVodPlayUrlError">无法获取该视频播放地址！\n1、可能是网站自身无播放地址。\n2、可能是网站开启了CloudFlare等反爬虫安全策略，可尝试在设置中开启绕过浏览器安全检测（建议与视频嗅探同时开启）\n3、可能是网站更改了播放地址相关处理导致代码无法解析，可尝试在设置中开启视频嗅探。</string>
+    <string name="sniffVodPlayUrlError">在设定的超时时间内没有嗅探到任何疑似视频的资源链接！</string>
+    <string name="parsingErrorContent">!*哦豁,解析异常*!\n%s\n%s</string>
+    <string name="errorDialogTitle">!*哦豁,出错啦*!</string>
+    <string name="retryBtnText">点击重试</string>
+    <string name="closeBtnText">关闭</string>
+    <string name="emptyData">无数据</string>
+    <string name="errorDanmuMsg">获取弹幕信息失败!</string>
+    <string name="loadErrorMsg">数据加载失败</string>
+</resources>

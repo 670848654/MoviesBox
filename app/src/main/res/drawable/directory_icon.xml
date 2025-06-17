@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="16dp"
+        android:height="16dp"
+        android:drawable="@drawable/sharp_expand_circle_down_24"/>
+</layer-list>

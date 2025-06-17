@@ -131,21 +131,6 @@ public class SharedPreferencesUtils {
     public static void setAppMainInfo() {
         setParam("app_info", true);
     }
-
-    /**
-     * 是否显示隐藏功能
-     * @return
-     */
-    public static boolean getTurnOnHiddenFeatures() {
-        return (boolean) getParam("turnOnHiddenFeatures", ConfigManager.getInstance().isTurnOnHiddenFeatures());
-    }
-
-    /**
-     * 显示隐藏功能
-     */
-    public static void setTurnOnHiddenFeatures(boolean enable) {
-        setParam("turnOnHiddenFeatures", enable);
-    }
     /********************************************************** 系统相关结束 **********************************************************/
 
     /******************************************************** M3U8配置相关开始 ********************************************************/
@@ -251,6 +236,28 @@ public class SharedPreferencesUtils {
         setParam(getCacheTitleBySource(source), domain);
     }
 
+/*
+    */
+/**
+     * 通过数据源获取用户设置的域名
+     * @return
+     *//*
+
+    public static String getSubDomain() {
+        return (String) getParam(getCacheTitleBySource(getDefaultSource()) + "_subdomain", "");
+    }
+
+    */
+/**
+     * 保存用户设置的域名
+     * @param subDomain
+     *//*
+
+    public static void setSubDomain(String subDomain) {
+        setParam(getCacheTitleBySource(getDefaultSource()) + "_subdomain", subDomain);
+    }
+*/
+
     /**
      * 设置是否开启视频嗅探
      * @param enable
@@ -314,15 +321,6 @@ public class SharedPreferencesUtils {
     public static int getByPassCFTimeout() {
         return (int) getParam("byPassCFTimeout", ConfigManager.getInstance().getByPassCFTimeout());
     }
-
-    public static void setSaveParserLogs(boolean enable) {
-        setParam("saveParserLogs", enable);
-    }
-
-    public static boolean getSaveParserLogs() {
-        return (boolean) getParam("saveParserLogs", ConfigManager.getInstance().isSaveParserLogs());
-    }
-
     /********************************************************** 解析源相关结束 **********************************************************/
 
     /********************************************************** 播放器相关开始 **********************************************************/

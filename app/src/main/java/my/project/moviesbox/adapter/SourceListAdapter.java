@@ -2,7 +2,6 @@ package my.project.moviesbox.adapter;
 
 import android.graphics.Paint;
 import android.text.Html;
-import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -26,7 +25,6 @@ import my.project.moviesbox.utils.Utils;
  * @date 2024/8/2 14:58
  */
 public class SourceListAdapter extends BaseQuickAdapter<SourceDataBean, BaseViewHolder> {
-
     private final OnItemClick onItemClick;
 
     public SourceListAdapter(List<SourceDataBean> list, OnItemClick onItemClick) {
@@ -46,25 +44,25 @@ public class SourceListAdapter extends BaseQuickAdapter<SourceDataBean, BaseView
         int itemSourceIndex = item.getSource().getIndex();
         int itemSourceState = item.getSource().getStateEnum().getState();
         cardView.setStrokeColor(Utils.getContext().getColor(R.color.defaultCardStrokeColor));
+        titleView.setPaintFlags(titleView.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
         if (itemSourceState == SourceEnum.SourceStateEnum.UNDONE.getState()) {
-            doneBtn.setText("暂不支持");
+            doneBtn.setText(Utils.getString(R.string.notSupported));
             doneBtn.setEnabled(false);
         } else if (itemSourceState == SourceEnum.SourceStateEnum.DEPRECATED.getState()) {
             doneBtn.setEnabled(true);
-            titleView.setPaintFlags(titleView.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
         } else if (nowSource == itemSourceIndex) {
             doneBtn.setEnabled(false);
-            doneBtn.setText("当前所在");
+            doneBtn.setText(Utils.getString(R.string.currentLocation));
             cardView.setStrokeColor(Utils.getContext().getColor(R.color.pinka200));
         } else {
             doneBtn.setEnabled(true);
-            doneBtn.setText("切换至此数据源");
+            doneBtn.setText(Utils.getString(R.string.change2ThisDataSource));
         }
         String stateMsg = item.getSource().getMsg();
         boolean hasStateMsg = !Utils.isNullOrEmpty(stateMsg);
         if (hasStateMsg) {
             int stateMsgColor = item.getSource().getStateEnum().getColor();
-            stateMsgView.setText("站点解析状态\n"+stateMsg);
+            stateMsgView.setText(String.format(Utils.getString(R.string.siteParserStatus), stateMsg));
             stateMsgView.setTextColor(Utils.getContext().getColor(stateMsgColor));
         }
         stateMsgView.setVisibility(hasStateMsg ? View.VISIBLE : View.GONE);
@@ -83,19 +81,19 @@ public class SourceListAdapter extends BaseQuickAdapter<SourceDataBean, BaseView
         helper.setText(R.id.sourceType, item.getSourceType());
         helper.setBackgroundResource(R.id.sourceType, item.getSourceBg());
         helper.setGone(R.id.danmu, !hasDanmu);
-        helper.setText(R.id.info, hasInfo ? item.getSourceInfo() : "无相关描述");
+        helper.setText(R.id.info, hasInfo ? item.getSourceInfo() : Utils.getString(R.string.noDescription));
         websiteReleaseBtn.setVisibility(hasWebsiteRelease ? View.VISIBLE : View.GONE);
         rssBtn.setVisibility(hasRss ? View.VISIBLE : View.GONE);
         websiteReleaseBtn.setOnClickListener(v -> {
-            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            Utils.setVibration(v);
             onItemClick.onWebsiteReleaseClick(item.getWebsiteReleaseUrl());
         });
         rssBtn.setOnClickListener(v -> {
-            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            Utils.setVibration(v);
             onItemClick.onRssClick(SharedPreferencesUtils.getUserSetDomain(itemSourceIndex)+item.getRssUrl());
         });
         doneBtn.setOnClickListener(v -> {
-            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            Utils.setVibration(v);
             onItemClick.onChangeSource(itemSourceIndex);
         });
     }

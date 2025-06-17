@@ -1,10 +1,13 @@
 package my.project.moviesbox.view;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
 
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
@@ -50,6 +53,10 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
     protected  SearchView mSearchView;
     protected  boolean isSearch = false;
 
+    /*@BindView(R.id.pageRv)
+    protected RecyclerView pageRecyclerView;
+    protected PageAdapter pageAdapter;*/
+
     @Override
     protected SearchPresenter createPresenter() {
         return new SearchPresenter(this);
@@ -70,6 +77,12 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
         setToolbar(toolbar, "", "");
         initSwipe();
         initDefaultAdapter();
+
+        /*List<Integer> pageList = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+        pageAdapter = new PageAdapter(pageList);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        pageRecyclerView.setLayoutManager(layoutManager);
+        pageRecyclerView.setAdapter(pageAdapter);*/
     }
 
     @Override
@@ -105,7 +118,7 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
                         //成功获取更多数据
                         page++;
                         mPresenter.loadPageData(title, String.valueOf(page));
-                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, page, pageCount), DialogXTipEnum.DEFAULT);
+                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, (parserInterface.startPageNum() == 0 ? page+1 : page), pageCount), DialogXTipEnum.DEFAULT);
                     } else {
                         //获取更多数据失败
                         page--;
@@ -121,7 +134,7 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
     }
 
     private void setSubTitle() {
-        toolbar.setSubtitle(String.format(PAGE_AND_ALL_PAGE, page, pageCount));
+        toolbar.setSubtitle(String.format(PAGE_AND_ALL_PAGE, parserInterface.startPageNum() == 0 ? page+1 : page, pageCount));
     }
 
     public void openVodDesc(String title, String url) {
@@ -148,6 +161,18 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
         mSearchView = (SearchView) item.getActionView();
         mSearchView.onActionViewExpanded();
         mSearchView.setSubmitButtonEnabled(true);
+        View searchPlate = mSearchView.findViewById(androidx.appcompat.R.id.search_plate);
+        if (!Utils.isNullOrEmpty(searchPlate))
+            searchPlate.setBackgroundColor(Color.TRANSPARENT);
+        View submitArea = mSearchView.findViewById(androidx.appcompat.R.id.submit_area);
+        if (!Utils.isNullOrEmpty(submitArea))
+            submitArea.setBackgroundColor(Color.TRANSPARENT);
+        ImageView submitButton = mSearchView.findViewById(androidx.appcompat.R.id.search_go_btn);
+        if (submitButton != null)
+            submitButton.setImageResource(R.drawable.round_send_24);
+        ImageView closeButton = mSearchView.findViewById(androidx.appcompat.R.id.search_close_btn);
+        if (closeButton != null)
+            closeButton.setImageResource(R.drawable.round_search_off_24);
         mSearchView.setQueryHint("请输入检索关键字");
         mSearchView.setMaxWidth(4000);
         if (!Utils.isNullOrEmpty(title)) {
@@ -213,9 +238,9 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
         position = mRecyclerView.getLayoutManager() == null ? 0 : ((GridLayoutManager) mRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
         int spanCount;
         if (multiItemEntities.size() > 0 && multiItemEntities.get(0).getItemType() == VodItemStyleEnum.STYLE_16_9.getType()) {
-            spanCount = parserInterface.setVodList16_9ItemSize(Utils.isPad(), isPortrait);
+            spanCount = parserInterface.setVodList16_9ItemSize(Utils.isPad(), isPortrait, false);
         } else {
-            spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait);
+            spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait, false);
         }
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
         mRecyclerView.getLayoutManager().scrollToPosition(position);
@@ -256,10 +281,12 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
                 new Handler().postDelayed(() -> {
                     adapter.setNewInstance(multiItemEntities);
                     setRecyclerViewView();
+                    lazyLoadImg();
                 }, 500);
             } else {
                 adapter.addData(vodDataBeans);
                 setLoadState(adapter, true);
+                lazyLoadImg();
             }
             setSubTitle();
         });

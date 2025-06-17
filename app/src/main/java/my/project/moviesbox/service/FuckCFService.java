@@ -67,7 +67,7 @@ public class FuckCFService extends Service {
                     isPageLoaded = false;
                     timeoutRunnable = () -> {
                         if (!isPageLoaded) {
-                            LogUtil.logInfo(url, "页面加载超时！");
+                            LogUtil.logInfo( "页面加载超时，停止加载！", "");
                             view.stopLoading();  // 停止加载
                             sendData();
                         }
@@ -115,9 +115,7 @@ public class FuckCFService extends Service {
             if (!urlQueue.contains(newUrlQueue)) {
                 urlQueue.add(newUrlQueue); // 如果队列中不存在相同的 URL，则添加
                 processNextUrl(); // 开始处理下一个 URL
-            } else
-                LogUtil.logInfo(this.getClass().getName(), "URL 已存在队列中: " + url);
-            LogUtil.logInfo(this.getClass().getName() + "url", url);
+            }
         } else
             stopSelf();
         return START_STICKY;
@@ -140,7 +138,10 @@ public class FuckCFService extends Service {
         }
         EventBus.getDefault().post(new HtmlSourceEvent(html, queue.getType()));
         isProcessing = false; // 完成处理，标记当前处理已结束
-        processNextUrl(); // 继续处理下一个 URL
+        if (!urlQueue.isEmpty())
+            processNextUrl(); // 继续处理下一个 URL
+        else
+            stopSelf();
     }
 
     @Nullable
@@ -152,9 +153,11 @@ public class FuckCFService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        LogUtil.logInfo("没有下一个任务了，关闭服务", "");
         if (webView != null) {
             webView.stopLoading();
             webView.destroy();
         }
+        webView = null;
     }
 }

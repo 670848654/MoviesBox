@@ -177,7 +177,7 @@ public class HomeActivity extends BaseActivity {
             return;
         }
         this.doubleBackToExitPressedOnce = true;
-        application.showToastMsg("再按一次退出应用", DialogXTipEnum.DEFAULT);
+        application.showToastMsg(getString(R.string.pressAgain2ExitApp), DialogXTipEnum.DEFAULT);
         new Handler().postDelayed(() -> doubleBackToExitPressedOnce = false, 2000); // 2秒内再次按下返回键生效
     }
 }

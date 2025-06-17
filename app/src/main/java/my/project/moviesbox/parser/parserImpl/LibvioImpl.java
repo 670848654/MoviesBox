@@ -144,6 +144,25 @@ public class LibvioImpl implements ParserInterface {
         return null;
     }
 
+    @Override
+    public HashMap<String, String> setPlayerHeaders() {
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("accept", "*/*");
+        headers.put("accept-encoding", "identity;q=1, *;q=0");
+        headers.put("accept-language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6");
+        headers.put("priority", "i");
+        headers.put("range", "bytes=0-");
+        headers.put("referer", getDefaultDomain());
+        headers.put("sec-ch-ua", "\"Microsoft Edge\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"");
+        headers.put("sec-ch-ua-mobile", "?0");
+        headers.put("sec-ch-ua-platform", "\"Windows\"");
+        headers.put("sec-fetch-dest", "video");
+        headers.put("sec-fetch-mode", "no-cors");
+        headers.put("sec-fetch-site", "cross-site");
+        headers.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0");
+        return headers;
+    }
+
     /**
      * 站点分页开始页码
      *
@@ -566,7 +585,7 @@ public class LibvioImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source) {
+    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
         try {
             List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);
@@ -595,7 +614,7 @@ public class LibvioImpl implements ParserInterface {
                 // 先获取接口
                 logInfo("getParserApiUrl", getDefaultDomain() + "/static/player/"+jsName+".js");
 //                Document urlJS = Jsoup.connect(getDefaultDomain() + "/static/player/"+jsName+".js").ignoreContentType(true).headers(requestHeaders()).get();
-                String responseData = OkHttpUtils.performSyncRequest(getDefaultDomain() + "/static/player/"+jsName+".js");
+                String responseData = OkHttpUtils.getInstance().performSyncRequest(getDefaultDomain() + "/static/player/"+jsName+".js");
                 Document urlJS = Jsoup.parse(responseData);
                 String parserApi = "";
                 String regex = "src=\"(.*?)\"";
@@ -616,7 +635,7 @@ public class LibvioImpl implements ParserInterface {
                 }
                 parserApi = parserApi.startsWith("http") ? parserApi : getDefaultDomain()+parserApi;
                 logInfo("parserUrl", parserApi);
-                responseData = OkHttpUtils.performSyncRequestAndHeader(parserApi);
+                responseData = OkHttpUtils.getInstance().performSyncRequestAndHeader(parserApi);
                 LogUtil.logInfo("responseData", responseData);
                 Document doc = Jsoup.parse(responseData);
                 if(doc != null) {

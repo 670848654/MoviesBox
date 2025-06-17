@@ -39,15 +39,15 @@ public class SniffingVideoService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        // 设置 WebView 相关配置
-        webView = new WebView(this);
-        webView.getSettings().setMediaPlaybackRequiresUserGesture(true);
-        webView.getSettings().setJavaScriptEnabled(true);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
+            // 设置 WebView 相关配置
+            webView = new WebView(getApplicationContext());
+            webView.getSettings().setMediaPlaybackRequiresUserGesture(true);
+            webView.getSettings().setJavaScriptEnabled(true);
             String activityEnum = intent.getStringExtra("activityEnum");
             String sniffEnum = intent.getStringExtra("sniffEnum");
             String url = intent.getStringExtra("url");
@@ -97,7 +97,7 @@ public class SniffingVideoService extends Service {
                 boolean foundUrls = !playUrls.isEmpty();
                 List<DialogItemBean> urlsToPost = foundUrls ? playUrls : notFoundUrls;
                 EventBus.getDefault().post(setVideoSniffEvent(foundUrls, this.activityEnum, this.sniffEnum, urlsToPost));
-                this.service.stopSelf();
+                this.service.onDestroy();
             };
         }
 
@@ -119,6 +119,7 @@ public class SniffingVideoService extends Service {
             String contentType = headers.get("Content-Type"); // 通过请求头获取 MIME 类型
             // 忽略集合
             for (String suffering : ConfigManager.getInstance().getSuffering()) {
+                LogUtil.logInfo("请求地址", url);
                 if (url.contains(suffering)) {
                     // 如果 URL 包含任何一个 suffering 字符串，直接跳过该 URL
                     continue;

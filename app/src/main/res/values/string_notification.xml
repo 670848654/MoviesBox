@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channelId">download</string>
+    <string name="channelName">下载通知</string>
+    <string name="channelDescription">下载通知</string>
+    <string name="channelInfoId">downloadInfo</string>
+    <string name="channelInfoName">下载状态</string>
+    <string name="channelInfoDescription">下载状态</string>
+    <string name="channelServiceInfoId">downloadService</string>
+    <string name="channelServiceInfoName">下载服务</string>
+    <string name="channelServiceInfoDescription">下载服务</string>
+    <string name="channelCheckServiceInfoId">checkUpdateService</string>
+    <string name="channelCheckServiceInfoName">检测更新服务</string>
+    <string name="channelCheckServiceInfoDescription">检测更新服务</string>
+    <string name="channelRssServiceInfoId">RssService</string>
+    <string name="channelRssServiceInfoName">RSS查询服务</string>
+    <string name="channelServiceServiceInfoDescription">RSS查询服务</string>
+</resources>

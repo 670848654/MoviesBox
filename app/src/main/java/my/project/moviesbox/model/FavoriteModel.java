@@ -20,8 +20,8 @@ import my.project.moviesbox.utils.Utils;
  */
 public class FavoriteModel extends BaseModel implements FavoriteContract.Model {
     @Override
-    public void getData(int offset, int limit, boolean updateOrder, FavoriteContract.LoadDataCallback callback) {
-        List<TFavoriteWithFields> list = TFavoriteManager.queryFavorite(offset, limit, updateOrder);
+    public void getData(String directoryId, int offset, int limit, boolean updateOrder, FavoriteContract.LoadDataCallback callback) {
+        List<TFavoriteWithFields> list = TFavoriteManager.queryFavorite(directoryId, offset, limit, updateOrder);
         if (list.size() > 0)
             callback.favoriteList(list);
         else

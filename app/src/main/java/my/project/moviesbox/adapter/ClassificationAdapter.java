@@ -1,7 +1,5 @@
 package my.project.moviesbox.adapter;
 
-import android.view.HapticFeedbackConstants;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -122,7 +120,7 @@ public class ClassificationAdapter extends BaseMultiItemQuickAdapter<MultiItemEn
                             }
                         }
                     }
-                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                    Utils.setVibration(view);
                     onItemClick.onChipClick(classificationDataBean.getIndex(), String.join(",", titleSb),  String.join(",", urlSb));
                 });
                 recyclerView.setPadding(0,0,0, 10);

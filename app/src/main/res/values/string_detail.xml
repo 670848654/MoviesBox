@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 详情界面文本 -->
+    <string name="downloadBtn">下载</string>
+    <string name="sourceWebPageBtn">源网页</string>
+    <string name="doNotBelieveAnyAdsInTheVideo">资源来自网站，不要相信视频中的任何广告！</string>
+    <string name="reverseOrderOfList">列表反序</string>
+    <string name="expandAllEpisodes">展开全部</string>
+    <string name="multipleSeasons">相关剧集</string>
+    <string name="relatedSuggestion">相关推荐</string>
+    <string name="clickToView">点击查看</string>
+
+    <string name="vipQuickAccess">VIP视频网站快捷访问</string>
+    <string name="playbackAddress">影视播放地址</string>
+    <string name="parseVideoData">解析影视数据</string>
+
+    <string name="noWifiDialogTitle">注意</string>
+    <string name="noWifiDialogContent">当前网络未连接到WLAN，确定要继续下载吗？</string>
+
+    <string name="downloadInfoContent">下载须知&#187; \n下载标识：\n\u3000绿色→ 表示该剧集已存在下载任务。\n存储位置：\n\u3000默认存储位置为公共目录/Download/MoviesBox[%s]中（其中Android 11以下需存储授权、Android 11及以上不需要权限但并非所有设备都支持这种方式），如公共目录无法读写或未授予存储权限将存入应用自身私有目录中，可通过SAF自定义授权目录进行导出，导出为复制操作，导出后并不会删除源下载文件，需自行在下载列表进行删除。\n 后台下载：\n\u3000请注意如果你需要在后台进行下载时，由于数据操作是在服务中进行，不同设备可能存在后台、锁屏后下载服务被杀死的情况，请根据自己的设备设置手动将该APP设置电池优化白名单或允许后台运行，否则后台下载时会出现下载失败的情况！\nM3U8协议格式：\n\u3000虽然支持M3U8协议格式的视频下载，由于M3U8协议的特殊性，其中可能存在格式伪装、资源加密、多级域名、key等资源路劲问题，解析方法只能兼容经测试过的部分规则，所以不一定能执行成功，如果下载失败自行删除下载任务！下载成功后会进行ts分片合并通过ffmpeg转为MP4，耗时与设备配置挂钩~\n\u3000下载的视频仅在 我的→ 下载列表中进行播放，其他界面播放还是使用网络解析播放！</string>
+    <string name="downloadMultipleVideoDialogTitle">请选择下载资源</string>
+    <string name="hasDownloadTask">已存在下载任务，请勿重复执行！</string>
+
+    <string name="notSupportDownloadMsg">不支持的下载格式，该地址可能非视频地址！ -> %s</string>
+    <string name="downloadM3u8Tips">该视频资源类型为M3U8，可能无法正常下载成功！</string>
+    <string name="downloadStart">开始下载 -> %s</string>
+    <string name="episodeSize">%s [共%d集]</string>
+    <string name="noEpisode">!*未解析出该剧集播放列表*!\n请检查网站是否存在播放列表或尝试刷新~</string>
+    <string name="playUrlParserError">%s -> 播放地址解析失败</string>
+
+    <string name="loadVodDescInfo">请在影视详情加载完毕后再进行操作</string>
+</resources>

@@ -43,7 +43,7 @@ public class TFavoriteManager extends BaseManager {
      * @param videoId
      * @return
      */
-    public static boolean favorite(String videoDescUrl, String videoImgUrl, String videoDesc, String videoId) {
+    public static boolean favorite(String videoDescUrl, String videoImgUrl, String videoDesc, String videoId, String directoryId) {
         TFavorite tFavorite = tFavoriteDao.queryByVideoId(videoId);
         if (Utils.isNullOrEmpty(tFavorite)) {
             // 收藏
@@ -56,6 +56,7 @@ public class TFavoriteManager extends BaseManager {
             tFavorite.setVideoDesc(videoDesc);
             tFavorite.setLastVideoPlayNumberUrl("");
             tFavorite.setLastVideoUpdateNumber("");
+            tFavorite.setDirectoryId(Utils.isNullOrEmpty(directoryId) ? null : directoryId);
             THistory tHistory = tHistoryDao.queryByVideoId(videoId);
             if (!Utils.isNullOrEmpty(tHistory)) {
                 THistoryData tHistoryData = tHistoryDataDao.querySingleData(tHistory.getHistoryId());
@@ -99,7 +100,8 @@ public class TFavoriteManager extends BaseManager {
      */
     public static void updateFavorite(String videoDescUrl, String videoImgUrl, String videoDesc, String videoId) {
         TFavorite tFavorite = tFavoriteDao.queryByVideoId(videoId);
-        tFavorite.setVideoImgUrl(videoImgUrl);
+        if (!tFavorite.getVideoImgUrl().contains("base64"))
+            tFavorite.setVideoImgUrl(videoImgUrl);
         tFavorite.setVideoUrl(videoDescUrl);
         tFavorite.setVideoDesc(videoDesc);
         tFavoriteDao.update(tFavorite);
@@ -107,13 +109,23 @@ public class TFavoriteManager extends BaseManager {
 
     /**
      * 分页查询用户收藏的影视
+     * @param directoryId
      * @param offset
      * @param limit
      * @param updateOrder
      * @return
      */
-    public static List<TFavoriteWithFields> queryFavorite(int offset, int limit, boolean updateOrder) {
-        return tFavoriteDao.queryFavorite(source, offset, limit);
+    public static List<TFavoriteWithFields> queryFavorite(String directoryId, int offset, int limit, boolean updateOrder) {
+        return tFavoriteDao.queryFavorite(source, directoryId, offset, limit);
+    }
+
+    /**
+     * 根据目录id查询目录下数据总数
+     * @param directoryId
+     * @return
+     */
+    public static int queryFavoriteCountByDirectoryId(String directoryId) {
+        return tFavoriteDao.queryFavoriteCountByDirectoryId(source, directoryId);
     }
 
     /**
@@ -130,5 +142,27 @@ public class TFavoriteManager extends BaseManager {
      */
     public static void deleteFavorite(String videoId) {
         tFavoriteDao.deleteByVideoId(videoId);
+    }
+
+    /**
+     * 变更域名时更新相关域名
+     * @param oldDomain 旧域名
+     * @param newDomain 新域名
+     */
+    public static void updateUrlByChangeDomain(String oldDomain, String newDomain) {
+        tFavoriteDao.updateUrlByChangeDomain(oldDomain, newDomain);
+        tHistoryDao.updateUrlByChangeDomain(oldDomain, newDomain);
+        tHistoryDataDao.updateUrlByChangeDomain(oldDomain, newDomain);
+    }
+
+    /**
+     * 更新收藏影视清单位置
+     * @param videoId
+     * @param directoryId
+     */
+    public static void updateFavoriteDirectoryId(String videoId, String directoryId) {
+        TFavorite tFavorite = tFavoriteDao.queryByVideoId(videoId);
+        tFavorite.setDirectoryId(directoryId.isEmpty() ? null : directoryId);
+        tFavoriteDao.update(tFavorite);
     }
 }

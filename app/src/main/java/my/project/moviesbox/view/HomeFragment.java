@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Html;
-import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -55,6 +54,7 @@ import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.HomePresenter;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.lazyLoadImage.VodListLazyImgActivity;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -75,12 +75,13 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
     List<MultiItemEntity> multiItemEntities = new ArrayList<>();
     @BindView(R.id.rv_list)
     RecyclerView recyclerView;
-    private HomeAdapter adapter;
+    protected HomeAdapter adapter;
     @BindView(R.id.search)
     ExtendedFloatingActionButton searchFAB;
     private int fabHeight = 0;
     private SourceListAdapter sourceListAdapter;
     private BottomSheetDialog sourceListBottomSheetDialog;
+    private WebView webView;
 
     @Override
     protected void setConfigurationChanged() {
@@ -112,21 +113,19 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
     }
 
     private void initSwipe() {
+        mSwipe.setEnabled(false);
         mSwipe.setColorSchemeResources(R.color.pink500, R.color.blue500, R.color.purple500);
-        mSwipe.setOnRefreshListener(() ->
-            refreshData()
-        );
+        mSwipe.setOnRefreshListener(this::refreshData);
     }
 
     @OnClick({R.id.search, R.id.change_source, R.id.open_web_view})
     public void viewClick(View view) {
+        Utils.setVibration(view);
         switch (view.getId()) {
             case R.id.search:
-                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
                 startActivity(new Intent(getActivity(), parserInterface.searchOpenClass()));
                 break;
             case R.id.change_source:
-                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
                 sourceListBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
                 sourceListBottomSheetDialog.show();
                 break;
@@ -134,7 +133,7 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
                 if (SharedPreferencesUtils.getByPassCF())
                     openWebView();
                 else
-                    application.showToastMsg("仅开启尝试绕过浏览器安全检测时可用", DialogXTipEnum.WARNING);
+                    application.showToastMsg(getString(R.string.onlyEnableByPassCF), DialogXTipEnum.WARNING);
                 break;
         }
     }
@@ -171,7 +170,10 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
                     params[params.length - 1] = String.valueOf(parserInterface.startPageNum());
                     bundle.putString("title", title);
                     bundle.putStringArray("params", params);
-                } else if (mainDataBean.getOpenMoreClass().equals(VodListActivity.class) || mainDataBean.getOpenMoreClass().equals(TextListActivity.class) || mainDataBean.getOpenMoreClass().equals(TopticListActivity.class)) {
+                } else if (mainDataBean.getOpenMoreClass().equals(VodListActivity.class) ||
+                        mainDataBean.getOpenMoreClass().equals(TextListActivity.class) ||
+                        mainDataBean.getOpenMoreClass().equals(TopticListActivity.class) ||
+                        mainDataBean.getOpenMoreClass().equals(VodListLazyImgActivity.class)) {
                     // 打开对应列表界面视图
                     bundle.putString("title", mainDataBean.getTitle());
                     bundle.putString("url", mainDataBean.getMore());
@@ -197,8 +199,8 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
 
     private void openWebView() {
         BottomSheetDialog webviewBottomSheetDialog = new BottomSheetDialog(getActivity());
-        FrameLayout view= (FrameLayout) getLayoutInflater().inflate(R.layout.dialog_webview, null);
-        WebView webView= view.findViewById(R.id.webView);
+        FrameLayout view = (FrameLayout) getLayoutInflater().inflate(R.layout.dialog_webview, null);
+        webView = view.findViewById(R.id.webView);
         Button getCookie = view.findViewById(R.id.getCookie);
         getCookie.setOnClickListener(v -> {
             webviewBottomSheetDialog.dismiss();
@@ -214,9 +216,8 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
         });
 
         webviewBottomSheetDialog.setOnDismissListener(dialog -> {
-            // 销毁 WebView
             webView.stopLoading();
-            webView.destroy();
+            webView.onPause();
         });
 
         // 加载 URL
@@ -250,6 +251,16 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
     }
 
     @Override
+    public void onDestroy() {
+        if (webView != null) {
+            webView.stopLoading();
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
+    }
+
+    @Override
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(RefreshEnum refresh) {
         switch (refresh) {
@@ -275,7 +286,7 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
         if (getActivity() == null) return;
         getActivity().runOnUiThread(() -> {
             if (Utils.isNullOrEmpty(tag.getOpenClass()))
-                application.showToastMsg("跳转视图未定义，请检查！", DialogXTipEnum.ERROR);
+                application.showToastMsg(getString(R.string.openActivityIsUndefined), DialogXTipEnum.ERROR);
             else {
                 Bundle bundle = new Bundle();
                 if (tag.getOpenClass().equals(WeekActivity.class)) {
@@ -295,7 +306,10 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
                     bundle.putString("title", tag.getTitle());
                     bundle.putString("url", tag.getUrl());
                     bundle.putBoolean("isVodList", false);
-                } else if (tag.getOpenClass().equals(VodListActivity.class) || tag.getOpenClass().equals(TextListActivity.class)) {
+                } else if (tag.getOpenClass().equals(VodListActivity.class) ||
+                        tag.getOpenClass().equals(TextListActivity.class) ||
+                        tag.getOpenClass().equals(VodListLazyImgActivity.class)) {
+                    // 跳转列表视图
                     bundle.putString("title", tag.getTitle());
                     bundle.putString("url", tag.getUrl());
                 }
@@ -347,7 +361,7 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
      */
     private void setDropDownTagOpenClass(Class openClass, String title, String url) {
         if (Utils.isNullOrEmpty(openClass)) {
-            application.showToastMsg("跳转视图未定义，请检查！", DialogXTipEnum.ERROR);
+            application.showToastMsg(getString(R.string.openActivityIsUndefined), DialogXTipEnum.ERROR);
         } else {
             Bundle bundle = new Bundle();
             if (openClass.equals(ClassificationVodListActivity.class)) {
@@ -427,6 +441,7 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
                         }
                     });
                 }
+                lazyLoadImg();
             }, 500);
         });
     }

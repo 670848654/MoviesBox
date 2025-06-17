@@ -571,7 +571,7 @@ public class ZxzjImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source) {
+    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
         try {
             List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);
@@ -594,8 +594,7 @@ public class ZxzjImpl implements ParserInterface {
             // 调用接口获取真实播放地址
             // 先获取接口
             LogUtil.logInfo("getDataUrl", url);
-//            Document dataHtml = Jsoup.connect(url).ignoreContentType(true).headers(requestHeaders()).get();
-            String responseData = OkHttpUtils.performSyncRequest(url);
+            String responseData = OkHttpUtils.getInstance().performSyncRequestAndHeader(url);
             Document dataHtml = Jsoup.parse(responseData);
             Elements dataScriptList = dataHtml.select("script");
             Element dataScript = null;

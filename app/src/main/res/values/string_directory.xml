@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="defaultToolbarTitle">清单列表</string>
+    <string name="saveToList">保存到清单</string>
+    <string name="saveToListSplicing">保存到清单：%s</string>
+    <string name="defaultList">默认清单</string>
+    <string name="createNewList">创建新的清单</string>
+    <string name="enterListName">输入清单名称</string>
+    <string name="listNameCannotBeTheDefaultName">清单名称不能为默认名称</string>
+    <string name="listNameCannotBeEmpty">清单名称不能为空</string>
+    <string name="editListName">编辑清单名称</string>
+    <string name="listNameAlreadyExists">清单名称已存在</string>
+    <string name="listRenameComplete">重命名完成</string>
+    <string name="listDeletePrompt">是否删除该清单分组？删除后不可恢复，所属数据将移动默认清单分组中！</string>
+    <string name="listDeleteComplete">清单已删除</string>
+</resources>

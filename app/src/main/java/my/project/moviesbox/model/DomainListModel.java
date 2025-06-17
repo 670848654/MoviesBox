@@ -10,6 +10,7 @@ import my.project.moviesbox.event.HtmlSourceEvent;
 import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.bean.DomainDataBean;
 import my.project.moviesbox.parser.config.SourceEnum;
+import my.project.moviesbox.utils.Utils;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -23,6 +24,16 @@ import okhttp3.Response;
 public class DomainListModel extends BaseModel implements DomainListContract.Model {
     @Override
     public void getData(DomainListContract.LoadDataCallback callback) {
+        if (!parserInterface.needParserDomain()) {
+            DomainDataBean domainDataBean = parserInterface.parserDomain("");
+            if (Utils.isNullOrEmpty(domainDataBean))
+                callback.error("parserDomain NullPointerException 解析方法未定义或出现错误，请检查");
+            if (domainDataBean.isSuccess())
+                callback.success(domainDataBean.getDomainList());
+            else
+                callback.error(domainDataBean.getMsg());
+            return;
+        }
         String url = SourceEnum.getWebsiteReleaseBySource(parserInterface.getSource());
         if (parserInterface.getPostMethodClassName().contains(this.getClass().getName())) {
             // 使用http post

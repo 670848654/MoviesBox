@@ -27,18 +27,22 @@ import okhttp3.Response;
  */
 public class HomeModel extends BaseModel implements HomeContract.Model {
     private HomeContract.LoadDataCallback callback;
-
     @Override
     public void getData(HomeContract.LoadDataCallback callback) {
         this.callback = callback;
+        String defaultDomain = parserInterface.getDefaultDomain();
+        if (parserInterface.getSource() == 6 && defaultDomain.endsWith(".shop")) {
+            // 555电影特殊处理
+            defaultDomain += "/index/home.html";
+        }
         if (SharedPreferencesUtils.getByPassCF()) {
             // 使用webview
-            App.startMyService(parserInterface.getDefaultDomain(), FuckCFEnum.HOME.name());
+            App.startMyService(defaultDomain, FuckCFEnum.HOME.name());
         } else {
             if (parserInterface.getPostMethodClassName().contains(this.getClass().getName())) {
                 // 使用http post
             } else
-                OkHttpUtils.getInstance().doGet(parserInterface.getDefaultDomain(), new Callback() {
+                OkHttpUtils.getInstance().doGet(defaultDomain, new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
                         callback.error(e.getMessage());
@@ -68,7 +72,7 @@ public class HomeModel extends BaseModel implements HomeContract.Model {
         if (!Utils.isNullOrEmpty(mainDataBeans))
             callback.success(mainDataBeans);
         else
-            callback.error(response != null ? parserErrorMsg(response, html) : html);
+            callback.error(response != null ? parserErrorMsg(response, html) : truncateString(html));
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

@@ -14,7 +14,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Rational;
 import android.util.TypedValue;
-import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -91,7 +90,7 @@ import my.project.moviesbox.utils.VideoUtils;
   * @版本: 1.0
  */
 public abstract class BasePlayerActivity extends BaseActivity implements JZPlayer.CompleteListener, JZPlayer.TouchListener,
-        JZPlayer.ShowOrHideChangeViewListener,  JZPlayer.OnProgressListener, JZPlayer.PlayingListener, JZPlayer.PauseListener, JZPlayer.OnQueryDanmuListener, JZPlayer.ActivityOrientationListener, DanmuContract.View {
+        JZPlayer.ShowOrHideChangeViewListener,  JZPlayer.OnProgressListener, JZPlayer.PlayingListener, JZPlayer.PauseListener, JZPlayer.OnQueryDanmuListener, JZPlayer.ActivityOrientationListener, JZPlayer.FlipListener, DanmuContract.View {
     @BindView(R.id.episodes_view)
     LinearLayout episodesView;
     @BindView(R.id.config_view)
@@ -216,19 +215,19 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         player.configView.setOnClickListener(v -> setDrawerOpen(GravityCompat.START));
         player.openDrama.setOnClickListener(view -> setDrawerOpen(GravityCompat.END));
         player.selectDramaView.setOnClickListener(view -> setDrawerOpen(GravityCompat.END));
-        player.setListener(this, this, this, this, this, this, this, this, this);
+        player.setListener(this, this, this, this, this, this, this, this, this, this);
         player.backButton.setOnClickListener(v -> {
-            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            Utils.setVibration(v);
             finish();
         });
         player.preVideo.setOnClickListener(v -> {
             clickIndex--;
-            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            Utils.setVibration(v);
             changePlayUrl(VideoUrlChangeEnum.PRE, clickIndex);
         });
         player.nextVideo.setOnClickListener(v -> {
             clickIndex++;
-            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            Utils.setVibration(v);
             changePlayUrl(VideoUrlChangeEnum.NEXT, clickIndex);
         });
         if (isLocalVideo())
@@ -833,5 +832,12 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
             configViewLayoutParams.width = widthInDp;
             configView.setLayoutParams(configViewLayoutParams);
         }, 500);
+    }
+
+    private int flipValue = 1;
+    @Override
+    public void setFlip() {
+        flipValue = flipValue == 1 ? -1 : 1;
+        player.getCustomTextureView().setScaleX(flipValue);
     }
 }

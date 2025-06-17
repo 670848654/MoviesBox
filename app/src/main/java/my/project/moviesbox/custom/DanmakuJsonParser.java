@@ -54,11 +54,9 @@ public class DanmakuJsonParser extends BaseDanmakuParser {
                 JSONObject danmuObj = jsonArray.getJSONObject(i);
                 long time = (long) (Float.parseFloat(danmuObj.getString("time"))); // 出现时间
                 int color = Color.WHITE;
-                try {
-                    color = Color.parseColor(danmuObj.getString("color"));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                String colorStr = danmuObj.getString("color");
+                if (colorStr.length() == 7)
+                    color = Color.parseColor(colorStr);
                 int danmuType = Integer.parseInt(danmuObj.getString("type"));
                 int textSize = Integer.parseInt(danmuObj.getString("textSize"));
                 BaseDanmaku item = mContext.mDanmakuFactory.createDanmaku(danmuType, mContext);

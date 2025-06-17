@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 通用文本 -->
+    <string name="openActivityIsUndefined">跳转视图未定义，请检查!</string>
+    <string name="otherOperation">操作</string>
+    <string name="defaultPositiveBtnText">确定</string>
+    <string name="defaultNegativeBtnText">取消</string>
+    <string name="yesterday">昨天 </string>
+    <string name="today">今天 </string>
+    <string name="selectVideoPlayer">请选择视频播放器</string>
+    <string name="noAppFound">没有找到匹配的程序</string>
+
+    <string name="pageAndAllPage">"%s/%s页</string>
+    <string name="loadPageAndAllPage">加载第%s页，共%s页</string>
+
+    <string name="emptyMyList">空空如也</string>
+
+    <string name="loading">加载中…</string>
+    <string name="failedToLoad">加载失败</string>
+    <string name="noMoreData">无更多数据</string>
+    <string name="noMoreContent">没有更多内容</string>
+
+    <string name="moveDirectory">变更清单目录</string>
+    <string name="refreshImageText">刷新封面</string>
+</resources>

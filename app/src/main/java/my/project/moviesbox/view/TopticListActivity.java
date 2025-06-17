@@ -94,27 +94,25 @@ public class TopticListActivity extends BaseActivity<TopticListModel, TopTicList
             openList(title, url);
         });
         adapter.getLoadMoreModule().setLoadMoreView(new CustomLoadMoreView());
-        adapter.getLoadMoreModule().setOnLoadMoreListener(() -> {
-            mRecyclerView.postDelayed(() -> {
-                if (page >= pageCount) {
-                    //数据全部加载完毕
-                    adapter.getLoadMoreModule().loadMoreEnd();
-                    application.showToastMsg(getString(R.string.noMoreContent), DialogXTipEnum.SUCCESS);
+        adapter.getLoadMoreModule().setOnLoadMoreListener(() -> mRecyclerView.postDelayed(() -> {
+            if (page >= pageCount) {
+                //数据全部加载完毕
+                adapter.getLoadMoreModule().loadMoreEnd();
+                application.showToastMsg(getString(R.string.noMoreContent), DialogXTipEnum.SUCCESS);
+            } else {
+                if (isErr) {
+                    //成功获取更多数据
+                    page++;
+                    mPresenter.loadPageData(url, isVodList, page);
+                    application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, (parserInterface.startPageNum() == 0 ? page+1 : page), pageCount), DialogXTipEnum.DEFAULT);
                 } else {
-                    if (isErr) {
-                        //成功获取更多数据
-                        page++;
-                        mPresenter.loadPageData(url, isVodList, page);
-                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, page, pageCount), DialogXTipEnum.DEFAULT);
-                    } else {
-                        //获取更多数据失败
-                        page--;
-                        isErr = true;
-                        adapter.getLoadMoreModule().loadMoreFail();
-                    }
+                    //获取更多数据失败
+                    page--;
+                    isErr = true;
+                    adapter.getLoadMoreModule().loadMoreFail();
                 }
-            }, 500);
-        });
+            }
+        }, 500));
         if (Utils.checkHasNavigationBar(this)) mRecyclerView.setPadding(0,0,0, Utils.getNavigationBarHeight(this));
         mRecyclerView.setAdapter(adapter);
         adapter.setEmptyView(rvView);
@@ -167,12 +165,11 @@ public class TopticListActivity extends BaseActivity<TopticListModel, TopTicList
         position = mRecyclerView.getLayoutManager() == null ? 0 : ((GridLayoutManager) mRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
         int spanCount;
         if (multiItemEntities.size() > 0 && multiItemEntities.get(0).getItemType() == VodItemStyleEnum.STYLE_16_9.getType()) {
-            spanCount = parserInterface.setVodList16_9ItemSize(Utils.isPad(), isPortrait);
+            spanCount = parserInterface.setVodList16_9ItemSize(Utils.isPad(), isPortrait, false);
         } else {
-            spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait);
+            spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait, false);
         }
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
-        //        mRecyclerView.setLayoutManager(new GridLayoutManager(this, isVodList ? parserInterface.setVodListItemSize(Utils.isPad(), isPortrait) :  parserInterface.setTopticItemListItemSize(Utils.isPad(), isPortrait)));
         mRecyclerView.getLayoutManager().scrollToPosition(position);
     }
 

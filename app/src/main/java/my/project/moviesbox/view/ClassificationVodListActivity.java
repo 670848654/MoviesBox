@@ -3,7 +3,6 @@ package my.project.moviesbox.view;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -127,7 +126,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
 
     @OnClick(R.id.classFab)
     public void openBSD(View view) {
-        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+        Utils.setVibration(view);
         classificationBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
         classificationBottomSheetDialog.show();
     }
@@ -155,7 +154,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
                         page++;
                         paramsUrl[paramsUrl.length-1] = String.valueOf(page);
                         mPresenter.loadPageData(paramsUrl);
-                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, page, pageCount), DialogXTipEnum.DEFAULT);
+                        application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, (parserInterface.startPageNum() == 0 ? page+1 : page), pageCount), DialogXTipEnum.DEFAULT);
                     } else {
                         //获取更多数据失败
                         page--;
@@ -178,7 +177,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
             restButton.setVisibility(View.GONE);
         restButton.setOnClickListener(view -> {
             // 重置过滤器
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            Utils.setVibration(view);
             for (MultiItemEntity it : classificationAdapter.getData()) {
                 ClassificationDataBean classificationDataBean = (ClassificationDataBean) it;
                 paramsUrl[classificationDataBean.getIndex()] = "";
@@ -205,7 +204,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
             }
             toolbar.setTitle(title + stringBuilder);
             // 条件检索
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            Utils.setVibration(view);
             page = parserInterface.startPageNum();
             paramsUrl[paramsUrl.length-1] = String.valueOf(page);
            loadData();
@@ -213,7 +212,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
         });
         Button closeButton = classificationView.findViewById(R.id.close);
         closeButton.setOnClickListener(view -> {
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            Utils.setVibration(view);
             classificationBottomSheetDialog.dismiss();
         });
         classificationListRv = classificationView.findViewById(R.id.rv_list);
@@ -227,7 +226,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
     }
 
     private void setToolbarInfo() {
-        toolbar.setSubtitle(String.format(PAGE_AND_ALL_PAGE, page, pageCount));
+        toolbar.setSubtitle(String.format(PAGE_AND_ALL_PAGE, (parserInterface.startPageNum() == 0 ? page+1 : page), pageCount));
     }
 
     public void openVodDetail(String title, String url) {
@@ -267,9 +266,9 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
         position = mRecyclerView.getLayoutManager() == null ? 0 : ((GridLayoutManager) mRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
         int spanCount;
         if (vodMultiItemEntities.size() > 0 && vodMultiItemEntities.get(0).getItemType() == VodItemStyleEnum.STYLE_16_9.getType()) {
-            spanCount = parserInterface.setVodList16_9ItemSize(Utils.isPad(), isPortrait);
+            spanCount = parserInterface.setVodList16_9ItemSize(Utils.isPad(), isPortrait, false);
         } else {
-            spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait);
+            spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait, false);
         }
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
         mRecyclerView.getLayoutManager().scrollToPosition(position);

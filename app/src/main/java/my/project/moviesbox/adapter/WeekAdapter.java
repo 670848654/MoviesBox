@@ -1,7 +1,7 @@
 package my.project.moviesbox.adapter;
 
-import android.content.Context;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.LayoutRes;
 
@@ -23,25 +23,26 @@ import my.project.moviesbox.utils.Utils;
   * @版本: 1.0
  */
 public class WeekAdapter extends BaseQuickAdapter<WeekDataBean.WeekItem, BaseViewHolder> {
-    private Context context;
     @LayoutRes
     private int layout;
 
-    public WeekAdapter(Context context, @LayoutRes int layout, List<WeekDataBean.WeekItem> data) {
+    public WeekAdapter(@LayoutRes int layout, List<WeekDataBean.WeekItem> data) {
         super(layout, data);
         this.layout = layout;
-        this.context = context;
     }
 
     @Override
     protected void convert(BaseViewHolder helper, WeekDataBean.WeekItem item) {
         helper.setText(R.id.title, item.getTitle());
         helper.setText(R.id.episodes, item.getEpisodes());
+        TextView textView = helper.getView(R.id.title);
+        textView.setMinLines(item.getTitleLines());
+        textView.setMaxLines(item.getTitleLines());
         if (layout == WeekDataBean.ITEM_TYPE_0 || layout == WeekDataBean.ITEM_TYPE_1) {
             String imgUrl = item.getImgUrl();
             ImageView imageView = helper.getView(R.id.img);
             imageView.setTag(R.id.imageid, imgUrl);
-            Utils.setDefaultImage(item.getImgUrl(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title));
+            Utils.setDefaultImage(item.getImgUrl(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), false);
             helper.setVisible(R.id.episodesLayout, true);
         }
     }

@@ -4,6 +4,7 @@ import static my.project.moviesbox.parser.LogUtil.logInfo;
 import static my.project.moviesbox.parser.config.ItemStyleEnum.STYLE_16_9;
 import static my.project.moviesbox.parser.config.MultiItemEnum.BANNER_LIST;
 import static my.project.moviesbox.parser.config.MultiItemEnum.ITEM_LIST;
+import static my.project.moviesbox.parser.config.MultiItemEnum.TAG_LIST;
 import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum.YJYS;
 import static my.project.moviesbox.parser.config.VodTypeEnum.M3U8;
 import static my.project.moviesbox.parser.config.VodTypeEnum.MP4;
@@ -43,6 +44,8 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import my.project.moviesbox.model.DanmuModel;
 import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.LogUtil;
@@ -56,12 +59,14 @@ import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.bean.WeekDataBean;
 import my.project.moviesbox.parser.config.ItemStyleEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
+import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
-import my.project.moviesbox.parser.sourceCustomView.yjys.YjysSearchActivity;
+import my.project.moviesbox.parser.sourceCustomView.VerifySearchActivity;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.HomeFragment;
 import my.project.moviesbox.view.PlayerActivity;
+import my.project.moviesbox.view.WeekActivity;
 import okhttp3.FormBody;
 import okhttp3.Headers;
 import okhttp3.Response;
@@ -69,7 +74,7 @@ import okhttp3.Response;
 /**
  * @author Li
  * @version 1.0
- * @description: 注释
+ * @description: 修罗影视（原缘觉影视）站点解析实现
  * @date 2024/7/27 13:17
  */
 public class YjysImpl implements ParserInterface {
@@ -188,8 +193,17 @@ public class YjysImpl implements ParserInterface {
         try {
             Document document = Jsoup.parse(source);
             List<MainDataBean> mainDataBeans = new ArrayList<>();
+            // tag内容解析
+            MainDataBean mainDataBean = new MainDataBean();
+            mainDataBean.setDataType(TAG_LIST.getType());
+            List<MainDataBean.Tag> tags = new ArrayList<>();
+            tags.add(new MainDataBean.Tag(HomeTagEnum.WEEK.name, HomeTagEnum.WEEK.content, WeekActivity.class));
+            mainDataBean.setTags(tags);
+            mainDataBeans.add(mainDataBean);
             /*************************** 解析banner内容开始 ***************************/
             Elements bannerList = document.getElementById("carousel-captions").select("a.carousel-item");
+            if (bannerList.size() == 0)
+                return null;
             List<MainDataBean.Item> bannerItems = new ArrayList<>();
             MainDataBean bannerBean = new MainDataBean();
             bannerBean.setHasMore(false);
@@ -266,6 +280,8 @@ public class YjysImpl implements ParserInterface {
             DetailsDataBean detailsDataBean = new DetailsDataBean();
             Document document = Jsoup.parse(source);
             String title = document.select(".d-sm-block.d-md-none").text();
+            if (title.isEmpty())
+                return null;
             detailsDataBean.setTitle(title);
             // 影视图片
             String img = document.select(".col-md-auto.col-5.cover-lg-max-25 img").attr("src");
@@ -456,7 +472,7 @@ public class YjysImpl implements ParserInterface {
 
     @Override
     public Class searchOpenClass() {
-        return YjysSearchActivity.class;
+        return VerifySearchActivity.class;
     }
 
     /**
@@ -638,7 +654,7 @@ public class YjysImpl implements ParserInterface {
            String url = params[0];
            if (!url.startsWith("http"))
                url = getDefaultDomain() + url;
-           String source = OkHttpUtils.performSyncRequestAndHeader(url);
+           String source = OkHttpUtils.getInstance().performSyncRequestAndHeader(url);
            // 提取PID
            String pid = "";
            Document doc = Jsoup.parse(source);
@@ -685,7 +701,7 @@ public class YjysImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source) {
+    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
         try {
             // 提取PID
             String pid = "";
@@ -739,7 +755,7 @@ public class YjysImpl implements ParserInterface {
             String urlString = String.format(linesApi, getDefaultDomain(), timestamp, hexEncrypted, pid);
             LogUtil.logInfo("linesApi", urlString);
             // 发送HTTP请求，处理响应
-            String getResult = OkHttpUtils.performSyncRequestAndHeader(urlString);
+            String getResult = OkHttpUtils.getInstance().performSyncRequestAndHeader(urlString);
             LogUtil.logInfo("linesApi result", getResult);
             JSONObject jsonObject = new JSONObject(getResult);
             JSONObject data = jsonObject.getJSONObject("data");
@@ -778,14 +794,14 @@ public class YjysImpl implements ParserInterface {
 
     private void setDialogItemBean(String[] m3u8Arr, List<DialogItemBean> playUrls) throws Exception {
         for (String s : m3u8Arr) {
-            s = s.replace("https://www.bde4.cc", getDefaultDomain());
-            String[] sources = s.split("#");
+            String s1 = s.replace("https://www.bde4.cc", getDefaultDomain());
+            String[] sources = s1.split("#");
             String sourceName = sources.length > 1 ? sources[1] : "";
-            s = removeString(s, '#');
-            LogUtil.logInfo("s", s);
-            String localPath = saveLocalM3U8Path(s, sourceName);
+            s1 = removeString(s1, '#');
+            LogUtil.logInfo("m3u8 url", s1);
+            String localPath = saveLocalM3U8Path(s1, sourceName);
             if (!Utils.isNullOrEmpty(localPath)) {
-                playUrls.add(new DialogItemBean(localPath, M3U8));
+                playUrls.add(new DialogItemBean(localPath, M3U8, s.contains("sp")));
             }
         }
     }
@@ -834,7 +850,7 @@ public class YjysImpl implements ParserInterface {
             String decompressedString = new String(out.toByteArray(), StandardCharsets.UTF_8);
 //            LogUtil.logInfo("decompressedString", decompressedString);
             // 替换 TS URL 部分
-            decompressedString = decompressedString.replaceAll("((?:[0-9A-F]+){2,}\\.ts)", "https://vod.bdys.me/$1");
+            decompressedString = decompressedString.replaceAll("((?:[0-9A-F]+){2,}\\.ts)", "https://vod.xlys.me/$1");
 //            LogUtil.logInfo("replaceAll", decompressedString);
             return decompressedString.getBytes(StandardCharsets.UTF_8);
         }
@@ -879,7 +895,6 @@ public class YjysImpl implements ParserInterface {
         String encryptedBase64 = Base64.encodeBase64String(encryptedBytes);
         // 将 Base64 字符串转换为 Hex
         String sg = base64ToHex(encryptedBase64).toUpperCase(Locale.ROOT);
-//        String urlStr = String.format(ENCRYPT_API, getDefaultDomain(), pid, type);
         String urlStr = String.format(ENCRYPT_API, getDefaultDomain(), pid, type);
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(urlStr);
@@ -907,12 +922,13 @@ public class YjysImpl implements ParserInterface {
         headersBuilder.set("User-Agent", "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36 Edg/127.0.0.0");
         headersBuilder.set("X-Requested-With", "XMLHttpRequest");
         // 构建请求参数
-        FormBody formBody = new FormBody.Builder()
+        /*FormBody formBody = new FormBody.Builder()
                 .add("t", String.valueOf(timestamp))
                 .add("sg", sg)
                 .add("verifyCode", verifyCode)
-                .build();
-        try (Response response = OkHttpUtils.getInstance().doPostDefault(stringBuilder.toString(), headersBuilder.build(), formBody)) {
+                .build();*/
+//        try (Response response = OkHttpUtils.getInstance().doPostDefault(stringBuilder.toString(), headersBuilder.build(), formBody)) {
+        try (Response response = OkHttpUtils.getInstance().performSyncRequestAndHeader(stringBuilder.toString(), headersBuilder.build())) {
             // 获取响应码
             int responseCode = response.code();
             if (responseCode == 200) {
@@ -929,8 +945,8 @@ public class YjysImpl implements ParserInterface {
                     LogUtil.logInfo("api result", json);
                     parserJson(json, playUrls);
                 } else {
-                    LogUtil.logInfo("api result", response.body().string());
-                    String json = decompressZstd(responseBodyBytes);
+                    String json = response.body().string();
+                    LogUtil.logInfo("api result", json);
                     parserJson(json, playUrls);
                 }
             }
@@ -987,7 +1003,6 @@ public class YjysImpl implements ParserInterface {
      * @throws JSONException
      */
     private void parserJson(String json, List<DialogItemBean> playUrls) throws JSONException {
-        LogUtil.logInfo("api result", json);
         JSONObject jsonObject = new JSONObject(json);
         if (jsonObject.has("url")) {
             String playUrl = jsonObject.getString("url");
@@ -1021,6 +1036,11 @@ public class YjysImpl implements ParserInterface {
         return null;
     }
 
+    @Override
+    public int setWeekItemType() {
+        return WeekDataBean.ITEM_TYPE_2;
+    }
+
     /**
      * 一般为新番时间表接口
      *
@@ -1029,6 +1049,34 @@ public class YjysImpl implements ParserInterface {
      */
     @Override
     public List<WeekDataBean> parserWeekDataList(String source) {
+        try {
+            List<WeekDataBean> weekDataBeans = new ArrayList<>();
+            Document document = Jsoup.parse(source);
+            for (int i=0,size=7; i<size; i++) {
+                int week = WeekEnum.values()[i].getIndex();
+                Element weekDom = document.getElementById("tabs-"+(i+1));
+                if (Utils.isNullOrEmpty(weekDom))
+                    return null;
+                Elements weekA = weekDom.select("a");
+                List<WeekDataBean.WeekItem> weekItems = new ArrayList<>();
+                for (Element a : weekA) {
+                    weekItems.add(new WeekDataBean.WeekItem(
+                            a.select("span.text-truncate").text(),
+                            3,
+                            "",
+                            a.attr("href"),
+                            a.select("span.text-muted").text(),
+                            ""
+                    ));
+                }
+                weekDataBeans.add(new WeekDataBean(week, weekItems));
+                logInfo("时间表数据", weekDataBeans.toString());
+            }
+            return weekDataBeans;
+        } catch (Exception e) {
+            e.printStackTrace();
+            logInfo("parserWeekDataList error", e.getMessage());
+        }
         return null;
     }
 
@@ -1115,5 +1163,17 @@ public class YjysImpl implements ParserInterface {
             e.printStackTrace();
             return new DomainDataBean().error("获取最新域名失败："+e.getMessage());
         }
+    }
+
+    /**
+     * 首页TAG枚举
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum HomeTagEnum {
+        WEEK("更新时间表", "%s");
+
+        private String name;
+        private String content;
     }
 }

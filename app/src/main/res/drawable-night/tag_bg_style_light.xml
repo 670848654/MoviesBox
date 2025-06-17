@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 这里是设置背景色-->
     <solid android:color="@color/night_color_primary" />
 </shape>

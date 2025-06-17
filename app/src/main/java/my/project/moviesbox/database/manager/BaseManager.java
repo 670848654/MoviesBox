@@ -1,6 +1,9 @@
 package my.project.moviesbox.database.manager;
 
 import androidx.room.Room;
+import androidx.room.RoomDatabase;
+import androidx.room.migration.Migration;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,6 +26,20 @@ public abstract class BaseManager {
     public static int source = parserInterface.getSource();
 
     /**
+     * 数据库版本 1->2升级
+     * 收藏、下载表新增字段 清单ID
+     * 新增清单目录表
+     */
+    public static final Migration MIGRATION_1_2 = new Migration(1, 2) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE TFavorite ADD COLUMN directoryId TEXT");
+            database.execSQL("ALTER TABLE TDownload ADD COLUMN directoryId TEXT");
+            database.execSQL("CREATE TABLE TDirectory (`index` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, id TEXT, name TEXT, source INTEGER NOT NULL, type TEXT, createTime TEXT)");
+        }
+    };
+
+    /**
      * 获得数据库实例
      * @return
      */
@@ -34,6 +51,8 @@ public abstract class BaseManager {
                                     AppDatabase.class,
                                     "appDatabase")
                             .allowMainThreadQueries()
+                            .setJournalMode(RoomDatabase.JournalMode.TRUNCATE)
+                            .addMigrations(MIGRATION_1_2)
                             .build();
                 }
             }

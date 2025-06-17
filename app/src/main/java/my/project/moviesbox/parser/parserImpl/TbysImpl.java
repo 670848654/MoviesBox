@@ -23,6 +23,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -137,7 +138,12 @@ public class TbysImpl implements ParserInterface {
      */
     @Override
     public Map<String, String> setImgHeaders() {
-        return null;
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Referer", getDefaultDomain() + "/");
+        headers.put("Sec-Ch-Ua", "\"Not(A:Brand\";v=\"99\", \"Microsoft Edge\";v=\"133\", \"Chromium\";v=\"133\"");
+        headers.put("Sec-Ch-Ua-Platform", "\"Windows\"");
+        headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0");
+        return headers;
     }
 
     /**
@@ -629,7 +635,7 @@ public class TbysImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source) {
+    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
         try {
             List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);

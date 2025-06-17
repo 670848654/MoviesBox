@@ -20,7 +20,7 @@
         <!-- 改变status bar 文字颜色， true黑色， false白色，API23可用-->
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowTranslucentNavigation">true</item>
-
+        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:textColorPrimary">@color/night_text_color</item>
 
         <item name="android:textColor">@color/white</item>
@@ -71,7 +71,7 @@
     <!-- BUTTON 主题 -->
     <style name="Button.Icon" parent="Widget.Material3.Button.IconButton">
         <item name="materialThemeOverlay">@style/TextButton</item>
-        <item name="backgroundTint">@color/night_text_button_background_color_selector</item>
+        <item name="backgroundTint">@color/translucent</item>
         <item name="rippleColor">@color/m3_text_button_ripple_color_selector</item>
     </style>
 

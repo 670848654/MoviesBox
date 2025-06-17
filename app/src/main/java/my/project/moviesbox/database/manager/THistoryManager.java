@@ -43,7 +43,8 @@ public class THistoryManager extends BaseManager {
             tHistoryDao.insert(tHistory);
         } else {
             // 存在则更新
-            tHistory.setVideoImgUrl(videoImgUrl);
+            if (!tHistory.getVideoImgUrl().contains("base64"))
+                tHistory.setVideoImgUrl(videoImgUrl);
             tHistory.setVideoDescUrl(videoDescUrl);
             tHistoryDao.update(tHistory);
         }

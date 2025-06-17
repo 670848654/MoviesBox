@@ -23,6 +23,14 @@
     <bool name="playNextVideo">false</bool>
     <!-- 开启播放器弹幕 站点支持弹幕才有效 -->
     <bool name="openDanmu">true</bool>
+    <!-- 收藏列表数据每页数量 -->
+    <integer name="favoriteQueryLimit">20</integer>
+    <!-- 历史列表数据每页数量 -->
+    <integer name="historyQueryLimit">20</integer>
+    <!-- 下载列表数据每页数量 -->
+    <integer name="downloadQueryLimit">20</integer>
+    <!-- 下载子列表数据每页数量 -->
+    <integer name="downloadDataQueryLimit">20</integer>
 
     <!-- BRVAH列表适配器动画配置 -->
     <!-- 是否开启动画 -->
@@ -49,9 +57,6 @@
     <bool name="enableSniffing">false</bool>
     <!-- 嗅探时长（单位：秒） -->
     <integer name="sniffTimeOut">10</integer>
-
-    <!-- 是否保存解析日志 -->
-    <bool name="saveParserLogs">false</bool>
 
     <!-- URL配置过滤（包含以下通配符） -->
     <string-array name="suffering">

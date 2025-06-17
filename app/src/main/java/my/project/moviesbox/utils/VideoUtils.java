@@ -15,16 +15,21 @@ import com.arialyy.aria.core.task.DownloadTask;
 import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,12 +61,6 @@ import my.project.moviesbox.view.PlayerActivity;
   * @版本: 1.0
  */
 public class VideoUtils {
-    private static Context context;
-    private static AlertDialog alertDialog;
-
-    public static void init(Context context) {
-        VideoUtils.context = context.getApplicationContext();
-    }
 
     /**
      * 打开播放器
@@ -181,7 +180,7 @@ public class VideoUtils {
                 LogUtil.logInfo("KeyError", "Key长度不是16位");
                 return null;
             }
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
             if (iv.length != 16)
                 iv = new byte[16];
@@ -189,6 +188,7 @@ public class VideoUtils {
             cipher.init(Cipher.DECRYPT_MODE, keySpec, paramSpec);
             return cipher.doFinal(fileBytes);
         } catch (Exception ex) {
+            LogUtil.logInfo("DecryptError", ex.toString());
             return null;
         }
     }
@@ -200,7 +200,7 @@ public class VideoUtils {
      * @return
      */
     public static boolean merge(String savePath, List<File> fileList) {
-        try {
+        /*try {
             File file = new File(savePath.replaceAll("m3u8", "ts"));
             if (file.exists()) file.delete();
             else file.createNewFile();
@@ -228,6 +228,52 @@ public class VideoUtils {
                 fs.flush();
             }
             fs.close();
+            LogUtil.logInfo("TsMergeHandler", "合并TS成功");
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            LogUtil.logInfo("TsMergeHandler", "合并TS失败，请重新下载....");
+            return false;
+        }*/
+        try {
+            File file = new File(savePath.replaceAll("m3u8", "ts"));
+            if (file.exists()) file.delete();
+            file.createNewFile();
+
+            try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file))) {
+                byte[] buffer = new byte[8192]; // 使用更大的缓冲区
+
+                for (File f : fileList) {
+                    int position = 0;
+
+                    // 第一次读取，获取位置
+                    try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
+                        ByteArrayOutputStream temp = new ByteArrayOutputStream();
+                        int bytesRead;
+
+                        while ((bytesRead = bis.read(buffer)) != -1) {
+                            temp.write(buffer, 0, bytesRead);
+                            if (temp.size() >= buffer.length) {
+                                position = getPosition(temp.toByteArray());
+                                break;
+                            }
+                        }
+                    }
+
+                    // 第二次读取，从指定位置开始写入
+                    try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
+                        if (position != 0) {
+                            bis.skip(position);
+                        }
+                        int bytesRead;
+                        while ((bytesRead = bis.read(buffer)) != -1) {
+                            bos.write(buffer, 0, bytesRead);
+                        }
+                    }
+                }
+                bos.flush();
+            }
+
             LogUtil.logInfo("TsMergeHandler", "合并TS成功");
             return true;
         } catch (Exception e) {
@@ -278,6 +324,7 @@ public class VideoUtils {
      * @param msg
      */
     public static void showInfoDialog(Context context, String msg) {
+        AlertDialog alertDialog;
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context, R.style.DialogStyle);
         builder.setCancelable(true);
         builder.setTitle(Utils.getString(R.string.otherOperation));
@@ -297,6 +344,7 @@ public class VideoUtils {
     public static AlertDialog showMultipleVideoSources4Download(Context context,
                                                                 List<DialogItemBean> dialogItemBeans,
                                                                 OnItemClickListener onItemClickListener) {
+        AlertDialog alertDialog;
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context, R.style.DialogStyle);
         builder.setTitle(Utils.getString(R.string.downloadMultipleVideoDialogTitle));
         builder.setCancelable(false);
@@ -324,6 +372,7 @@ public class VideoUtils {
     public static AlertDialog showMultipleVideoSources(Context context,
                                                 List<DialogItemBean> dialogItemBeans,
                                                 OnItemClickListener onItemClickListener, boolean isPlayerActivity) {
+        AlertDialog alertDialog;
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context, R.style.DialogStyle);
         builder.setTitle(Utils.getString(R.string.selectVideoSource));
         builder.setCancelable(false);
@@ -362,7 +411,7 @@ public class VideoUtils {
      * @param activityEnum EventBus订阅处理判断
      * @param sniffEnum 嗅探结果处理类型
      */
-    public static void startSniffing(String url,
+    public static void startSniffing(Context context, String url,
                                      VideoSniffEvent.ActivityEnum activityEnum,
                                      VideoSniffEvent.SniffEnum sniffEnum) {
         Intent intent = new Intent(context, SniffingVideoService.class);
@@ -378,14 +427,60 @@ public class VideoUtils {
      */
     public static void sniffErrorDialog(Activity activity) {
         Utils.showAlert(activity,
-                context.getString(R.string.errorDialogTitle),
-                context.getString(R.string.sniffVodPlayUrlError),
+                activity.getString(R.string.errorDialogTitle),
+                activity.getString(R.string.sniffVodPlayUrlError),
                 false,
-                context.getString(R.string.defaultPositiveBtnText),
+                activity.getString(R.string.defaultPositiveBtnText),
                 "",
                 "",
                 (dialog, which) -> dialog.dismiss(),
                 null,
                 null);
+    }
+
+    /**
+     * 移除某些M3U8广告切片
+     * @param filePath
+     * @return
+     */
+    public static boolean removeLocalM3U8Ad(String filePath) {
+        try {
+            boolean hasAd = false;
+            String targetExtinf = "#EXTINF:3.366667,";
+            List<String> lines = new ArrayList<>();
+            BufferedReader reader = new BufferedReader(new FileReader(filePath));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
+            reader.close();
+
+            // 处理文件内容
+            List<String> modifiedLines = new ArrayList<>();
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).startsWith(targetExtinf)) {
+                    hasAd = true;
+                    // 跳过当前EXTINF和它下一行的URL
+                    i++; // 跳过URL
+                } else {
+                    // 保留其他行
+                    modifiedLines.add(lines.get(i));
+                }
+            }
+            if (hasAd) {
+                // 写回文件
+                BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
+                for (String modifiedLine : modifiedLines) {
+                    writer.write(modifiedLine);
+                    writer.newLine();
+                }
+                writer.close();
+                LogUtil.logInfo("广告分片删除成功！", "");
+            }
+            return hasAd;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
