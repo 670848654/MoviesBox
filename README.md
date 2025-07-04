@@ -14,8 +14,9 @@
 | 动漫 | 樱花动漫 | http://www.iyinghua.com |
 | 动漫 | ~~AnFuns（站点关闭）~~ | ~~https://www.anfuns.vip~~ |
 | 影视 | LIBVIO | https://www.libvio.pw |
-| 影视 | 在线之家 | https://www.zxzja.com |
+| 影视 | 在线之家 | https://www.zxzjhd.com |
 | 影视 | ~~555电影（不再支持）~~ | ~~https://5look.site~~ |
 | 影视 | 修罗影视（原哔嘀影视） | https://v.xlys.ltd.ua|
-| 影视 | 小宝影院 | https://xiaoxintv.com |
+| 影视 | 小宝影院（需梯子） | https://xiaoxintv.cc |
 | 影视 | 纽约影院 | https://nycvod.com |
+| 动漫 | ギリギリ愛 | https://anime.girigirilove.com |
