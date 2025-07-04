@@ -48,8 +48,6 @@ public class SourceListAdapter extends BaseQuickAdapter<SourceDataBean, BaseView
         if (itemSourceState == SourceEnum.SourceStateEnum.UNDONE.getState()) {
             doneBtn.setText(Utils.getString(R.string.notSupported));
             doneBtn.setEnabled(false);
-        } else if (itemSourceState == SourceEnum.SourceStateEnum.DEPRECATED.getState()) {
-            doneBtn.setEnabled(true);
         } else if (nowSource == itemSourceIndex) {
             doneBtn.setEnabled(false);
             doneBtn.setText(Utils.getString(R.string.currentLocation));
