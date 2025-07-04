@@ -5,6 +5,7 @@ import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum.from
 import my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum;
 import my.project.moviesbox.parser.parserImpl.AnFunsImpl;
 import my.project.moviesbox.parser.parserImpl.FiveMovieImpl;
+import my.project.moviesbox.parser.parserImpl.GiriGiriLoveImpl;
 import my.project.moviesbox.parser.parserImpl.IYingHuaImpl;
 import my.project.moviesbox.parser.parserImpl.LibvioImpl;
 import my.project.moviesbox.parser.parserImpl.NyyyImpl;
@@ -62,6 +63,9 @@ public class ParserInterfaceFactory {
                             break;
                         case NYYY:
                             parserInterface = new NyyyImpl();
+                            break;
+                        case GIRI_GIRI_LOVE:
+                            parserInterface = new GiriGiriLoveImpl();
                             break;
                     }
                 }

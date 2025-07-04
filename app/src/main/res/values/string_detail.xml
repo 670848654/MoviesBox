@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 详情界面文本 -->
+    <string name="previewBtn">预览封面</string>
     <string name="downloadBtn">下载</string>
     <string name="sourceWebPageBtn">源网页</string>
     <string name="doNotBelieveAnyAdsInTheVideo">资源来自网站，不要相信视频中的任何广告！</string>

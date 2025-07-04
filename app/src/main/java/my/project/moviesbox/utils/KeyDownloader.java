@@ -29,8 +29,8 @@ public class KeyDownloader {
                 // 匹配 #EXT-X-KEY 的 URI
                 Pattern pattern = Pattern.compile("#EXT-X-KEY:METHOD=AES-128,URI=\"(.*?)\"");
                 Matcher matcher = pattern.matcher(m3u8Content);
-                if (!matcher.find()) throw new RuntimeException("未找到加密 KEY URI");
-
+                if (!matcher.find())
+                    throw new RuntimeException("未找到加密 KEY URI");
                 String keyUrl = matcher.group(1);
                 if (!keyUrl.startsWith("http")) {
                     // 拼接相对路径

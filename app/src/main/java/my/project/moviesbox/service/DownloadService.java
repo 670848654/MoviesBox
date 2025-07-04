@@ -29,7 +29,6 @@ import my.project.moviesbox.event.DownloadEvent;
 import my.project.moviesbox.event.DownloadStateEvent;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.utils.Utils;
-import my.project.moviesbox.utils.VideoConverter;
 import my.project.moviesbox.utils.VideoUtils;
 
 /**
@@ -162,7 +161,7 @@ public class DownloadService extends Service {
             int notificationId = mNotify.uploadInfo(taskId.intValue(), vodTitle, vodEpisodes, Utils.getString(R.string.downloadTsSuccessMsg));
             TDownloadDataManager.updateDownloadState(3, taskId);
             EventBus.getDefault().post(new DownloadStateEvent(taskId, vodEpisodes, 3));
-            VideoConverter.convertTSToMP4(notificationId, savePath, inputPath, outputPath, taskId, vodTitle, vodEpisodes, mNotify);
+            VideoUtils.convertTSToMP4(notificationId, savePath, inputPath, outputPath, taskId, vodTitle, vodEpisodes, mNotify);
         }
         shouldUnRegister();
     }

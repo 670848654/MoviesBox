@@ -53,8 +53,11 @@ public class SniffingVideoService extends Service {
             String url = intent.getStringExtra("url");
             if (!url.startsWith("http"))
                 url = ParserInterfaceFactory.getParserInterface().getDefaultDomain() + url;
-            webView.setWebViewClient(new MyWebViewClient(this, activityEnum, sniffEnum));
+            MyWebViewClient client = new MyWebViewClient(this, activityEnum, sniffEnum);
+            webView.setWebViewClient(client);
             webView.loadUrl(url);
+            // 页面加载后只启动一次定时器
+            client.startTimeoutTimer();
         } else
             stopSelf();
         return START_NOT_STICKY;
@@ -101,11 +104,13 @@ public class SniffingVideoService extends Service {
             };
         }
 
+        public void startTimeoutTimer() {
+            handler.postDelayed(timeoutRunnable, SharedPreferencesUtils.getSniffTimeout() * 1000L);
+        }
+
         @Override
         public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
             super.onPageStarted(view, url, favicon);
-            // 页面开始加载时启动超时定时器
-            handler.postDelayed(timeoutRunnable, SharedPreferencesUtils.getSniffTimeout()* 1000L);
         }
 
         @Override

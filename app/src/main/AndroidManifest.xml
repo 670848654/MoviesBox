@@ -61,10 +61,6 @@
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
 
         <activity
-            android:name=".view.WebViewActivity"
-            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
-
-        <activity
             android:name=".view.TestActivity"
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
 
@@ -94,6 +90,15 @@
             android:supportsPictureInPicture="true"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.MoviesBox.FullScreenTheme"/>
+
+        <activity android:name=".view.VipParsingInterfacesPlayerActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden|uiMode"
+            android:excludeFromRecents="true"
+            android:resizeableActivity="true"
+            android:launchMode="singleTask"
+            android:supportsPictureInPicture="true"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.MoviesBox.FullScreenTheme" />
 
         <activity
             android:name=".view.SearchActivity"
@@ -173,6 +178,61 @@
         <!--<activity
             android:name=".view.WebViewActivity"
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />-->
+
+        <activity
+            android:name=".view.ImagePreviewActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden"
+            android:theme="@style/Theme.MoviesBox.FullScreenTheme"/>
+
+        <activity
+            android:name=".view.VipParsingInterfacesActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden"
+            android:exported="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="http"/>
+                <data android:scheme="https"/>
+                <data android:scheme="about"/>
+                <data android:scheme="javascript"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="http"/>
+                <data android:scheme="https"/>
+                <data android:scheme="inline"/>
+                <data android:scheme="file"/>
+                <data android:scheme="content"/>
+                <data android:mimeType="text/html"/>
+                <data android:mimeType="text/plain"/>
+                <data android:mimeType="application/xhtml+xml"/>
+                <data android:mimeType="application/vnd.wap.xhtml+xml"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.WEB_SEARCH"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="app" android:host="open_vip" />
+            </intent-filter>
+        </activity>
 
         <!-- 检查更新服务 -->
         <service android:name=".service.CheckUpdateService"/>

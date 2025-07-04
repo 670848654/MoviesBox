@@ -77,7 +77,9 @@ public class OpenSourceActivity extends BaseActivity {
         adapter = new SourceAdapter(list);
         setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
-            if (Utils.isFastClick()) Utils.viewInChrome(this, list.get(position).getUrl());
+            if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
+            Utils.viewInChrome(this, list.get(position).getUrl());
         });
         if (Utils.checkHasNavigationBar(this)) recyclerView.setPadding(0,0,0, Utils.getNavigationBarHeight(this) + 15);
         recyclerView.setAdapter(adapter);

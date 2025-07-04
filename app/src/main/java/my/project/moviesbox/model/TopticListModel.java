@@ -73,7 +73,7 @@ public class TopticListModel extends BaseModel implements TopTicListContract.Mod
         int pageCount = firstTimeData ? parserInterface.parserPageCount(html) : parserInterface.startPageNum();
         List<VodDataBean> vodDataBean = isVodList ? parserInterface.parserTopticVodList(html) : parserInterface.parserTopticList(html);
         if (Utils.isNullOrEmpty(vodDataBean))
-            callback.error(response != null ? parserErrorMsg(response, html) : html);
+            callback.error(firstTimeData, response != null ? parserErrorMsg(response, html) : html);
         else if (vodDataBean.size() > 0)
             callback.success(firstTimeData, vodDataBean, pageCount);
         else

@@ -38,4 +38,10 @@
     <string name="friday">周五</string>
     <string name="saturday">周六</string>
     <string name="sunday">周日</string>
+
+    <!-- VIP解析文本 -->
+    <string name="QQ">腾讯视频</string>
+    <string name="iQiYi">爱奇艺</string>
+    <string name="YouKu">优酷</string>
+    <string name="ManGuoTv">芒果TV</string>
 </resources>

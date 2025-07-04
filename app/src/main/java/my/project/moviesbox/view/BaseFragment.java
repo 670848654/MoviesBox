@@ -41,6 +41,7 @@ import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.utils.VideoAlertUtils;
 import my.project.moviesbox.view.lazyLoadImage.LazyLoadImgListener;
 
 /**
@@ -74,6 +75,8 @@ public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V
 
     protected LazyLoadImgListener lazyLoadImgListener;
 
+    protected VideoAlertUtils videoAlertUtils;
+
     protected void setLazyLoadImgListener(LazyLoadImgListener lazyLoadImgListener) {
         this.lazyLoadImgListener = lazyLoadImgListener;
     }
@@ -89,6 +92,7 @@ public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V
         if (application == null) application = (App) getActivity().getApplication();
         View view = initViews(inflater, container, savedInstanceState);
         EventBus.getDefault().register(this);
+        videoAlertUtils = new VideoAlertUtils(this.getActivity());
         loadData();
         return view;
     }
@@ -113,6 +117,8 @@ public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V
         //取消View的关联
         if (null != mPresenter)
             mPresenter.detachView();
+        if (null != videoAlertUtils)
+            videoAlertUtils.release();
         EventBus.getDefault().unregister(this);
         try {
             mUnBinder.unbind();

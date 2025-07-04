@@ -41,11 +41,13 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import cn.jzvd.Jzvd;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.HomeAdapter;
 import my.project.moviesbox.adapter.SourceListAdapter;
 import my.project.moviesbox.contract.HomeContract;
 import my.project.moviesbox.custom.FabExtendingOnScrollListener;
+import my.project.moviesbox.custom.VideoPreviewDialog;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.model.HomeModel;
@@ -158,6 +160,7 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
         adapter.setOnItemChildClickListener((adapter, view, position) -> {
             if (adapter.getItemViewType(position) == ITEM_LIST.getType()
                    || adapter.getItemViewType(position) == VOD_LIST.getType()) { // 更多点击事件
+                Utils.setVibration(view);
                 MainDataBean mainDataBean = (MainDataBean) adapter.getData().get(position);
                 if (!mainDataBean.isHasMore()) return;
                 Bundle bundle = new Bundle();
@@ -272,12 +275,6 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
                 adapter.notifyDataSetChanged();
                 mPresenter.loadData(true);
                 break;
-            case REFRESH_ON_HIDDEN_FEATURES:
-                sourceListAdapter.setNewInstance(SourceEnum.getTurnOnHiddenFeaturesList());
-                break;
-            case REFRESH_OFF_HIDDEN_FEATURES:
-                sourceListAdapter.setNewInstance(SourceEnum.getSourceDataBeanList());
-                break;
         }
     }
 
@@ -386,6 +383,27 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
             bundle.putString("url", data.getUrl());
             startActivity(new Intent(getActivity(), data.getOpenClass()).putExtras(bundle));
         });
+    }
+
+    /**
+     * ITEM长按点击接口
+     *
+     * @param data
+     */
+    @Override
+    public void onVideoLongClick(MainDataBean.Item data) {
+        if (getActivity() == null) return;
+        if (Utils.isNullOrEmpty(data.getPreviewUrl())) return;
+        getActivity().runOnUiThread(() -> {
+            VideoPreviewDialog dialog = new VideoPreviewDialog(this.getActivity(), data.getTitle(), data.getPreviewUrl());
+            dialog.show();
+        });
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Jzvd.releaseAllVideos(); // 万一还在播放，及时清理
     }
 
     @Override

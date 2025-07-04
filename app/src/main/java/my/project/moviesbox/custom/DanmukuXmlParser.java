@@ -30,8 +30,16 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.XMLReaderFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import master.flame.danmaku.danmaku.model.AlphaValue;
 import master.flame.danmaku.danmaku.model.BaseDanmaku;
@@ -70,7 +78,13 @@ public class DanmukuXmlParser extends BaseDanmakuParser {
                 XMLReader xmlReader = XMLReaderFactory.createXMLReader();
                 XmlContentHandler contentHandler = new XmlContentHandler();
                 xmlReader.setContentHandler(contentHandler);
-                xmlReader.parse(new InputSource(source.data()));
+//                xmlReader.parse(new InputSource(source.data()));
+                InputStream inputStream = source.data();
+                String rawXml = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))
+                        .lines().collect(Collectors.joining("\n"));
+                String cleanedXml = fixIllegalXmlText(rawXml);
+                InputSource inputSource = new InputSource(new StringReader(cleanedXml));
+                xmlReader.parse(inputSource);
                 return contentHandler.getResult();
             } catch (SAXException e) {
                 e.printStackTrace();
@@ -81,6 +95,38 @@ public class DanmukuXmlParser extends BaseDanmakuParser {
         }
 
         return null;
+    }
+
+    /**
+     * 处理异常XML
+     * @param xml
+     * @return
+     */
+    public static String fixIllegalXmlText(String xml) {
+        // 先处理 < /d> 标签空格问题
+        xml = xml.replaceAll("<\\s+/\\s*", "</");
+
+        // 匹配 <d ...>内容</d> 并替换中间的非法 < 和 &
+        Pattern pattern = Pattern.compile("(<d\\s+[^>]+>)(.*?)(</d>)", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(xml);
+        StringBuffer sb = new StringBuffer();
+        while (matcher.find()) {
+            String openingTag = matcher.group(1);
+            String content = matcher.group(2);
+            String closingTag = matcher.group(3);
+
+            // 转义非法字符
+            content = content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(openingTag + content + closingTag));
+        }
+        matcher.appendTail(sb);
+
+        // 补全根标签
+        if (!sb.toString().trim().endsWith("</i>")) {
+            sb.append("</i>");
+        }
+
+        return sb.toString();
     }
 
     public class XmlContentHandler extends DefaultHandler {
@@ -142,7 +188,7 @@ public class DanmukuXmlParser extends BaseDanmakuParser {
                         item.setTimer(mTimer);
                         item.underlineColor = Color.TRANSPARENT;
                         item.borderColor = Color.TRANSPARENT;
-                        item.priority = 1;
+                        item.priority = 0; //  一旦设置 >0的属性，那个防止重叠和最大行数就会失效
                         item.textSize = textSize * (mDispDensity - 0.6f);
                     }
                 }

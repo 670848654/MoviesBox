@@ -18,6 +18,7 @@ import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import com.google.android.material.carousel.CarouselLayoutManager;
 import com.google.android.material.carousel.CarouselSnapHelper;
 import com.google.android.material.carousel.HeroCarouselStrategy;
+import com.google.android.material.carousel.UncontainedCarouselStrategy;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
@@ -133,10 +134,17 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
             List<MainDataBean.Item> bannerItem = mainDataBean.getItems();
             RecyclerView bannerRecyclerView = helper.getView(R.id.rv_list);
             HomeBannerAdapter homeBannerAdapter = new HomeBannerAdapter(bannerItem);
-            homeBannerAdapter.setOnItemClickListener((adapter, view, position) -> onItemClick.onVideoClick(bannerItem.get(position)));
+            homeBannerAdapter.setOnItemClickListener((adapter, view, position) -> {
+                Utils.setVibration(view);
+                onItemClick.onVideoClick(bannerItem.get(position));
+            });
             bannerRecyclerView.setAdapter(homeBannerAdapter);
             snapHelper.attachToRecyclerView(bannerRecyclerView);
-            bannerRecyclerView.setLayoutManager(new CarouselLayoutManager(new HeroCarouselStrategy()));
+            bannerRecyclerView.setLayoutManager(new CarouselLayoutManager(
+                    Utils.isPad() ? (bannerItem.size() > 3 ? new HeroCarouselStrategy() : new UncontainedCarouselStrategy())
+                            :
+                            new HeroCarouselStrategy()
+                    ));
                 /*CarouselLayoutManager layoutManager = new CarouselLayoutManager();
                 layoutManager.setCarouselAlignment(CarouselLayoutManager.ALIGNMENT_CENTER);
                 layoutManager.setCarouselStrategy(new HeroCarouselStrategy());
@@ -186,8 +194,15 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                         break;
                 }
             }
-            homeItemAdapter.setOnItemClickListener((adapter, view, position) ->
-                        onItemClick.onVideoClick(items.get(position))
+            homeItemAdapter.setOnItemClickListener((adapter, view, position) -> {
+                Utils.setVibration(view);
+                onItemClick.onVideoClick(items.get(position));
+            }
+            );
+            homeItemAdapter.setOnItemLongClickListener((adapter, view, position) -> {
+                onItemClick.onVideoLongClick(items.get(position));
+                return true;
+            }
             );
             mainDataBean.setHomeItemAdapter(homeItemAdapter);
             recyclerView.setPadding(0,0,0, 10);
@@ -223,9 +238,15 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
         void onDropDownTagNoMenusClick(MainDataBean.DropDownTag dropDownTag, View view);
 
         /**
-         * 轮播ITEM点击接口
+         * ITEM点击接口
          * @param data
          */
         void onVideoClick(MainDataBean.Item data);
+
+        /**
+         * ITEM长按点击接口
+         * @param data
+         */
+        void onVideoLongClick(MainDataBean.Item data);
     }
 }

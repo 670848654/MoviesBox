@@ -209,6 +209,23 @@
                         android:orientation="horizontal">
 
                         <Button
+                            android:visibility="gone"
+                            android:id="@+id/preview"
+                            style="@style/Widget.Material3.Button.TextButton.Icon"
+                            android:textColor="@color/white"
+                            app:iconTint="@color/white"
+                            app:elevation="5dp"
+                            android:layout_marginLeft="2dp"
+                            android:layout_marginRight="2dp"
+                            android:text="@string/previewBtn"
+                            app:iconGravity="top"
+                            app:iconSize="24dp"
+                            app:icon="@drawable/round_wallpaper_24"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"/>
+
+                        <Button
                             android:id="@+id/favorite"
                             style="@style/Widget.Material3.Button.TextButton.Icon"
                             android:textColor="@color/white"

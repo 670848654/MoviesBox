@@ -1,16 +1,14 @@
 package my.project.moviesbox.parser.bean;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * @author Li
  * @version 1.0
- * @description: 弹幕数据实体
+ * @description: 每个站点json数据结构肯定是不一样的，这里统一弹幕数据实体规则
  * @date 2024/9/14 10:19
  */
 @Data
-@NoArgsConstructor
 public class DanmuDataBean {
     /**
      * 默认颜色
@@ -54,6 +52,30 @@ public class DanmuDataBean {
      */
     private int textSize;
 
+    private DanmuDataBean() {}
+
+    /**
+     * 构造方法
+     * @param text      弹幕文本
+     * @param color     弹幕颜色
+     * @param type      弹幕显示类型
+     * @param time      弹幕出现实际那
+     */
+    public DanmuDataBean(String text, String color, int type, Long time) {
+        this.text = text;
+        this.color = color;
+        this.setType(type);
+        this.time = time;
+    }
+
+    /**
+     * 构造方法
+     * @param text      弹幕文本
+     * @param color     弹幕颜色
+     * @param type      弹幕显示类型
+     * @param time      弹幕出现实际那
+     * @param textSize  弹幕字体大小
+     */
     public DanmuDataBean(String text, String color, int type, Long time, int textSize) {
         this.text = text;
         this.color = color;

@@ -7,8 +7,8 @@ package my.project.moviesbox.enums;
  * @date 2024/7/19 16:16
  */
 public enum DialogXTipEnum {
-    DEFAULT, // 默认
-    SUCCESS, // 显示成功ICON
-    ERROR, // 显示失败ICON
-    WARNING // 显示警告ICON
+    DEFAULT,    // 默认
+    SUCCESS,    // 显示成功ICON
+    ERROR,      // 显示失败ICON
+    WARNING     // 显示警告ICON
 }

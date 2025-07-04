@@ -48,7 +48,6 @@ import my.project.moviesbox.presenter.VideoPresenter;
 import my.project.moviesbox.utils.ImageUpdateManager;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
-import my.project.moviesbox.utils.VideoUtils;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -111,6 +110,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
         adapter.addChildClickViewIds(R.id.option);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             THistoryWithFields tHistoryWithField = (THistoryWithFields) adapter.getData().get(position);
             vodId = tHistoryWithField.getVideoId();
             vodTitle = tHistoryWithField.getVideoTitle();
@@ -217,7 +217,10 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
                     Utils.getNavigationBarHeight(getActivity()) + 15);
             removeAllFAB.setLayoutParams(params);
         }*/
-        removeAllFAB.setOnClickListener(view -> showDeleteHistoryDialog(0, null, true));
+        removeAllFAB.setOnClickListener(view -> {
+            Utils.setVibration(view);
+            showDeleteHistoryDialog(0, null, true);
+        });
     }
 
     private void loadHistoryData() {
@@ -279,7 +282,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
                 //调用播放器
                 TFavoriteManager.updateFavorite(vodDramaUrl, vodDramaTitle, vodId);
                 TVideoManager.addVideoHistory(vodId, vodDramaUrl, vodPlaySource, vodDramaTitle);
-                VideoUtils.openPlayer(true, getActivity(), vodDramaTitle, url, vodTitle, vodDramaUrl, dramasItems, clickIndex, vodId, vodSource);
+                videoAlertUtils.openPlayer(true, vodDramaTitle, url, vodTitle, vodDramaUrl, dramasItems, clickIndex, vodId, vodSource);
                 break;
             case 1:
                 Utils.selectVideoPlayer(getActivity(), url);
@@ -374,7 +377,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
             if (urls.size() == 1)
                 playVod(urls.get(0).getUrl());
             else
-                alertDialog = VideoUtils.showMultipleVideoSources(getActivity(),
+                alertDialog = videoAlertUtils.showMultipleVideoSources(
                         urls,
                         (adapter, view, position) -> {
                             playVod(urls.get(position).getUrl());
@@ -390,7 +393,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
             cancelDialog();
             if (SharedPreferencesUtils.getEnableSniff()) {
                 alertDialog = Utils.getProDialog(getActivity(), R.string.sniffVodPlayUrl);
-                VideoUtils.startSniffing(getContext(), vodDramaUrl, VideoSniffEvent.ActivityEnum.HISTORY, VideoSniffEvent.SniffEnum.PLAY);
+                videoAlertUtils.startSniffing(vodDramaUrl, VideoSniffEvent.ActivityEnum.HISTORY, VideoSniffEvent.SniffEnum.PLAY);
             } else {
                 Utils.showAlert(getActivity(),
                         getString(R.string.errorDialogTitle),
@@ -506,7 +509,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
             if (event.isSuccess())
                 successPlayUrl(urls);
             else
-                VideoUtils.sniffErrorDialog(getActivity());
+                videoAlertUtils.sniffErrorDialog();
         }
     }
 }

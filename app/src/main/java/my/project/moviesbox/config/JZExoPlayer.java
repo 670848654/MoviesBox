@@ -19,6 +19,7 @@ import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.audio.AudioAttributes;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
@@ -134,6 +135,13 @@ public class JZExoPlayer extends JZMediaInterface implements Player.EventListene
             Log.e(TAG, "URL Link = " + currUrl);
 
             simpleExoPlayer.addListener(this);
+
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setContentType(C.CONTENT_TYPE_MOVIE)
+                    .setUsage(C.USAGE_MEDIA)
+                    .build();
+            simpleExoPlayer.setAudioAttributes(audioAttributes, false); // 👈 这句很关键！
+
             Boolean isLoop = jzvd.jzDataSource.looping;
             if (isLoop) {
                 simpleExoPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);

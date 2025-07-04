@@ -144,6 +144,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
         setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             long taskId = downloadDataBeans.get(position).getTDownloadData().getAriaTaskId();
             DownloadEntity downloadEntity = Aria.download(this).getDownloadEntity(taskId);
             switch (downloadDataBeans.get(position).getTDownloadData().getComplete()) {
@@ -554,7 +555,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
                         if (path.contains("m3u8")) {
                             path = path.replaceAll("m3u8", "mp4");
                             File file = new File(path);
-                            downloadDataBeans.get(i).getTDownloadData().setVideoFileSize(file == null ? 0 : file.length());
+                            downloadDataBeans.get(i).getTDownloadData().setVideoFileSize(file.length());
                             downloadDataBeans.get(i).getTDownloadData().setSavePath(path);
                         } else {
                             downloadDataBeans.get(i).getTDownloadData().setVideoFileSize(downloadEvent.getFileSize());

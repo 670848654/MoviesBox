@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -249,7 +250,7 @@ public class M3U8DownloadConfig {
 //            String keyPath = m3U8Entity.getKeyPath();
             String keyPath = replaceWithKeyExtension(m3U8Entity.getFilePath());
             File keyFile = new File(keyPath);
-//            OutputStream outputStream = null;
+            OutputStream outputStream = null;
             InputStream inputStream = null;
             FileOutputStream fileOutputStream = null;
             List<File> finishedFiles = new ArrayList<>();
@@ -262,7 +263,8 @@ public class M3U8DownloadConfig {
 //            tsKey = VideoUtils.readKeyInfo2Byte(new File(m3U8Entity.getKeyPath()));
                         tsKey = VideoUtils.readKeyInfo2Byte(new File(keyPath));
                         tsIv = m3U8Entity.getIv() == null ? new byte[16] : m3U8Entity.getIv().getBytes();
-                        LogUtil.logInfo("TsMergeHandler", String.format("TS分片存在加密; key=%s; iv=%s", new String(tsKey), new String(tsIv)));
+                        String encryptedInformation = "TS分片存在加密; key=%s; iv=%s";
+                        LogUtil.logInfo("TsMergeHandler", String.format(encryptedInformation, new String(tsKey), new String(tsIv)));
                         // 存在加密
                         inputStream= new FileInputStream(pathFile);
                         byte[] bytes = new byte[inputStream.available()];
@@ -276,7 +278,7 @@ public class M3U8DownloadConfig {
                     e.printStackTrace();
                 } finally {
                     try {
-//                        if (outputStream != null) outputStream.close();
+                        if (outputStream != null) outputStream.close();
                         if (inputStream != null) inputStream.close();
                         if (fileOutputStream != null) fileOutputStream.close();
                     } catch (IOException e) {

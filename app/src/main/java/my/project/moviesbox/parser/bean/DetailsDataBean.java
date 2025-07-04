@@ -138,6 +138,7 @@ public class DetailsDataBean implements Serializable {
         private String url;         // 地址
         private String episodes;    // 集数 预留
         private String episodesUrl; // 集数跳转地址 -> 一般为播放地址 预留
+        private String previewUrl; // 视频预览地址
         /**
          * @see VodItemStyleEnum
          * 默认为竖屏样式
@@ -154,6 +155,14 @@ public class DetailsDataBean implements Serializable {
             this.title = title;
             this.img = img;
             this.url = url;
+            this.vodItemStyleType = vodItemStyleType;
+        }
+
+        public Recommend(String title, String img, String url, String previewUrl, int vodItemStyleType) {
+            this.title = title;
+            this.img = img;
+            this.url = url;
+            this.previewUrl = previewUrl;
             this.vodItemStyleType = vodItemStyleType;
         }
 

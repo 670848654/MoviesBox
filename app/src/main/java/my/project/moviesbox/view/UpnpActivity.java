@@ -228,6 +228,7 @@ public class UpnpActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     @OnClick({R.id.play, R.id.pause, R.id.stop, R.id.exit})
     public void onClick(View view) {
         if (!Utils.isFastClick()) return;
+        Utils.setVibration(view);
         switch (view.getId()) {
             case R.id.play:
                 if (deviceControl == null) return;

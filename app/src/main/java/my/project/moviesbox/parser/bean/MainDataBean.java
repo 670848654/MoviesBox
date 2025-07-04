@@ -147,6 +147,7 @@ public class MainDataBean implements MultiItemEntity, Serializable {
         private String url; // 访问地址
         private String episodes; // 集数
         private String episodesUrl; // 集数跳转地址 -> 一般为播放地址
+        private String previewUrl; // 视频预览地址
         private Class openClass = DetailsActivity.class; // 一般为详情界面
 
         @Override

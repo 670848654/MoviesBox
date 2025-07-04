@@ -93,6 +93,7 @@ public class TextListActivity extends BaseActivity<TextListModel, TextListContra
         setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             TextDataBean.Item item = (TextDataBean.Item) adapter.getItem(position);
             Bundle bundle = new Bundle();
             bundle.putString("name", item.getTitle());

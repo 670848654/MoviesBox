@@ -1,5 +1,9 @@
 package my.project.moviesbox.view;
 
+import static cn.jzvd.Jzvd.VIDEO_IMAGE_DISPLAY_TYPE_ADAPTER;
+import static cn.jzvd.Jzvd.VIDEO_IMAGE_DISPLAY_TYPE_FILL_PARENT;
+import static cn.jzvd.Jzvd.VIDEO_IMAGE_DISPLAY_TYPE_FILL_SCROP;
+import static cn.jzvd.Jzvd.VIDEO_IMAGE_DISPLAY_TYPE_ORIGINAL;
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_FAVORITE;
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_HISTORY;
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_PLAYER_KERNEL;
@@ -8,21 +12,27 @@ import android.app.PictureInPictureParams;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Rational;
 import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.alibaba.fastjson.JSON;
@@ -51,7 +61,9 @@ import master.flame.danmaku.danmaku.parser.BaseDanmakuParser;
 import master.flame.danmaku.danmaku.parser.IDataSource;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.DramaAdapter;
+import my.project.moviesbox.adapter.MenuAdapter;
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.bean.MenuBean;
 import my.project.moviesbox.config.JZExoPlayer;
 import my.project.moviesbox.config.JZMediaIjk;
 import my.project.moviesbox.contract.DanmuContract;
@@ -59,6 +71,7 @@ import my.project.moviesbox.custom.AutoLineFeedLayoutManager;
 import my.project.moviesbox.custom.DanmakuJsonParser;
 import my.project.moviesbox.custom.DanmukuXmlParser;
 import my.project.moviesbox.custom.JZPlayer;
+import my.project.moviesbox.custom.TextViewAnimator;
 import my.project.moviesbox.database.entity.TDownloadDataWithFields;
 import my.project.moviesbox.database.manager.TDownloadDataManager;
 import my.project.moviesbox.database.manager.TFavoriteManager;
@@ -79,6 +92,7 @@ import my.project.moviesbox.service.DLNAService;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.StatusBarUtil;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.utils.VideoAlertUtils;
 import my.project.moviesbox.utils.VideoUtils;
 
 /**
@@ -90,7 +104,7 @@ import my.project.moviesbox.utils.VideoUtils;
   * @版本: 1.0
  */
 public abstract class BasePlayerActivity extends BaseActivity implements JZPlayer.CompleteListener, JZPlayer.TouchListener,
-        JZPlayer.ShowOrHideChangeViewListener,  JZPlayer.OnProgressListener, JZPlayer.PlayingListener, JZPlayer.PauseListener, JZPlayer.OnQueryDanmuListener, JZPlayer.ActivityOrientationListener, JZPlayer.FlipListener, DanmuContract.View {
+        JZPlayer.ShowOrHideChangeViewListener,  JZPlayer.OnProgressListener, JZPlayer.PlayingListener, JZPlayer.PauseListener, JZPlayer.OnQueryDanmuListener, JZPlayer.ActivityOrientationListener, JZPlayer.FlipListener, DanmuContract.View, JZPlayer.SpeedListener, JZPlayer.DisplayListener {
     @BindView(R.id.episodes_view)
     LinearLayout episodesView;
     @BindView(R.id.config_view)
@@ -140,6 +154,9 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     protected static final int MAX_RETRY_COUNT = 3; // 最大重试次数
     protected static final long RETRY_DELAY_MILLIS = 3000; // 等待3秒重试
     protected int retryCount = 0; // 重试次数
+    protected VideoAlertUtils videoAlertUtils;
+    private final List<MenuBean> speedMenuBeanList = new ArrayList<>();
+    private final List<MenuBean> displayMenuBeanList = new ArrayList<>();
 
     @Override
     protected Presenter createPresenter() {
@@ -166,6 +183,8 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         initPlayerView();
         initNavConfigView();
         initUserConfig();
+        initMenuList();
+        videoAlertUtils = new VideoAlertUtils(this);
     }
 
     /**
@@ -215,7 +234,7 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         player.configView.setOnClickListener(v -> setDrawerOpen(GravityCompat.START));
         player.openDrama.setOnClickListener(view -> setDrawerOpen(GravityCompat.END));
         player.selectDramaView.setOnClickListener(view -> setDrawerOpen(GravityCompat.END));
-        player.setListener(this, this, this, this, this, this, this, this, this, this);
+        player.setListener(this, this, this, this, this, this, this, this, this, this, this, this);
         player.backButton.setOnClickListener(v -> {
             Utils.setVibration(v);
             finish();
@@ -230,11 +249,12 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
             Utils.setVibration(v);
             changePlayUrl(VideoUrlChangeEnum.NEXT, clickIndex);
         });
-        if (isLocalVideo())
-            player.danmuView.setVisibility(View.GONE);
         player.openDamuConfig = SharedPreferencesUtils.getUserSetOpenDanmu();
         player.hasDanmuConfig = SourceEnum.hasDanmuConfigBySource(SharedPreferencesUtils.getDefaultSource());
-        if (player.openDamuConfig && player.hasDanmuConfig)  {
+        if (isLocalVideo()) {
+            player.danmuView.setVisibility(View.INVISIBLE);
+            player.danmuInfoView.setVisibility(View.INVISIBLE);
+        } else if (player.openDamuConfig && player.hasDanmuConfig)  {
             // 开启了弹幕开关且该源支持弹幕
             player.danmuView.setVisibility(View.VISIBLE);
             player.danmuInfoView.setVisibility(View.VISIBLE);
@@ -322,6 +342,22 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         });
     }
 
+    private void initMenuList() {
+        speedMenuBeanList.add(new MenuBean("倍速x0.5", 0.5f, false));
+        speedMenuBeanList.add(new MenuBean("倍速x1.0", 1f, true));
+        speedMenuBeanList.add(new MenuBean("倍速x1.25", 1.25f, false));
+        speedMenuBeanList.add(new MenuBean("倍速x1.5", 1.5f, false));
+        speedMenuBeanList.add(new MenuBean("倍速x1.75", 1.75f, false));
+        speedMenuBeanList.add(new MenuBean("倍速x2.0", 2.0f, false));
+        speedMenuBeanList.add(new MenuBean("倍速x2.5", 2.5f, false));
+        speedMenuBeanList.add(new MenuBean("倍速x3.0", 3.0f, false));
+
+        displayMenuBeanList.add(new MenuBean(getString(R.string.adaptiveScale), VIDEO_IMAGE_DISPLAY_TYPE_ADAPTER, true));
+        displayMenuBeanList.add(new MenuBean(getString(R.string.stretchFullScreen), VIDEO_IMAGE_DISPLAY_TYPE_FILL_PARENT, false));
+        displayMenuBeanList.add(new MenuBean(getString(R.string.cropFullScreen), VIDEO_IMAGE_DISPLAY_TYPE_FILL_SCROP, false));
+        displayMenuBeanList.add(new MenuBean(getString(R.string.originalSize), VIDEO_IMAGE_DISPLAY_TYPE_ORIGINAL, false));
+    }
+
     /**
      * 设置用户保存的快进、快退时长
      * @param index 下标
@@ -329,6 +365,7 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     private void setUserSpeedConfig(int index) {
         SharedPreferencesUtils.setUserSetSpeed(speedsIntItems[index]);
         speedTextView.setText(speedsStrItems[index]);
+        player.setFastQuickText(speedsStrItems[index]);
         userSpeed = index;
     }
 
@@ -412,7 +449,7 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         if (nextPlayUrl.size() == 1)
             playNetworkVideo(nextPlayUrl.get(0).getUrl());
         else
-           alertDialog = VideoUtils.showMultipleVideoSources(this,
+           alertDialog = videoAlertUtils.showMultipleVideoSources(
                     nextPlayUrl,
                     (adapter, view, position) -> {
                        playNetworkVideo(nextPlayUrl.get(position).getUrl());
@@ -617,8 +654,28 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void enterPicInPic() {
         PictureInPictureParams.Builder pipBuilder = new PictureInPictureParams.Builder();
-        pipBuilder.setAspectRatio(new Rational(player.videoWidth, player.videoHeight));
+//        pipBuilder.setAspectRatio(new Rational(player.videoWidth, player.videoHeight));
+        Rational safeRatio = getSafeAspectRatio(player.videoWidth, player.videoHeight);
+        pipBuilder.setAspectRatio(safeRatio);
         enterPictureInPictureMode(pipBuilder.build());
+    }
+
+    public static Rational getSafeAspectRatio(int width, int height) {
+        final float MIN_RATIO = 0.418410f;
+        final float MAX_RATIO = 2.39f;
+        if (width <= 0 || height <= 0) return new Rational(16, 9); // fallback
+        float ratio = (float) width / height;
+        // 修正比例在合法范围内
+        if (ratio < MIN_RATIO) {
+            ratio = MIN_RATIO;
+        } else if (ratio > MAX_RATIO) {
+            ratio = MAX_RATIO;
+        }
+        // 转为 Rational（例如 1.78 → 178 : 100）
+        int scale = 1000; // 精度控制
+        int w = (int) (ratio * scale);
+        int h = scale;
+        return new Rational(w, h);
     }
 
     @Override
@@ -801,6 +858,8 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
             videoPresenter.detachView();
         App.removeDestroyActivity("player");
         emptyRecyclerView(recyclerView);
+        if (videoAlertUtils != null)
+            videoAlertUtils.release();
         super.onDestroy();
     }
 
@@ -838,6 +897,73 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     @Override
     public void setFlip() {
         flipValue = flipValue == 1 ? -1 : 1;
+        // 镜像翻转
         player.getCustomTextureView().setScaleX(flipValue);
+        TextViewAnimator.showMultipleWithFade(player.tipsView, (isFlipped() ? "镜像翻转开启" : "镜像翻转关闭"), 300, 1000);
+    }
+
+    public boolean isFlipped() {
+        return flipValue == -1;
+    }
+
+    @Override
+    public void setSpeed(MenuBean.MenuEnum menuEnum) {
+        showMenuPopupView(menuEnum, speedMenuBeanList);
+    }
+
+    @Override
+    public void setDisplay(MenuBean.MenuEnum menuEnum) {
+        showMenuPopupView(menuEnum, displayMenuBeanList);
+    }
+
+    /**
+     * 显示菜单弹窗
+     * @param menuEnum
+     * @param menuBeanList
+     */
+    public void showMenuPopupView(MenuBean.MenuEnum menuEnum, List<MenuBean> menuBeanList) {
+        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_menu_selection, null);
+        RecyclerView recyclerView = popupView.findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        MenuAdapter adapter = new MenuAdapter(this, menuBeanList);
+        recyclerView.setAdapter(adapter);
+        PopupWindow popupWindow = new PopupWindow(popupView,
+                Utils.dpToPx(this, 160),
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                true);
+        popupWindow.setFocusable(true);
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setAnimationStyle(R.style.PopupRightAnim);
+        popupWindow.showAtLocation(player.tipsView.getRootView(), Gravity.END, 0, 0);
+        adapter.setOnItemClickListener((adapter1, view, position) -> {
+            MenuBean menuBean = (MenuBean) adapter1.getData().get(position);
+            switch (menuEnum) {
+                case SPEED:
+                    if (player.currentSpeedIndex == position) return;
+                    speedMenuBeanList.get(player.currentSpeedIndex).setSelected(false);
+                    adapter.notifyItemChanged(player.currentSpeedIndex);
+                    player.currentSpeedIndex = position;
+                    menuBean.setSelected(true);
+                    adapter.notifyItemChanged(position);
+                    player.speedRet = (Float) menuBean.getValue();
+                    player.mediaInterface.setSpeed((Float) menuBean.getValue());
+                    player.tvSpeedView.setText(menuBean.getTitle());
+                    TextViewAnimator.showMultipleWithFade(player.tipsView, menuBean.getTitle(), 300, 1000);
+                    break;
+                case DISPLAY:
+                    if (player.displayIndex == position) return;
+                    menuBeanList.get(player.displayIndex).setSelected(false);
+                    adapter.notifyItemChanged(player.displayIndex);
+                    player.displayIndex = position;
+                    menuBean.setSelected(true);
+                    Jzvd.setVideoImageDisplayType((Integer) menuBean.getValue());
+                    String displayText = menuBean.getTitle();
+                    player.displayView.setText(displayText);
+                    TextViewAnimator.showMultipleWithFade(player.tipsView, displayText, 300, 1000);
+                    break;
+            }
+            popupWindow.dismiss();
+        });
     }
 }

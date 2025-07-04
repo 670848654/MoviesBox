@@ -87,6 +87,7 @@ public class LocalPlayerActivity extends BasePlayerActivity {
         recyclerView.setAdapter(dramaAdapter);
         dramaAdapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             drawerLayout.closeDrawer(GravityCompat.END);
             changePlayUrl(VideoUrlChangeEnum.CLICK, position);
         });

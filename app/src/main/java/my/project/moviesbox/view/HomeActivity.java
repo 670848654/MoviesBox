@@ -1,8 +1,15 @@
 package my.project.moviesbox.view;
 
 import android.content.Intent;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
+import android.graphics.drawable.Icon;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 
+import androidx.annotation.DrawableRes;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -13,6 +20,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import butterknife.BindView;
@@ -119,6 +127,9 @@ public class HomeActivity extends BaseActivity {
                     null,
                     null);
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1)
+            createShortcut();
     }
 
     /**
@@ -179,5 +190,36 @@ public class HomeActivity extends BaseActivity {
         this.doubleBackToExitPressedOnce = true;
         application.showToastMsg(getString(R.string.pressAgain2ExitApp), DialogXTipEnum.DEFAULT);
         new Handler().postDelayed(() -> doubleBackToExitPressedOnce = false, 2000); // 2秒内再次按下返回键生效
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N_MR1)
+    private void createShortcut() {
+        ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
+        if (shortcutManager != null) {
+            shortcutManager.removeDynamicShortcuts(Arrays.asList("open_favorite", "open_download"));
+            List<ShortcutInfo> shortcuts = new ArrayList<>();
+            shortcuts.add(createFragmentShortcut("open_91", "91吃瓜中心", "91吃瓜中心", R.drawable.ic_shortcut_insert_link, "app://open_91"));
+            shortcuts.add(createFragmentShortcut("open_vip", "VIP视频解析助手", "VIP视频解析助手", R.drawable.ic_shortcut_insert_link, "app://open_vip"));
+            shortcutManager.setDynamicShortcuts(shortcuts);
+        }
+    }
+
+    /**
+     *
+     * @param openId
+     * @param shortLabel
+     * @param longLabel
+     * @param icon
+     * @param location
+     * @return
+     */
+    @RequiresApi(api = Build.VERSION_CODES.N_MR1)
+    private ShortcutInfo createFragmentShortcut(String openId, String shortLabel, String longLabel, @DrawableRes int icon, String location) {
+        return new ShortcutInfo.Builder(this, openId)
+                .setShortLabel(shortLabel)  // 快捷方式显示的名称
+                .setLongLabel(longLabel)  // 长按时显示的描述
+                .setIcon(Icon.createWithResource(this, icon))
+                .setIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(location)))  // 设置启动时的 Intent
+                .build();
     }
 }

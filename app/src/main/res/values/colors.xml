@@ -290,7 +290,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="delete_color">#FF0000</color>
+    <color name="delete_color">#ff5722</color>
     <color name="sub_content_color">#8C8C8C</color>
 
     <color name="undone">#31BDEC</color>
@@ -299,6 +299,6 @@
     <color name="deprecated">#FF5722</color>
 
     <color name="movie">#1E9FFF</color>
-    <color name="anime">#009688</color>
-    <color name="adult">#393D49</color>
+    <color name="anime">#8cba04</color>
+    <color name="adult">#ffb10d</color>
 </resources>

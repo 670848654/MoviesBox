@@ -302,6 +302,27 @@ public class OkHttpUtils {
         call.enqueue(callback);
     }
 
+    /**
+     * post json请求
+     * @param url
+     * @param headers
+     * @param json
+     * @param callback
+     */
+    public void doPostJson(String url, Headers headers, String json, Callback callback) {
+        LogUtil.logInfo("POST JSON 请求", url);
+        LogUtil.logInfo("POST JSON 请求参数", json);
+        MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
+        RequestBody body = RequestBody.create(json, mediaType);
+        Request request = new Request.Builder()
+                .url(url)
+                .headers(headers)
+                .post(body)
+                .build();
+        Call call = getOkHttpClient().newCall(request);
+        call.enqueue(callback);
+    }
+
     public Response doPostDefault(String url, Headers headers, FormBody body) throws IOException {
         LogUtil.logInfo("POST请求", url);
         Request request = new Request.Builder()

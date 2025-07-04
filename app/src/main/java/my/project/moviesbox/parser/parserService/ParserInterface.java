@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import my.project.moviesbox.contract.DanmuContract;
-import my.project.moviesbox.model.DanmuModel;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.parser.bean.DialogItemBean;
@@ -22,6 +20,7 @@ import my.project.moviesbox.parser.config.FavoriteItemStyleEnum;
 import my.project.moviesbox.parser.config.ItemStyleEnum;
 import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
+import my.project.moviesbox.strategy.danmu.DanmuStrategyFactory;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.view.BaseActivity;
 import my.project.moviesbox.view.PlayerActivity;
@@ -174,6 +173,14 @@ public interface ParserInterface {
     }
 
     /**
+     * 搜索默认提示文字
+     * @return
+     */
+    default String searchHint() {
+        return "请输入检索关键字";
+    }
+
+    /**
      * 获取剧集列表集合接口 (搜索)
      * @param source 网页源代码
      * @return {@link VodDataBean}
@@ -233,7 +240,7 @@ public interface ParserInterface {
     /**
      * 弹幕接口返回是否为JSON
      * <p>注：弹幕只有两种格式 XML/JsonObject</p>
-     * <p>JSON弹幕需自行实现弹幕解析{@link DanmuModel#getDanmu(DanmuContract.LoadDataCallback, String...)}</p>
+     * <p>JSON弹幕需自行实现弹幕解析{@link DanmuStrategyFactory#getStrategy}</p>
      * @return true JSON格式 false XML格式
      */
     boolean getDanmuResultJson();

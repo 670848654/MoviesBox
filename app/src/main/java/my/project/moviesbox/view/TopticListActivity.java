@@ -88,6 +88,7 @@ public class TopticListActivity extends BaseActivity<TopticListModel, TopTicList
         setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             VodDataBean bean = (VodDataBean) adapter.getItem(position);
             String url = bean.getUrl();
             String title = bean.getTitle();

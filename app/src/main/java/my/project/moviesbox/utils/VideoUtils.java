@@ -1,19 +1,17 @@
 package my.project.moviesbox.utils;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
+import static com.arthenica.mobileffmpeg.Config.RETURN_CODE_SUCCESS;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
+import android.os.Build;
 
 import com.arialyy.aria.core.task.DownloadTask;
-import com.chad.library.adapter.base.listener.OnItemClickListener;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.arthenica.mobileffmpeg.FFmpeg;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -26,13 +24,10 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -40,17 +35,13 @@ import javax.crypto.spec.SecretKeySpec;
 
 import cn.jzvd.JZMediaInterface;
 import my.project.moviesbox.R;
-import my.project.moviesbox.adapter.VodTypeListAdapter;
-import my.project.moviesbox.application.App;
 import my.project.moviesbox.config.JZExoPlayer;
 import my.project.moviesbox.config.JZMediaIjk;
+import my.project.moviesbox.config.NotificationUtils;
+import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.database.manager.TVideoManager;
-import my.project.moviesbox.event.VideoSniffEvent;
+import my.project.moviesbox.event.DownloadEvent;
 import my.project.moviesbox.parser.LogUtil;
-import my.project.moviesbox.parser.bean.DetailsDataBean;
-import my.project.moviesbox.parser.bean.DialogItemBean;
-import my.project.moviesbox.service.SniffingVideoService;
-import my.project.moviesbox.view.PlayerActivity;
 
 /**
   * @包名: my.project.moviesbox.utils
@@ -61,39 +52,6 @@ import my.project.moviesbox.view.PlayerActivity;
   * @版本: 1.0
  */
 public class VideoUtils {
-
-    /**
-     * 打开播放器
-     * @param isDescActivity
-     * @param activity
-     * @param dramaTitle
-     * @param url
-     * @param vodTitle
-     * @param dramaUrl
-     * @param list
-     * @param clickIndex
-     * @param vodId
-     * @param nowSource
-     */
-    public static void openPlayer(boolean isDescActivity, Activity activity, String dramaTitle, String url, String vodTitle, String dramaUrl,
-                                  List<DetailsDataBean.DramasItem> list, int clickIndex, String vodId, int nowSource) {
-        Bundle bundle = new Bundle();
-        bundle.putString("dramaTitle", dramaTitle);
-        bundle.putString("url", url);
-        bundle.putString("vodTitle", vodTitle);
-        bundle.putString("dramaUrl", dramaUrl);
-        bundle.putSerializable("list", (Serializable) list);
-        bundle.putInt("clickIndex", clickIndex);
-        bundle.putString("vodId", vodId);
-        bundle.putInt("nowSource", nowSource);
-        App.destroyActivity("player");
-        if (isDescActivity)
-            activity.startActivityForResult(new Intent(activity, PlayerActivity.class).putExtras(bundle), 0x10);
-        else {
-            activity.startActivity(new Intent(activity, PlayerActivity.class).putExtras(bundle));
-            activity.finish();
-        }
-    }
 
     /**
      * 读取key内容
@@ -291,7 +249,7 @@ public class VideoUtils {
      * @return
      */
     public static int getPosition (byte[] src) {
-        StringBuffer sb = new StringBuffer("");
+        /*StringBuffer sb = new StringBuffer("");
         if (src == null || src.length == 0) {
             return 0;
         }
@@ -304,7 +262,19 @@ public class VideoUtils {
             sb.append(hv);
         }
         Matcher matcher = Pattern.compile("47401110").matcher(sb.toString());
-        return matcher.find() ? matcher.start() / 2 : 0;
+        return matcher.find() ? matcher.start() / 2 : 0;*/
+        if (src == null || src.length < 4) return 0;
+
+        for (int i = 0; i < src.length - 3; i++) {
+            // 注意：byte 是有符号的，需要和 0xFF 做位运算
+            if ((src[i] & 0xFF) == 0x47 &&
+                    (src[i + 1] & 0xFF) == 0x40 &&
+                    (src[i + 2] & 0xFF) == 0x11 &&
+                    (src[i + 3] & 0xFF) == 0x10) {
+                return i; // 直接返回匹配位置
+            }
+        }
+        return 0; // 未找到，默认返回开头
     }
 
     /**
@@ -319,79 +289,6 @@ public class VideoUtils {
     }
 
     /**
-     * 相关提示
-     * @param context
-     * @param msg
-     */
-    public static void showInfoDialog(Context context, String msg) {
-        AlertDialog alertDialog;
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context, R.style.DialogStyle);
-        builder.setCancelable(true);
-        builder.setTitle(Utils.getString(R.string.otherOperation));
-        builder.setMessage(msg);
-        builder.setPositiveButton(Utils.getString(R.string.defaultPositiveBtnText), (dialog, which) -> dialog.dismiss());
-        alertDialog = builder.create();
-        alertDialog.show();
-    }
-
-    /**
-     * 发现多个播放地址时弹窗 下载用
-     *
-     * @param context
-     * @param list
-     * @param listener
-     */
-    public static AlertDialog showMultipleVideoSources4Download(Context context,
-                                                                List<DialogItemBean> dialogItemBeans,
-                                                                OnItemClickListener onItemClickListener) {
-        AlertDialog alertDialog;
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context, R.style.DialogStyle);
-        builder.setTitle(Utils.getString(R.string.downloadMultipleVideoDialogTitle));
-        builder.setCancelable(false);
-        LayoutInflater inflater = LayoutInflater.from(context);
-        View dialogView = inflater.inflate(R.layout.custom_dialog_recyclerview, null);
-        RecyclerView recyclerView = dialogView.findViewById(R.id.recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(context));
-        VodTypeListAdapter adapter = new VodTypeListAdapter(dialogItemBeans);
-        adapter.setOnItemClickListener(onItemClickListener);
-        recyclerView.setAdapter(adapter);
-        builder.setView(dialogView);
-        alertDialog = builder.create();
-        alertDialog.show();
-        return alertDialog;
-    }
-
-    /**
-     * 发现多个播放地址时弹窗
-     *
-     * @param context
-     * @param list
-     * @param listener
-     * @param isPlayerActivity 是否是播放界面
-     */
-    public static AlertDialog showMultipleVideoSources(Context context,
-                                                List<DialogItemBean> dialogItemBeans,
-                                                OnItemClickListener onItemClickListener, boolean isPlayerActivity) {
-        AlertDialog alertDialog;
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context, R.style.DialogStyle);
-        builder.setTitle(Utils.getString(R.string.selectVideoSource));
-        builder.setCancelable(false);
-        LayoutInflater inflater = LayoutInflater.from(context);
-        View dialogView = inflater.inflate(R.layout.custom_dialog_recyclerview, null);
-        RecyclerView recyclerView = dialogView.findViewById(R.id.recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(context));
-        VodTypeListAdapter adapter = new VodTypeListAdapter(dialogItemBeans);
-        adapter.setOnItemClickListener(onItemClickListener);
-        recyclerView.setAdapter(adapter);
-        builder.setView(dialogView);
-        if (!isPlayerActivity)
-            builder.setNegativeButton(Utils.getString(R.string.defaultNegativeBtnText), null);
-        alertDialog = builder.create();
-        alertDialog.show();
-        return alertDialog;
-    }
-
-    /**
      * 获取用户设置的播放器内核类型
      * @return
      */
@@ -402,40 +299,6 @@ public class VideoUtils {
         } else {
             return JZExoPlayer.class;
         }
-    }
-
-
-    /**
-     * 启动嗅探服务
-     * @param url 播放页地址
-     * @param activityEnum EventBus订阅处理判断
-     * @param sniffEnum 嗅探结果处理类型
-     */
-    public static void startSniffing(Context context, String url,
-                                     VideoSniffEvent.ActivityEnum activityEnum,
-                                     VideoSniffEvent.SniffEnum sniffEnum) {
-        Intent intent = new Intent(context, SniffingVideoService.class);
-        intent.putExtra("url", url);
-        intent.putExtra("activityEnum", activityEnum.name());
-        intent.putExtra("sniffEnum", sniffEnum.name());
-        context.startService(intent);
-    }
-
-    /**
-     * 嗅探失败弹窗
-     * @param context
-     */
-    public static void sniffErrorDialog(Activity activity) {
-        Utils.showAlert(activity,
-                activity.getString(R.string.errorDialogTitle),
-                activity.getString(R.string.sniffVodPlayUrlError),
-                false,
-                activity.getString(R.string.defaultPositiveBtnText),
-                "",
-                "",
-                (dialog, which) -> dialog.dismiss(),
-                null,
-                null);
     }
 
     /**
@@ -481,6 +344,76 @@ public class VideoUtils {
         } catch (IOException e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    /**
+     * 使用FFmpeg TS转MP4
+     * @param notificationId        通知ID
+     * @param m3u8Path              M3U8保存地址
+     * @param inputPath             ts地址
+     * @param outputPath            mp4地址
+     * @param taskId                任务ID
+     * @param vodTitle              影视标题
+     * @param vodEpisodes           影视集数
+     * @param notificationUtils     通知
+     */
+    public static void convertTSToMP4(int notificationId, String m3u8Path, String inputPath, String outputPath, Long taskId, String vodTitle, String vodEpisodes, NotificationUtils notificationUtils) {
+        String[] cmd = {"-i", inputPath, "-acodec", "copy", "-vcodec", "copy", "-absf", "aac_adtstoasc", outputPath};
+        long startTime = System.nanoTime();
+        // 执行FFmpeg命令
+        FFmpeg.executeAsync(cmd, (executionId, returnCode) -> {
+            long endTime = System.nanoTime();
+            double durationInSeconds = (endTime - startTime) / 1_000_000_000.0;
+            String timeConsuming = String.format("转码耗时: %.2f 秒", durationInSeconds);
+            if (returnCode == RETURN_CODE_SUCCESS) {
+                LogUtil.logInfo("转换MP4成功，" + timeConsuming, null);
+                // 转换完成删除TS文件
+                File file = new File(inputPath);
+                if (file.exists()) {
+                    boolean delete = file.delete();
+                    LogUtil.logInfo(delete ? inputPath + "文件删除成功" : inputPath + "文件删除失败", null);
+                }
+                // 删除M3U8文件
+                file= new File(m3u8Path);
+                if (file.exists()) {
+                    boolean delete = file.delete();
+                    LogUtil.logInfo(delete ? m3u8Path + "文件删除成功" : m3u8Path + "文件删除失败", null);
+                }
+                file = new File(outputPath);
+                TDownloadManager.updateDownloadSuccess(m3u8Path, taskId, file.length());
+                EventBus.getDefault().post(new DownloadEvent(taskId, vodTitle, vodEpisodes, m3u8Path, file.length(), 1));
+                notificationUtils.uploadInfo(notificationId, vodTitle, vodEpisodes, Utils.getString(R.string.convertTSToMP4SuccessMsg) + "，" + timeConsuming);
+            } else {
+                LogUtil.logInfo("转换出错，错误代码:", returnCode+"");
+                TDownloadManager.updateDownloadError(m3u8Path, taskId, 0);
+                EventBus.getDefault().post(new DownloadEvent(taskId, vodTitle, vodEpisodes, m3u8Path, 0, 2));
+                notificationUtils.uploadInfo(notificationId, vodTitle, vodEpisodes, String.format(Utils.getString(R.string.convertTSToMP4ErrorMsg), returnCode));
+            }
+        });
+    }
+
+    public static void requestAudioFocus(Context context) {
+        Context appContext = context.getApplicationContext(); // 避免万一传入 Activity
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            AudioAttributes attributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build();
+
+            AudioFocusRequest focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                    .setAudioAttributes(attributes)
+                    .setWillPauseWhenDucked(false)
+                    .setAcceptsDelayedFocusGain(false)
+                    .build();
+
+            audioManager.requestAudioFocus(focusRequest);
+        } else {
+            audioManager.requestAudioFocus(null,
+                    AudioManager.STREAM_MUSIC,
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
         }
     }
 }

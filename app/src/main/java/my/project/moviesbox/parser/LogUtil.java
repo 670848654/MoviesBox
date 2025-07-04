@@ -41,7 +41,7 @@ public class LogUtil {
         String dateTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss ", Locale.getDefault()).format(new Date());
         String content = Utils.isNullOrEmpty(args) ? message : String.format((Utils.isNullOrEmpty(message) ? "" : message + " -> ") + "%s", args);
         logs.add(0, new ParserLogBean(dateTime, content));
-        if (logs.size() >= MAX_LOG_COUNT) {
+        if (logs.size() > MAX_LOG_COUNT) {
             logs.remove(logs.size() - 1); // 删除最后一条，保留最新
         }
         /*if (SharedPreferencesUtils.getSaveParserLogs())

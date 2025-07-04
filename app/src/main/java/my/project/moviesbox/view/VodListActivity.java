@@ -21,6 +21,7 @@ import my.project.moviesbox.adapter.VodListAdapter;
 import my.project.moviesbox.contract.VodListContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
 import my.project.moviesbox.custom.FabExtendingOnScrollListener;
+import my.project.moviesbox.custom.VideoPreviewDialog;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.model.VodListModel;
 import my.project.moviesbox.parser.bean.VodDataBean;
@@ -91,10 +92,20 @@ public class VodListActivity extends BaseActivity<VodListModel, VodListContract.
         setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             VodDataBean bean = (VodDataBean) adapter.getItem(position);
             String url = bean.getUrl();
             String title = bean.getTitle();
             openVodDetail(title, url);
+        });
+        adapter.setOnItemLongClickListener((adapter, view, position) -> {
+            VodDataBean bean = (VodDataBean) adapter.getItem(position);
+            String title = bean.getTitle();
+            String previewUrl = bean.getPreviewUrl();
+            if (Utils.isNullOrEmpty(previewUrl)) return false;
+            VideoPreviewDialog dialog = new VideoPreviewDialog(this, title, previewUrl);
+            dialog.show();
+            return true;
         });
         adapter.getLoadMoreModule().setLoadMoreView(new CustomLoadMoreView());
         adapter.getLoadMoreModule().setOnLoadMoreListener(() -> {

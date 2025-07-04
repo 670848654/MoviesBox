@@ -30,7 +30,6 @@ import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.VideoPresenter;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
-import my.project.moviesbox.utils.VideoUtils;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -90,6 +89,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
         recyclerView.setAdapter(dramaAdapter);
         dramaAdapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             drawerLayout.closeDrawer(GravityCompat.END);
             changePlayUrl(VideoUrlChangeEnum.CLICK, position);
         });
@@ -139,6 +139,9 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
             case NYYY:
                 // 缘觉影视 | 纽约影视 弹幕参数 [0] 播放页地址
                 return new String[]{dramaUrl};
+            case GIRI_GIRI_LOVE:
+                // ギリギリ愛 弹幕参数 [0] 视频播放地址
+                return new String[]{url};
             default:
                 return null;
         }
@@ -161,7 +164,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
             if (urls.size() == 1)
                 playNetworkVideo(urls.get(0).getUrl());
             else
-                alertDialog = VideoUtils.showMultipleVideoSources(this,
+                alertDialog = videoAlertUtils.showMultipleVideoSources(
                         urls,
                         (adapter, view, position) -> {
                             playNetworkVideo(urls.get(position).getUrl());
@@ -180,7 +183,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
             hideNavBar();
             if (SharedPreferencesUtils.getEnableSniff()) {
                 alertDialog = Utils.getProDialog(this, R.string.sniffVodPlayUrl);
-                VideoUtils.startSniffing(this, dramaUrl, VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.PLAY);
+                videoAlertUtils.startSniffing(dramaUrl, VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.PLAY);
             } else {
                 Utils.showAlert(this,
                         getString(R.string.errorDialogTitle),
@@ -246,7 +249,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
                 // 延迟指定时间后重试
                 new Handler().postDelayed(() -> {
                     if (SharedPreferencesUtils.getEnableSniff())
-                        VideoUtils.startSniffing(this, dramasItems.get(clickIndex+1).getUrl(), VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.NEXT_PLAY);
+                        videoAlertUtils.startSniffing(dramasItems.get(clickIndex+1).getUrl(), VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.NEXT_PLAY);
                     else
                     getNextPlayUrl();
             }, RETRY_DELAY_MILLIS);
@@ -289,7 +292,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
                     if (success)
                         successPlayUrl(urls);
                     else
-                        VideoUtils.sniffErrorDialog(this);
+                        videoAlertUtils.sniffErrorDialog();
                     break;
                 case NEXT_PLAY:
                     if (success) {

@@ -178,6 +178,7 @@ public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContra
         adapter.setHeaderWithEmptyEnable(true);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             Bundle bundle = new Bundle();
             bundle.putString("vodTitle", downloadList.get(position).getVideoTitle());
             bundle.putString("downloadId", downloadList.get(position).getTDownload().getDownloadId());

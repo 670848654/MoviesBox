@@ -24,5 +24,4 @@ public enum FuckCFEnum {
     DOWNLOAD_URL,               // 获取视频地址（下载）
     DANMU,                      // 弹幕
     UPDATE_IMG,                 // 更新图片信息
-    AV_CATEGORY                 // NJAV/MISSAV 分类界面
 }

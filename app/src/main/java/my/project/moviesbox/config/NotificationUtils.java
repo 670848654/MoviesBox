@@ -129,6 +129,7 @@ public class NotificationUtils {
                         .setContentTitle(videoNumber)
                         .setSubText(title)
                         .setContentText("下载中")
+                        .setOngoing(true)
                         .setProgress(progressMax, 0, false)
                         .build();
                 mManager.notify(notificationId, notification);
@@ -148,6 +149,7 @@ public class NotificationUtils {
                         .setContentTitle(videoNumber)
                         .setSubText(title)
                         .setContentText("下载中")
+                        .setOngoing(true)
                         .setProgress(progressMax, 0, false)
                         .build();
                 mManager.notify(notificationId, notification);

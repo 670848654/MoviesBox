@@ -10,6 +10,7 @@ import java.util.Map;
 
 import fi.iki.elonen.NanoHTTPD;
 
+@Deprecated
 public class LocalVideoDLNAServer extends NanoHTTPD {
     private String path;
 

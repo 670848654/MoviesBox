@@ -25,6 +25,7 @@ import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.VodListAdapter;
 import my.project.moviesbox.contract.SearchContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
+import my.project.moviesbox.custom.VideoPreviewDialog;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.model.SearchModel;
 import my.project.moviesbox.parser.bean.VodDataBean;
@@ -99,10 +100,20 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
         setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             VodDataBean bean = (VodDataBean) adapter.getItem(position);
             String url = bean.getUrl();
             String title = bean.getTitle();
             openVodDesc(title, url);
+        });
+        adapter.setOnItemLongClickListener((adapter, view, position) -> {
+            VodDataBean bean = (VodDataBean) adapter.getItem(position);
+            String title = bean.getTitle();
+            String previewUrl = bean.getPreviewUrl();
+            if (Utils.isNullOrEmpty(previewUrl)) return false;
+            VideoPreviewDialog dialog = new VideoPreviewDialog(this, title, previewUrl);
+            dialog.show();
+            return true;
         });
         adapter.getLoadMoreModule().setLoadMoreView(new CustomLoadMoreView());
         adapter.getLoadMoreModule().setOnLoadMoreListener(() -> {
@@ -173,7 +184,7 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
         ImageView closeButton = mSearchView.findViewById(androidx.appcompat.R.id.search_close_btn);
         if (closeButton != null)
             closeButton.setImageResource(R.drawable.round_search_off_24);
-        mSearchView.setQueryHint("请输入检索关键字");
+        mSearchView.setQueryHint(parserInterface.searchHint());
         mSearchView.setMaxWidth(4000);
         if (!Utils.isNullOrEmpty(title)) {
             mSearchView.setQuery(title, false);

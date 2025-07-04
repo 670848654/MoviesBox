@@ -9,11 +9,13 @@
     <string name="testModelSubContent">OnePlus 12 | XiaomiPad 5 Pro<![CDATA[<br>]]>Android 15 | 14</string>
     <string name="currentVersionTitle">当前版本</string>
     <string name="lastBuildDateTitle">最后构建日期</string>
-    <string name="lastBuildDateSubContent">2025年6月17日09:43:01</string>
+    <string name="lastBuildDateSubContent">2025年7月4日19:59:31</string>
     <string name="cacheDirectoryTitle">存储位置</string>
     <string name="cacheDirectorySubContent">%s<![CDATA[<br>]]>卸载后自行删除此目录</string>
     <string name="authorizationDirectoryTitle">外部存储授权目录</string>
     <string name="openSourceTitle">开源相关</string>
+    <string name="vipVideoParserTitle">VIP视频解析小工具</string>
+    <string name="vipVideoParserSubTitle">通过第三方接口解析各大网站资源</string>
     <string name="githubTitle">Github仓库</string>
     <string name="githubSubContent">帮我点个Star？:-)<![CDATA[<br>]]>https://github.com/670848654/MoviesBox</string>
     <string name="githubUrl">https://github.com/670848654/MoviesBox</string>

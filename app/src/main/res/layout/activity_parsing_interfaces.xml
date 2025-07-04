@@ -153,6 +153,18 @@
 
                     </LinearLayout>
 
+                    <TextView
+                        android:id="@+id/json"
+                        android:visibility="gone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textIsSelectable="true"
+                        android:scrollbars="vertical"
+                        android:gravity="start"
+                        android:lineSpacingExtra="4dp"
+                        android:inputType="textMultiLine"
+                        android:overScrollMode="always"/>
+
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>

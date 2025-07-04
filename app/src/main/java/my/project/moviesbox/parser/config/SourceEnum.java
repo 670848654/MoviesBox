@@ -1,8 +1,9 @@
 package my.project.moviesbox.parser.config;
 
 import static my.project.moviesbox.parser.config.SourceEnum.SourceStateEnum.ABNORMAL;
-import static my.project.moviesbox.parser.config.SourceEnum.SourceStateEnum.DEPRECATED;
 import static my.project.moviesbox.parser.config.SourceEnum.SourceStateEnum.NORMAL;
+import static my.project.moviesbox.parser.config.SourceEnum.SourceStateEnum.NO_LONGER_UPDATED;
+import static my.project.moviesbox.parser.config.SourceEnum.SourceStateEnum.WEBSITE_SHUTDOWN;
 import static my.project.moviesbox.parser.config.SourceEnum.SourceTypeEnum.ANIME;
 import static my.project.moviesbox.parser.config.SourceEnum.SourceTypeEnum.MOVIES;
 
@@ -79,7 +80,8 @@ public enum SourceEnum {
             "",
             "",
             new ArrayList<>()),
-    //  网站关闭废弃
+//    网站关闭废弃
+    @Deprecated
     ANFUNS(SourceIndexEnum.ANFUNS,
             "AnFuns",
             ANIME.title,
@@ -182,6 +184,20 @@ public enum SourceEnum {
             "",
             new ArrayList<>()
             ),
+    GIRI_GIRI_LOVE(SourceIndexEnum.GIRI_GIRI_LOVE,
+            "ギリギリ愛",
+            ANIME.title,
+            ANIME.bg,
+            "质量高，无国产动漫",
+            "girigirilove",
+            "https://anime.girigirilove.com",
+            "https://girigirilove.top/",
+            "/search/%s----------%s---/", // 搜索参数.分页
+            true,
+            "/show/%s-%s-%s-%s-%s----%s-%s--%s%s", // 频道.季度.排序.类型.语言.分页.改编.年份.类别
+            "https://m3u8.girigirilove.com/api.php/Scrolling/getVodOutScrolling", // 弹幕API接口,POST请求{"play_url":"https://m3u8.girigirilove.com/zijian/oldanime/2025/04/cht/YourFormaCHT/01/playlist.m3u8"}参数为当前播放地址
+            "",
+            new ArrayList<>())
     ;
 
     /**
@@ -280,26 +296,12 @@ public enum SourceEnum {
      */
     public static List<SourceDataBean> getSourceDataBeanList() {
         List<SourceDataBean> sourceDataBeans = new ArrayList<>();
+        boolean turnOnHiddenFeatures = SharedPreferencesUtils.getTurnOnHiddenFeatures();
         for (SourceEnum sourceEnum : SourceEnum.values()) {
-            sourceDataBeans.add(new SourceDataBean(
-                    sourceEnum.getSourceName(),
-                    sourceEnum.getSourceIndexEnum(),
-                    sourceEnum.getSourceType(),
-                    sourceEnum.getSourceTypeBg(),
-                    sourceEnum.getSourceInfo(),
-                    !Utils.isNullOrEmpty(sourceEnum.getDanmuUrl()),
-                    !Utils.isNullOrEmpty(sourceEnum.getWebsiteRelease()),
-                    sourceEnum.getWebsiteRelease(),
-                    !Utils.isNullOrEmpty(sourceEnum.getRss()),
-                    sourceEnum.getRss()
-            ));
-        }
-        return sourceDataBeans;
-    }
-
-    public static List<SourceDataBean> getTurnOnHiddenFeaturesList() {
-        List<SourceDataBean> sourceDataBeans = new ArrayList<>();
-        for (SourceEnum sourceEnum : SourceEnum.values()) {
+            int sourceIndex = sourceEnum.sourceIndexEnum.index;
+            // 过滤网站已关闭的资源
+            if (sourceEnum.sourceIndexEnum.stateEnum == WEBSITE_SHUTDOWN)
+                continue;
             sourceDataBeans.add(new SourceDataBean(
                     sourceEnum.getSourceName(),
                     sourceEnum.getSourceIndexEnum(),
@@ -379,20 +381,22 @@ public enum SourceEnum {
         // 樱花动漫
         I_YINGHUA(2, NORMAL, ""),
         // AnFuns动漫
-        ANFUNS(3, DEPRECATED, "2025年6月16日访问显示网站已关闭，估计是无了"),
+        @Deprecated
+        ANFUNS(3, WEBSITE_SHUTDOWN, "站点已关闭，凉凉"),
         // LIBVIO
         LIBVIO(4, NORMAL, ""),
         // 在线之家
         ZXZJ(5, NORMAL, ""),
         // 555电影
-        FIVE_MOVIE(6, DEPRECATED, "经常更换域名、出现Cloudflare，失效后将不再维护"),
-        // 7/8/9 自用暂不开源
+        FIVE_MOVIE(6, NO_LONGER_UPDATED, "经常更换域名、出现Cloudflare，失效后将不再维护"),
         // 缘觉影视 2024年12月5日14:03:55发现站长回归 更名为修罗影视
         YJYS(10, ABNORMAL, "影视搜索存在服务器验证请手动验证，部分视频调用接口存在二次验证（不支持），尝试支持该站的M3U8协议播放（如果存在MP4的播放地址优先使用，不可播放再尝试M3U8协议的播放地址，不一定能播放成功），测试中可能存在应用崩溃"),
         // 小宝影院
         XBYY(11, ABNORMAL, "仅支持但并未经过详细测试，M3U8协议播放列表尝试过滤广告"),
         // 纽约影院
         NYYY(12, ABNORMAL, "影视搜索存在服务器验证请手动验证（无数据请刷新重试，这个网站有时返回的就是无数据~）"),
+        // ギリギリ愛
+        GIRI_GIRI_LOVE(16, ABNORMAL, "仅添加支持未深入测试是否存在问题"),
         ;
         public int index;
         public SourceStateEnum stateEnum;
@@ -419,10 +423,11 @@ public enum SourceEnum {
     @Getter
     @AllArgsConstructor
     public enum SourceStateEnum {
-        UNDONE(0, R.color.undone), // 计划中，并不保证最终支持该站点
-        NORMAL(1, R.color.normal), // 解析正常
-        ABNORMAL(2, R.color.abnormal), // 部分解析异常
-        DEPRECATED(-1, R.color.deprecated) // 废弃，不再维护
+        UNDONE(0, R.color.undone),                  // 计划中，并不保证最终支持该站点
+        NORMAL(1, R.color.normal),                  // 解析正常
+        ABNORMAL(2, R.color.abnormal),              // 部分解析异常
+        NO_LONGER_UPDATED(-1, R.color.deprecated),  // 不再维护
+        WEBSITE_SHUTDOWN(-2, R.color.deprecated)    // 网站关闭
         ;
         private int state;
         @ColorInt
@@ -441,7 +446,8 @@ public enum SourceEnum {
     @AllArgsConstructor
     public enum SourceTypeEnum {
         MOVIES("影视", R.drawable.source_type_movie),
-        ANIME("动漫", R.drawable.source_type_anime);
+        ANIME("动漫", R.drawable.source_type_anime),
+        ;
         public String title;
         @DrawableRes
         private int bg;

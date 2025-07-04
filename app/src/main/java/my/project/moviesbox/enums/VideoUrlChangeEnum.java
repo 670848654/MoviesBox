@@ -7,7 +7,7 @@ package my.project.moviesbox.enums;
  * @date 2024/5/15 15:05
  */
 public enum VideoUrlChangeEnum {
-    CLICK, // 点击换集
-    PRE, // 上一集
-    NEXT // 下一集
+    CLICK,  // 点击换集
+    PRE,    // 上一集
+    NEXT    // 下一集
 }

@@ -374,7 +374,8 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
                 !getRunningActivityName().equals("LocalPlayerActivity") &&
                 !getRunningActivityName().equals("VipParsingInterfacesPlayerActivity") &&
                 !getRunningActivityName().equals("UpnpActivity") &&
-                !getRunningActivityName().equals("ImageActivity")) {
+                !getRunningActivityName().equals("ImageActivity") &&
+                !getRunningActivityName().equals("ImagePreviewActivity")) {
             StatusBarUtil.setColorForSwipeBack(this, DarkModeUtils.isDarkMode(this) ? getColor(R.color.night_color_primary) : getColor(R.color.light_color_primary), 0);
         }
         if (DarkModeUtils.isDarkMode(this) || getRunningActivityName().equals("DetailsActivity"))

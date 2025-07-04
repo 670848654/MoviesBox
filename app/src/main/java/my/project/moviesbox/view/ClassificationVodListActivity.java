@@ -34,6 +34,7 @@ import my.project.moviesbox.application.App;
 import my.project.moviesbox.contract.ClassificationVodListContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
 import my.project.moviesbox.custom.FabExtendingOnScrollListener;
+import my.project.moviesbox.custom.VideoPreviewDialog;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.model.ClassificationVodListModel;
 import my.project.moviesbox.parser.LogUtil;
@@ -136,10 +137,20 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
         setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             VodDataBean bean = (VodDataBean) adapter.getItem(position);
             String url = bean.getUrl();
             String title = bean.getTitle();
             openVodDetail(title, url);
+        });
+        adapter.setOnItemLongClickListener((adapter, view, position) -> {
+            VodDataBean bean = (VodDataBean) adapter.getItem(position);
+            String title = bean.getTitle();
+            String previewUrl = bean.getPreviewUrl();
+            if (Utils.isNullOrEmpty(previewUrl)) return false;
+            VideoPreviewDialog dialog = new VideoPreviewDialog(this, title, previewUrl);
+            dialog.show();
+            return true;
         });
         adapter.getLoadMoreModule().setLoadMoreView(new CustomLoadMoreView());
         adapter.getLoadMoreModule().setOnLoadMoreListener(() -> {

@@ -115,6 +115,7 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
         adapter.setHeaderWithEmptyEnable(true);
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             TFavoriteWithFields bean = (TFavoriteWithFields) adapter.getItem(position);
             Bundle bundle = new Bundle();
             bundle.putString("title", bean.getVideoTitle());

@@ -61,7 +61,7 @@ public class DanmakuJsonParser extends BaseDanmakuParser {
                 int textSize = Integer.parseInt(danmuObj.getString("textSize"));
                 BaseDanmaku item = mContext.mDanmakuFactory.createDanmaku(danmuType, mContext);
                 if (item != null) {
-                    item.setTime(time + 1200);
+                    item.setTime(time + i* 500L);
                     item.textColor = color;
                     item.textShadowColor = color <= Color.BLACK ? Color.WHITE : Color.BLACK;
                     item.index = i;

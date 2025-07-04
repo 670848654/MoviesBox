@@ -6,8 +6,7 @@
     <string name="castScreenNeedWlan">投屏需要连接WLAN，确保与投屏设备网络环境一致!</string>
     <string name="selectEpisodes">选集</string>
     <string name="playingAt2xSpeed">2倍速播放中</string>
-    <string name="doubleSpeed">倍速</string>
-    <string name="doubleSpeedX">倍速×</string>
+    <string name="doubleSpeed">倍速x1.0</string>
     <string name="adaptiveScale">自适应比例</string>
     <string name="stretchFullScreen">拉伸全屏</string>
     <string name="cropFullScreen">裁剪全屏</string>

@@ -79,25 +79,25 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
                 android:text="00:00"
+                android:textStyle="bold"
                 android:textColor="#ffffff" />
 
             <SeekBar
                 android:id="@+id/bottom_seek_progress"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
                 android:layout_weight="1.0"
                 android:background="@null"
                 android:max="100"
-                android:maxHeight="1dp"
-                android:minHeight="1dp"
-                android:paddingLeft="12dp"
+                android:maxHeight="8dp"
+                android:minHeight="8dp"
                 android:paddingTop="8dp"
-                android:paddingRight="12dp"
                 android:paddingBottom="8dp"
-                android:thumb="@drawable/icon_tv"
-                android:progressDrawable="@drawable/jz_bottom_seek_progress"
-                />
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:splitTrack="false"
+                android:thumb="@drawable/icon_seek_thumb"
+                android:progressDrawable="@drawable/custom_jz_bottom_seek_progress" />
 <!--            android:thumb="@drawable/player_seek_img"-->
 
             <TextView
@@ -105,6 +105,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="14dp"
+                android:textStyle="bold"
                 android:text="00:00"
                 android:textColor="#ffffff" />
 
@@ -116,8 +117,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true">
-
-
 
             <RelativeLayout
                 android:layout_width="wrap_content"
@@ -234,7 +233,7 @@
         android:layout_height="1.5dp"
         android:layout_alignParentBottom="true"
         android:max="100"
-        android:progressDrawable="@drawable/jz_bottom_progress" />
+        android:progressDrawable="@drawable/custom_jz_bottom_seek_progress" />
 
     <ImageView
         android:id="@+id/back_tiny"
@@ -438,27 +437,67 @@
             android:layout_width="@dimen/jz_start_button_w_h_normal"
             android:layout_height="@dimen/jz_start_button_w_h_normal"
             android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
             android:src="@drawable/jz_click_play_selector" />
 
-        <ImageView
-            android:id="@+id/quick_retreat"
+        <RelativeLayout
+            android:id="@+id/quick_retreat_layout"
             android:layout_toStartOf="@+id/start"
-            android:layout_marginEnd="40dp"
-            android:src="@drawable/round_fast_rewind_24"
             android:layout_centerVertical="true"
             android:visibility="invisible"
-            android:layout_width="@dimen/jz_start_button_w_h_normal"
-            android:layout_height="@dimen/jz_start_button_w_h_normal"/>
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/jz_start_button_w_h_normal">
 
-        <ImageView
-            android:id="@+id/fast_forward"
+            <TextView
+                android:id="@+id/quick_retreat_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                android:layout_centerVertical="true"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/quick_retreat"
+                android:layout_toEndOf="@id/quick_retreat_text"
+                android:layout_marginEnd="40dp"
+                android:src="@drawable/round_fast_rewind_24"
+                android:layout_centerVertical="true"
+                android:layout_width="@dimen/jz_start_button_w_h_normal"
+                android:layout_height="@dimen/jz_start_button_w_h_normal"/>
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/fast_forward_layout"
             android:layout_toEndOf="@+id/start"
-            android:layout_marginStart="40dp"
-            android:src="@drawable/round_fast_forward_24"
             android:layout_centerVertical="true"
             android:visibility="invisible"
-            android:layout_width="@dimen/jz_start_button_w_h_normal"
-            android:layout_height="@dimen/jz_start_button_w_h_normal"/>
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/jz_start_button_w_h_normal">
+
+            <ImageView
+                android:id="@+id/fast_forward"
+                android:layout_marginStart="40dp"
+                android:layout_marginEnd="5dp"
+                android:src="@drawable/round_fast_forward_24"
+                android:layout_width="@dimen/jz_start_button_w_h_normal"
+                android:layout_height="@dimen/jz_start_button_w_h_normal"/>
+
+            <TextView
+                android:id="@+id/fast_forward_text"
+                android:layout_toEndOf="@id/fast_forward"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_centerVertical="true"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+         />
+        </RelativeLayout>
+
     </RelativeLayout>
 
 
@@ -550,4 +589,23 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tips"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/layout_bottom"
+        android:visibility="gone"
+        android:textColor="@color/white"
+        android:shadowColor="#80000000"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="4"
+        android:textSize="20sp"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMinTextSize="20sp"
+        android:autoSizeMaxTextSize="28sp"
+        android:textStyle="bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 </RelativeLayout>

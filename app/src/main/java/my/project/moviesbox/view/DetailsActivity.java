@@ -2,7 +2,6 @@ package my.project.moviesbox.view;
 
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_DOWNLOAD;
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_FAVORITE;
-import static my.project.moviesbox.utils.Utils.DOWNLOAD_SAVE_PATH;
 import static my.project.moviesbox.utils.Utils.isPad;
 
 import android.annotation.SuppressLint;
@@ -37,8 +36,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.arialyy.aria.core.Aria;
-import com.arialyy.aria.core.common.HttpOption;
 import com.bumptech.glide.load.DecodeFormat;
 import com.bumptech.glide.load.resource.bitmap.BitmapTransitionOptions;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
@@ -61,8 +58,6 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -77,16 +72,15 @@ import my.project.moviesbox.adapter.DownloadDramaAdapter;
 import my.project.moviesbox.adapter.DramaAdapter;
 import my.project.moviesbox.bean.DownloadDramaBean;
 import my.project.moviesbox.config.GlideApp;
-import my.project.moviesbox.config.M3U8DownloadConfig;
 import my.project.moviesbox.contract.DetailsContract;
 import my.project.moviesbox.contract.DownloadVideoContract;
 import my.project.moviesbox.contract.VideoContract;
 import my.project.moviesbox.custom.AutoLineFeedLayoutManager;
+import my.project.moviesbox.custom.VideoPreviewDialog;
 import my.project.moviesbox.database.entity.TDirectory;
 import my.project.moviesbox.database.entity.TDownload;
 import my.project.moviesbox.database.enums.DirectoryTypeEnum;
 import my.project.moviesbox.database.manager.TDirectoryManager;
-import my.project.moviesbox.database.manager.TDownloadDataManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.TVideoManager;
@@ -99,18 +93,15 @@ import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.parser.bean.DialogItemBean;
 import my.project.moviesbox.parser.config.ItemStyleEnum;
-import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.presenter.DetailsPresenter;
 import my.project.moviesbox.presenter.DownloadVideoPresenter;
 import my.project.moviesbox.presenter.VideoPresenter;
-import my.project.moviesbox.service.DownloadService;
-import my.project.moviesbox.utils.ImageUtils;
-import my.project.moviesbox.utils.KeyDownloader;
-import my.project.moviesbox.utils.SAFUtils;
+import my.project.moviesbox.utils.DownloadUtils;
+import my.project.moviesbox.utils.ImageCache;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.StatusBarUtil;
 import my.project.moviesbox.utils.Utils;
-import my.project.moviesbox.utils.VideoUtils;
+import my.project.moviesbox.utils.VideoAlertUtils;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -122,6 +113,9 @@ import my.project.moviesbox.utils.VideoUtils;
  */
 public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.View, DetailsPresenter> implements DetailsContract.View,
         VideoContract.View, DownloadVideoContract.View {
+    /**
+     * toolbar
+     */
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     /**
@@ -169,6 +163,8 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
      */
     @BindView(R.id.mSwipe)
     SwipeRefreshLayout mSwipe;
+    @BindView(R.id.preview)
+    Button previewBtn;
     /**
      * <p>detailsTitle 详情标题</p>
      * <p>detailsUrl 详情源地址</p>
@@ -199,7 +195,6 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
      */
     @BindView(R.id.drama_list)
     RecyclerView dramaListRv;
-    private LinearLayoutManager dramaListLayoutManager;
     private DramaAdapter dramaListAdapter;
     @BindView(R.id.play_layout)
     LinearLayout playLinearLayout;
@@ -255,7 +250,9 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     private BottomSheetDialog tagBottomSheetDialog;
     List<ClassificationDataBean.Item> detailTags = new ArrayList<>();
     DetailTagAdapter detailTagAdapter;
-
+    /**
+     * 其他视图
+     */
     @BindView(R.id.info)
     public TextView infoView;
     /**
@@ -284,7 +281,6 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     /**
      * 下载相关参数
      */
-    private String savePath; // 下载保存路劲
     private final DownloadVideoPresenter downloadVideoPresenter = new DownloadVideoPresenter(this); // 下载适配器
     private RecyclerView downloadListRv;
     private BottomSheetDialog downloadBottomSheetDialog;
@@ -300,19 +296,41 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     @BindView(R.id.selected_text)
     AutoCompleteTextView selectedDrama;
     private List<String> dramaTitles;
-    private ArrayAdapter dramaTitlesApter;
-    private int sourceIndex = 0; // 所选播放列表下标
-    private final VideoPresenter videoPresenter = new VideoPresenter(this);
+    /**
+     * 所选播放列表下标
+     */
+    private int sourceIndex = 0;
     private RecyclerView multiRecommendRv;
     private BottomSheetDialog multiRecommendDialog;
     private View multiRecommendView;
-    private List<MultiItemEntity> detailsExpandData = new ArrayList<>();
+    /**
+     * 多季/推荐列表展开适配器
+     */
+    private final List<MultiItemEntity> detailsExpandData = new ArrayList<>();
     private DetailsExpandListItemAdapter detailsExpandListItemAdapter;
-    private Button selectDirectoryView; // 保存清单按钮
-    private String downloaDdirectoryId; // 下载保存清单ID
+    /**
+     * 保存清单按钮
+     */
+    private Button selectDirectoryView;
+    /**
+     *  下载保存清单ID
+     */
+    private String downloaDdirectoryId;
+    /**
+     * 浮动按钮
+     */
     @BindView(R.id.detailFab)
     ExtendedFloatingActionButton detailFab;
     private int fabHeight = 0;
+    private final VideoPresenter videoPresenter = new VideoPresenter(this);
+    /**
+     * 下载工具类
+     */
+    private DownloadUtils downloadUtils;
+    /**
+     * 弹窗工具类
+     */
+    private VideoAlertUtils videoAlertUtils;
 
     @Override
     protected DetailsPresenter createPresenter() {
@@ -338,6 +356,8 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         initSwipe();
         initFab();
         initAdapter();
+        previewBtn.setVisibility(Utils.isPad() ? View.GONE : View.VISIBLE);
+        videoAlertUtils = new VideoAlertUtils(this);
     }
 
     @Override
@@ -363,6 +383,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
             }
         }));
         scrollView.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener) (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            if (!detailFab.isShown()) return;
             if (scrollY > oldScrollY) {
                 detailFab.shrink();
             } else {
@@ -371,10 +392,19 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         });
     }
 
-    @OnClick({R.id.order, R.id.favorite, R.id.download, R.id.browser,R.id.drama})
+    @OnClick({R.id.preview, R.id.vod_img_type0, R.id.vod_img_type1, R.id.order, R.id.favorite, R.id.download, R.id.browser,R.id.drama})
     public void onClick(View view) {
         Utils.setVibration(view);
         switch (view.getId()) {
+            case R.id.preview:
+            case R.id.vod_img_type0:
+            case R.id.vod_img_type1:
+                ImageCache.ImagePathResult result = ImageCache.prepareImagePath(this, detailsDataBean.getImg(), "preview.jpg");
+                Intent intent = new Intent(this, ImagePreviewActivity.class);
+                intent.putExtra("image_path", result.path);
+                intent.putExtra("is_temp_file", result.isTempFile);
+                startActivity(intent);
+                break;
             case R.id.favorite:
                 if (!isFavorite)
                     // 去选择清单进行收藏
@@ -383,7 +413,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
                     favoriteVod("");
                 break;
             case R.id.download:
-                select2Download();
+                downloadUtils.select2Download();
                 break;
             case R.id.browser:
                 Utils.viewInChrome(DetailsActivity.this, detailsUrl);
@@ -400,32 +430,6 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
                 }
                 break;
         }
-    }
-
-    private void select2Download() {
-        if (downloadAdapter.getData().size() == 0) {
-            application.showToastMsg("无可下载列表", DialogXTipEnum.ERROR);
-            return;
-        }
-        if (!Utils.isWifiConnected()) {
-            Utils.showAlert(this,
-                    getString(R.string.noWifiDialogTitle),
-                    getString(R.string.noWifiDialogContent),
-                    false,
-                    getString(R.string.defaultPositiveBtnText),
-                    getString(R.string.defaultNegativeBtnText),
-                    "",
-                    (dialog, which) -> showDownloadBsd(),
-                    (dialog, which) -> dialog.dismiss(),
-                    null);
-        } else
-            showDownloadBsd();
-    }
-
-    private void showDownloadBsd() {
-        checkHasDownload();
-        downloadBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
-        downloadBottomSheetDialog.show();
     }
 
     private void initSwipe() {
@@ -472,6 +476,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         dramaListAdapter = new DramaAdapter(this, dramaList);
         dramaListAdapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             playVideo(dramaListAdapter, position);
         });
         dramaListAdapter.setOnItemLongClickListener((adapter, view, position) -> {
@@ -479,7 +484,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
             expandListBSD.show();
             return true;
         });
-        dramaListLayoutManager = getLinearLayoutManager();
+        LinearLayoutManager dramaListLayoutManager = getLinearLayoutManager();
         dramaListRv.setLayoutManager(dramaListLayoutManager);
         dramaListRv.setAdapter(dramaListAdapter);
         dramaListRv.setNestedScrollingEnabled(false);
@@ -490,6 +495,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         expandListAdapter = new DramaAdapter(this, new ArrayList<>());
         expandListAdapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             expandListBSD.dismiss();
             playVideo(expandListAdapter, position);
         });
@@ -511,6 +517,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
 
         downloadAdapter = new DownloadDramaAdapter(this, new ArrayList<>());
         downloadAdapter.setOnItemClickListener((adapter, view, position) -> {
+            Utils.setVibration(view);
             DownloadDramaBean bean = downloadBean.get(position);
             if (bean.isHasDownload()) {
                 application.showToastMsg(getString(R.string.hasDownloadTask), DialogXTipEnum.WARNING);
@@ -518,10 +525,10 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
             }
             downloadDramaUrl = downloadBean.get(position).getUrl();
             downloadDramaNumber = downloadBean.get(position).getTitle();
-            createDownloadConfig();
+            downloadUtils.createDownloadConfig(detailsTitle);
             // 下载开始
             if (!parserInterface.playUrlNeedParser()) {
-                startDownload(downloadDramaUrl, downloadDramaNumber);
+                downloadUtils.startDownload(detailsTitle, detailsUrl, downloadDramaUrl, downloadDramaNumber, detailsDataBean.getImg(), downloaDdirectoryId);
                 return;
             }
             alertDialog = Utils.getProDialog(this, R.string.parseVodPlayUrl);
@@ -535,7 +542,19 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         multiRecommendView = LayoutInflater.from(this).inflate(R.layout.dialog_multi_recommend, null);
         multiRecommendRv = multiRecommendView.findViewById(R.id.drama_list);
         detailsExpandListItemAdapter = new DetailsExpandListItemAdapter(new ArrayList<>());
-        detailsExpandListItemAdapter.setOnItemClickListener((adapter, view, position) -> getDescData((DetailsDataBean.Recommend) adapter.getItem(position)));
+        detailsExpandListItemAdapter.setOnItemClickListener((adapter, view, position) -> {
+            Utils.setVibration(view);
+            getDescData((DetailsDataBean.Recommend) adapter.getItem(position));
+        });
+        detailsExpandListItemAdapter.setOnItemLongClickListener((adapter, view, position) -> {
+            DetailsDataBean.Recommend bean = (DetailsDataBean.Recommend) adapter.getItem(position);
+            String title = bean.getTitle();
+            String previewUrl = bean.getPreviewUrl();
+            if (Utils.isNullOrEmpty(previewUrl)) return false;
+            VideoPreviewDialog dialog = new VideoPreviewDialog(this, title, previewUrl);
+            dialog.show();
+            return true;
+        });
         multiRecommendRv.setLayoutManager(new LinearLayoutManager(this));
         multiRecommendRv.setAdapter(detailsExpandListItemAdapter);
         multiRecommendDialog.setContentView(multiRecommendView);
@@ -781,9 +800,12 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         else
             multiPlayInput.setHint("播放列表");
         selectedDrama.setText(dramaTitles.get(0));
-        dramaTitlesApter = new ArrayAdapter(this, R.layout.text_list_item, dramaTitles);
+        ArrayAdapter dramaTitlesApter = new ArrayAdapter(this, R.layout.text_list_item, dramaTitles);
         selectedDrama.setAdapter(dramaTitlesApter);
-        selectedDrama.setOnItemClickListener((parent, view, position, id) -> setAdapterData(position));
+        selectedDrama.setOnItemClickListener((parent, view, position, id) -> {
+            Utils.setVibration(view);
+            setAdapterData(position);
+        });
     }
 
     private void setAdapterData(int position) {
@@ -823,7 +845,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
             if (urls.size() == 1)
                 playVod(urls.get(0).getUrl());
             else
-               alertDialog = VideoUtils.showMultipleVideoSources(this,
+               alertDialog = videoAlertUtils.showMultipleVideoSources(
                         urls,
                         (adapter, view, position) -> {
                             playVod(urls.get(position).getUrl());
@@ -845,7 +867,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
                 //调用播放器
                 TFavoriteManager.updateFavorite(dramaUrl, dramaTitle, vodId);
                 TVideoManager.addVideoHistory(vodId, dramaUrl, sourceIndex, dramaTitle);
-                VideoUtils.openPlayer(true, this, dramaTitle, playUrl, detailsTitle, dramaUrl, dramaList, clickIndex, vodId, sourceIndex);
+                videoAlertUtils.openPlayer(true, dramaTitle, playUrl, detailsTitle, dramaUrl, dramaList, clickIndex, vodId, sourceIndex);
                 break;
             case 1:
                 Utils.selectVideoPlayer(this, playUrl);
@@ -860,7 +882,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         runOnUiThread(() -> {
             if (SharedPreferencesUtils.getEnableSniff()) {
                 alertDialog = Utils.getProDialog(this, R.string.sniffVodPlayUrl);
-                VideoUtils.startSniffing(this, dramaUrl, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.PLAY);
+                videoAlertUtils.startSniffing(dramaUrl, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.PLAY);
             } else
                 Utils.showAlert(this,
                         getString(R.string.errorDialogTitle),
@@ -938,6 +960,10 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         emptyRecyclerView(dramaListRv, expandListRv, multiListRv, recommendRv, detailTagRecyclerView, expandTagListRv, downloadListRv);
         EventBus.getDefault().unregister(this);
         Utils.clearCache();
+        if (downloadUtils != null)
+            downloadUtils.release();
+        if (videoAlertUtils != null)
+            videoAlertUtils.release();
         super.onDestroy();
     }
 
@@ -948,102 +974,6 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         dramaList.get(clickIndex).setSelected(true);
         dramaListAdapter.notifyItemChanged(clickIndex);
         expandListAdapter.notifyItemChanged(clickIndex);
-    }
-
-    /****************************************** 下载相关 ******************************************/
-    /**
-     * 创建下载保存目录
-     */
-    private void createDownloadConfig() {
-        String fileName = Utils.getHashedFileName(detailsTitle);
-        savePath = String.format(DOWNLOAD_SAVE_PATH, ParserInterfaceFactory.getParserInterface().getSourceName() , fileName);
-        if (SAFUtils.canReadDownloadDirectory())
-            Utils.createDataFolder(savePath);
-        else {
-            savePath = getFilesDir().getAbsolutePath()+String.format(DOWNLOAD_SAVE_PATH, ParserInterfaceFactory.getParserInterface().getSourceName() , fileName);
-            Utils.createDataFolder(savePath);
-        }
-    }
-
-    /**
-     * 开始执行下载操作
-     * @param url
-     * @param playNumber
-     */
-    private void startDownload(String url, String playNumber) {
-        if (!url.contains("http")) {
-            VideoUtils.showInfoDialog(this, String.format(getString(R.string.notSupportDownloadMsg), url));
-            return;
-        }
-        String fileSavePath = savePath + playNumber;
-        String netImg = detailsDataBean.getImg();
-        String localImgPath = savePath + "cover_" + new Date().getTime() + ".jpg";
-        ImageUtils.saveImageToLocalAsync(netImg, localImgPath, saveSuccess -> {
-            String img = saveSuccess ? localImgPath : netImg;
-            boolean isM3U8 = url.contains("m3u8");
-            long taskId = createDownloadTask(isM3U8, url, fileSavePath);
-            if (isM3U8) VideoUtils.showInfoDialog(this, getString(R.string.downloadM3u8Tips));
-            TDownloadManager.insertDownload(detailsTitle,  img, detailsUrl, downloaDdirectoryId);
-            TDownloadDataManager.insertDownloadData(detailsTitle, playNumber, 0, taskId);
-            application.showToastMsg(String.format(getString(R.string.downloadStart), playNumber), DialogXTipEnum.SUCCESS);
-            // 开启下载服务
-            startService(new Intent(this, DownloadService.class));
-            EventBus.getDefault().post(REFRESH_DOWNLOAD);
-            checkHasDownload();
-        });
-    }
-
-    /**
-     * 创建下载任务
-     * @param isM3u8
-     * @param url
-     * @param savePath
-     * @return
-     */
-    private long createDownloadTask(boolean isM3u8, String url, String savePath) {
-        url = url.replaceAll("\\\\", "");
-        HttpOption httpOption = new HttpOption();
-        HashMap<String, String> headerMap = parserInterface.setPlayerHeaders();
-        if (!Utils.isNullOrEmpty(headerMap))
-            httpOption.addHeaders(headerMap);
-        long downloadId = isM3u8 ?
-                Aria.download(this)
-                .load(url)
-                .setFilePath(savePath + ".m3u8")
-                .ignoreFilePathOccupy()
-                .option(httpOption)
-                .m3u8VodOption(new M3U8DownloadConfig().setM3U8Option())
-                .ignoreCheckPermissions()
-                .create() :
-                Aria.download(this)
-                .load(url)
-                .setFilePath(savePath + ".mp4")
-                .ignoreFilePathOccupy()
-                .option(httpOption)
-                .ignoreCheckPermissions()
-                .create();
-        KeyDownloader.downloadKey(url, savePath);
-        return downloadId;
-    }
-
-    /**
-     * 检查是否在下载任务中
-     */
-    private void checkHasDownload() {
-        List<DownloadDramaBean> data = downloadAdapter.getData();
-        for (int i=0,size=data.size(); i<size; i++) {
-            int complete = TDownloadManager.queryDownloadDataIsDownloadError(vodId, data.get(i).getTitle(), 0);
-            switch (complete) {
-                case -1:
-                case 2:
-                    data.get(i).setHasDownload(false);
-                    break;
-                default:
-                    data.get(i).setHasDownload(true);
-                    break;
-            }
-            downloadAdapter.notifyItemChanged(i);
-        }
     }
 
     @Override
@@ -1150,7 +1080,10 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
                         break;
                 }
                 multiAdapter = new DetailsListItemAdapter(layout, detailsDataBean.getMultiList());
-                multiAdapter.setOnItemClickListener((adapter, view, position) -> getDescData((DetailsDataBean.Recommend) adapter.getItem(position)));
+                multiAdapter.setOnItemClickListener((adapter, view, position) -> {
+                    Utils.setVibration(view);
+                    getDescData((DetailsDataBean.Recommend) adapter.getItem(position));
+                });
                 multiAdapter.setOnItemLongClickListener((adapter, view, position) -> {
                     setMultiRecommendDialog(detailsDataBean.getMultiStyle(), detailsDataBean.getMultiList());
                     multiRecommendDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
@@ -1176,7 +1109,10 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
                         break;
                 }
                 recommendAdapter = new DetailsListItemAdapter(layout, detailsDataBean.getRecommendList());
-                recommendAdapter.setOnItemClickListener((adapter, view, position) -> getDescData((DetailsDataBean.Recommend) adapter.getItem(position)));
+                recommendAdapter.setOnItemClickListener((adapter, view, position) -> {
+                    Utils.setVibration(view);
+                    getDescData((DetailsDataBean.Recommend) adapter.getItem(position));
+                });
                 recommendAdapter.setOnItemLongClickListener((adapter, view, position) -> {
                     setMultiRecommendDialog(detailsDataBean.getRecommendStyle(), detailsDataBean.getRecommendList());
                     multiRecommendDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
@@ -1272,6 +1208,10 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     @Override
     public void getVodId(String id) {
         vodId = id;
+        if (downloadUtils == null)
+            downloadUtils = new DownloadUtils(this, vodId, downloadAdapter, downloadBottomSheetDialog);
+        else
+            downloadUtils.updateVodId(vodId);
     }
 
     @Override
@@ -1280,15 +1220,15 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         runOnUiThread(() -> {
             cancelDialog();
             if (urls.size() > 1) {
-                alertDialog = VideoUtils.showMultipleVideoSources4Download(this,
+                alertDialog = videoAlertUtils.showMultipleVideoSources4Download(
                         urls,
                         (adapter, view, position) -> {
-                            startDownload(urls.get(position).getUrl(), playNumber);
+                            downloadUtils.startDownload(detailsTitle, detailsUrl, urls.get(position).getUrl(), playNumber, detailsDataBean.getImg(), downloaDdirectoryId);
                             Utils.cancelDialog(alertDialog);
                         }
                 );
             } else
-                startDownload(urls.get(0).getUrl(), playNumber);
+                downloadUtils.startDownload(detailsTitle, detailsUrl, urls.get(0).getUrl(), playNumber, detailsDataBean.getImg(), downloaDdirectoryId);
         });
     }
 
@@ -1300,7 +1240,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
             cancelDialog();
             if (SharedPreferencesUtils.getEnableSniff()) {
                 alertDialog = Utils.getProDialog(this, R.string.sniffVodPlayUrl);
-                VideoUtils.startSniffing(this, downloadDramaUrl, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.DOWNLOAD);
+                videoAlertUtils.startSniffing(downloadDramaUrl, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.DOWNLOAD);
             } else {
                 Utils.showAlert(this,
                         getString(R.string.errorDialogTitle),
@@ -1332,7 +1272,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
                         break;
                 }
             } else
-                VideoUtils.sniffErrorDialog(this);
+                videoAlertUtils.sniffErrorDialog();
         }
     }
 

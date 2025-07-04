@@ -19,8 +19,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.util.ArrayList;
@@ -36,8 +34,6 @@ import javax.crypto.spec.SecretKeySpec;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import my.project.moviesbox.contract.DanmuContract;
-import my.project.moviesbox.model.DanmuModel;
 import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
@@ -54,6 +50,7 @@ import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
+import my.project.moviesbox.strategy.danmu.DanmuStrategyFactory;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.HomeFragment;
@@ -799,8 +796,7 @@ public class FiveMovieImpl implements ParserInterface {
     /**
      * 弹幕接口返回是否为JSON
      * <p>注：弹幕只有两种格式 XML/JsonObject</p>
-     * <p>JSON弹幕需自行实现弹幕解析{@link DanmuModel#getDanmu(DanmuContract.LoadDataCallback, String...)}</p>
-     *
+     * <p>JSON弹幕需自行实现弹幕解析{@link DanmuStrategyFactory#getStrategy}</p>
      * @return true JSON格式 false XML格式
      */
     @Override
@@ -1045,11 +1041,7 @@ public class FiveMovieImpl implements ParserInterface {
 
     // -------------------------------- 获取播放地址方法开始 --------------------------------
     private static final String CIPHER_ALGORITHM = "AES/CBC/PKCS5Padding";
-    private static final String
-//            API = "https://player.ddzyku.com:3653/getUrls",
-            API = "https://player.ddzyku.com:3653/get_url_v2",
-            KEY = "a67e9a3a85049339",
-            IV = "86ad9b37cc9f5b9501b3cecc7dc6377c";
+    private static final String KEY = "81f834a7f68d4c52", IV = "zkz8scsGXttFVZBb";
 
     /**
      * 获取JavaScript中的JSON文本
@@ -1069,87 +1061,24 @@ public class FiveMovieImpl implements ParserInterface {
      */
     private String getVodPlayUrl(JSONObject jsonObject) throws Exception {
         String url = jsonObject.getString("url");
-        String urlNext = jsonObject.getString("url_next");
-
-        // API提交数据
-        JSONObject dataJson = new JSONObject();
-        dataJson.put("url", url);
-        dataJson.put("next_url", urlNext);
-
-        // 使用AES加密获取提交参数data
-//        String encryptedData = encryptWithAES(dataJson.toJSONString());
-        String encryptedData = encryptWithAES(url); // v2新版接口参数变为 url
-        LogUtil.logInfo("API提交参数加密后", encryptedData);
-
-        encryptedData = encodeURIComponent(encryptedData);
-        LogUtil.logInfo("API提交参数编码后", encryptedData);
-
-        String query = (-1 == API.indexOf("?") ? "?" : "&") + "data=" + encryptedData;
-        String dataParam = API + query;
-        LogUtil.logInfo("API URL", dataParam);
-
-        Document dataHtml = Jsoup.connect(dataParam).ignoreContentType(true).get();
-        LogUtil.logInfo("[加密]播放地址JSON", dataHtml.body().text());
-
-        String decryptedResponse = decryptWithAES(dataHtml.body().text());
-        LogUtil.logInfo("[解密]播放地址JSON", decryptedResponse);
-
-        JSONObject resultJson = JSONObject.parseObject(decryptedResponse);
-        if (resultJson.getInteger("code") == 0) {
-            JSONObject data = resultJson.getJSONObject("data");
-            return data.getString("url");
-        }
-        return null;
-    }
-
-    private static String encryptWithAES(String data) {
-        try {
-            Security.addProvider(new BouncyCastleProvider());
-            SecretKeySpec secretKey = new SecretKeySpec(KEY.getBytes(), "AES");
-            IvParameterSpec ivParameterSpec = new IvParameterSpec(hexStringToByteArray(IV));
-            Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec);
-            byte[] encryptedBytes = cipher.doFinal(data.getBytes());
-            return new String(Base64.encodeBase64(encryptedBytes));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "";
-        }
+        url = url.replace("O0O0O", "=")
+                .replace("o000o", "+")
+                .replace("oo00o", "/");
+        LogUtil.logInfo("urlReplace", url);
+        url = decryptWithAES(url);
+        LogUtil.logInfo("urlDecrypt", url);
+        return url;
     }
 
     private static String decryptWithAES(String encryptedData) throws Exception {
         Security.addProvider(new BouncyCastleProvider());
-        IvParameterSpec iv = new IvParameterSpec(hexStringToByteArray(IV));
+        IvParameterSpec iv = new IvParameterSpec(IV.getBytes(StandardCharsets.UTF_8));
         SecretKeySpec sKeySpec = new SecretKeySpec(KEY.getBytes(StandardCharsets.UTF_8), "AES");
         Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
         cipher.init(Cipher.DECRYPT_MODE, sKeySpec, iv);
         byte[] encryptedBytes = Base64.decodeBase64(encryptedData);
         byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
         return new String(decryptedBytes);
-    }
-
-    public static byte[] hexStringToByteArray(String hexString) {
-        int len = hexString.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4)
-                    + Character.digit(hexString.charAt(i+1), 16));
-        }
-        return data;
-    }
-
-    public static String encodeURIComponent(String input) {
-        try {
-            return URLEncoder.encode(input, "UTF-8")
-                    .replaceAll("\\+", "%20")
-                    .replaceAll("\\%21", "!")
-                    .replaceAll("\\%27", "'")
-                    .replaceAll("\\%28", "(")
-                    .replaceAll("\\%29", ")")
-                    .replaceAll("\\%7E", "~");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("UTF-8 encoding not supported", e);
-        }
     }
 
     @Override

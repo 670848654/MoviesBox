@@ -36,8 +36,6 @@ import javax.crypto.spec.SecretKeySpec;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import my.project.moviesbox.contract.DanmuContract;
-import my.project.moviesbox.model.DanmuModel;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
@@ -54,6 +52,7 @@ import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
+import my.project.moviesbox.strategy.danmu.DanmuStrategyFactory;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.utils.md5.DigestUtils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
@@ -676,8 +675,7 @@ public class SilisiliImpl implements ParserInterface {
     /**
      * 弹幕接口返回是否为JSON
      * <p>注：弹幕只有两种格式 XML/JsonObject</p>
-     * <p>JSON弹幕需自行实现弹幕解析{@link DanmuModel#getDanmu(DanmuContract.LoadDataCallback, String...)}</p>
-     *
+     * <p>JSON弹幕需自行实现弹幕解析{@link DanmuStrategyFactory#getStrategy}</p>
      * @return true JSON格式 false XML格式
      */
     @Override
