@@ -17,6 +17,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class DramaEvent {
     /**
+     * 当前影视ID
+     */
+    private String vodId;
+    /**
      * 当前播放源
      */
     private int nowSource;

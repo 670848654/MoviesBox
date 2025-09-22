@@ -36,12 +36,13 @@ public class DownloadDataAdapter extends BaseQuickAdapter<TDownloadDataWithField
     @Override
     protected void convert(BaseViewHolder helper, TDownloadDataWithFields item) {
         String imgUrl = item.getVideoImgUrl();
+        String savePath = item.getTDownloadData().getSavePath();
         ImageView imageView = helper.getView(R.id.img);
-        imageView.setTag(R.id.imageid, imgUrl);
+        imageView.setTag(R.id.imageid, savePath);
         String title = item.getTDownloadData().getVideoNumber() + (item.getTDownloadData().getSavePath().contains(context.getFilesDir().getAbsolutePath()) ? context.getString(R.string.savePrivateDirectoryStr) : context.getString(R.string.savePublicDirectoryStr));
         helper.setText(R.id.title, Html.fromHtml(title));
-        helper.setText(R.id.file_size, item.getTDownloadData().getVideoFileSize() != 0 ? Utils.getNetFileSizeDescription(item.getTDownloadData().getVideoFileSize()) : "0B");
-        helper.setVisible(R.id.bottom_progress, false);
+        helper.setText(R.id.file_size, item.getTDownloadData().getVideoFileSize() != 0 ? Utils.getNetFileSizeDescription(item.getTDownloadData().getVideoFileSize()) : "未知");
+        helper.setGone(R.id.bottom_progress, true);
         String completeText = "";
         switch (item.getTDownloadData().getComplete()) {
             case 0:
@@ -75,10 +76,10 @@ public class DownloadDataAdapter extends BaseQuickAdapter<TDownloadDataWithField
         if (item.getTDownloadData().getComplete() == 1) {
             helper.getView(R.id.img_box).setBackground(null);
             helper.setText(R.id.number, "");
-            Utils.loadVideoScreenshot(context, item.getTDownloadData().getSavePath(), item.getVideoImgUrl(), helper.getView(R.id.img), (item.getTDownloadData().getWatchProgress() == 0 ? 1000 : item.getTDownloadData().getWatchProgress()) * 1000);
+            Utils.loadVideoScreenshot(context, savePath, imgUrl, helper.getView(R.id.img), (item.getTDownloadData().getWatchProgress() == 0 ? 1000 : item.getTDownloadData().getWatchProgress()) * 1000);
         } else {
             helper.setBackgroundColor(R.id.img_box, R.drawable.download_img_gradient);
-            Utils.setImgViewBg(item.getVideoImgUrl(), "", imageView);
+            Utils.setImgViewBg(imgUrl, "", imageView);
         }
     }
 }

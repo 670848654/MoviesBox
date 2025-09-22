@@ -15,23 +15,24 @@ import okhttp3.Response;
  * @date 2025/6/20 9:22
  */
 public class DefaultXmlGetDanmuStrategy extends BaseDanmuStrategy {
-    public DefaultXmlGetDanmuStrategy(boolean resultIsJson) {
-        super(resultIsJson);
-    }
 
     @Override
     protected void doRequest(String url, DanmuContract.LoadDataCallback callback) {
         OkHttpUtils.getInstance().doGet(url, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                callback.errorDanmu(e.getMessage());
+                callback.netErrorDanmu(e.getMessage());
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 try {
-                    String danmu = response.body().string();
-                    parseDanmu(danmu, callback);
+                    if (!response.isSuccessful())
+                        callback.netErrorDanmu("获取弹幕接口响应失败：" + response);
+                    else {
+                        String danmu = response.body().string();
+                        parseDanmu(danmu, danmuResult, callback);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                     callback.errorDanmu(e.getMessage());

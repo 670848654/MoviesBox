@@ -47,13 +47,12 @@ import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
-import my.project.moviesbox.strategy.danmu.DanmuStrategyFactory;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
-import my.project.moviesbox.view.HomeFragment;
 import my.project.moviesbox.view.PlayerActivity;
 import my.project.moviesbox.view.TextListActivity;
 import my.project.moviesbox.view.WeekActivity;
+import my.project.moviesbox.view.fragment.HomeFragment;
 import okhttp3.FormBody;
 
 /**
@@ -713,17 +712,6 @@ public class AnFunsImpl implements ParserInterface {
     public String getDanmuUrl(String[] params) {
         // 该站点查询弹幕只需要id和下标
         return getDefaultDomain() + String.format(SourceEnum.ANFUNS.getDanmuUrl(), params[0], params[1]);
-    }
-
-    /**
-     * 弹幕接口返回是否为JSON
-     * <p>注：弹幕只有两种格式 XML/JsonObject</p>
-     * <p>JSON弹幕需自行实现弹幕解析{@link DanmuStrategyFactory#getStrategy}</p>
-     * @return true JSON格式 false XML格式
-     */
-    @Override
-    public boolean getDanmuResultJson() {
-        return false;
     }
 
     /**

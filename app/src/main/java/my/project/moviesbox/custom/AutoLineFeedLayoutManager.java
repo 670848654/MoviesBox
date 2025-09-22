@@ -11,7 +11,9 @@ import androidx.recyclerview.widget.RecyclerView;
   * @作者: Li Z
   * @日期: 2024/1/22 20:02
   * @版本: 1.0
+  * @deprecated 改为 {@link com.google.android.flexbox.FlexboxLayoutManager}
  */
+@Deprecated
 public class AutoLineFeedLayoutManager extends RecyclerView.LayoutManager {
 
     public AutoLineFeedLayoutManager() {

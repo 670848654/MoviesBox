@@ -28,25 +28,11 @@
             android:background="#80000000"
             android:orientation="vertical">
 
-            <androidx.core.widget.NestedScrollView
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_list"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:descendantFocusability="blocksDescendants"
-                    android:orientation="vertical">
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rv_list"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="2dp" />
-
-                </LinearLayout>
-
-            </androidx.core.widget.NestedScrollView>
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"/>
 
         </LinearLayout>
 

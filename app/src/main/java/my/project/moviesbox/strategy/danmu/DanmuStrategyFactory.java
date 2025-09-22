@@ -10,18 +10,18 @@ import my.project.moviesbox.parser.config.SourceEnum;
  */
 public class DanmuStrategyFactory {
 
-    public static DanmuStrategy getStrategy(SourceEnum.SourceIndexEnum sourceEnum, boolean resultIsJson) {
+    public static DanmuStrategy getStrategy(SourceEnum.SourceIndexEnum sourceEnum) {
         switch (sourceEnum) {
             case SILISILI:
             case ANFUNS:
             case NYYY:
-                return new DefaultXmlGetDanmuStrategy(resultIsJson);
+                return new DefaultXmlGetDanmuStrategy();
             case GIRI_GIRI_LOVE:
-                return new GiriGiriLoveDanmuStrategy(resultIsJson);
+                return new GiriGiriLoveDanmuStrategy();
             case YJYS:
-                return new YjysDanmuStrategy(resultIsJson);
+                return new YjysDanmuStrategy();
             default:
-                throw new IllegalArgumentException("不支持的 sourceEnum: " + sourceEnum);
+                throw new IllegalArgumentException("不支持的源sourceEnum: " + sourceEnum);
         }
     }
 }

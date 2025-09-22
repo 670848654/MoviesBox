@@ -1,37 +1,49 @@
 package my.project.moviesbox.view;
 
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.ImageView;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 
-import androidx.appcompat.widget.SearchView;
-import androidx.appcompat.widget.Toolbar;
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.chad.library.adapter.base.entity.MultiItemEntity;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.divider.MaterialDividerItemDecoration;
+import com.google.android.material.search.SearchBar;
+import com.google.android.material.search.SearchView;
+import com.google.android.material.shape.MaterialShapeDrawable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
 import my.project.moviesbox.R;
+import my.project.moviesbox.adapter.SearchHistoryAdapter;
 import my.project.moviesbox.adapter.VodListAdapter;
 import my.project.moviesbox.contract.SearchContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
 import my.project.moviesbox.custom.VideoPreviewDialog;
+import my.project.moviesbox.databinding.ActivitySearchListBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.model.SearchModel;
 import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.presenter.SearchPresenter;
+import my.project.moviesbox.utils.SearchHistoryManager;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.base.BaseMvpActivity;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -41,22 +53,51 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:12
   * @版本: 1.0
  */
-public class SearchActivity extends BaseActivity<SearchModel, SearchContract.View, SearchPresenter> implements SearchContract.View {
-    @BindView(R.id.toolbar)
-    protected Toolbar toolbar;
-    @BindView(R.id.rv_list)
+public class SearchActivity extends BaseMvpActivity<SearchModel, SearchContract.View, SearchPresenter, ActivitySearchListBinding> implements SearchContract.View {
+    protected AppBarLayout appBar;
+    protected MaterialToolbar toolbar;
     protected RecyclerView mRecyclerView;
-    @BindView(R.id.mSwipe)
     protected SwipeRefreshLayout mSwipe;
     protected  VodListAdapter adapter;
     protected  final List<MultiItemEntity> multiItemEntities = new ArrayList<>();
-    protected  String title;
-    protected  SearchView mSearchView;
+    protected  String searchContent;
+    protected SearchBar searchBar;
+    protected SearchView searchView;
+    protected RecyclerView rvHistory;
     protected  boolean isSearch = false;
 
-    /*@BindView(R.id.pageRv)
-    protected RecyclerView pageRecyclerView;
-    protected PageAdapter pageAdapter;*/
+    @Override
+    protected void initBeforeView() {}
+
+    /**
+     * 子类实现，返回具体的 ViewBinding
+     *
+     * @param inflater
+     * @return
+     */
+    @Override
+    protected ActivitySearchListBinding inflateBinding(LayoutInflater inflater) {
+        return ActivitySearchListBinding.inflate(inflater);
+    }
+
+    /**
+     * 初始化控件
+     */
+    @Override
+    protected void findById() {
+        appBar = binding.appBar;
+        toolbar = binding.toolbar;
+        searchBar = binding.searchBar;
+        searchView = binding.searchView;
+        rvHistory = binding.rvHistory;
+        mRecyclerView = binding.contentLayout.rvList;
+        mSwipe = binding.contentLayout.mSwipe;
+    }
+
+    @Override
+    public void initClickListeners() {
+
+    }
 
     @Override
     protected SearchPresenter createPresenter() {
@@ -69,25 +110,13 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
     }
 
     @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_vod_list;
-    }
-
-    @Override
     protected void init() {
+        appBar.setStatusBarForeground(MaterialShapeDrawable.createWithElevationOverlay(this));
         setToolbar(toolbar, "", "");
         initSwipe();
         initDefaultAdapter();
-
-        /*List<Integer> pageList = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-        pageAdapter = new PageAdapter(pageList);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
-        pageRecyclerView.setLayoutManager(layoutManager);
-        pageRecyclerView.setAdapter(pageAdapter);*/
+        initSearchBar();
     }
-
-    @Override
-    protected void initBeforeView() {}
 
     public void initSwipe() {
         mSwipe.setColorSchemeResources(R.color.pink500, R.color.blue500, R.color.purple500);
@@ -111,14 +140,13 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
             String title = bean.getTitle();
             String previewUrl = bean.getPreviewUrl();
             if (Utils.isNullOrEmpty(previewUrl)) return false;
-            VideoPreviewDialog dialog = new VideoPreviewDialog(this, title, previewUrl);
+            VideoPreviewDialog dialog = new VideoPreviewDialog(this, title, bean.getUrl(), previewUrl, bean.getImg());
             dialog.show();
             return true;
         });
         adapter.getLoadMoreModule().setLoadMoreView(new CustomLoadMoreView());
         adapter.getLoadMoreModule().setOnLoadMoreListener(() -> {
             mRecyclerView.postDelayed(() -> {
-                isSearch = true;
                 if (page >= pageCount) {
                     //数据全部加载完毕
                     adapter.getLoadMoreModule().loadMoreEnd();
@@ -128,7 +156,7 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
                     if (isErr) {
                         //成功获取更多数据
                         page++;
-                        mPresenter.loadPageData(title, String.valueOf(page));
+                        mPresenter.loadPageData(searchContent, String.valueOf(page));
                         application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, (parserInterface.startPageNum() == 0 ? page+1 : page), pageCount), DialogXTipEnum.DEFAULT);
                     } else {
                         //获取更多数据失败
@@ -144,6 +172,128 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
         adapter.setEmptyView(rvView);
     }
 
+    private void initSearchBar() {
+        List<String> historyList = SearchHistoryManager.getHistory(this);
+        SearchHistoryAdapter adapter = new SearchHistoryAdapter(historyList);
+        MaterialDividerItemDecoration divider = new MaterialDividerItemDecoration(this, LinearLayoutManager.VERTICAL);
+        divider.setLastItemDecorated(false);
+        rvHistory.addItemDecoration(divider);
+        rvHistory.setNestedScrollingEnabled(false);
+        rvHistory.setLayoutManager(new LinearLayoutManager(this));
+        rvHistory.setAdapter(adapter);
+        if (Utils.checkHasNavigationBar(this)) rvHistory.setPadding(0,0,0, Utils.getNavigationBarHeight(this));
+        rvHistory.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    // 隐藏键盘
+                    Utils.hideKeyboard(SearchActivity.this);
+                }
+            }
+        });
+        // 点击 item 填充搜索框
+        adapter.setOnItemClickListener((adapter1, view, position) -> {
+            searchContent = adapter.getItem(position);
+            if (searchContent != null) {
+                searchView.setText(searchContent); // 填充到搜索框
+                searchData();
+            }
+        });
+
+        // 删除历史
+        adapter.addChildClickViewIds(R.id.iv_delete);
+        adapter.setOnItemChildClickListener((adapter12, view, position) -> {
+            Utils.setVibration(view);
+            if (view.getId() == R.id.iv_delete) {
+                String keyword = adapter.getItem(position);
+                historyList.remove(keyword);
+                adapter.notifyDataSetChanged();
+                // 更新SP
+                getSharedPreferences("search_history", MODE_PRIVATE)
+                        .edit()
+                        .putString("history", TextUtils.join(",", historyList))
+                        .apply();
+            }
+        });
+
+        searchBar.setHint(parserInterface.searchHint());
+        searchView.setHint(parserInterface.searchHint());
+        // 将 SearchView 附加到 SearchBar
+        searchView.setupWithSearchBar(searchBar);
+        // 监听输入框提交
+        searchView.addTransitionListener((searchView1, previousState, newState) -> {
+            if (newState == SearchView.TransitionState.HIDDEN) {
+                // SearchView关闭时刷新历史
+                adapter.setList(SearchHistoryManager.getHistory(this));
+            }
+        });
+
+        // Activity 创建时直接展开 SearchView
+        searchView.show();
+        // 注册返回键拦截
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (searchView.isShowing()) {
+                    searchView.hide();
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
+
+        // 如果还想自动弹出软键盘，可以再加：
+        searchView.post(() -> {
+            searchView.getEditText().requestFocus();
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(searchView.getEditText(), InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
+        // 监听输入变化
+        searchView.getEditText().addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // 监听软键盘搜索按钮
+        searchView.getEditText().setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                String query = v.getText().toString();
+                if (isSearch) {
+                    application.showToastMsg(getString(R.string.searchPleaseTryAgainLater), DialogXTipEnum.WARNING);
+                    return false;
+                }else {
+                    searchContent = query.trim();
+                    if (!searchContent.isEmpty()) {
+                        searchData();
+                        SearchHistoryManager.saveHistory(this, searchContent);
+                    }
+                }
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void searchData() {
+        page = parserInterface.startPageNum();
+        pageCount = parserInterface.startPageNum();
+        multiItemEntities.clear();
+        mPresenter.loadMainData(true, searchContent, String.valueOf(page));
+        // 收起 SearchView
+        searchView.hide();
+        searchBar.setText(searchContent);
+    }
+
     private void setSubTitle() {
         toolbar.setSubtitle(String.format(PAGE_AND_ALL_PAGE, parserInterface.startPageNum() == 0 ? page+1 : page, pageCount));
     }
@@ -153,70 +303,6 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
         bundle.putString("title", title);
         bundle.putString("url", url);
         startActivity(new Intent(SearchActivity.this, DetailsActivity.class).putExtras(bundle));
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.search) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.search_menu, menu);
-        final MenuItem item = menu.findItem(R.id.search);
-//        mSearchView = (SearchView) MenuItemCompat.getActionView(item);
-        mSearchView = (SearchView) item.getActionView();
-        mSearchView.onActionViewExpanded();
-        mSearchView.setSubmitButtonEnabled(true);
-        View searchPlate = mSearchView.findViewById(androidx.appcompat.R.id.search_plate);
-        if (!Utils.isNullOrEmpty(searchPlate))
-            searchPlate.setBackgroundColor(Color.TRANSPARENT);
-        View submitArea = mSearchView.findViewById(androidx.appcompat.R.id.submit_area);
-        if (!Utils.isNullOrEmpty(submitArea))
-            submitArea.setBackgroundColor(Color.TRANSPARENT);
-        ImageView submitButton = mSearchView.findViewById(androidx.appcompat.R.id.search_go_btn);
-        if (submitButton != null)
-            submitButton.setImageResource(R.drawable.round_send_24);
-        ImageView closeButton = mSearchView.findViewById(androidx.appcompat.R.id.search_close_btn);
-        if (closeButton != null)
-            closeButton.setImageResource(R.drawable.round_search_off_24);
-        mSearchView.setQueryHint(parserInterface.searchHint());
-        mSearchView.setMaxWidth(4000);
-        if (!Utils.isNullOrEmpty(title)) {
-            mSearchView.setQuery(title, false);
-            mSearchView.clearFocus();
-            Utils.hideKeyboard(mSearchView);
-        }
-        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                if (isSearch) {
-                    application.showToastMsg(getString(R.string.searchPleaseTryAgainLater), DialogXTipEnum.WARNING);
-                }else {
-                    title = query.trim();
-                    if (!title.isEmpty()) {
-                        page = parserInterface.startPageNum();
-                        pageCount = parserInterface.startPageNum();
-                        multiItemEntities.clear();
-                        mPresenter.loadMainData(true, title, String.valueOf(page));
-                        toolbar.setTitle(title);
-                        mSearchView.clearFocus();
-                        Utils.hideKeyboard(mSearchView);
-                    }
-                }
-                return true;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                return false;
-            }
-        });
-        return true;
     }
 
     @Override
@@ -238,7 +324,7 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
         page = parserInterface.startPageNum();
         pageCount = parserInterface.startPageNum();
         multiItemEntities.clear();
-        mPresenter.loadMainData(true, title, String.valueOf(page));
+        mPresenter.loadMainData(true, searchContent, String.valueOf(page));
     }
 
     private void setRecyclerViewEmpty() {
@@ -313,6 +399,7 @@ public class SearchActivity extends BaseActivity<SearchModel, SearchContract.Vie
                 mSwipe.setRefreshing(false);
                 rvError(msg);
                 Utils.showAlert(this,
+                        R.drawable.round_warning_24,
                         getString(R.string.errorDialogTitle),
                         msg,
                         false,

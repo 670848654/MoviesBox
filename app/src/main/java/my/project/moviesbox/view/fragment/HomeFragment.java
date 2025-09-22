@@ -1,4 +1,4 @@
-package my.project.moviesbox.view;
+package my.project.moviesbox.view.fragment;
 
 import static my.project.moviesbox.event.RefreshEnum.CHANGE_SOURCES;
 import static my.project.moviesbox.parser.config.MultiItemEnum.ITEM_LIST;
@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.ViewTreeObserver;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -29,6 +30,8 @@ import com.chad.library.adapter.base.animation.AlphaInAnimation;
 import com.chad.library.adapter.base.entity.MultiItemEntity;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import org.greenrobot.eventbus.EventBus;
@@ -38,9 +41,6 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import cn.jzvd.Jzvd;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.HomeAdapter;
@@ -48,6 +48,9 @@ import my.project.moviesbox.adapter.SourceListAdapter;
 import my.project.moviesbox.contract.HomeContract;
 import my.project.moviesbox.custom.FabExtendingOnScrollListener;
 import my.project.moviesbox.custom.VideoPreviewDialog;
+import my.project.moviesbox.databinding.DialogSourceListBinding;
+import my.project.moviesbox.databinding.DialogWebviewBinding;
+import my.project.moviesbox.databinding.FragmentHomeBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.model.HomeModel;
@@ -56,6 +59,13 @@ import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.HomePresenter;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.ClassificationVodListActivity;
+import my.project.moviesbox.view.HomeActivity;
+import my.project.moviesbox.view.TextListActivity;
+import my.project.moviesbox.view.TopticListActivity;
+import my.project.moviesbox.view.VodListActivity;
+import my.project.moviesbox.view.WeekActivity;
+import my.project.moviesbox.view.base.BaseMvpFragment;
 import my.project.moviesbox.view.lazyLoadImage.VodListLazyImgActivity;
 
 /**
@@ -66,20 +76,11 @@ import my.project.moviesbox.view.lazyLoadImage.VodListLazyImgActivity;
   * @日期: 2024/2/4 17:11
   * @版本: 1.0
  */
-public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, HomePresenter> implements HomeContract.View, HomeAdapter.OnItemClick, SourceListAdapter.OnItemClick {
-    private View view;
-    /*@BindView(R.id.source_title)
-    TextView sourceTitleView;*/
-    @BindView(R.id.change_source)
-    Button sourceTitleView;
-    @BindView(R.id.swipe_refresh)
-    SwipeRefreshLayout mSwipe;
-    List<MultiItemEntity> multiItemEntities = new ArrayList<>();
-    @BindView(R.id.rv_list)
-    RecyclerView recyclerView;
+public class HomeFragment extends BaseMvpFragment<HomeModel, HomeContract.View, HomePresenter, FragmentHomeBinding> implements HomeContract.View, HomeAdapter.OnItemClick, SourceListAdapter.OnItemClick {
+    // 当前源
+    private String nowSourceType = SourceEnum.SourceTypeEnum.MOVIES.title;
+    private List<MultiItemEntity> multiItemEntities = new ArrayList<>();
     protected HomeAdapter adapter;
-    @BindView(R.id.search)
-    ExtendedFloatingActionButton searchFAB;
     private int fabHeight = 0;
     private SourceListAdapter sourceListAdapter;
     private BottomSheetDialog sourceListBottomSheetDialog;
@@ -91,20 +92,60 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
     }
 
     @Override
-    protected View initViews(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (view == null) {
-            view = inflater.inflate(R.layout.fragment_home, container, false);
-            mUnBinder = ButterKnife.bind(this, view);
+    protected FragmentHomeBinding inflateBinding(LayoutInflater inflater, ViewGroup container) {
+        // 防止重复 inflate
+        if (binding == null) {
+            binding = FragmentHomeBinding.inflate(inflater, container, false);
         } else {
-            ViewGroup parent = (ViewGroup) view.getParent();
-            if (parent != null) {
-                parent.removeView(view);
+            // 从父容器移除
+            ViewParent parent = binding.getRoot().getParent();
+            if (parent instanceof ViewGroup) {
+                ((ViewGroup) parent).removeView(binding.getRoot());
             }
         }
+        return binding;
+    }
+
+    private ChipGroup chipGroup;
+    private Button sourceTitleView;
+    private SwipeRefreshLayout mSwipe;
+    private RecyclerView recyclerView;
+    private ExtendedFloatingActionButton searchFAB;
+    @Override
+    public void initViews() {
+        sourceTitleView = binding.changeSource;
+        mSwipe = binding.swipeRefresh;
+        recyclerView = binding.rvList;
+        searchFAB = binding.search;
         initHeader();
         initSwipe();
         initAdapter();
-        return view;
+    }
+
+    @Override
+    public void initClickListeners() {
+        // 搜索按钮
+        searchFAB.setOnClickListener(view -> {
+            Utils.setVibration(view);
+            startActivity(new Intent(getActivity(), parserInterface.searchOpenClass()));
+        });
+
+        // 切换资源按钮
+        sourceTitleView.setOnClickListener(view -> {
+            Utils.setVibration(view);
+            sourceListBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+            sourceListBottomSheetDialog.show();
+        });
+
+        // 打开网页按钮
+        binding.openWebView.setOnClickListener(view -> {
+            Utils.setVibration(view);
+            if (SharedPreferencesUtils.getByPassCF()) {
+                openWebView();
+            } else {
+                application.showToastMsg(getString(R.string.onlyEnableByPassCF), DialogXTipEnum.WARNING);
+            }
+        });
     }
 
     private void initHeader() {
@@ -118,26 +159,6 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
         mSwipe.setEnabled(false);
         mSwipe.setColorSchemeResources(R.color.pink500, R.color.blue500, R.color.purple500);
         mSwipe.setOnRefreshListener(this::refreshData);
-    }
-
-    @OnClick({R.id.search, R.id.change_source, R.id.open_web_view})
-    public void viewClick(View view) {
-        Utils.setVibration(view);
-        switch (view.getId()) {
-            case R.id.search:
-                startActivity(new Intent(getActivity(), parserInterface.searchOpenClass()));
-                break;
-            case R.id.change_source:
-                sourceListBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
-                sourceListBottomSheetDialog.show();
-                break;
-            case R.id.open_web_view:
-                if (SharedPreferencesUtils.getByPassCF())
-                    openWebView();
-                else
-                    application.showToastMsg(getString(R.string.onlyEnableByPassCF), DialogXTipEnum.WARNING);
-                break;
-        }
     }
 
     /**
@@ -156,7 +177,7 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
         HomeActivity homeActivity = (HomeActivity) getActivity();
         if (homeActivity != null)
             homeActivity.setAdapterAnimation(adapter);
-        adapter.addChildClickViewIds(R.id.more);
+        adapter.addChildClickViewIds(R.id.moreBtn);
         adapter.setOnItemChildClickListener((adapter, view, position) -> {
             if (adapter.getItemViewType(position) == ITEM_LIST.getType()
                    || adapter.getItemViewType(position) == VOD_LIST.getType()) { // 更多点击事件
@@ -189,22 +210,53 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
         // 监听 RecyclerView 的滑动事件
         recyclerView.addOnScrollListener(new FabExtendingOnScrollListener(searchFAB));
 
-        View sourceListView = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_source_list, null);
-        RecyclerView sourceListRecyclerView = sourceListView.findViewById(R.id.rv_list);
-        sourceListAdapter = new SourceListAdapter(SourceEnum.getSourceDataBeanList(), this);
+        DialogSourceListBinding dialogSourceListBinding = DialogSourceListBinding.inflate(LayoutInflater.from(getActivity()));
+        chipGroup = dialogSourceListBinding.chipGroup;
+        setChipGroup();
+        RecyclerView sourceListRecyclerView = dialogSourceListBinding.rvList;
+        sourceListAdapter = new SourceListAdapter(SourceEnum.getSourceDataBeanList(nowSourceType), this);
         sourceListAdapter.setAnimationEnable(true);
         sourceListAdapter.setAdapterAnimation(new AlphaInAnimation());
         sourceListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         sourceListRecyclerView.setAdapter(sourceListAdapter);
         sourceListBottomSheetDialog = new BottomSheetDialog(getActivity(), R.style.BottomSheetDialogTheme);
-        sourceListBottomSheetDialog.setContentView(sourceListView);
+        sourceListBottomSheetDialog.setContentView(dialogSourceListBinding.getRoot());
+    }
+
+    private void setChipGroup() {
+        chipGroup.removeAllViews();
+        chipGroup.setOnCheckedStateChangeListener(null);
+        List<MainDataBean.Tag> tags = SourceEnum.getSourceTypeTitle();
+        LayoutInflater inflater = LayoutInflater.from(getActivity());
+        for (MainDataBean.Tag tag : tags) {
+            Chip chip = (Chip) inflater.inflate(R.layout.item_classification_item, chipGroup, false);
+            chip.setCheckable(true);
+            chip.setId(androidx.core.view.ViewCompat.generateViewId());
+            String title = tag.getTitle();
+            if (title != null && tag.getTitle().equals(nowSourceType)) {
+                chip.setChecked(true);
+            }
+            chip.setText(title);
+            chipGroup.addView(chip);
+        }
+        chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (!checkedIds.isEmpty()) {
+                int checkedId = checkedIds.get(0);
+                Chip selectedChip = group.findViewById(checkedId);
+                if (selectedChip != null) {
+                    Utils.setVibration(group);
+                    nowSourceType = selectedChip.getText().toString();
+                    sourceListAdapter.setNewInstance(SourceEnum.getSourceDataBeanList(nowSourceType));
+                }
+            }
+        });
     }
 
     private void openWebView() {
         BottomSheetDialog webviewBottomSheetDialog = new BottomSheetDialog(getActivity());
-        FrameLayout view = (FrameLayout) getLayoutInflater().inflate(R.layout.dialog_webview, null);
-        webView = view.findViewById(R.id.webView);
-        Button getCookie = view.findViewById(R.id.getCookie);
+        DialogWebviewBinding dialogWebviewBinding = DialogWebviewBinding.inflate(LayoutInflater.from(getActivity()));
+        webView = dialogWebviewBinding.webView;
+        Button getCookie = dialogWebviewBinding.getCookie;
         getCookie.setOnClickListener(v -> {
             webviewBottomSheetDialog.dismiss();
             retryListener();
@@ -226,7 +278,7 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
         // 加载 URL
         webView.loadUrl(parserInterface.getDefaultDomain());
 
-        webviewBottomSheetDialog.setContentView(view);
+        webviewBottomSheetDialog.setContentView(dialogWebviewBinding.getRoot());
         // 获取 BottomSheet 并设置为全屏高度
         FrameLayout bottomSheet = webviewBottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
         if (bottomSheet != null) {
@@ -274,6 +326,12 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
                 multiItemEntities.clear();
                 adapter.notifyDataSetChanged();
                 mPresenter.loadData(true);
+                break;
+            case REFRESH_ON_HIDDEN_FEATURES:
+                sourceListAdapter.setNewInstance(SourceEnum.getTurnOnHiddenFeaturesList());
+                break;
+            case REFRESH_OFF_HIDDEN_FEATURES:
+                setChipGroup();
                 break;
         }
     }
@@ -395,7 +453,8 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
         if (getActivity() == null) return;
         if (Utils.isNullOrEmpty(data.getPreviewUrl())) return;
         getActivity().runOnUiThread(() -> {
-            VideoPreviewDialog dialog = new VideoPreviewDialog(this.getActivity(), data.getTitle(), data.getPreviewUrl());
+            String imgPath = Utils.isNullOrEmpty(data.getBase64Img()) ? data.getImg() : data.getBase64Img();
+            VideoPreviewDialog dialog = new VideoPreviewDialog(this.getActivity(), data.getTitle(), data.getUrl(), data.getPreviewUrl(), imgPath);
             dialog.show();
         });
     }
@@ -410,7 +469,7 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
     public void loadingView() {
         mSwipe.setRefreshing(false);
         mSwipe.setEnabled(false);
-        rvLoading();
+        rvLoading(true);
     }
 
     @Override
@@ -419,6 +478,7 @@ public class HomeFragment extends BaseFragment<HomeModel, HomeContract.View, Hom
         getActivity().runOnUiThread(() -> {
             mSwipe.setEnabled(true);
             Utils.showAlert(getActivity(),
+                    R.drawable.round_warning_24,
                     getString(R.string.errorDialogTitle),
                     msg,
                     false,

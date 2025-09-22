@@ -13,7 +13,7 @@ import okhttp3.Request;
 /**
  * @author Li
  * @version 1.0
- * @description: 注释
+ * @description: m3u8加密key下载工具
  * @date 2025/5/18 1:43
  */
 public class KeyDownloader {
@@ -30,7 +30,7 @@ public class KeyDownloader {
                 Pattern pattern = Pattern.compile("#EXT-X-KEY:METHOD=AES-128,URI=\"(.*?)\"");
                 Matcher matcher = pattern.matcher(m3u8Content);
                 if (!matcher.find())
-                    throw new RuntimeException("未找到加密 KEY URI");
+                    throw new RuntimeException("当前m3u8无加密key信息");
                 String keyUrl = matcher.group(1);
                 if (!keyUrl.startsWith("http")) {
                     // 拼接相对路径
@@ -51,9 +51,9 @@ public class KeyDownloader {
                 try (FileOutputStream fos = new FileOutputStream(keyFile)) {
                     fos.write(keyBytes);
                 }
-                LogUtil.logInfo("key下载成功", keyFile.getAbsolutePath());
+                LogUtil.logInfo("key下载成功,保存位置:", keyFile.getAbsolutePath());
             } catch (Exception e) {
-                LogUtil.logInfo("key下载失败", e.getMessage());
+                LogUtil.logInfo("key下载失败,错误信息:", e.getMessage());
             }
         }).start();
     }

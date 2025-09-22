@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLDecoder;
 
+import my.project.moviesbox.R;
 import my.project.moviesbox.parser.LogUtil;
 
 /**
@@ -59,13 +60,14 @@ public class SAFUtils {
 
     /**
      * 显示未授权弹窗
-     * @param context
+     * @param activity
      * @param onClickListener
      */
     public static void showUnauthorizedAlert(Activity activity, DialogInterface.OnClickListener onClickListener) {
         Utils.showAlert(
                 activity,
-                "!*操作失败*!",
+                R.drawable.round_warning_24,
+                "操作失败!",
                 "无法写入外部存储，请选择授权保存目录后再进行此操作！",
                 false,
                 "目录授权",

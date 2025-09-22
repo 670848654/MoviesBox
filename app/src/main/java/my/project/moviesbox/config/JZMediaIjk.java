@@ -98,6 +98,8 @@ public class JZMediaIjk extends JZMediaInterface implements IMediaPlayer.OnPrepa
                 if (hashMap != null) {
                     for (Map.Entry<String, String> entry : hashMap.entrySet()) {
                         String key = entry.getKey();
+                        if (key.equals("user-agent"))
+                            key = "user_agent";
                         String value = entry.getValue();
                         ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, key, value);
                     }

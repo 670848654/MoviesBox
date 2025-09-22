@@ -20,21 +20,18 @@
             app:tabMode="fixed">
 
             <com.google.android.material.tabs.TabItem
-                android:id="@+id/favorite"
                 android:icon="@drawable/round_bookmark_added_24"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/favoriteTabTitle" />
 
             <com.google.android.material.tabs.TabItem
-                android:id="@+id/history"
                 android:icon="@drawable/round_history_toggle_off_24"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/historyTabTitle" />
 
             <com.google.android.material.tabs.TabItem
-                android:id="@+id/download"
                 android:icon="@drawable/round_download_24"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

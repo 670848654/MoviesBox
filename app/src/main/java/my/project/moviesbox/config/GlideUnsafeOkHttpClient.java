@@ -1,16 +1,17 @@
 package my.project.moviesbox.config;
 
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
+import okhttp3.TlsVersion;
 
 /**
  * @author Li
@@ -50,12 +51,13 @@ public class GlideUnsafeOkHttpClient {
 
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
             builder.sslSocketFactory(sslSocketFactory, (X509TrustManager) trustAllCerts[0]);
-            builder.hostnameVerifier(new HostnameVerifier() {
-                @Override
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
-                }
-            });
+            // 兼容一些老服务器（TLS 1.0/1.1/1.2）
+            builder.connectionSpecs(Arrays.asList(new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+                            .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
+                            .allEnabledCipherSuites()
+                            .build(),
+                    ConnectionSpec.CLEARTEXT)); // 支持明文 HTTP
+            builder.hostnameVerifier((hostname, session) -> true);
 
             builder.connectTimeout(20, TimeUnit.SECONDS);
             builder.readTimeout(20, TimeUnit.SECONDS);

@@ -6,9 +6,12 @@ import static my.project.moviesbox.utils.Utils.isPad;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
@@ -16,6 +19,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -45,6 +50,10 @@ import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.chad.library.adapter.base.entity.MultiItemEntity;
 import com.ctetin.expandabletextviewlibrary.ExpandableTextView;
+import com.google.android.flexbox.FlexDirection;
+import com.google.android.flexbox.FlexWrap;
+import com.google.android.flexbox.FlexboxLayoutManager;
+import com.google.android.flexbox.JustifyContent;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
@@ -59,10 +68,9 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
-import butterknife.BindView;
-import butterknife.OnClick;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.DetailTagAdapter;
@@ -75,17 +83,22 @@ import my.project.moviesbox.config.GlideApp;
 import my.project.moviesbox.contract.DetailsContract;
 import my.project.moviesbox.contract.DownloadVideoContract;
 import my.project.moviesbox.contract.VideoContract;
-import my.project.moviesbox.custom.AutoLineFeedLayoutManager;
 import my.project.moviesbox.custom.VideoPreviewDialog;
 import my.project.moviesbox.database.entity.TDirectory;
 import my.project.moviesbox.database.entity.TDownload;
+import my.project.moviesbox.database.entity.THistoryData;
 import my.project.moviesbox.database.enums.DirectoryTypeEnum;
 import my.project.moviesbox.database.manager.TDirectoryManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.TVideoManager;
+import my.project.moviesbox.databinding.ActivityDetailsBinding;
+import my.project.moviesbox.databinding.DialogDownloadDramaBinding;
+import my.project.moviesbox.databinding.DialogDramaBinding;
+import my.project.moviesbox.databinding.DialogMultiRecommendBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.event.DramaEvent;
+import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.event.VideoSniffEvent;
 import my.project.moviesbox.model.DetailsModel;
 import my.project.moviesbox.parser.LogUtil;
@@ -99,9 +112,9 @@ import my.project.moviesbox.presenter.VideoPresenter;
 import my.project.moviesbox.utils.DownloadUtils;
 import my.project.moviesbox.utils.ImageCache;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
-import my.project.moviesbox.utils.StatusBarUtil;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.utils.VideoAlertUtils;
+import my.project.moviesbox.view.base.BaseMvpActivity;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -111,59 +124,51 @@ import my.project.moviesbox.utils.VideoAlertUtils;
   * @日期: 2024/2/4 17:09
   * @版本: 1.0
  */
-public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.View, DetailsPresenter> implements DetailsContract.View,
+public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContract.View, DetailsPresenter, ActivityDetailsBinding> implements DetailsContract.View,
         VideoContract.View, DownloadVideoContract.View {
     /**
      * toolbar
      */
-    @BindView(R.id.toolbar)
     Toolbar toolbar;
     /**
      * 收藏按钮视图
      */
-    @BindView(R.id.favorite)
     MaterialButton favoriteBtn;
     /**
      * 平板图片视图
      */
-    @BindView(R.id.pad_img_box)
     public ConstraintLayout padImgBoxView;
     /**
      * 影视图片视图 (1:1.4)
      */
-    @BindView(R.id.img_view_type_0)
     public MaterialCardView imgType0View;
     /**
      * 影视图片视图 (1:1.4)
      */
-    @BindView(R.id.vod_img_type0)
     public ImageView vodImgType0View;
     /**
      * 影视图片视图 (16:9)
      */
-    @BindView(R.id.img_view_type_1)
     public MaterialCardView imgType1View;
     /**
      * 影视图片视图 (16:9)
      */
-    @BindView(R.id.vod_img_type1)
     public ImageView vodImgType1View;
     /**
      * 影视详情视图
      */
-    @BindView(R.id.desc)
     ExpandableTextView expandableDescView;
     /**
      * 影视标题视图
      */
-    @BindView(R.id.title)
     public TextView titleView;
     /**
      * 下拉刷新视图
      */
-    @BindView(R.id.mSwipe)
     SwipeRefreshLayout mSwipe;
-    @BindView(R.id.preview)
+    /**
+     * 预览图片
+     */
     Button previewBtn;
     /**
      * <p>detailsTitle 详情标题</p>
@@ -189,14 +194,12 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     /**
      * 剧集列表
      */
-    private List<DetailsDataBean.DramasItem> dramaList;
+    private List<DetailsDataBean.DramasItem> dramaList = new ArrayList<>();
     /**
      * 播放列表相关
      */
-    @BindView(R.id.drama_list)
     RecyclerView dramaListRv;
     private DramaAdapter dramaListAdapter;
-    @BindView(R.id.play_layout)
     LinearLayout playLinearLayout;
     /**
      * 展开播放列表相关
@@ -204,47 +207,37 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     private RecyclerView expandListRv;
     private DramaAdapter expandListAdapter;
     private BottomSheetDialog expandListBSD;
-    @BindView(R.id.open_drama)
     RelativeLayout openDramaView;
     /**
      * 多季相关
      */
-    @BindView(R.id.multi_list)
     RecyclerView multiListRv;
     private LinearLayoutManager multiLayoutManager;
     protected DetailsListItemAdapter multiAdapter;
-    @BindView(R.id.multi_layout)
     LinearLayout multiLinearLayout;
     /**
      * 相关推荐相关
      */
-    @BindView(R.id.recommend_list)
     RecyclerView recommendRv;
     private LinearLayoutManager recommendLayoutManager;
     protected DetailsListItemAdapter recommendAdapter;
-    @BindView(R.id.recommend_layout)
     LinearLayout recommendLinearLayout;
     /**
      * 加载错误视图相关
      */
-    @BindView(R.id.error_bg)
     RelativeLayout errorBgView;
-    @BindView(R.id.error_msg)
     TextView errorMsgView;
     /**
      * 详情视图
      */
-    @BindView(R.id.desc_view)
     RelativeLayout descView;
     /**
      * 背景模糊图片
      */
-    @BindView(R.id.bg)
     public ImageView bgView;
     /**
      * TAG列表
      */
-    @BindView(R.id.chip_group)
     RecyclerView detailTagRecyclerView;
     private RecyclerView expandTagListRv;
     private BottomSheetDialog tagBottomSheetDialog;
@@ -253,22 +246,18 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     /**
      * 其他视图
      */
-    @BindView(R.id.info)
     public TextView infoView;
     /**
      * 更新时间视图
      */
-    @BindView(R.id.update_time)
     public TextView updateTimeView;
     /**
      * 评分视图
      */
-    @BindView(R.id.score_view)
-    public AppCompatTextView scoreView;
+    public TextView scoreView;
     /**
      * 整体滚动视图
      */
-    @BindView(R.id.scrollview)
     NestedScrollView scrollView;
     /**
      * 当前点击剧集
@@ -289,11 +278,8 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     /**
      * 多播放列表选择相关
      */
-    @BindView(R.id.multi_play_layout)
     RelativeLayout multiPlayLayout;
-    @BindView(R.id.multi_play_input)
     TextInputLayout multiPlayInput;
-    @BindView(R.id.selected_text)
     AutoCompleteTextView selectedDrama;
     private List<String> dramaTitles;
     /**
@@ -319,7 +305,6 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     /**
      * 浮动按钮
      */
-    @BindView(R.id.detailFab)
     ExtendedFloatingActionButton detailFab;
     private int fabHeight = 0;
     private final VideoPresenter videoPresenter = new VideoPresenter(this);
@@ -331,6 +316,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
      * 弹窗工具类
      */
     private VideoAlertUtils videoAlertUtils;
+    TextView lastWatchView;
 
     @Override
     protected DetailsPresenter createPresenter() {
@@ -343,14 +329,22 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     }
 
     @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_details;
-    }
-
-    @Override
     protected void init() {
         EventBus.getDefault().register(this);
-        StatusBarUtil.setTranslucentForCoordinatorLayout(this, 0);
+//        StatusBarUtil.setTranslucentForCoordinatorLayout(this, 0);
+        Window window = getWindow();
+        // 透明状态栏
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(Color.TRANSPARENT);
+
+            // 内容延伸到状态栏
+            window.getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            );
+        }
         getBundle();
         initToolbar();
         initSwipe();
@@ -361,7 +355,77 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     }
 
     @Override
-    protected void initBeforeView() {
+    protected void initBeforeView() {}
+
+    /**
+     * 子类实现，返回具体的 ViewBinding
+     *
+     * @param inflater
+     * @return
+     */
+    @Override
+    protected ActivityDetailsBinding inflateBinding(LayoutInflater inflater) {
+        return ActivityDetailsBinding.inflate(inflater);
+    }
+
+
+    /**
+     * 初始化控件
+     */
+    @Override
+    protected void findById() {
+        toolbar = binding.toolbar;
+        favoriteBtn = binding.favorite;
+        padImgBoxView = binding.padImgBox;
+        imgType0View = binding.imgViewType0;
+        vodImgType0View = binding.vodImgType0;
+        imgType1View = binding.imgViewType1;
+        vodImgType1View = binding.vodImgType1;
+        expandableDescView = binding.desc;
+        titleView = binding.title;
+        mSwipe = binding.mSwipe;
+        previewBtn = binding.preview;
+        dramaListRv = binding.dramaList;
+        playLinearLayout = binding.playLayout;
+        openDramaView = binding.openDrama;
+        multiListRv = binding.multiList;
+        multiLinearLayout = binding.multiLayout;
+        recommendRv = binding.recommendList;
+        recommendLinearLayout = binding.recommendLayout;
+        errorBgView = binding.errorBg;
+        errorMsgView = binding.errorMsg;
+        descView = binding.descView;
+        bgView = binding.bg;
+        detailTagRecyclerView = binding.chipGroup;
+        infoView = binding.info;
+        updateTimeView = binding.updateTime;
+        scoreView = binding.scoreView;
+        scrollView = binding.scrollview;
+        multiPlayLayout = binding.multiPlayLayout;
+        multiPlayInput = binding.multiPlayInput;
+        selectedDrama = binding.selectedText;
+        detailFab = binding.detailFab;
+        lastWatchView = binding.lastWatch;
+    }
+
+    @Override
+    public void initClickListeners() {
+        // 预览、图像点击
+        binding.preview.setOnClickListener(v -> handleClick(v));
+        binding.vodImgType0.setOnClickListener(v -> handleClick(v));
+        binding.vodImgType1.setOnClickListener(v -> handleClick(v));
+        // 收藏
+        binding.favorite.setOnClickListener(v -> handleClick(v));
+        // 下载
+        binding.download.setOnClickListener(v -> handleClick(v));
+        // 浏览器打开
+        binding.browser.setOnClickListener(v -> handleClick(v));
+        // 排序
+        binding.order.setOnClickListener(v -> handleClick(v));
+        // 剧集
+        binding.drama.setOnClickListener(v -> handleClick(v));
+        // 浮动按钮点击事件
+        binding.detailFab.setOnClickListener(v -> handleClick(v));
     }
 
     public void getBundle() {
@@ -392,18 +456,36 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         });
     }
 
-    @OnClick({R.id.preview, R.id.vod_img_type0, R.id.vod_img_type1, R.id.order, R.id.favorite, R.id.download, R.id.browser,R.id.drama})
-    public void onClick(View view) {
+    public void handleClick(View view) {
         Utils.setVibration(view);
+        ActivityOptions options;
         switch (view.getId()) {
             case R.id.preview:
+                binding.preview.setTransitionName("image_transition");
+                options = ActivityOptions.makeSceneTransitionAnimation(
+                        this,
+                        binding.preview,
+                        "image_transition"
+                );
+                openPreviewActivity(options);
+                break;
             case R.id.vod_img_type0:
+                binding.vodImgType0.setTransitionName("image_transition");
+                options = ActivityOptions.makeSceneTransitionAnimation(
+                        this,
+                        binding.vodImgType0,
+                        "image_transition"
+                );
+                openPreviewActivity(options);
+                break;
             case R.id.vod_img_type1:
-                ImageCache.ImagePathResult result = ImageCache.prepareImagePath(this, detailsDataBean.getImg(), "preview.jpg");
-                Intent intent = new Intent(this, ImagePreviewActivity.class);
-                intent.putExtra("image_path", result.path);
-                intent.putExtra("is_temp_file", result.isTempFile);
-                startActivity(intent);
+                binding.vodImgType1.setTransitionName("image_transition");
+                options = ActivityOptions.makeSceneTransitionAnimation(
+                        this,
+                        binding.vodImgType1,
+                        "image_transition"
+                );
+                openPreviewActivity(options);
                 break;
             case R.id.favorite:
                 if (!isFavorite)
@@ -429,7 +511,31 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
                     expandListBSD.show();
                 }
                 break;
+            case R.id.detailFab:
+                DetailsDataBean.DetailsFabBren fabBren = detailsDataBean.getDetailsFabBren();
+                if (fabBren != null) {
+                    if (fabBren.getOpenClass().equals(DetailsActivity.class)) {
+                        detailsTitle = fabBren.getTitle();
+                        detailsUrl = fabBren.getUrl();
+                        vodUrlList.add(detailsUrl);
+                        openVodDesc();
+                    } else if (fabBren.getOpenClass().equals(SniffingVideoActivity.class)) {
+                        Bundle bundle = new Bundle();
+                        bundle.putString("url", fabBren.getUrl());
+                        bundle.putString("vodId", vodId);
+                        startActivity(new Intent(this, SniffingVideoActivity.class).putExtras(bundle));
+                    }
+                }
+                break;
         }
+    }
+
+    private void openPreviewActivity(ActivityOptions options) {
+        ImageCache.ImagePathResult result = ImageCache.prepareImagePath(this, detailsDataBean.getImg(), "preview.jpg");
+        Intent intent = new Intent(this, ImagePreviewActivity.class);
+        intent.putExtra("image_path", result.path);
+        intent.putExtra("is_temp_file", result.isTempFile);
+        startActivity(intent, options.toBundle());
     }
 
     private void initSwipe() {
@@ -454,12 +560,16 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         detailTagAdapter.setOnItemClickListener((adapter, view, position) -> {
             chipClick(view, position);
         });
-        View tagView = LayoutInflater.from(this).inflate(R.layout.dialog_drama, null);
-        expandTagListRv = tagView.findViewById(R.id.drama_list);
+        DialogDramaBinding dialogDramaBinding = DialogDramaBinding.inflate(LayoutInflater.from(this));
+        expandTagListRv = dialogDramaBinding.dramaList;
         expandTagListRv.setAdapter(detailTagAdapter);
         tagBottomSheetDialog = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
-        tagBottomSheetDialog.setContentView(tagView);
-        expandTagListRv.setLayoutManager(new AutoLineFeedLayoutManager());
+        tagBottomSheetDialog.setContentView(dialogDramaBinding.getRoot());
+        FlexboxLayoutManager layoutManager = new FlexboxLayoutManager(this);
+        layoutManager.setFlexDirection(FlexDirection.ROW); // 横向排布
+        layoutManager.setFlexWrap(FlexWrap.WRAP);         // 换行
+        layoutManager.setJustifyContent(JustifyContent.FLEX_START); // 起始对齐
+        expandTagListRv.setLayoutManager(layoutManager);
         detailTagAdapter.setOnItemLongClickListener((adapter, view, position) -> {
             tagBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
             tagBottomSheetDialog.show();
@@ -468,12 +578,12 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
 //        if (Utils.isPad()) {
 //            detailTagRecyclerView.setLayoutManager(new AutoLineFeedLayoutManager());
 //        } else {
-            LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-            layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
-            detailTagRecyclerView.setLayoutManager(layoutManager);
+            LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+            linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+            detailTagRecyclerView.setLayoutManager(linearLayoutManager);
 //        }
         detailTagRecyclerView.setAdapter(detailTagAdapter);
-        dramaListAdapter = new DramaAdapter(this, dramaList);
+        dramaListAdapter = new DramaAdapter(this, false, dramaList);
         dramaListAdapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             Utils.setVibration(view);
@@ -489,10 +599,9 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         dramaListRv.setAdapter(dramaListAdapter);
         dramaListRv.setNestedScrollingEnabled(false);
 
-        View dramaView = LayoutInflater.from(this).inflate(R.layout.dialog_drama, null);
-        expandListRv = dramaView.findViewById(R.id.drama_list);
-
-        expandListAdapter = new DramaAdapter(this, new ArrayList<>());
+        DialogDramaBinding dialogDramaBinding1 = DialogDramaBinding.inflate(LayoutInflater.from(this));
+        expandListRv = dialogDramaBinding1.dramaList;
+        expandListAdapter = new DramaAdapter(this, false, new ArrayList<>());
         expandListAdapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             Utils.setVibration(view);
@@ -501,19 +610,19 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         });
         expandListRv.setAdapter(expandListAdapter);
         expandListBSD = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
-        expandListBSD.setContentView(dramaView);
+        expandListBSD.setContentView(dialogDramaBinding1.getRoot());
 
-        View downloadView = LayoutInflater.from(this).inflate(R.layout.dialog_download_drama, null);
-        ExpandableTextView expandableTextView = downloadView.findViewById(R.id.info);
+        DialogDownloadDramaBinding dialogDownloadDramaBinding = DialogDownloadDramaBinding.inflate(LayoutInflater.from(this));
+        ExpandableTextView expandableTextView = dialogDownloadDramaBinding.info;
         expandableTextView.setContent(String.format(getString(R.string.downloadInfoContent), SharedPreferencesUtils.getDataName()));
         expandableTextView.setNeedExpend(true);
-        selectDirectoryView = downloadView.findViewById(R.id.selectDirectory);
+        selectDirectoryView = dialogDownloadDramaBinding.selectDirectory;
         selectDirectoryView.setOnClickListener(v -> {
             // 去选择清单进行收藏
             startActivityForResult(new Intent(this, DirectoryActivity.class).putExtra("type", DirectoryTypeEnum.DOWNLOAD.getName()), DIRECTORY_REQUEST_CODE);
         });
         setSelectDirectoryData();
-        downloadListRv = downloadView.findViewById(R.id.download_list);
+        downloadListRv = dialogDownloadDramaBinding.downloadList;
 
         downloadAdapter = new DownloadDramaAdapter(this, new ArrayList<>());
         downloadAdapter.setOnItemClickListener((adapter, view, position) -> {
@@ -536,11 +645,12 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         });
         downloadListRv.setAdapter(downloadAdapter);
         downloadBottomSheetDialog = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
-        downloadBottomSheetDialog.setContentView(downloadView);
+        downloadBottomSheetDialog.setContentView(dialogDownloadDramaBinding.getRoot());
 
         multiRecommendDialog = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
-        multiRecommendView = LayoutInflater.from(this).inflate(R.layout.dialog_multi_recommend, null);
-        multiRecommendRv = multiRecommendView.findViewById(R.id.drama_list);
+        DialogMultiRecommendBinding dialogMultiRecommendBinding = DialogMultiRecommendBinding.inflate(LayoutInflater.from(this));
+        multiRecommendView = dialogMultiRecommendBinding.getRoot();
+        multiRecommendRv = dialogMultiRecommendBinding.dramaList;
         detailsExpandListItemAdapter = new DetailsExpandListItemAdapter(new ArrayList<>());
         detailsExpandListItemAdapter.setOnItemClickListener((adapter, view, position) -> {
             Utils.setVibration(view);
@@ -551,7 +661,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
             String title = bean.getTitle();
             String previewUrl = bean.getPreviewUrl();
             if (Utils.isNullOrEmpty(previewUrl)) return false;
-            VideoPreviewDialog dialog = new VideoPreviewDialog(this, title, previewUrl);
+            VideoPreviewDialog dialog = new VideoPreviewDialog(this, title, bean.getUrl(), previewUrl, bean.getImg());
             dialog.show();
             return true;
         });
@@ -574,20 +684,6 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         bundle.putString("title", detailsDataBean.getTagTitles().get(position));
         bundle.putString("url", detailsDataBean.getTagUrls().get(position));
         startActivity(new Intent(this, parserInterface.detailTagOpenClass()).putExtras(bundle));
-    }
-
-    @OnClick(R.id.detailFab)
-    public void onDetailFabClick() {
-        Utils.setVibration(detailFab);
-        DetailsDataBean.DetailsFabBren fabBren = detailsDataBean.getDetailsFabBren();
-        if (fabBren != null) {
-            if (fabBren.getOpenClass().equals(DetailsActivity.class)) {
-                detailsTitle = fabBren.getTitle();
-                detailsUrl = fabBren.getUrl();
-                vodUrlList.add(detailsUrl);
-                openVodDesc();
-            }
-        }
     }
 
     @SuppressLint("RestrictedApi")
@@ -696,43 +792,30 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
                                 // 获取图片宽高
                                 int width = resource.getWidth();
                                 int height = resource.getHeight();
+                                // 显示图片
+                                padImgBoxView.setVisibility(View.VISIBLE);
                                 // 回调结果
                                 if (width > height) {
                                     vodImgType1View.setTag(R.id.imageid, detailsDataBean.getImg());
                                     vodImgType1View.setImageBitmap(resource);
                                     imgType1View.setVisibility(View.VISIBLE);
+                                    Utils.setImageViewAnim(vodImgType1View);
                                 } else {
                                     vodImgType0View.setTag(R.id.imageid, detailsDataBean.getImg());
                                     vodImgType0View.setImageBitmap(resource);
                                     imgType0View.setVisibility(View.VISIBLE);
+                                    Utils.setImageViewAnim(vodImgType0View);
                                 }
-                                // 显示图片
-                                padImgBoxView.setVisibility(View.VISIBLE);
                             }
 
                             @Override
-                            public void onLoadCleared(@Nullable Drawable placeholder) {
-
-                            }
+                            public void onLoadCleared(@Nullable Drawable placeholder) {}
 
                             @Override
                             public void onLoadFailed(@Nullable Drawable errorDrawable) {
                                 padImgBoxView.setVisibility(View.GONE);
                             }
                         });
-                /*if (detailsDataBean.getImgStyle().equals(ItemStyleEnum.STYLE_16_9)) {
-                    // 如果是16:9
-                    vodImgType1View.setTag(R.id.imageid, videoImgUrl);
-                    Utils.setDefaultImage(videoImgUrl, detailsDataBean.getUrl(), vodImgType1View, false, null, null);
-                    imgType1View.setVisibility(View.VISIBLE);
-                } else {
-                    // 1:1.4
-                    vodImgType0View.setTag(R.id.imageid, videoImgUrl);
-                    Utils.setDefaultImage(videoImgUrl, detailsDataBean.getUrl(), vodImgType0View, false, null, null);
-                    imgType0View.setVisibility(View.VISIBLE);
-                }
-                // 显示图片
-                imgBoxView.setVisibility(View.VISIBLE);*/
             } else {
                 // 手机设备显示原图
                 GlideApp.with(this)
@@ -865,6 +948,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         switch (SharedPreferencesUtils.getUserSetOpenVidePlayer()) {
             case 0:
                 //调用播放器
+                dramaUrl = Utils.isNullOrEmpty(dramaUrl) ? playUrl : dramaUrl;
                 TFavoriteManager.updateFavorite(dramaUrl, dramaTitle, vodId);
                 TVideoManager.addVideoHistory(vodId, dramaUrl, sourceIndex, dramaTitle);
                 videoAlertUtils.openPlayer(true, dramaTitle, playUrl, detailsTitle, dramaUrl, dramaList, clickIndex, vodId, sourceIndex);
@@ -882,9 +966,10 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
         runOnUiThread(() -> {
             if (SharedPreferencesUtils.getEnableSniff()) {
                 alertDialog = Utils.getProDialog(this, R.string.sniffVodPlayUrl);
-                videoAlertUtils.startSniffing(dramaUrl, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.PLAY);
+                videoAlertUtils.startSniffing(vodId, dramaUrl, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.PLAY);
             } else
                 Utils.showAlert(this,
+                        R.drawable.round_warning_24,
                         getString(R.string.errorDialogTitle),
                         getString(R.string.parseVodPlayUrlError),
                         false,
@@ -898,10 +983,11 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     }
 
     @Override
-    public void errorNet(String msg) {
+    public void errorNet(boolean onlyGetPlayUrl, String msg) {
         if (isFinishing()) return;
         //网络出错
         runOnUiThread(() -> Utils.showAlert(this,
+                R.drawable.round_warning_24,
                 getString(R.string.errorDialogTitle),
                 msg,
                 false,
@@ -970,10 +1056,20 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(DramaEvent event) {
         if (isFinishing()) return;
-        clickIndex = event.getClickIndex();
-        dramaList.get(clickIndex).setSelected(true);
-        dramaListAdapter.notifyItemChanged(clickIndex);
-        expandListAdapter.notifyItemChanged(clickIndex);
+        if (event.getVodId().equals(vodId)) {
+            clickIndex = event.getClickIndex();
+            dramaList.get(clickIndex).setSelected(true);
+            dramaListAdapter.notifyItemChanged(clickIndex);
+            expandListAdapter.notifyItemChanged(clickIndex);
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void refreshLastWatch(RefreshEnum refreshEnum) {
+        if (isFinishing()) return;
+        if (Objects.requireNonNull(refreshEnum) == RefreshEnum.REFRESH_LAST_WATCH) {
+            showLastWatch();
+        }
     }
 
     @Override
@@ -1042,6 +1138,7 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     public void success(DetailsDataBean detailsDataBean) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
+            showLastWatch();
             this.detailsDataBean = detailsDataBean;
             detailsTitle = detailsDataBean.getTitle();
             setCollapsingToolbar();
@@ -1064,7 +1161,8 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
                 showView(multiPlayLayout);
                 showView(openDramaView);
             } else {
-                errorMsgView.setText(getString(R.string.noEpisode));
+                String errorMsg = detailsDataBean.getNoDramaListFoundMsg();
+                errorMsgView.setText(Utils.isNullOrEmpty(errorMsg) ? getString(R.string.noEpisode) : errorMsg);
                 hideView(openDramaView);
                 showView(errorBgView);
             }
@@ -1145,6 +1243,27 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
             }
             lazyLoadImg();
         });
+    }
+
+    private void showLastWatch() {
+        String msg = "上次观看至「%s」%s";
+        THistoryData tHistoryData = TVideoManager.queryLastWatchData(vodId);
+        if (!Utils.isNullOrEmpty(tHistoryData)) {
+            int duration = (int) tHistoryData.getWatchProgress(); // 已观看，单位：毫秒
+            int progress = (int) tHistoryData.getVideoDuration(); // 总时长，单位：毫秒
+            String percentStr;
+            if (duration == 0 && progress == 0) {
+                percentStr = "播放出错";
+            } else if (duration == 0) {
+                percentStr = "已看完";
+            } else {
+                float percent = (duration * 100f) / progress;
+                percentStr = String.format(Locale.getDefault(), "进度%.1f%%", percent);
+            }
+            lastWatchView.setText(String.format(msg, tHistoryData.getVideoNumber(), percentStr));
+            lastWatchView.setVisibility(View.VISIBLE);
+        } else
+            lastWatchView.setVisibility(View.GONE);
     }
 
     private void showFab() {
@@ -1240,9 +1359,10 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
             cancelDialog();
             if (SharedPreferencesUtils.getEnableSniff()) {
                 alertDialog = Utils.getProDialog(this, R.string.sniffVodPlayUrl);
-                videoAlertUtils.startSniffing(downloadDramaUrl, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.DOWNLOAD);
+                videoAlertUtils.startSniffing(vodId, downloadDramaUrl, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.DOWNLOAD);
             } else {
                 Utils.showAlert(this,
+                        R.drawable.round_warning_24,
                         getString(R.string.errorDialogTitle),
                         String.format(getString(R.string.playUrlParserError), msg),
                         false,
@@ -1259,10 +1379,15 @@ public class DetailsActivity extends BaseActivity<DetailsModel, DetailsContract.
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onSniff(VideoSniffEvent event) {
         if (isFinishing()) return;
-        if (event.getActivityEnum() == VideoSniffEvent.ActivityEnum.DETAIL) {
+        if (event.getActivityEnum() == VideoSniffEvent.ActivityEnum.DETAIL && event.getVodId().equals(vodId)) {
             cancelDialog();
             List<DialogItemBean> urls = event.getUrls();
             if (event.isSuccess()) {
+                if (!Utils.isNullOrEmpty(event.getDramaTitle())) {
+                    dramaTitle = event.getDramaTitle();
+                    downloadDramaNumber = event.getDramaTitle();
+                    downloadUtils.createDownloadConfig(detailsTitle);
+                }
                 switch (event.getSniffEnum()) {
                     case PLAY:
                         successPlayUrl(urls);

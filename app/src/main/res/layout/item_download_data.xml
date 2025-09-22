@@ -102,89 +102,54 @@
 
         </RelativeLayout>
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="6"
             android:layout_marginTop="2dp"
             android:layout_marginBottom="2dp"
             android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
-            android:orientation="vertical">
+            android:layout_marginRight="5dp">
 
             <TextView
                 android:id="@+id/title"
+                android:textSize="15sp"
+                android:lineSpacingMultiplier='1.2'
+                android:paddingBottom="4dp"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="2"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="14sp"
-                android:autoSizeMaxTextSize="16sp"
-                android:textSize="16sp"/>
+                android:layout_height="wrap_content"
+                android:maxLines="2"
+                android:ellipsize="end" />
 
             <TextView
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
                 android:id="@+id/state"
-                android:gravity="bottom"
-                android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="12sp"
-                android:autoSizeMaxTextSize="14sp"/>
-
-            <RelativeLayout
+                android:paddingBottom="4dp"
+                android:layout_below="@+id/title"
+                android:textSize="12sp"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:layout_height="wrap_content" />
 
-                <TextView
-                    android:id="@+id/file_size"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:autoSizeTextType="uniform"
-                    android:autoSizeMinTextSize="12sp"
-                    android:autoSizeMaxTextSize="14sp"
-                    android:layout_alignParentStart="true"
-                    android:layout_above="@+id/bottom_progress"
-                    android:textColor="#bdbdbd"/>
+            <TextView
+                android:id="@+id/file_size"
+                android:layout_below="@+id/state"
+                android:textSize="12sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#bdbdbd"/>
 
-                <!--<TextView
-                    android:id="@+id/progress_info"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_above="@+id/bottom_progress"
-                    android:textColor="@color/light_toolbar_color_lt23"/>-->
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/bottom_progress"
+                android:visibility="visible"
+                android:layout_alignParentBottom="true"
+                app:trackCornerRadius="2dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:indicatorColor="#fff85959"
+                app:showAnimationBehavior="inward"
+                app:hideAnimationBehavior="outward"
+                android:max="100" />
 
-                <!--<ProgressBar
-                    android:id="@+id/bottom_progress"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="3dp"
-                    android:layout_alignParentBottom="true"
-                    android:max="100"
-                    android:progressDrawable="@drawable/progress_bg"
-                    android:visibility="visible" />-->
-
-                <com.google.android.material.progressindicator.LinearProgressIndicator
-                    android:id="@+id/bottom_progress"
-                    android:visibility="visible"
-                    app:trackCornerRadius="2dp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
-                    app:indicatorColor="#fff85959"
-                    app:showAnimationBehavior="inward"
-                    app:hideAnimationBehavior="outward"
-                    android:max="100" />
-
-            </RelativeLayout>
-
-        </LinearLayout>
+        </RelativeLayout>
 
     </LinearLayout>
 

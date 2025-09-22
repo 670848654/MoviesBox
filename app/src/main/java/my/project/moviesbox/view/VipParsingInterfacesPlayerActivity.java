@@ -2,12 +2,18 @@ package my.project.moviesbox.view;
 
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_PLAYER_KERNEL;
 
+import android.app.PendingIntent;
 import android.app.PictureInPictureParams;
+import android.app.RemoteAction;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Icon;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,7 +25,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -31,6 +36,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.google.android.flexbox.FlexDirection;
+import com.google.android.flexbox.FlexWrap;
+import com.google.android.flexbox.FlexboxLayoutManager;
+import com.google.android.flexbox.JustifyContent;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
 import org.greenrobot.eventbus.EventBus;
@@ -39,11 +48,10 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.regex.Matcher;
+import java.util.Objects;
 
-import butterknife.BindView;
-import butterknife.OnClick;
 import cn.jzvd.Jzvd;
 import master.flame.danmaku.danmaku.loader.ILoader;
 import master.flame.danmaku.danmaku.loader.IllegalDataException;
@@ -60,11 +68,11 @@ import my.project.moviesbox.config.JZExoPlayer;
 import my.project.moviesbox.config.JZMediaIjk;
 import my.project.moviesbox.contract.DanmuContract;
 import my.project.moviesbox.contract.ParsingInterfacesContract;
-import my.project.moviesbox.custom.AutoLineFeedLayoutManager;
 import my.project.moviesbox.custom.DanmakuJsonParser;
 import my.project.moviesbox.custom.DanmukuXmlParser;
 import my.project.moviesbox.custom.JZPlayer;
 import my.project.moviesbox.custom.TextViewAnimator;
+import my.project.moviesbox.databinding.ActivityPlayerBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.model.ParsingInterfacesModel;
 import my.project.moviesbox.parser.LogUtil;
@@ -76,6 +84,7 @@ import my.project.moviesbox.service.DLNAService;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.StatusBarUtil;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.base.BaseMvpActivity;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -85,44 +94,31 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/23 15:38
   * @版本: 1.0
  */
-public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInterfacesModel, ParsingInterfacesContract.View, ParsingInterfacesPresenter> implements
+public class VipParsingInterfacesPlayerActivity extends BaseMvpActivity<ParsingInterfacesModel, ParsingInterfacesContract.View, ParsingInterfacesPresenter, ActivityPlayerBinding> implements
         JZPlayer.CompleteListener,
         JZPlayer.TouchListener,
         JZPlayer.ShowOrHideChangeViewListener,
         JZPlayer.OnProgressListener,
         JZPlayer.PlayingListener,
         JZPlayer.PauseListener,
-        JZPlayer.OnQueryDanmuListener,
         JZPlayer.ActivityOrientationListener,
         ParsingInterfacesContract.View,
         JZPlayer.FlipListener,
         DanmuContract.View,
         JZPlayer.SpeedListener,
         JZPlayer.DisplayListener {
-    @BindView(R.id.episodes_view)
-    LinearLayout episodesView;
-    @BindView(R.id.config_view)
-    LinearLayout configView;
-    @BindView(R.id.player)
-    JZPlayer player;
+    public static final String ACTION_PLAY_PAUSE = "ACTION_PLAY_PAUSE";
+    public static final String ACTION_FORWARD = "ACTION_FORWARD";
+    public static final String ACTION_REWIND = "ACTION_REWIND";
     protected String videoTitle, dramaTitle, url;
-    @BindView(R.id.drawer_layout)
-    DrawerLayout drawerLayout;
-    @BindView(R.id.other_view)
-    LinearLayout otherView;
-    @BindView(R.id.hide_progress)
-    MaterialSwitch hideProgressSc;
-    @BindView(R.id.auto_play_next_video)
-    MaterialSwitch autoplayNextVideoSwitch;
     protected boolean playNextVideo;
     protected int clickIndex; // 当前点击剧集
     protected boolean hasPreVideo = false;
     protected boolean hasNextVideo = false;
-    @BindView(R.id.rv_list)
-    RecyclerView recyclerView; // 剧集列表
+    private String danmuUrl; // 弹幕接口
+    private String dmid; // 弹幕ID
+    private boolean loadDlDanmu; // 是否加载独立弹幕
     protected VipVideoAdapter adapter;
-    @BindView(R.id.speed)
-    TextView speedTextView;
     protected String[] speedsStrItems = Utils.getArray(R.array.fast_forward_item);
     protected int[] speedsIntItems = Utils.getIntArray(R.array.fast_forward_set_item);
     protected int userSpeed = 2;
@@ -132,28 +128,69 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     private final List<MenuBean> displayMenuBeanList = new ArrayList<>();
 
     @Override
+    protected void initBeforeView() {
+        StatusBarUtil.setTranslucent(this, 0);
+    }
+
+    /**
+     * 子类实现，返回具体的 ViewBinding
+     *
+     * @param inflater
+     * @return
+     */
+    @Override
+    protected ActivityPlayerBinding inflateBinding(LayoutInflater inflater) {
+        return ActivityPlayerBinding.inflate(inflater);
+    }
+
+    private LinearLayout episodesView;
+    private LinearLayout configView;
+    private JZPlayer player;
+    private DrawerLayout drawerLayout;
+    private LinearLayout otherView;
+    private MaterialSwitch hideProgressSc;
+    private MaterialSwitch autoplayNextVideoSwitch;
+    private RecyclerView recyclerView; // 剧集列表
+    private TextView speedTextView;
+    /**
+     * 初始化控件
+     */
+    @Override
+    protected void findById() {
+        episodesView = binding.episodesView;
+        configView = binding.configView;
+        player = binding.player;
+        drawerLayout = binding.drawerLayout;
+        otherView = binding.otherView;
+        hideProgressSc = binding.hideProgress;
+        autoplayNextVideoSwitch = binding.autoPlayNextVideo;
+        recyclerView = binding.rvList;
+        speedTextView = binding.speed;
+    }
+
+    @Override
+    public void initClickListeners() {
+        binding.speedConfig.setOnClickListener(v -> setDefaultSpeed());
+    }
+
+    @Override
     protected ParsingInterfacesPresenter createPresenter() {
         return new ParsingInterfacesPresenter(this);
     }
 
     @Override
     protected void loadData() {
-        if (url.contains("?url")) {
+        /*if (url.contains("?url")) {
             // 需要二次解析
             Matcher matcher = VipParsingInterfacesActivity.URL_PATTERN.matcher(url);
             if (matcher.find()) {
                 url = matcher.group();
-                mPresenter.parser(url);
+                mPresenter.parser(VipParsingInterfacesActivity.OLD_API, url);
             } else
-                mPresenter.parser(url);
+                mPresenter.parser(VipParsingInterfacesActivity.OLD_API, url);
         }
-        else
-            play(url);
-    }
-
-    @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_player;
+        else*/
+        play(url);
     }
 
     @Override
@@ -162,6 +199,8 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
         url = bundle.getString("url");
         videoTitle = bundle.getString("videoTitle");
         dramaTitle = bundle.getString("dramaTitle");
+        danmuUrl = bundle.getString("danmuUrl");
+        dmid = bundle.getString("dmid");
         dramasItems = (List<VipVideoDataBean.DramasItem>) bundle.getSerializable("list");
         initPlayerView();
         initNavConfigView();
@@ -169,11 +208,6 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
         setPreNextData();
         setAdapter();
         initMenuList();
-    }
-
-    @Override
-    protected void initBeforeView() {
-        StatusBarUtil.setTranslucent(this, 0);
     }
 
     @Override
@@ -195,6 +229,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
         App.addDestroyActivity(this, "player");
         if (dramasItems.size() == 0)
             player.selectDramaView.setVisibility(View.GONE);
+        player.changePlayerKernel.setVisibility(View.GONE);
         otherView.setVisibility(View.GONE);
         player.configView.setOnClickListener(v -> {
             if (!Utils.isFastClick()) return;
@@ -202,7 +237,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
                 drawerLayout.closeDrawer(GravityCompat.START);
             else drawerLayout.openDrawer(GravityCompat.START);
         });
-        player.setListener(this, this, this, this, this, this, this, this, this, this, this, this);
+        player.setListener(this, this, this, this, this, this, this, this, this, this, this);
         player.backButton.setOnClickListener(v -> {
             Utils.setVibration(v);
             finish();
@@ -250,6 +285,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
         player.openDamuConfig = true;
         player.hasDanmuConfig = true;
         player.danmuView.setVisibility(View.VISIBLE);
+        player.danmuConfigView.setVisibility(View.VISIBLE);
         player.danmuInfoView.setVisibility(View.VISIBLE);
         Jzvd.FULLSCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
         Jzvd.NORMAL_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
@@ -263,16 +299,36 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
      */
     protected void play(String playUrl) {
         Jzvd.releaseAllVideos();
-        player.setUp(playUrl, videoTitle + " - " + dramaTitle, Jzvd.SCREEN_FULLSCREEN, JZExoPlayer.class);
+        player.isVideoPrepared = false;
+        player.isDanmakuPrepared = false;
+        player.setUp(playUrl, Utils.isNullOrEmpty(videoTitle) ? dramaTitle : videoTitle + " - " + dramaTitle, Jzvd.SCREEN_FULLSCREEN, JZExoPlayer.class);
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("accept", "*/*");
+        headers.put("accept-encoding", "gzip, deflate, br, zstd");
+        headers.put("accept-language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6");
+        headers.put("origin", "https://jx.xmflv.com");
+        headers.put("priority", "u=1, i");
+        headers.put("sec-ch-ua", "\"Not;A=Brand\";v=\"99\", \"Microsoft Edge\";v=\"139\", \"Chromium\";v=\"139\"");
+        headers.put("sec-ch-ua-mobile", "?0");
+        headers.put("sec-ch-ua-platform", "\"Windows\"");
+        headers.put("sec-fetch-dest", "empty");
+        headers.put("sec-fetch-mode", "cors");
+        headers.put("sec-fetch-site", "cross-site");
+        headers.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                "Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0");
+        player.jzDataSource.headerMap = headers;
         player.startVideo();
         player.startButton.performClick();//响应点击事件
+        if (!Utils.isNullOrEmpty(danmuUrl))
+            getDanmu();
     }
 
 
     /**
      * 获取弹幕
      */
-    private void getDanmu(String danmuUrl) {
+    private void getDanmu() {
         danmuPresenter.loadVipDanmu(danmuUrl);
     }
 
@@ -345,7 +401,11 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
             changePlayUrl(position);
         });
         recyclerView.setNestedScrollingEnabled(false);
-        recyclerView.setLayoutManager(new AutoLineFeedLayoutManager());
+        FlexboxLayoutManager layoutManager = new FlexboxLayoutManager(this);
+        layoutManager.setFlexDirection(FlexDirection.ROW); // 横向排布
+        layoutManager.setFlexWrap(FlexWrap.WRAP);         // 换行
+        layoutManager.setJustifyContent(JustifyContent.FLEX_START); // 起始对齐
+        recyclerView.setLayoutManager(layoutManager);
     }
 
     private void initMenuList() {
@@ -394,17 +454,9 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
         else finish();
     }
 
-    @OnClick({R.id.speed_config})
-    public void configBtnClick(RelativeLayout relativeLayout) {
-        switch (relativeLayout.getId()) {
-            case R.id.speed_config:
-                setDefaultSpeed();
-                break;
-        }
-    }
-
     private void setDefaultSpeed() {
         Utils.showSingleChoiceAlert(this,
+                null,
                 getString(R.string.setUserSpeed),
                 speedsStrItems,
                 true,
@@ -449,6 +501,68 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
             player.goOnPlayOnResume();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private List<RemoteAction> createPipActions() {
+        List<RemoteAction> actions = new ArrayList<>();
+        int userSetSpeed = SharedPreferencesUtils.getUserSetSpeed();
+        // 快退按钮
+        Icon rewindIcon = Icon.createWithResource(this, R.drawable.round_fast_rewind_24); // 自定义图标
+        PendingIntent rewindIntent = PendingIntent.getBroadcast(
+                this, 1, new Intent(ACTION_REWIND).setPackage(getPackageName()), PendingIntent.FLAG_IMMUTABLE);
+        actions.add(new RemoteAction(rewindIcon, String.format("快退%s秒", userSetSpeed), String.format("快退%s秒", userSetSpeed), rewindIntent));
+
+        // 播放/暂停按钮
+        Icon playPauseIcon = Icon.createWithResource(this,
+                Jzvd.CURRENT_JZVD.state == Jzvd.STATE_PLAYING ? R.drawable.round_pause_24 : R.drawable.round_play_arrow_24);
+        PendingIntent playPauseIntent = PendingIntent.getBroadcast(
+                this, 0, new Intent(ACTION_PLAY_PAUSE).setPackage(getPackageName()), PendingIntent.FLAG_IMMUTABLE);
+        actions.add(new RemoteAction(playPauseIcon, "播放/暂停", "播放/暂停", playPauseIntent));
+
+        // 快进按钮
+        Icon forwardIcon = Icon.createWithResource(this, R.drawable.round_fast_forward_24);
+        PendingIntent forwardIntent = PendingIntent.getBroadcast(
+                this, 2, new Intent(ACTION_FORWARD).setPackage(getPackageName()), PendingIntent.FLAG_IMMUTABLE);
+        actions.add(new RemoteAction(forwardIcon, String.format("快进%s秒", userSetSpeed), String.format("快进%s秒", userSetSpeed), forwardIntent));
+        return actions;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private final BroadcastReceiver pipReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (player == null) return;
+            switch (Objects.requireNonNull(intent.getAction())) {
+                case ACTION_PLAY_PAUSE:
+                    if (player.state == Jzvd.STATE_PLAYING) {
+                        player.onStatePause();
+                        player.mediaInterface.pause();
+                    } else {
+                        player.onStatePlaying();
+                        player.mediaInterface.start();
+                    }
+                    updatePipActions();
+                    break;
+                case ACTION_FORWARD:
+                    player.setFast(true);
+                    break;
+                case ACTION_REWIND:
+                    player.setFast(false);
+                    break;
+            }
+        }
+    };
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void updatePipActions() {
+        if (isInPictureInPictureMode()) {
+            PictureInPictureParams.Builder pipBuilder = new PictureInPictureParams.Builder();
+            pipBuilder.setActions(createPipActions());
+            Rational safeRatio = BasePlayerActivity.getSafeAspectRatio(player.videoWidth, player.videoHeight);
+            pipBuilder.setAspectRatio(safeRatio);
+            setPictureInPictureParams(pipBuilder.build());
+        }
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -477,6 +591,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void enterPicInPic() {
         PictureInPictureParams.Builder pipBuilder = new PictureInPictureParams.Builder();
+        pipBuilder.setActions(createPipActions());
         Rational safeRatio = BasePlayerActivity.getSafeAspectRatio(player.videoWidth, player.videoHeight);
         pipBuilder.setAspectRatio(safeRatio);
         enterPictureInPictureMode(pipBuilder.build());
@@ -485,6 +600,16 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     @Override
     protected void onStart() {
         super.onStart();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_REWIND);
+        filter.addAction(ACTION_FORWARD);
+        filter.addAction(ACTION_PLAY_PAUSE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(pipReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(pipReceiver, filter);
+        }
         if (danmuPresenter != null)
             danmuPresenter.registerEventBus();
     }
@@ -492,6 +617,8 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     @Override
     protected void onStop() {
         super.onStop();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            unregisterReceiver(pipReceiver);
         if (danmuPresenter != null)
             danmuPresenter.unregisterEventBus();
     }
@@ -545,6 +672,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
             player.onStateError();
             hideNavBar();
             Utils.showAlert(this,
+                    R.drawable.round_warning_24,
                     getString(R.string.errorDialogTitle),
                     getString(R.string.parseVodPlayUrlError),
                     false,
@@ -581,15 +709,15 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
                     String aes_key = jsonObject.getString("aes_key");
                     String aes_iv = jsonObject.getString("aes_iv");
                     String videoUrl = VipParsingInterfacesActivity.getData(aes_iv, aes_key, jsonObject.getString("url"));
-                    play(videoUrl);
                     // 弹幕URL
-                    String danmuUrl = jsonObject.getString("ggdmapi");
+                    danmuUrl = jsonObject.getString("ggdmapi");
                     // 独立弹幕库
                     /*String dmid = jsonObject.getString("dmid");
                     danmuUrl = danmuUrl.split("&")[0] + "&id=" + dmid;*/
-                    getDanmu(danmuUrl);
+                    play(videoUrl);
                 } else
                     Utils.showAlert(this,
+                            R.drawable.round_warning_24,
                             getString(R.string.errorDialogTitle),
                             jsonObject.getString("msg"),
                             false,
@@ -602,6 +730,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
             } catch (Exception e) {
                 e.printStackTrace();
                 Utils.showAlert(this,
+                        R.drawable.round_warning_24,
                         getString(R.string.errorDialogTitle),
                         e.getMessage(),
                         false,
@@ -628,12 +757,14 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     @Override
     public void complete() {
         if (hasNextVideo && playNextVideo) {
-            application.showToastMsg("开始播放下一集", DialogXTipEnum.DEFAULT);
+//            application.showToastMsg("开始播放下一集", DialogXTipEnum.DEFAULT);
+            TextViewAnimator.showMultipleWithFade(player.tipsView, "开始播放下一集", 300, 1000);
             clickIndex++;
             changePlayUrl(clickIndex);
         } else {
             player.releaseDanMu();
-            application.showToastMsg("全部播放完毕", DialogXTipEnum.SUCCESS);
+//            application.showToastMsg("全部播放完毕", DialogXTipEnum.SUCCESS);
+            TextViewAnimator.showMultipleWithFade(player.tipsView, "全部播放完毕", 300, 1000);
             if (dramasItems.size() == 0) return;
             if (!drawerLayout.isDrawerOpen(GravityCompat.END))
                 drawerLayout.openDrawer(GravityCompat.END);
@@ -648,11 +779,6 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
 
     @Override
     public void getPosition(long position, long duration) {
-
-    }
-
-    @Override
-    public void queryDamu(String queryDanmuTitle, String queryDanmuDrama) {
 
     }
 
@@ -708,23 +834,29 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
             // JSON格式弹幕信息解析示例
             if (player.loadError) return;
             try {
-                player.danmuInfoView.setText("已加载"+ danmuDataBeanList.size() + "条弹幕");
+//                player.danmuInfoView.setText("已加载"+ danmuDataBeanList.size() + "条弹幕");
+                player.danmuInfoView.setText("弹幕接口响应正常");
                 player.danmuInfoView.setVisibility(View.VISIBLE);
                 String json = JSON.toJSONString(danmuDataBeanList);
                 LogUtil.logInfo("弹幕信息", json);
                 InputStream result = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
                 player.danmakuParser = createParser(true, result);
                 player.createDanmu();
+                player.danmakuContext.setFTDanmakuVisibility(player.showTopDanmaku);
+                player.danmakuContext.setFBDanmakuVisibility(player.showBottomDanmaku);
+                player.danmakuContext.setR2LDanmakuVisibility(player.showRollDanmaku);
+                player.danmakuContext.setMaximumVisibleSizeInScreen(player.damuShowCount);
+                player.danmakuContext.mGlobalFlagValues.updateFilterFlag();
                 if (player.danmakuView.isPrepared()) {
                     player.danmakuView.restart();
                 }
                 player.danmakuView.prepare(player.danmakuParser, player.danmakuContext);
-                if (player.seekToInAdvance > 0) {
+                /*if (player.seekToInAdvance > 0) {
                     new Handler().postDelayed(() -> {
                         // 一秒后定位弹幕时间为用户上次观看位置
                         player.seekDanmu(player.seekToInAdvance);
                     }, 1000);
-                }
+                }*/
             } catch (Exception e) {
                 application.showToastMsg(e.getMessage(), DialogXTipEnum.ERROR);
             }
@@ -739,7 +871,32 @@ public class VipParsingInterfacesPlayerActivity extends BaseActivity<ParsingInte
     @Override
     public void errorDanmu(String msg) {
         if (isFinishing()) return;
-        runOnUiThread(() -> application.showToastMsg(msg, DialogXTipEnum.ERROR));
+        if (!Utils.isNullOrEmpty(dmid) && !loadDlDanmu) {
+            errorDanmuInfo(msg + ",请求独立弹幕库");
+            danmuUrl = "https://dmku.hls.one/?ac=dm&id="+dmid;
+            getDanmu();
+        } else
+            errorDanmuInfo(msg);
+    }
+
+    @Override
+    public void netErrorDanmu(String msg) {
+        if (isFinishing()) return;
+        if (player.loadError) return;
+        errorDanmuInfo(msg);
+    }
+
+    private void errorDanmuInfo(String msg) {
+        runOnUiThread(() -> {
+            try {
+                application.showToastMsg(msg, DialogXTipEnum.WARNING);
+                player.danmuInfoView.setText("点击重新获取弹幕数据");
+                player.danmuInfoView.setClickable(true);
+                player.danmuInfoView.setOnClickListener(v -> getDanmu());
+            } catch (Exception e) {
+                application.showToastMsg(e.getMessage(), DialogXTipEnum.ERROR);
+            }
+        });
     }
 
     private int flipValue = 1;

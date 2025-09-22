@@ -8,7 +8,7 @@ package my.project.moviesbox.contract;
  */
 public interface ParsingInterfacesContract {
     interface Model {
-        void parser(String url, LoadDataCallback callback);
+        void parser(String parserUrl, String url, LoadDataCallback callback);
     }
 
     interface View extends BaseView {

@@ -8,9 +8,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <include layout="@layout/toolbar" />
+        <include
+            android:id="@+id/toolbarLayout"
+            layout="@layout/toolbar" />
 
-        <include layout="@layout/content_home" />
+        <include
+            android:id="@+id/contentLayout"
+            layout="@layout/content_home" />
 
         <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
             android:id="@+id/classFab"
@@ -20,7 +24,7 @@
             android:layout_margin="16dp"
             app:layout_anchorGravity="bottom|end"
             android:text="@string/categorySearch"
-            app:layout_anchor="@id/mSwipe"
+            app:layout_anchor="@id/contentLayout"
             android:textColor="@color/white"
             app:iconTint="@color/white"
             app:backgroundTint="@color/pink200"

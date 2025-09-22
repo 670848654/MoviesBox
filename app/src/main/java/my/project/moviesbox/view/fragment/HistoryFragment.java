@@ -1,14 +1,14 @@
-package my.project.moviesbox.view;
+package my.project.moviesbox.view.fragment;
 
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_TAB_COUNT;
 import static my.project.moviesbox.utils.ImageUpdateManager.UpdateImgEnum.HISTORY;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AlertDialog;
@@ -24,8 +24,6 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.HistoryListAdapter;
 import my.project.moviesbox.config.ConfigManager;
@@ -36,6 +34,7 @@ import my.project.moviesbox.database.entity.THistoryWithFields;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.THistoryManager;
 import my.project.moviesbox.database.manager.TVideoManager;
+import my.project.moviesbox.databinding.FragmentMyListBinding;
 import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.event.ShowProgressEvent;
 import my.project.moviesbox.event.UpdateImgEvent;
@@ -48,6 +47,9 @@ import my.project.moviesbox.presenter.VideoPresenter;
 import my.project.moviesbox.utils.ImageUpdateManager;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.DetailsActivity;
+import my.project.moviesbox.view.HomeActivity;
+import my.project.moviesbox.view.base.BaseMvpFragment;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -57,11 +59,8 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:10
   * @版本: 1.0
  */
-public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.View, HistoryPresenter> implements HistoryContract.View,
+public class HistoryFragment extends BaseMvpFragment<HistoryModel, HistoryContract.View, HistoryPresenter, FragmentMyListBinding> implements HistoryContract.View,
         VideoContract.View {
-    private View view;
-    @BindView(R.id.rv_list)
-    RecyclerView mRecyclerView;
     private HistoryListAdapter adapter;
     private int historyCount = 0;
     private boolean isMain = true;
@@ -76,8 +75,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
     private int vodSource;
     private List<DetailsDataBean.DramasItem> dramasItems = new ArrayList<>();
     private int clickIndex = 0;
-    @BindView(R.id.remove_all)
-    FloatingActionButton removeAllFAB;
+
 
     @Override
     protected void setConfigurationChanged() {
@@ -85,20 +83,34 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
     }
 
     @Override
-    protected View initViews(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (view == null) {
-            view = inflater.inflate(R.layout.fragment_my_list, container, false);
-            mUnBinder = ButterKnife.bind(this, view);
+    protected FragmentMyListBinding inflateBinding(LayoutInflater inflater, ViewGroup container) {
+        // 防止重复 inflate
+        if (binding == null) {
+            binding = FragmentMyListBinding.inflate(inflater, container, false);
         } else {
-            ViewGroup parent = (ViewGroup) view.getParent();
-            if (parent != null) {
-                parent.removeView(view);
+            // 从父容器移除
+            ViewParent parent = binding.getRoot().getParent();
+            if (parent instanceof ViewGroup) {
+                ((ViewGroup) parent).removeView(binding.getRoot());
             }
         }
+        return binding;
+    }
+
+    private RecyclerView mRecyclerView;
+    private FloatingActionButton removeAllFAB;
+    @Override
+    public void initViews() {
+        mRecyclerView = binding.rvList;
+        removeAllFAB = binding.removeAll;
         historyCount = THistoryManager.queryHistoryCount();
         initAdapter();
         initFab();
-        return view;
+    }
+
+    @Override
+    public void initClickListeners() {
+
     }
 
     private void initAdapter() {
@@ -118,7 +130,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
             vodDramaTitle = tHistoryWithField.getVideoNumber();
             vodPlaySource = tHistoryWithField.getVideoPlaySource();
             vodSource = tHistoryWithField.getVideoSource();
-            if (!parserInterface.playUrlNeedParser()) {
+            if (!parserInterface.playUrlNeedParser() || vodDramaUrl.contains("mp4") || vodDramaUrl.contains("m3u8")) {
                 dramasItems.add(new DetailsDataBean.DramasItem(0, vodDramaTitle, vodDramaUrl, true));
                 playVod(vodDramaUrl);
                 return;
@@ -128,6 +140,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
         });
         adapter.setOnItemChildClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             THistoryWithFields tHistoryWithField = (THistoryWithFields) adapter.getData().get(position);
             switch (view.getId()) {
                 /*case R.id.desc_view:
@@ -142,7 +155,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
                         switch (item.getItemId()) {
                             case R.id.refreshImage:
                                 ImageView imageView = (ImageView) adapter.getViewByPosition(position+adapter.getHeaderLayoutCount(), R.id.img);
-                                imageView.setImageDrawable(getActivity().getDrawable(R.drawable.loading));
+                                imageView.setImageResource(R.drawable.loading);
 //                                updateImgPresenter.loadData(historyBeans.get(position).getTHistory().getVideoImgUrl(), historyBeans.get(position).getTHistory().getVideoDescUrl());
                                 ImageUpdateManager.getInstance().addUpdateImgTask(
                                         tHistoryWithField.getTHistory().getVideoDescUrl(),
@@ -238,6 +251,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
      */
     private void showDeleteHistoryDialog(int position, String historyId, boolean isAll) {
         Utils.showAlert(getActivity(),
+                R.drawable.round_warning_24,
                 getString(R.string.otherOperation),
                 isAll ? getString(R.string.deleteAllHistory) : getString(R.string.deleteSingleHistory),
                 true,
@@ -319,7 +333,7 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
     @Override
     public void loadingView() {
         setRecyclerViewEmpty();
-        rvLoading();
+        rvLoading(false);
     }
 
     @Override
@@ -342,12 +356,9 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
         setLoadState(true);
         getActivity().runOnUiThread(() -> {
             if (isMain) {
-                new Handler().postDelayed(() -> {
-                    hideProgress();
-                    removeAllFAB.setVisibility(View.VISIBLE);
-                    adapter.setNewInstance(list);
-                    setRecyclerViewView();
-                }, 500);
+                removeAllFAB.setVisibility(View.VISIBLE);
+                adapter.setNewInstance(list);
+                setRecyclerViewView();
             } else
                 adapter.addData(list);
         });
@@ -393,9 +404,10 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
             cancelDialog();
             if (SharedPreferencesUtils.getEnableSniff()) {
                 alertDialog = Utils.getProDialog(getActivity(), R.string.sniffVodPlayUrl);
-                videoAlertUtils.startSniffing(vodDramaUrl, VideoSniffEvent.ActivityEnum.HISTORY, VideoSniffEvent.SniffEnum.PLAY);
+                videoAlertUtils.startSniffing(vodId, vodDramaUrl, VideoSniffEvent.ActivityEnum.HISTORY, VideoSniffEvent.SniffEnum.PLAY);
             } else {
                 Utils.showAlert(getActivity(),
+                        R.drawable.round_warning_24,
                         getString(R.string.errorDialogTitle),
                         getString(R.string.parseVodPlayUrlError),
                         false,
@@ -410,11 +422,12 @@ public class HistoryFragment extends BaseFragment<HistoryModel, HistoryContract.
     }
 
     @Override
-    public void errorNet(String msg) {
+    public void errorNet(boolean onlyGetPlayUrl, String msg) {
         if (getActivity().isFinishing()) return;
         getActivity().runOnUiThread(() -> {
             cancelDialog();
             Utils.showAlert(getActivity(),
+                    R.drawable.round_warning_24,
                     getString(R.string.errorDialogTitle),
                     msg,
                     false,

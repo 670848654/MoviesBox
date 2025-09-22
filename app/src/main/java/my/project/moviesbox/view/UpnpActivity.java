@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.DisplayMetrics;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -36,15 +37,14 @@ import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
 
-import butterknife.BindView;
-import butterknife.OnClick;
 import kotlin.Unit;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.UpnpDevicesAdapter;
+import my.project.moviesbox.databinding.ActivityUpnpBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.parser.LogUtil;
-import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.base.BaseActivity;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -54,26 +54,12 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:09
   * @版本: 1.0
  */
-public class UpnpActivity extends BaseActivity implements SeekBar.OnSeekBarChangeListener  {
+public class UpnpActivity extends BaseActivity<ActivityUpnpBinding> implements SeekBar.OnSeekBarChangeListener  {
     private final static int LOCAL_PORT = 8899;
     private final static String LOCAL_ADDRESS = "http://127.0.0.1:%s%s";
-    @BindView(R.id.video_url)
-    TextView videoUrlView;
-    @BindView(R.id.rv_list)
-    RecyclerView recyclerView;
     private UpnpDevicesAdapter adapter;
     private List<Device> clingDevices = new ArrayList<>();
     private Device currentDevice = null;
-    @BindView(R.id.pause)
-    Button pauseBtn;
-    @BindView(R.id.tv_selected)
-    TextView mTVSelected;
-    @BindView(R.id.seekbar_progress)
-    SeekBar mSeekProgress;
-    @BindView(R.id.seekbar_volume)
-    SeekBar mSeekVolume;
-    @BindView(R.id.duration)
-    TextView durationText;
     private boolean isLocalVideo;
     private String playUrl; // 视频播放地址
     private long duration; // 视屏长度
@@ -81,18 +67,46 @@ public class UpnpActivity extends BaseActivity implements SeekBar.OnSeekBarChang
     private TransportState currentState = NO_MEDIA_PRESENT;
 
     @Override
-    protected Presenter createPresenter() {
-        return null;
+    protected void initBeforeView() {}
+
+    /**
+     * 子类实现，返回具体的 ViewBinding
+     *
+     * @param inflater
+     * @return
+     */
+    @Override
+    protected ActivityUpnpBinding inflateBinding(LayoutInflater inflater) {
+        return ActivityUpnpBinding.inflate(inflater);
+    }
+
+    private TextView videoUrlView;
+    private RecyclerView recyclerView;
+    private Button pauseBtn;
+    private TextView mTVSelected;
+    private SeekBar mSeekProgress;
+    private SeekBar mSeekVolume;
+    private TextView durationText;
+    /**
+     * 初始化控件
+     */
+    @Override
+    protected void findById() {
+        videoUrlView = binding.videoUrl;
+        recyclerView = binding.rvList;
+        pauseBtn = binding.pause;
+        mTVSelected = binding.tvSelected;
+        mSeekProgress = binding.seekbarProgress;
+        mSeekVolume = binding.seekbarVolume;
+        durationText = binding.duration;
     }
 
     @Override
-    protected void loadData() {
-
-    }
-
-    @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_upnp;
+    public void initClickListeners() {
+        binding.play.setOnClickListener(v -> onClick(v));
+        binding.pause.setOnClickListener(v -> onClick(v));
+        binding.stop.setOnClickListener(v -> onClick(v));
+        binding.exit.setOnClickListener(v -> onClick(v));
     }
 
     @Override
@@ -112,11 +126,6 @@ public class UpnpActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         isLocalVideo = playUrl.startsWith("/storage/");
         initView();
         hideNavBar();
-    }
-
-    @Override
-    protected void initBeforeView() {
-
     }
 
     @Override
@@ -225,7 +234,6 @@ public class UpnpActivity extends BaseActivity implements SeekBar.OnSeekBarChang
         });
     }
 
-    @OnClick({R.id.play, R.id.pause, R.id.stop, R.id.exit})
     public void onClick(View view) {
         if (!Utils.isFastClick()) return;
         Utils.setVibration(view);

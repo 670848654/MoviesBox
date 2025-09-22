@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:padding="5dp">
+
+    <TextView
+        android:id="@+id/tv_history"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:layout_marginStart="18dp"
+        android:textSize="16sp"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/iv_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/Button.Icon"
+        app:iconTint="#bdbdbd"
+        app:icon="@drawable/round_close_24" />
+
+
+</LinearLayout>

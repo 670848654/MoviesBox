@@ -41,9 +41,10 @@ public class DownloadAdapter extends BaseQuickAdapter<TDownloadWithFields, BaseV
         if (item.getNoCompleteSize() > 0)
             imgContent += "<br><font color=\"RED\">" + String.format(Utils.getString(R.string.downloadVodNotCompleteListContent), item.getNoCompleteSize()) + "</font>";
         helper.setText(R.id.number, Html.fromHtml(imgContent));
-        Utils.setDefaultImage(item.getTDownload().getVideoImgUrl(), item.getTDownload().getVideoDescUrl(), imageView, false, null, null, false);
-        helper.setVisible(R.id.file_size, false);
-        helper.setVisible(R.id.bottom_progress, false);
-        helper.setText(R.id.all_size, String.format(Utils.getString(R.string.downloadFileSize), item.getFilesSize()));
+        Utils.setDefaultImage(item.getTDownload().getVideoImgUrl(), item.getTDownload().getVideoDescUrl(), imageView, false, null, null, false, false);
+//        helper.setGone(R.id.file_size, true);
+        helper.setGone(R.id.bottom_progress, true);
+//        helper.setText(R.id.all_size, String.format(Utils.getString(R.string.downloadFileSize), item.getFilesSize()));
+        helper.setText(R.id.all_size, item.getFilesSize());
     }
 }

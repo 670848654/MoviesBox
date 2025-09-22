@@ -116,7 +116,8 @@ public class TFavoriteManager extends BaseManager {
      * @return
      */
     public static List<TFavoriteWithFields> queryFavorite(String directoryId, int offset, int limit, boolean updateOrder) {
-        return tFavoriteDao.queryFavorite(source, directoryId, offset, limit);
+        List<TFavoriteWithFields> tFavoriteWithFields = tFavoriteDao.queryFavorite(source, directoryId, offset, limit);
+        return tFavoriteWithFields;
     }
 
     /**

@@ -6,14 +6,21 @@ import static cn.jzvd.Jzvd.VIDEO_IMAGE_DISPLAY_TYPE_FILL_SCROP;
 import static cn.jzvd.Jzvd.VIDEO_IMAGE_DISPLAY_TYPE_ORIGINAL;
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_FAVORITE;
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_HISTORY;
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_LAST_WATCH;
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_PLAYER_KERNEL;
 
+import android.app.PendingIntent;
 import android.app.PictureInPictureParams;
+import android.app.RemoteAction;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -26,7 +33,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
@@ -36,6 +42,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.alibaba.fastjson.JSON;
+import com.google.android.flexbox.FlexDirection;
+import com.google.android.flexbox.FlexWrap;
+import com.google.android.flexbox.FlexboxLayoutManager;
+import com.google.android.flexbox.JustifyContent;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
 import org.greenrobot.eventbus.EventBus;
@@ -48,9 +58,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindArray;
-import butterknife.BindView;
-import butterknife.OnClick;
 import cn.jzvd.JZUtils;
 import cn.jzvd.Jzvd;
 import master.flame.danmaku.danmaku.loader.ILoader;
@@ -67,7 +74,6 @@ import my.project.moviesbox.bean.MenuBean;
 import my.project.moviesbox.config.JZExoPlayer;
 import my.project.moviesbox.config.JZMediaIjk;
 import my.project.moviesbox.contract.DanmuContract;
-import my.project.moviesbox.custom.AutoLineFeedLayoutManager;
 import my.project.moviesbox.custom.DanmakuJsonParser;
 import my.project.moviesbox.custom.DanmukuXmlParser;
 import my.project.moviesbox.custom.JZPlayer;
@@ -77,6 +83,7 @@ import my.project.moviesbox.database.manager.TDownloadDataManager;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.THistoryManager;
 import my.project.moviesbox.database.manager.TVideoManager;
+import my.project.moviesbox.databinding.ActivityPlayerBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.enums.VideoUrlChangeEnum;
 import my.project.moviesbox.event.RefreshDownloadEvent;
@@ -86,7 +93,6 @@ import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.parser.bean.DialogItemBean;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.DanmuPresenter;
-import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.presenter.VideoPresenter;
 import my.project.moviesbox.service.DLNAService;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
@@ -94,6 +100,7 @@ import my.project.moviesbox.utils.StatusBarUtil;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.utils.VideoAlertUtils;
 import my.project.moviesbox.utils.VideoUtils;
+import my.project.moviesbox.view.base.BaseActivity;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -103,34 +110,18 @@ import my.project.moviesbox.utils.VideoUtils;
   * @日期: 2024/2/4 16:34
   * @版本: 1.0
  */
-public abstract class BasePlayerActivity extends BaseActivity implements JZPlayer.CompleteListener, JZPlayer.TouchListener,
-        JZPlayer.ShowOrHideChangeViewListener,  JZPlayer.OnProgressListener, JZPlayer.PlayingListener, JZPlayer.PauseListener, JZPlayer.OnQueryDanmuListener, JZPlayer.ActivityOrientationListener, JZPlayer.FlipListener, DanmuContract.View, JZPlayer.SpeedListener, JZPlayer.DisplayListener {
-    @BindView(R.id.episodes_view)
-    LinearLayout episodesView;
-    @BindView(R.id.config_view)
-    LinearLayout configView;
-    @BindView(R.id.player)
-    JZPlayer player; // 播放器
-    @BindView(R.id.rv_list)
-    RecyclerView recyclerView; // 剧集列表
-    @BindView(R.id.drawer_layout) // 侧滑抽屉
-    DrawerLayout drawerLayout;
-    @BindView(R.id.hide_progress)
-    MaterialSwitch hideProgressSc; // 播放时隐藏进度条
-    @BindView(R.id.other_view)
-    LinearLayout otherView; // 其他视图
+public abstract class BasePlayerActivity extends BaseActivity<ActivityPlayerBinding> implements JZPlayer.CompleteListener, JZPlayer.TouchListener,
+        JZPlayer.ShowOrHideChangeViewListener,  JZPlayer.OnProgressListener, JZPlayer.PlayingListener, JZPlayer.PauseListener, JZPlayer.ActivityOrientationListener, JZPlayer.FlipListener, DanmuContract.View, JZPlayer.SpeedListener, JZPlayer.DisplayListener {
+    public static final String ACTION_PLAY_PAUSE = "ACTION_PLAY_PAUSE";
+    public static final String ACTION_FORWARD = "ACTION_FORWARD";
+    public static final String ACTION_REWIND = "ACTION_REWIND";
+
     protected String
             vodTitle, // 影视名称
             dramaTitle, // 观看集数
-            url, // 播放地址
+            videoPlayUrl, // 播放地址
             dramaUrl; // 源地址
     protected DramaAdapter dramaAdapter; // 集数适配器
-    @BindView(R.id.speed)
-    TextView speedTextView; // 快进设置文本
-    @BindArray(R.array.fast_forward_item)
-    protected String[] speedsStrItems; // 快进选项
-    @BindArray(R.array.fast_forward_set_item)
-    protected int[] speedsIntItems; // 倍速选项
     protected int userSpeed = 2; // 倍数值
     protected int clickIndex; // 当前点击剧集
     protected boolean hasPreVideo = false; // 是否有上一集
@@ -140,8 +131,6 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     protected long videoDuration; // 视频总长度
     protected boolean hasPosition = false; // 是否存在历史播放进度
     protected long userSavePosition = 0; // 历史播放进度
-    @BindView(R.id.auto_play_next_video)
-    MaterialSwitch autoPlayNextVideoSwitch; // 是否开启自动播放下一集控件
     protected boolean playNextVideo; // 是否开启自动播放下一集
     protected List<DetailsDataBean.DramasItem> dramasItems = new ArrayList<>(); // 影视剧集集合
     protected VideoPresenter videoPresenter;
@@ -159,16 +148,35 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     private final List<MenuBean> displayMenuBeanList = new ArrayList<>();
 
     @Override
-    protected Presenter createPresenter() {
-        return null;
+    protected ActivityPlayerBinding inflateBinding(LayoutInflater inflater) {
+        return ActivityPlayerBinding.inflate(inflater);
     }
 
-    @Override
-    protected void loadData() {}
+    protected LinearLayout episodesView;              // 剧集视图
+    protected LinearLayout configView;                // 设置视图
+    protected JZPlayer player;                        // 播放器
+    protected RecyclerView recyclerView;              // 剧集列表
+    protected DrawerLayout drawerLayout;              // 侧滑抽屉
+    protected MaterialSwitch hideProgressSc;          // 播放时隐藏进度条
+    protected LinearLayout otherView;                 // 其他视图
+    protected TextView speedTextView;                 // 快进设置文本
+    protected String[] speedsStrItems;      // 快进选项
+    protected int[] speedsIntItems;         // 倍速选项
+    protected MaterialSwitch autoPlayNextVideoSwitch; // 是否开启自动播放下一集控件
 
     @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_player;
+    protected void findById() {
+        episodesView = binding.episodesView;
+        configView = binding.configView;
+        player = binding.player;
+        recyclerView = binding.rvList;
+        drawerLayout = binding.drawerLayout;
+        hideProgressSc = binding.hideProgress;
+        otherView = binding.otherView;
+        speedTextView = binding.speed;
+        speedsStrItems = Utils.getArray(R.array.fast_forward_item);
+        speedsIntItems = Utils.getIntArray(R.array.fast_forward_set_item);
+        autoPlayNextVideoSwitch = binding.autoPlayNextVideo;
     }
 
     @Override
@@ -219,7 +227,7 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
      * 设置上一集/下一集按钮
      */
     protected void initPlayerPreNextTag() {
-        if (dramasItems.size() > 0) {
+        if (dramaAdapter.getData().size() > 0) {
             hasPreVideo = clickIndex != 0;
             setPreNextData();
         }
@@ -229,22 +237,24 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
      * 初始化播放器相关事件
      */
     private void initPlayerView() {
-        if (dramasItems.size() == 0)
-            player.selectDramaView.setVisibility(View.GONE);
+        /*if (Utils.isNullOrEmpty(dramasItems) || dramasItems.size() == 0)
+            player.selectDramaView.setVisibility(View.GONE);*/
         player.configView.setOnClickListener(v -> setDrawerOpen(GravityCompat.START));
         player.openDrama.setOnClickListener(view -> setDrawerOpen(GravityCompat.END));
         player.selectDramaView.setOnClickListener(view -> setDrawerOpen(GravityCompat.END));
-        player.setListener(this, this, this, this, this, this, this, this, this, this, this, this);
+        player.setListener(this, this, this, this, this, this, this, this, this, this, this);
         player.backButton.setOnClickListener(v -> {
             Utils.setVibration(v);
             finish();
         });
         player.preVideo.setOnClickListener(v -> {
+            notifyItemChangedClickIndexData(clickIndex);
             clickIndex--;
             Utils.setVibration(v);
             changePlayUrl(VideoUrlChangeEnum.PRE, clickIndex);
         });
         player.nextVideo.setOnClickListener(v -> {
+            notifyItemChangedClickIndexData(clickIndex);
             clickIndex++;
             Utils.setVibration(v);
             changePlayUrl(VideoUrlChangeEnum.NEXT, clickIndex);
@@ -253,35 +263,55 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         player.hasDanmuConfig = SourceEnum.hasDanmuConfigBySource(SharedPreferencesUtils.getDefaultSource());
         if (isLocalVideo()) {
             player.danmuView.setVisibility(View.INVISIBLE);
+            player.danmuConfigView.setVisibility(View.INVISIBLE);
             player.danmuInfoView.setVisibility(View.INVISIBLE);
         } else if (player.openDamuConfig && player.hasDanmuConfig)  {
             // 开启了弹幕开关且该源支持弹幕
             player.danmuView.setVisibility(View.VISIBLE);
+            player.danmuConfigView.setVisibility(View.VISIBLE);
             player.danmuInfoView.setVisibility(View.VISIBLE);
         }
-        player.changePlayerKernel.setOnClickListener(v -> {
-            // 切换播放器内核
-            int userSetPlayerKernel = SharedPreferencesUtils.getUserSetPlayerKernel();
-            switch (userSetPlayerKernel) {
-                case 0:
-                    // EXO 切换至 IJK
-                    SharedPreferencesUtils.setUserSetPlayerKernel(1);
-                    player.setMediaInterface(JZMediaIjk.class);
-                    application.showToastMsg("已切换至IjkPlayer内核", DialogXTipEnum.SUCCESS);
-                    break;
-                case 1:
-                    // IJK 切换至 EXO
-                    SharedPreferencesUtils.setUserSetPlayerKernel(0);
-                    player.setMediaInterface(JZExoPlayer.class);
-                    application.showToastMsg("已切换至ExoPlayer内核", DialogXTipEnum.SUCCESS);
-                    break;
-            }
-            EventBus.getDefault().post(REFRESH_PLAYER_KERNEL);
-        });
+        player.changePlayerKernel.setOnClickListener(v -> changePlayerKernel());
+        player.kernelView.setOnClickListener(v -> changePlayerKernel());
         player.tvSpeedView.setVisibility(gtSdk23() ? View.VISIBLE : View.GONE);
         player.pipView.setOnClickListener(v -> startPic());
         player.playingShow();
         playVideo();
+    }
+
+    private void changePlayerKernel() {
+        // 切换播放器内核
+        int userSetPlayerKernel = SharedPreferencesUtils.getUserSetPlayerKernel();
+        switch (userSetPlayerKernel) {
+            case 0:
+                // EXO 切换至 IJK
+                SharedPreferencesUtils.setUserSetPlayerKernel(1);
+                player.setMediaInterface(JZMediaIjk.class);
+//                application.showToastMsg("已切换至IjkPlayer内核", DialogXTipEnum.SUCCESS);
+                TextViewAnimator.showMultipleWithFade(player.tipsView, "已切换至IjkPlayer内核", 300, 1000);
+                break;
+            case 1:
+                // IJK 切换至 EXO
+                SharedPreferencesUtils.setUserSetPlayerKernel(0);
+                player.setMediaInterface(JZExoPlayer.class);
+//                application.showToastMsg("已切换至ExoPlayer内核", DialogXTipEnum.SUCCESS);
+                TextViewAnimator.showMultipleWithFade(player.tipsView, "已切换至ExoPlayer内核", 300, 1000);
+                break;
+        }
+        if (isLocalVideo()) {
+            userSavePosition = TDownloadDataManager.queryDownloadDataProgressById(downloadDataId);
+        } else {
+            if (player.danmakuView != null && player.danmakuView.isPrepared()) {
+                player.danmakuView.pause();
+                player.danmuInfoView.setVisibility(View.GONE);
+            }
+            userSavePosition = THistoryManager.getPlayPosition(vodId, dramaUrl);
+        }
+        player.seekToInAdvance = userSavePosition;//跳转到指定的播放进度
+        hasPosition = userSavePosition > 0;
+        player.startVideo();
+        player.startButton.performClick();//响应点击事件
+        EventBus.getDefault().post(REFRESH_PLAYER_KERNEL);
     }
 
     /**
@@ -304,8 +334,13 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
      * 设置剧集列表适配器
      */
     public void initAdapter() {
-        recyclerView.setNestedScrollingEnabled(false);
-        recyclerView.setLayoutManager(new AutoLineFeedLayoutManager());
+//        recyclerView.setNestedScrollingEnabled(true);
+//        recyclerView.setLayoutManager(new AutoLineFeedLayoutManager());
+        FlexboxLayoutManager layoutManager = new FlexboxLayoutManager(this);
+        layoutManager.setFlexDirection(FlexDirection.ROW); // 横向排布
+        layoutManager.setFlexWrap(FlexWrap.WRAP);         // 换行
+        layoutManager.setJustifyContent(JustifyContent.FLEX_START); // 起始对齐
+        recyclerView.setLayoutManager(layoutManager);
         setAdapter();
     }
 
@@ -369,32 +404,32 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         userSpeed = index;
     }
 
-    /**
-     * 播放器设置点击事件
-     * @param relativeLayout
-     */
-    @OnClick({R.id.speed_config, R.id.player_config, R.id.browser_config})
-    public void configBtnClick(RelativeLayout relativeLayout) {
-        switch (relativeLayout.getId()) {
-            case R.id.speed_config: // 设置快进/快退时长
-                Utils.showSingleChoiceAlert(this,
-                        getString(R.string.setUserSpeed),
-                        speedsStrItems,
-                        true,
-                        userSpeed,
-                        (dialogInterface, i) -> {
-                            setUserSpeedConfig(i);
-                            dialogInterface.dismiss();
-                        }
-                );
-                break;
-            case R.id.player_config: // 使用外部播放器播放
-                Utils.selectVideoPlayer(this, url);
-                break;
-            case R.id.browser_config: // 访问源网站
-                Utils.viewInChrome(this, dramaUrl);
-                break;
-        }
+    @Override
+    public void initClickListeners() {
+        // 设置快进/快退时长
+        binding.speedConfig.setOnClickListener(v -> {
+            Utils.setVibration(v);
+            Utils.showSingleChoiceAlert(this,
+                    null,
+                    getString(R.string.setUserSpeed),
+                    speedsStrItems,
+                    true,
+                    userSpeed,
+                    (dialogInterface, i) -> {
+                        setUserSpeedConfig(i);
+                        dialogInterface.dismiss();
+                    }
+            );
+        });
+        // 使用外部播放器播放
+        binding.playerConfig.setOnClickListener(v -> {
+            Utils.setVibration(v);
+            Utils.selectVideoPlayer(this, videoPlayUrl);
+        });
+        // 访问源网站
+        binding.browserConfig.setOnClickListener(v -> {
+            Utils.viewInChrome(this, dramaUrl);
+        });
     }
 
     /**
@@ -403,8 +438,6 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
      * @param position 集数下标
      */
     protected void changePlayUrl(VideoUrlChangeEnum changeEnum, int position) {
-        player.releaseDanMu();
-        player.danmuInfoView.setVisibility(View.GONE);
         dramaAdapter.getData().get(position).setSelected(true);
         dramaAdapter.notifyItemChanged(position);
         // 本地视频换集 或 不需要解析的直接播放
@@ -412,6 +445,8 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
             changeLocalPlayUrl(position);
             return;
         }
+        player.releaseDanMu();
+        player.danmuInfoView.setVisibility(View.GONE);
         // 网络视频换集
         retryCount = 0;
         clickIndex = position;
@@ -442,6 +477,11 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     }
 
     /**
+     * 刷新当前观看的item
+     */
+    public abstract void notifyItemChangedClickIndexData(int clickIndex);
+
+    /**
      * 播放下一集
      * @param nextPlayUrl 下一集播放地址集合
      */
@@ -469,7 +509,7 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         DetailsDataBean.DramasItem bean = getItemByPosition(VideoUrlChangeEnum.CLICK, position);
         Jzvd.releaseAllVideos();
         downloadDataId = bean.getDownloadDataId();
-        playLocalVideo(bean.getUrl(), bean.getTitle());
+        playLocalVideo(Utils.isNullOrEmpty(bean.getVideoTitle()) ? vodTitle : bean.getVideoTitle(), bean.getUrl(), bean.getTitle());
     }
 
     /**
@@ -494,9 +534,9 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         boolean gt2second = playPosition > 2000;
         long witchPosition = completed ? 0 : (gt2second ? playPosition : 0);
         if (isLocalVideo()) {
-            LogUtil.logInfo("witchPosition", witchPosition+"");
+            /*LogUtil.logInfo("witchPosition", witchPosition+"");
             LogUtil.logInfo("videoDuration", videoDuration+"");
-            LogUtil.logInfo("downloadDataId", downloadDataId+"");
+            LogUtil.logInfo("downloadDataId", downloadDataId+"");*/
             TDownloadDataManager.updateDownloadDataProgressById(witchPosition, videoDuration, downloadDataId);
             EventBus.getDefault().post(new RefreshDownloadEvent(downloadDataId, witchPosition, videoDuration));
         } else
@@ -513,10 +553,13 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         TFavoriteManager.updateFavorite(dramaUrl, dramaTitle, vodId);
         TVideoManager.addVideoHistory(vodId, dramaUrl, nowSource, dramaTitle);
         Jzvd.releaseAllVideos();
+        videoPlayUrl = videoUrl;
         player.setUp(videoUrl, vodTitle + " - " + dramaTitle, Jzvd.SCREEN_FULLSCREEN, VideoUtils.getUserPlayerKernel());
         userSavePosition = THistoryManager.getPlayPosition(vodId, dramaUrl);
         player.seekToInAdvance = userSavePosition;//跳转到指定的播放进度
         hasPosition = userSavePosition > 0;
+        player.isVideoPrepared = false;
+        player.isDanmakuPrepared = false;
         player.startVideo();
         player.startButton.performClick();//响应点击事件
         getDanmu();
@@ -529,7 +572,12 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         if (isLocalVideo()) // 本地视频不支持弹幕
             return;
         if (player.openDamuConfig && player.hasDanmuConfig) {
-            new Thread(() -> danmuPresenter.loadDanmu(getDanmuParams())).start();
+            new Thread(() -> {
+                player.danmuInfoView.setClickable(false);
+                player.danmuInfoView.setText("正在获取弹幕数据");
+                player.danmuInfoView.setVisibility(View.VISIBLE);
+                danmuPresenter.loadDanmu(getDanmuParams());
+            }).start();
         }
     }
 
@@ -544,7 +592,7 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
      * @param localVideoPath 本地视频地址
      * @param dramaTitle 集数
      */
-    protected void playLocalVideo(String localVideoPath, String dramaTitle) {
+    protected void playLocalVideo(String vodTitle, String localVideoPath, String dramaTitle) {
         player.playingShow();
         player.localVideoPath = localVideoPath;
         String localFilePath = Uri.fromFile(new File(localVideoPath)).toString();
@@ -618,6 +666,72 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
             Jzvd.goOnPlayOnResume();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private List<RemoteAction> createPipActions() {
+        List<RemoteAction> actions = new ArrayList<>();
+        int userSetSpeed = SharedPreferencesUtils.getUserSetSpeed();
+        // 快退按钮
+        Icon rewindIcon = Icon.createWithResource(this, R.drawable.round_fast_rewind_24);
+        PendingIntent rewindIntent = PendingIntent.getBroadcast(
+                this, 1, new Intent(ACTION_REWIND).setPackage(getPackageName()), PendingIntent.FLAG_IMMUTABLE);
+        actions.add(new RemoteAction(rewindIcon, String.format("快退%s秒", userSetSpeed), String.format("快退%s秒", userSetSpeed), rewindIntent));
+
+        // 播放/暂停按钮
+        Icon playPauseIcon = Icon.createWithResource(this,
+                Jzvd.CURRENT_JZVD.state == Jzvd.STATE_PLAYING ? R.drawable.round_pause_24 : R.drawable.round_play_arrow_24);
+        PendingIntent playPauseIntent = PendingIntent.getBroadcast(
+                this, 0, new Intent(ACTION_PLAY_PAUSE).setPackage(getPackageName()), PendingIntent.FLAG_IMMUTABLE);
+        actions.add(new RemoteAction(playPauseIcon, "播放/暂停", "播放/暂停", playPauseIntent));
+
+        // 快进按钮
+        Icon forwardIcon = Icon.createWithResource(this, R.drawable.round_fast_forward_24);
+        PendingIntent forwardIntent = PendingIntent.getBroadcast(
+                this, 2, new Intent(ACTION_FORWARD).setPackage(getPackageName()), PendingIntent.FLAG_IMMUTABLE);
+        actions.add(new RemoteAction(forwardIcon, String.format("快进%s秒", userSetSpeed), String.format("快进%s秒", userSetSpeed), forwardIntent));
+        return actions;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private final BroadcastReceiver pipReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (player == null) return;
+            String action = intent.getAction();
+            if (action == null) return;
+
+            switch (action) {
+                case ACTION_PLAY_PAUSE:
+                    if (player.state == Jzvd.STATE_PLAYING) {
+                        player.onStatePause();
+                        player.mediaInterface.pause();
+                    } else {
+                        player.onStatePlaying();
+                        player.mediaInterface.start();
+                    }
+                    updatePipActions();
+                    break;
+                case ACTION_FORWARD:
+                    player.setFast(true);
+                    break;
+                case ACTION_REWIND:
+                    player.setFast(false);
+                    break;
+            }
+        }
+    };
+
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void updatePipActions() {
+        if (isInPictureInPictureMode()) {
+            PictureInPictureParams.Builder pipBuilder = new PictureInPictureParams.Builder();
+            pipBuilder.setActions(createPipActions());
+            Rational safeRatio = getSafeAspectRatio(player.videoWidth, player.videoHeight);
+            pipBuilder.setAspectRatio(safeRatio);
+            setPictureInPictureParams(pipBuilder.build());
+        }
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -637,6 +751,8 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     protected void onStop() {
         saveProgress();
         super.onStop();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            unregisterReceiver(pipReceiver);
         if (danmuPresenter != null)
             danmuPresenter.unregisterEventBus();
         if (null != videoPresenter)
@@ -654,7 +770,7 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void enterPicInPic() {
         PictureInPictureParams.Builder pipBuilder = new PictureInPictureParams.Builder();
-//        pipBuilder.setAspectRatio(new Rational(player.videoWidth, player.videoHeight));
+        pipBuilder.setActions(createPipActions());
         Rational safeRatio = getSafeAspectRatio(player.videoWidth, player.videoHeight);
         pipBuilder.setAspectRatio(safeRatio);
         enterPictureInPictureMode(pipBuilder.build());
@@ -714,12 +830,14 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     public void complete() {
         saveProgress();
         if (hasNextVideo && playNextVideo) {
-            application.showToastMsg("开始播放下一集", DialogXTipEnum.DEFAULT);
+//            application.showToastMsg("开始播放下一集", DialogXTipEnum.DEFAULT);
+            TextViewAnimator.showMultipleWithFade(player.tipsView, "开始播放下一集", 300, 1000);
             clickIndex++;
             changePlayUrl(VideoUrlChangeEnum.NEXT, clickIndex);
         } else {
             player.releaseDanMu();
-            application.showToastMsg("全部播放完毕", DialogXTipEnum.SUCCESS);
+//            application.showToastMsg("全部播放完毕", DialogXTipEnum.SUCCESS);
+            TextViewAnimator.showMultipleWithFade(player.tipsView, "全部播放完毕", 300, 1000);
             if (!drawerLayout.isDrawerOpen(GravityCompat.END))
                 drawerLayout.openDrawer(GravityCompat.END);
         }
@@ -771,10 +889,14 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
             if (player.loadError) return;
             try {
                 player.danmuInfoView.setText("弹幕接口响应正常");
-                player.danmuInfoView.setVisibility(View.VISIBLE);
                 InputStream result = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
                 player.danmakuParser = createParser(false, result);
                 player.createDanmu();
+                player.danmakuContext.setFTDanmakuVisibility(player.showTopDanmaku);
+                player.danmakuContext.setFBDanmakuVisibility(player.showBottomDanmaku);
+                player.danmakuContext.setR2LDanmakuVisibility(player.showRollDanmaku);
+                player.danmakuContext.setMaximumVisibleSizeInScreen(player.damuShowCount);
+                player.danmakuContext.mGlobalFlagValues.updateFilterFlag();
                 if (player.danmakuView.isPrepared()) {
                     player.danmakuView.restart();
                 }
@@ -782,12 +904,12 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
                 if (!player.open_danmu) {
                     player.hideDanmmu();
                 }
-                if (userSavePosition > 0) {
+                /*if (userSavePosition > 0) {
                     new Handler().postDelayed(() -> {
                         // 一秒后定位弹幕时间为用户上次观看位置
                         player.seekDanmu(userSavePosition);
                     }, 1000);
-                }
+                }*/
             } catch (Exception e) {
                 application.showToastMsg(e.getMessage(), DialogXTipEnum.ERROR);
             }
@@ -801,13 +923,18 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
             // JSON格式弹幕信息解析示例
             if (player.loadError) return;
             try {
-                player.danmuInfoView.setText("已加载"+ danmuDataBeanList.size() + "条弹幕");
-                player.danmuInfoView.setVisibility(View.VISIBLE);
+//                player.danmuInfoView.setText("已加载"+ danmuDataBeanList.size() + "条弹幕");
+                player.danmuInfoView.setText("弹幕接口响应正常");
                 String json = JSON.toJSONString(danmuDataBeanList);
                 LogUtil.logInfo("弹幕信息", json);
                 InputStream result = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
                 player.danmakuParser = createParser(true, result);
                 player.createDanmu();
+                player.danmakuContext.setFTDanmakuVisibility(player.showTopDanmaku);
+                player.danmakuContext.setFBDanmakuVisibility(player.showBottomDanmaku);
+                player.danmakuContext.setR2LDanmakuVisibility(player.showRollDanmaku);
+                player.danmakuContext.setMaximumVisibleSizeInScreen(player.damuShowCount);
+                player.danmakuContext.mGlobalFlagValues.updateFilterFlag();
                 if (player.danmakuView.isPrepared()) {
                     player.danmakuView.restart();
                 }
@@ -815,12 +942,12 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
                 if (!player.open_danmu) {
                     player.hideDanmmu();
                 }
-                if (userSavePosition > 0) {
+                /*if (userSavePosition > 0) {
                     new Handler().postDelayed(() -> {
                         // 一秒后定位弹幕时间为用户上次观看位置
                         player.seekDanmu(userSavePosition);
                     }, 1000);
-                }
+                }*/
             } catch (Exception e) {
                 application.showToastMsg(e.getMessage(), DialogXTipEnum.ERROR);
             }
@@ -830,12 +957,43 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
     @Override
     public void errorDanmu(String msg) {
         if (isFinishing()) return;
-        runOnUiThread(() -> application.showToastMsg(msg, DialogXTipEnum.ERROR));
+        if (player.loadError) return;
+        errorDanmuInfo(msg);
+    }
+
+    @Override
+    public void netErrorDanmu(String msg) {
+        if (isFinishing()) return;
+        if (player.loadError) return;
+        errorDanmuInfo(msg);
+    }
+
+    private void errorDanmuInfo(String msg) {
+        runOnUiThread(() -> {
+            try {
+                application.showToastMsg(msg, DialogXTipEnum.WARNING);
+                player.danmuInfoView.setText("点击重新获取弹幕数据");
+                player.danmuInfoView.setClickable(true);
+                player.danmuInfoView.setOnClickListener(v -> getDanmu());
+            } catch (Exception e) {
+                application.showToastMsg(e.getMessage(), DialogXTipEnum.ERROR);
+            }
+        });
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_REWIND);
+        filter.addAction(ACTION_FORWARD);
+        filter.addAction(ACTION_PLAY_PAUSE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(pipReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(pipReceiver, filter);
+        }
         if (danmuPresenter != null)
             danmuPresenter.registerEventBus();
         if (null != videoPresenter)
@@ -848,6 +1006,7 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         if (!isLocalVideo()) {
             EventBus.getDefault().post(REFRESH_FAVORITE);
             EventBus.getDefault().post(REFRESH_HISTORY);
+            EventBus.getDefault().post(REFRESH_LAST_WATCH);
         }
         player.releaseDanMu();
         Jzvd.releaseAllVideos();
@@ -861,13 +1020,6 @@ public abstract class BasePlayerActivity extends BaseActivity implements JZPlaye
         if (videoAlertUtils != null)
             videoAlertUtils.release();
         super.onDestroy();
-    }
-
-    @Override
-    public void queryDamu(String queryDanmuTitle, String queryDanmuDrama) {
-        player.releaseDanMu();
-        player.danmuInfoView.setVisibility(View.GONE);
-        danmuPresenter.loadDanmu(getDanmuParams());
     }
 
     @Override

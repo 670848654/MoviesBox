@@ -48,12 +48,13 @@ public class SniffingVideoService extends Service {
             webView = new WebView(getApplicationContext());
             webView.getSettings().setMediaPlaybackRequiresUserGesture(true);
             webView.getSettings().setJavaScriptEnabled(true);
+            String vodId = intent.getStringExtra("vodId");
             String activityEnum = intent.getStringExtra("activityEnum");
             String sniffEnum = intent.getStringExtra("sniffEnum");
             String url = intent.getStringExtra("url");
             if (!url.startsWith("http"))
                 url = ParserInterfaceFactory.getParserInterface().getDefaultDomain() + url;
-            MyWebViewClient client = new MyWebViewClient(this, activityEnum, sniffEnum);
+            MyWebViewClient client = new MyWebViewClient(this, vodId, activityEnum, sniffEnum);
             webView.setWebViewClient(client);
             webView.loadUrl(url);
             // 页面加载后只启动一次定时器
@@ -79,6 +80,7 @@ public class SniffingVideoService extends Service {
     }
 
     static class MyWebViewClient extends WebViewClient {
+        private final String vodId;
         private final String activityEnum;
         private final String sniffEnum;
         private final Service service;
@@ -88,7 +90,8 @@ public class SniffingVideoService extends Service {
         private final Handler handler;
         private final Runnable timeoutRunnable;
 
-        public MyWebViewClient(Service service, String activityEnum, String sniffEnum) {
+        public MyWebViewClient(Service service, String vodId, String activityEnum, String sniffEnum) {
+            this.vodId = vodId;
             this.service = service;
             this.activityEnum = activityEnum;
             this.sniffEnum = sniffEnum;
@@ -99,7 +102,7 @@ public class SniffingVideoService extends Service {
                 // 如果在设定秒内没有找到匹配的URL，停止服务
                 boolean foundUrls = !playUrls.isEmpty();
                 List<DialogItemBean> urlsToPost = foundUrls ? playUrls : notFoundUrls;
-                EventBus.getDefault().post(setVideoSniffEvent(foundUrls, this.activityEnum, this.sniffEnum, urlsToPost));
+                EventBus.getDefault().post(setVideoSniffEvent(foundUrls, this.vodId, this.activityEnum, this.sniffEnum, urlsToPost));
                 this.service.onDestroy();
             };
         }
@@ -151,8 +154,9 @@ public class SniffingVideoService extends Service {
         }
     }
 
-    public static VideoSniffEvent setVideoSniffEvent(boolean success, String activityEnum, String sniffEnum, List<DialogItemBean> urls) {
+    public static VideoSniffEvent setVideoSniffEvent(boolean success, String vodId, String activityEnum, String sniffEnum, List<DialogItemBean> urls) {
         return new VideoSniffEvent(
+                vodId,
                 VideoSniffEvent.ActivityEnum.valueOf(activityEnum),
                 VideoSniffEvent.SniffEnum.valueOf(sniffEnum),
                 success,

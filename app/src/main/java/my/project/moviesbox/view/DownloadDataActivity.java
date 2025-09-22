@@ -5,6 +5,7 @@ import static my.project.moviesbox.event.RefreshEnum.REFRESH_TAB_COUNT;
 import static my.project.moviesbox.utils.Utils.DOWNLOAD_SAVE_PATH;
 import static my.project.moviesbox.utils.Utils.getArray;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Html;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -20,6 +22,7 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
@@ -28,6 +31,10 @@ import com.arialyy.aria.core.Aria;
 import com.arialyy.aria.core.common.HttpOption;
 import com.arialyy.aria.core.download.DownloadEntity;
 import com.arialyy.aria.core.task.DownloadTask;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.shape.MaterialShapeDrawable;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -36,15 +43,16 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.DownloadDataAdapter;
+import my.project.moviesbox.adapter.SingleLineAdapter;
 import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.config.M3U8DownloadConfig;
 import my.project.moviesbox.contract.DownloadContract;
@@ -54,6 +62,7 @@ import my.project.moviesbox.database.entity.TDownloadWithFields;
 import my.project.moviesbox.database.manager.TDownloadDataManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.database.manager.TVideoManager;
+import my.project.moviesbox.databinding.ActivityVodListBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.event.DownloadEvent;
 import my.project.moviesbox.event.DownloadStateEvent;
@@ -65,6 +74,7 @@ import my.project.moviesbox.service.DownloadService;
 import my.project.moviesbox.utils.SAFUtils;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.base.BaseMvpActivity;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -74,21 +84,14 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:10
   * @版本: 1.0
  */
-public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadContract.View, DownloadPresenter> implements DownloadContract.View {
+public class DownloadDataActivity extends BaseMvpActivity<DownloadModel, DownloadContract.View, DownloadPresenter, ActivityVodListBinding> implements DownloadContract.View {
     private static final int REQUEST_DOCUMENT_TREE = 10000;
-    @BindView(R.id.rv_list)
-    RecyclerView mRecyclerView;
-    @BindView(R.id.mSwipe)
-    SwipeRefreshLayout mSwipe;
-    @BindView(R.id.toolbar)
-    Toolbar toolbar;
     private List<TDownloadDataWithFields> downloadDataBeans = new ArrayList<>();
     private DownloadDataAdapter adapter;
     private String downloadId;
     private String vodTitle;
     private int downloadDataCount = 0;
     private boolean isMain = true;
-    protected boolean isErr = true;
     private static final String[] DOWNLOAD_STR = getArray(R.array.downloadItems);
     private static final String[] COMPLETE_STR = getArray(R.array.completeItems);
     private static final String[] COMPLETE_EXPORT_STR = getArray(R.array.completeExportItems);
@@ -96,6 +99,41 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
     private File downloadDirOld;
     private File downloadDirNew;
     private ExecutorService executorService;
+
+    @Override
+    protected void initBeforeView() {}
+
+    /**
+     * 子类实现，返回具体的 ViewBinding
+     *
+     * @param inflater
+     * @return
+     */
+    @Override
+    protected ActivityVodListBinding inflateBinding(LayoutInflater inflater) {
+        return ActivityVodListBinding.inflate(inflater);
+    }
+
+    private AppBarLayout appBar;
+    private Toolbar toolbar;
+    private RecyclerView mRecyclerView;
+    private SwipeRefreshLayout mSwipe;
+    /**
+     * 初始化控件
+     */
+    @Override
+    protected void findById() {
+        appBar = binding.toolbarLayout.appBar;
+        appBar.setStatusBarForeground(MaterialShapeDrawable.createWithElevationOverlay(this));
+        toolbar = binding.toolbarLayout.toolbar;
+        mRecyclerView = binding.contentLayout.rvList;
+        mSwipe = binding.contentLayout.mSwipe;
+    }
+
+    @Override
+    public void initClickListeners() {
+
+    }
 
     @Override
     protected DownloadPresenter createPresenter() {
@@ -106,11 +144,6 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
     protected void loadData() {
         downloadDataCount = TDownloadDataManager.queryDownloadDataCount(downloadId);
         mPresenter.loadDownloadDataList(isMain, downloadId, downloadDataBeans.size(), ConfigManager.getInstance().getDownloadDataQueryLimit());
-    }
-
-    @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_vod_list;
     }
 
     @Override
@@ -150,8 +183,8 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
             switch (downloadDataBeans.get(position).getTDownloadData().getComplete()) {
                 case 0:
                     // 等待下载状态
-                    Utils.showSingleListAlert(this, "", DOWNLOAD_STR, true, (dialogInterface, i) -> {
-                        switch (i) {
+                    showSingleListBottomSheet(this, DOWNLOAD_STR, (pos) -> {
+                        switch (pos) {
                             case 0:
                                 // 继续下载
                                 if (!Utils.isNullOrEmpty(downloadEntity)) {
@@ -180,15 +213,14 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
                                 showDeleteDataDialog(downloadDataBeans.get(position), position);
                                 break;
                         }
-                        dialogInterface.dismiss();
                     });
                     break;
                 case 1:
                     String savePath = downloadDataBeans.get(position).getTDownloadData().getSavePath();
                     String videoNumber = downloadDataBeans.get(position).getTDownloadData().getVideoNumber();
                     if (savePath.contains(getFilesDir().getAbsolutePath()))
-                        Utils.showSingleListAlert(this, "", COMPLETE_EXPORT_STR, true, (dialogInterface, i) -> {
-                            switch (i) {
+                        showSingleListBottomSheet(this, COMPLETE_EXPORT_STR, (pos) -> {
+                            switch (pos) {
                                 case 0:
                                     playLocalVideo(position);
                                     break;
@@ -215,11 +247,10 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
                                     showDeleteDataDialog(downloadDataBeans.get(position), position);
                                     break;
                             }
-                            dialogInterface.dismiss();
                         });
                     else
-                        Utils.showSingleListAlert(this, "", COMPLETE_STR, true, (dialogInterface, i) -> {
-                            switch (i) {
+                        showSingleListBottomSheet(this, COMPLETE_STR, (pos) -> {
+                            switch (pos) {
                                 case 0:
                                     playLocalVideo(position);
                                     break;
@@ -230,12 +261,11 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
                                     showDeleteDataDialog(downloadDataBeans.get(position), position);
                                     break;
                             }
-                        dialogInterface.dismiss();
-                    });
+                        });
                     break;
                 case 2:
-                    Utils.showSingleListAlert(this, "", DOWNLOAD_ERROR_STR, true, (dialogInterface, i) -> {
-                        switch (i) {
+                    showSingleListBottomSheet(this, DOWNLOAD_ERROR_STR, (pos) -> {
+                        switch (pos) {
                             case 0:
                                 if (!Utils.isNullOrEmpty(downloadEntity)) {
                                     boolean isM3u8 = downloadEntity.getUrl().contains("m3u8");
@@ -253,7 +283,6 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
                                 showDeleteDataDialog(downloadDataBeans.get(position), position);
                                 break;
                         }
-                        dialogInterface.dismiss();
                     });
             }
         });
@@ -280,6 +309,26 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
         adapter.setEmptyView(rvView);
     }
 
+    private void showSingleListBottomSheet(Context context, String[] items, OnItemClickWithTypeListener onItemClickWithTypeListener) {
+        BottomSheetDialog dialog = new BottomSheetDialog(context);
+        View view = LayoutInflater.from(context).inflate(R.layout.dialog_single_line, null);
+        dialog.setContentView(view);
+        RecyclerView recyclerView = view.findViewById(R.id.data_list);
+        recyclerView.setLayoutManager(new LinearLayoutManager(context));
+        SingleLineAdapter adapter = new SingleLineAdapter(Arrays.asList(items));
+        recyclerView.setAdapter(adapter);
+        adapter.setOnItemClickListener((adapter1, view1, position) -> {
+            onItemClickWithTypeListener.bottomSheetClick(position);
+            dialog.dismiss();
+        });
+        dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+        dialog.show();
+    }
+
+    public interface OnItemClickWithTypeListener {
+        void bottomSheetClick(int position);
+    }
+
     private void playLocalVideo(int position) {
         Bundle bundle = new Bundle();
 //        bundle.putString("localFilePath", encodeURL(downloadDataBeans.get(position).getTDownloadData().getSavePath()));
@@ -293,6 +342,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
     private void showDeleteDataDialog(TDownloadDataWithFields tDownloadDataWithFields, int position) {
         Utils.showAlert(
                 this,
+                R.drawable.round_warning_24,
                 getString(R.string.otherOperation),
                 getString(R.string.deleteSingleDownloadDialogSubContent),
                 true,
@@ -419,11 +469,6 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
         } catch (Exception e) {}
     }
 
-    public void setLoadState(boolean loadState) {
-        isErr = loadState;
-        adapter.getLoadMoreModule().loadMoreComplete();
-    }
-
     @Download.onTaskRunning
     protected void running(DownloadTask downloadTask) {
         for (int i = 0, size = downloadDataBeans.size(); i < size; i++) {
@@ -503,6 +548,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
         } catch (NullPointerException e) {
             e.printStackTrace();
             Utils.showAlert(this,
+                    R.drawable.round_warning_24,
                     getString(R.string.taskOperationFailedTitle),
                     getString(R.string.taskOperationFailedContent),
                     false,
@@ -522,10 +568,6 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
         if (!executorService.isShutdown())
             executorService.shutdownNow();
         super.onDestroy();
-    }
-
-    @Override
-    protected void initBeforeView() {
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -610,7 +652,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
     @Override
     public void errorView(String msg) {
         if (isFinishing()) return;
-        setLoadState(false);
+        setLoadState(adapter, false);
         runOnUiThread(() -> {
             if (isMain) {
                 setRecyclerViewEmpty();
@@ -632,7 +674,7 @@ public class DownloadDataActivity extends BaseActivity<DownloadModel, DownloadCo
     @Override
     public void downloadDataList(List<TDownloadDataWithFields> list) {
         if (isFinishing()) return;
-        setLoadState(true);
+        setLoadState(adapter, true);
         runOnUiThread(() -> {
             if (isMain) {
                 hideProgress();

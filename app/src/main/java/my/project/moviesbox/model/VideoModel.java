@@ -56,7 +56,7 @@ public class VideoModel extends BaseModel implements VideoContract.Model {
             OkHttpUtils.getInstance().doPost(getHttpUrl(url), body, new Callback() {
                 @Override
                 public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    callback.errorNet(e.getMessage());
+                    callback.errorNet(onlyGetPlayUrl, e.getMessage());
                 }
 
                 @Override
@@ -64,46 +64,8 @@ public class VideoModel extends BaseModel implements VideoContract.Model {
                     try {
                         String source = getBody(response);
                         parserHtml(source);
-                            /*String vodId = TVideoManager.queryId(title);
-                            String dramaStr = THistoryManager.queryAllIndex(vodId, true, listSource);
-                            int interfaceSource = parserInterface.getSource();
-                            SourceEnum.SourceIndexEnum sourceEnum = fromIndex(interfaceSource);
-                            switch (sourceEnum) {
-                                case SILISILI:
-                                    // 嘶哩嘶哩站点视频播放地址解析方案
-                                    String decodeData = SilisiliImpl.getDecodeData(source);
-                                    if (decodeData.isEmpty())
-                                        callback.errorPlayUrl();
-                                    else {
-                                        List<DialogItemBean> urls = parserInterface.getPlayUrl(decodeData);
-                                        if (onlyGetPlayUrl) {
-                                            if (!Utils.isNullOrEmpty(urls))
-                                                callback.successOnlyPlayUrl(urls);
-                                            else
-                                                callback.errorOnlyPlayUrl();
-                                        } else {
-                                            String fenjihtml = SilisiliImpl.getJsonData(false, decodeData);
-                                            List<DetailsDataBean.DramasItem> dramasItems = parserInterface.parserNowSourcesDramas(fenjihtml, listSource, dramaStr);
-                                            if (!Utils.isNullOrEmpty(dramasItems)) {
-                                                for (DetailsDataBean.DramasItem item : dramasItems) {
-                                                    if (dramaStr.contains(item.getUrl())) {
-                                                        item.setSelected(true);
-                                                    }
-                                                }
-                                                callback.successDramasList(dramasItems);
-                                            }
-                                            else
-                                                callback.errorDramasList();
-                                            if (!Utils.isNullOrEmpty(urls))
-                                                callback.successPlayUrl(urls);
-                                            else
-                                                callback.errorPlayUrl();
-                                        }
-                                    }
-                                    break;
-                            }*/
                     } catch (Exception e) {
-                        callback.errorNet(e.getMessage());
+                        callback.errorNet(onlyGetPlayUrl, e.getMessage());
                     }
                 }
             });
@@ -111,7 +73,7 @@ public class VideoModel extends BaseModel implements VideoContract.Model {
             OkHttpUtils.getInstance().doGet(getHttpUrl(url), new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    callback.errorNet(e.getMessage());
+                    callback.errorNet(onlyGetPlayUrl, e.getMessage());
                 }
 
                 @Override
@@ -120,7 +82,7 @@ public class VideoModel extends BaseModel implements VideoContract.Model {
                         String source = getBody(response);
                         parserHtml(source);
                     } catch (Exception e) {
-                        callback.errorNet(e.getMessage());
+                        callback.errorNet(onlyGetPlayUrl, e.getMessage());
                     }
                 }
             });

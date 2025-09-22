@@ -28,7 +28,6 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
-import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
@@ -37,11 +36,12 @@ import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.video.VideoListener;
 
 import java.io.File;
-import java.util.HashMap;
+import java.util.Map;
 
 import cn.jzvd.JZMediaInterface;
 import cn.jzvd.Jzvd;
 import my.project.moviesbox.R;
+import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.utils.Utils;
 
 /**
@@ -102,21 +102,27 @@ public class JZExoPlayer extends JZMediaInterface implements Player.EventListene
                     .setBandwidthMeter(bandwidthMeter)
                     .build();
             // Produces DataSource instances through which media data is loaded.
-            DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(context,
-                    Util.getUserAgent(context, context.getResources().getString(R.string.app_name)));
+            /*DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(context,
+                    Util.getUserAgent(context, context.getResources().getString(R.string.app_name)));*/
             String currUrl = jzvd.jzDataSource.getCurrentUrl().toString();
             MediaSource videoSource;
+            // 自定义 DefaultHttpDataSourceFactory
             DefaultHttpDataSourceFactory httpDataSourceFactory = new DefaultHttpDataSourceFactory(
-                    Util.getUserAgent(context, context.getResources().getString(R.string.app_name)),
+                    Util.getUserAgent(context, context.getResources().getString(R.string.app_name)), // user-agent
                     null,
                     15000,
                     15000,
-                    true /* allowCrossProtocolRedirects */
+                    true
             );
-            HashMap<String, String> hashMap = jzvd.jzDataSource.headerMap;
-            if (hashMap != null) {
-                httpDataSourceFactory.getDefaultRequestProperties().set(hashMap);
+            // 添加 headers
+            Map<String, String> headers = ParserInterfaceFactory.getParserInterface().setPlayerHeaders();
+            if (headers != null) {
+                httpDataSourceFactory.getDefaultRequestProperties().set(headers);
             }
+
+            // 包装成 DefaultDataSourceFactory
+            DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(context, null, httpDataSourceFactory);
+
             if (currUrl.contains(".m3u8")) {
 //                videoSource = new HlsMediaSource.Factory(httpDataSourceFactory)
 //                        .createMediaSource(Uri.parse(currUrl), handler, null);
@@ -125,9 +131,10 @@ public class JZExoPlayer extends JZMediaInterface implements Player.EventListene
                             .createMediaSource(MediaItem.fromUri(Uri.fromFile(new File(currUrl.replace("file:/", "")))));
                 else // 播放网络M3U8
                     videoSource = new HlsMediaSource.Factory(httpDataSourceFactory)
-                        .createMediaSource(Uri.parse(currUrl));
+                            .setAllowChunklessPreparation(false)  // 禁止直接跳 segment
+                            .createMediaSource(Uri.parse(currUrl));
             } else
-                // 播放本地视频
+                // 播放网络/本地视频
                 videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory)
                         .createMediaSource(currUrl.startsWith("file") ? Uri.fromFile(new File(currUrl.replace("file:/", ""))) : Uri.parse(currUrl));
             simpleExoPlayer.addVideoListener(this);

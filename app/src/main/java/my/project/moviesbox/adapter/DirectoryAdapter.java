@@ -1,7 +1,5 @@
 package my.project.moviesbox.adapter;
 
-import android.content.Context;
-
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
@@ -9,7 +7,6 @@ import java.util.List;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.database.entity.TDirectory;
-import my.project.moviesbox.utils.Utils;
 
 /**
   * @包名: my.project.moviesbox.adapter
@@ -35,11 +32,14 @@ public class DirectoryAdapter extends BaseQuickAdapter<TDirectory, BaseViewHolde
 
     @Override
     protected void convert(BaseViewHolder helper, TDirectory item) {
-        Context context = Utils.getContext();
         helper.setGone(R.id.edit, !item.isShowConfigBtn());
         helper.setGone(R.id.delete, !item.isShowConfigBtn());
         helper.setText(R.id.title, item.getName());
-        if (setBackground)
-            helper.getView(R.id.root).setBackground(context.getDrawable(isEven(helper.getBindingAdapterPosition()) ? R.drawable.tag_bg_style_night : R.drawable.tag_bg_style_light));
+        if (setBackground) {
+            int resId = isEven(helper.getBindingAdapterPosition())
+                    ? R.drawable.tag_bg_style_odd
+                    : R.drawable.tag_bg_style_even;
+            helper.getView(R.id.root).setBackgroundResource(resId);
+        }
     }
 }

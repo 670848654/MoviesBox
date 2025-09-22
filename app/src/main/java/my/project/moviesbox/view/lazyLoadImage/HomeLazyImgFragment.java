@@ -14,7 +14,7 @@ import my.project.moviesbox.contract.LazyLoadImgContract;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.MainDataBean;
 import my.project.moviesbox.presenter.LazyLoadImgPresenter;
-import my.project.moviesbox.view.HomeFragment;
+import my.project.moviesbox.view.fragment.HomeFragment;
 
 /**
   * @包名: my.project.moviesbox.view

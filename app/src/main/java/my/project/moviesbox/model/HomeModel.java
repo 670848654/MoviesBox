@@ -13,6 +13,7 @@ import my.project.moviesbox.enums.FuckCFEnum;
 import my.project.moviesbox.event.HtmlSourceEvent;
 import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.bean.MainDataBean;
+import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
 import okhttp3.Call;
@@ -31,10 +32,11 @@ public class HomeModel extends BaseModel implements HomeContract.Model {
     public void getData(HomeContract.LoadDataCallback callback) {
         this.callback = callback;
         String defaultDomain = parserInterface.getDefaultDomain();
-        if (parserInterface.getSource() == 6 && defaultDomain.endsWith(".shop")) {
+        if (parserInterface.getSource() == SourceEnum.SourceIndexEnum.FIVE_MOVIE.index && defaultDomain.endsWith(".shop")) {
             // 555电影特殊处理
             defaultDomain += "/index/home.html";
         }
+
         if (SharedPreferencesUtils.getByPassCF()) {
             // 使用webview
             App.startMyService(defaultDomain, FuckCFEnum.HOME.name());

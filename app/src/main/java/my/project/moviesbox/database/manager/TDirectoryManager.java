@@ -25,12 +25,26 @@ public class TDirectoryManager extends BaseManager {
 
     /**
      * 查询当前源收藏夹目录列表
+     * @param showConfigBtn 是否显示配置按钮
+     * @param showAllSelect 是否显示全部
      * @return
      */
-    public static List<TDirectory> queryFavoriteDirectoryList(boolean showConfigBtn) {
+    public static List<TDirectory> queryFavoriteDirectoryList(boolean showConfigBtn, boolean showAllSelect) {
         List<TDirectory> tDirectories = new ArrayList<>();
+        TDirectory tDirectory;
+        if (showAllSelect) {
+            // 显示全部
+            tDirectory = new TDirectory();
+            tDirectory.setIndex(-2);
+            tDirectory.setId("all");
+            tDirectory.setName(Utils.getString(R.string.allList));
+            tDirectory.setSource(source);
+            tDirectory.setType(DirectoryTypeEnum.FAVORITE.getName());
+            tDirectory.setShowConfigBtn(false);
+            tDirectories.add(tDirectory);
+        }
         // 添加默认清单
-        TDirectory tDirectory = new TDirectory();
+        tDirectory = new TDirectory();
         tDirectory.setIndex(-1);
         tDirectory.setId("");
         tDirectory.setName(Utils.getString(R.string.defaultList));
@@ -50,12 +64,26 @@ public class TDirectoryManager extends BaseManager {
 
     /**
      * 查询下载目录列表
+     * @param showConfigBtn 是否显示配置按钮
+     * @param showAllSelect 是否显示全部
      * @return
      */
-    public static List<TDirectory> queryDownloadDirectoryList(boolean showConfigBtn) {
+    public static List<TDirectory> queryDownloadDirectoryList(boolean showConfigBtn, boolean showAllSelect) {
         List<TDirectory> tDirectories = new ArrayList<>();
+        TDirectory tDirectory;
+        if (showAllSelect) {
+            // 显示全部
+            tDirectory = new TDirectory();
+            tDirectory.setIndex(-2);
+            tDirectory.setId("all");
+            tDirectory.setName(Utils.getString(R.string.allList));
+            tDirectory.setSource(source);
+            tDirectory.setType(DirectoryTypeEnum.FAVORITE.getName());
+            tDirectory.setShowConfigBtn(false);
+            tDirectories.add(tDirectory);
+        }
         // 添加默认清单
-        TDirectory tDirectory = new TDirectory();
+        tDirectory = new TDirectory();
         tDirectory.setIndex(-1);
         tDirectory.setId("");
         tDirectory.setName(Utils.getString(R.string.defaultList));

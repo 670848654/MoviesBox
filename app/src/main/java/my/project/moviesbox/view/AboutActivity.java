@@ -5,27 +5,31 @@ import static my.project.moviesbox.event.RefreshEnum.REFRESH_ON_HIDDEN_FEATURES;
 
 import android.content.Intent;
 import android.os.Environment;
+import android.view.LayoutInflater;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.shape.MaterialShapeDrawable;
+
 import org.greenrobot.eventbus.EventBus;
 
 import java.io.File;
 import java.util.List;
 
-import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.SettingAboutAdapter;
 import my.project.moviesbox.bean.SettingAboutBean;
+import my.project.moviesbox.databinding.ActivitySingleListBinding;
 import my.project.moviesbox.enums.AboutEnum;
 import my.project.moviesbox.enums.DialogXTipEnum;
-import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.SAFUtils;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.base.BaseActivity;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -35,28 +39,43 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/1/24 13:38
   * @版本: 1.0
  */
-public class AboutActivity extends BaseActivity {
-    @BindView(R.id.toolbar)
-    Toolbar toolbar;
-    @BindView(R.id.mSwipe)
-    SwipeRefreshLayout mSwipe;
-    @BindView(R.id.rv_list)
-    RecyclerView recyclerView;
+public class AboutActivity extends BaseActivity<ActivitySingleListBinding> {
     private SettingAboutAdapter settingAboutAdapter;
     private List<SettingAboutBean> list = AboutEnum.getSettingAboutBeanList();
 
     @Override
-    protected Presenter createPresenter() {
-        return null;
+    protected void initBeforeView() {}
+
+    /**
+     * 子类实现，返回具体的 ViewBinding
+     *
+     * @param inflater
+     * @return
+     */
+    @Override
+    protected ActivitySingleListBinding inflateBinding(LayoutInflater inflater) {
+        return ActivitySingleListBinding.inflate(inflater);
+    }
+
+    protected AppBarLayout appBar;
+    private Toolbar toolbar;
+    private SwipeRefreshLayout mSwipe;
+    private RecyclerView recyclerView;
+    /**
+     * 初始化控件
+     */
+    @Override
+    protected void findById() {
+        appBar = binding.toolbarLayout.appBar;
+        appBar.setStatusBarForeground(MaterialShapeDrawable.createWithElevationOverlay(this));
+        toolbar = binding.toolbarLayout.toolbar;
+        mSwipe = binding.contentLayout.mSwipe;
+        recyclerView = binding.contentLayout.rvList;
     }
 
     @Override
-    protected void loadData() {
-    }
+    public void initClickListeners() {
 
-    @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_single_list;
     }
 
     @Override
@@ -68,11 +87,13 @@ public class AboutActivity extends BaseActivity {
     }
 
     @Override
-    protected void initBeforeView() {}
-
-    @Override
     protected void setConfigurationChanged() {}
 
+    /**
+     * 点击重试抽象方法
+     *
+     * @return
+     */
     @Override
     protected void retryListener() {
 

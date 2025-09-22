@@ -10,7 +10,7 @@
     <string name="downloadingStr"><![CDATA[<font color="#31BDEC">等待下载<font>]]></string>
     <string name="downloadSuccessfulStr"><![CDATA[<font color="#5FB878">下载成功<font>]]></string>
     <string name="downloadFailedStr"><![CDATA[<font color="#FF5722">下载失败<font>]]></string>
-    <string name="transcodingStr"><![CDATA[<font color="#1E9FFF">正在转码<font>]]></string>
+    <string name="transcodingStr"><![CDATA[<font color="#1E9FFF">正在封装<font>]]></string>
 
     <!-- 下载子列表界面文本 -->
     <string-array name="downloadItems">
@@ -64,7 +64,7 @@
     <string name="downloadErrorMsg">❌下载失败 →%s</string>
     <string name="downloadDefaultErrorMsg">未知错误，可能下载的资源不存在或文件路劲不可写！</string>
     <string name="downloadSuccessMsg">下载成功</string>
-    <string name="downloadTsSuccessMsg">下载成功&amp;合并TS完成，开始转换为MP4格式</string>
-    <string name="convertTSToMP4SuccessMsg">🎉🎉🎉 TS转MP4完成</string>
+    <string name="downloadTsSuccessMsg">下载成功&amp;合并TS完成，开始封装为MP4格式</string>
+    <string name="convertTSToMP4SuccessMsg">🎉🎉🎉 TS封装MP4完成</string>
     <string name="convertTSToMP4ErrorMsg">❌转换出错，错误代码：%s</string>
 </resources>

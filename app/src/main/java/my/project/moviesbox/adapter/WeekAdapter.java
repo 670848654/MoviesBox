@@ -1,5 +1,6 @@
 package my.project.moviesbox.adapter;
 
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -42,8 +43,15 @@ public class WeekAdapter extends BaseQuickAdapter<WeekDataBean.WeekItem, BaseVie
             String imgUrl = item.getImgUrl();
             ImageView imageView = helper.getView(R.id.img);
             imageView.setTag(R.id.imageid, imgUrl);
-            Utils.setDefaultImage(item.getImgUrl(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), false);
+            Utils.setDefaultImage(item.getImgUrl(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), false, false);
             helper.setVisible(R.id.episodesLayout, true);
+            String topLeftTag = item.getTopLeftTag();
+            if (Utils.isNullOrEmpty(topLeftTag))
+                helper.getView(R.id.topLeftTag).setVisibility(View.GONE);
+            else {
+                helper.getView(R.id.topLeftTag).setVisibility(View.VISIBLE);
+                helper.setText(R.id.topLeftTag, topLeftTag);
+            }
         }
     }
 }

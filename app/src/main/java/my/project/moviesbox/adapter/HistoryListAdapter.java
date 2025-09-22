@@ -25,21 +25,17 @@ import my.project.moviesbox.utils.Utils;
   * @版本: 1.0
  */
 public class HistoryListAdapter extends BaseQuickAdapter<THistoryWithFields, BaseViewHolder> implements LoadMoreModule {
-    private Context context;
 
     public HistoryListAdapter(Context context, List<THistoryWithFields> list) {
         super(Utils.isPad() ? R.layout.item_history_pad : R.layout.item_history, list);
-        this.context = context;
     }
 
     @Override
     protected void convert(BaseViewHolder helper, THistoryWithFields item) {
-//        item.setRefreshCover(false);
         String imgUrl = item.getTHistory().getVideoImgUrl();
         ImageView imageView = helper.getView(R.id.img);
         imageView.setTag(R.id.imageid, imgUrl);
-        imgUrl = item.isRefreshCover() ? "" : imgUrl;
-        Utils.setDefaultImage(imgUrl, item.getTHistory().getVideoDescUrl(), imageView, false, null, helper.getView(R.id.title), true);
+        Utils.setDefaultImage(imgUrl, item.getTHistory().getVideoDescUrl(), imageView, false, null, helper.getView(R.id.title), true, item.isRefreshCover());
         helper.setText(R.id.title, item.getVideoTitle());
         helper.setText(R.id.play_date, item.getTHistory().getUpdateTime());
         long watchProgress = item.getWatchProgress();
@@ -49,7 +45,7 @@ public class HistoryListAdapter extends BaseQuickAdapter<THistoryWithFields, Bas
         else
             helper.setText(R.id.time, watchProgress == 0 ? Utils.getString(R.string.finishedReading) : JZUtils.stringForTime(watchProgress) + "/" + JZUtils.stringForTime(videoDuration));
 //        helper.setText(R.id.info, String.format(Utils.getString(R.string.playSource), item.getVideoNumber(), (item.getVideoPlaySource()+1)));
-        helper.setText(R.id.info, item.getVideoNumber());
+        helper.setText(R.id.info, Utils.isNullOrEmpty(item.getVideoNumber()) ? "未知" : item.getVideoNumber());
 //        LinearProgressIndicator linearProgressIndicator = helper.getView(R.id.bottom_progress);
         ProgressBar linearProgressIndicator = helper.getView(R.id.bottom_progress);
         linearProgressIndicator.setVisibility(watchProgress == 0 ? View.GONE : View.VISIBLE);

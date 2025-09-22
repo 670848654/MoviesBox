@@ -274,6 +274,22 @@ public class SharedPreferencesUtils {
 */
 
     /**
+     * 设置更新域名api
+     * @param time
+     */
+    public static void setUpdateDomainApi(String api) {
+        setParam("updateDomainApi", api);
+    }
+
+    /**
+     * 获取更新域名api
+     * @return
+     */
+    public static String getUpdateDomainApi() {
+        return (String) getParam("updateDomainApi", Utils.getString(R.string.updateDomainApiUrl));
+    }
+
+    /**
      * 设置是否开启视频嗅探
      * @param enable
      */

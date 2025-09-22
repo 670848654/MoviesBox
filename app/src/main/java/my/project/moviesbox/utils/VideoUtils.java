@@ -9,6 +9,7 @@ import android.media.AudioManager;
 import android.os.Build;
 
 import com.arialyy.aria.core.task.DownloadTask;
+import com.arthenica.mobileffmpeg.Config;
 import com.arthenica.mobileffmpeg.FFmpeg;
 
 import org.greenrobot.eventbus.EventBus;
@@ -24,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.ArrayList;
@@ -151,6 +153,7 @@ public class VideoUtils {
         }
     }
 
+    private static final int TS_PACKET_SIZE = 188;
     /**
      * 合并ts
      * @param savePath
@@ -158,78 +161,28 @@ public class VideoUtils {
      * @return
      */
     public static boolean merge(String savePath, List<File> fileList) {
-        /*try {
-            File file = new File(savePath.replaceAll("m3u8", "ts"));
-            if (file.exists()) file.delete();
-            else file.createNewFile();
-            FileOutputStream fs = new FileOutputStream(file);
-            byte[] b = new byte[4096];
-            for (File f : fileList) {
-                FileInputStream fileInputStream = new FileInputStream(f);
-                ByteArrayOutputStream temp = new ByteArrayOutputStream();
-                int len = 0;
-                int position = 0;
-                while ((len = fileInputStream.read(b)) != -1) {
-                    if (len == b.length) {
-                        temp.write(b, 0, len);
-                        position = getPosition(temp.toByteArray());
-                        break;
-                    }
-                }
-                fileInputStream.close();
-                fileInputStream = new FileInputStream(f);
-                if (position != 0) fileInputStream.skip(position);
-                while ((len = fileInputStream.read(b)) != -1) {
-                    fs.write(b, 0, len);
-                }
-                fileInputStream.close();
-                fs.flush();
-            }
-            fs.close();
-            LogUtil.logInfo("TsMergeHandler", "合并TS成功");
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            LogUtil.logInfo("TsMergeHandler", "合并TS失败，请重新下载....");
-            return false;
-        }*/
         try {
-            File file = new File(savePath.replaceAll("m3u8", "ts"));
-            if (file.exists()) file.delete();
-            file.createNewFile();
+            File outFile = new File(savePath.replaceAll("m3u8", "ts"));
+            if (outFile.exists()) outFile.delete();
+            outFile.createNewFile();
 
-            try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file))) {
-                byte[] buffer = new byte[8192]; // 使用更大的缓冲区
-
-                for (File f : fileList) {
-                    int position = 0;
-
-                    // 第一次读取，获取位置
-                    try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
-                        ByteArrayOutputStream temp = new ByteArrayOutputStream();
-                        int bytesRead;
-
-                        while ((bytesRead = bis.read(buffer)) != -1) {
-                            temp.write(buffer, 0, bytesRead);
-                            if (temp.size() >= buffer.length) {
-                                position = getPosition(temp.toByteArray());
-                                break;
-                            }
-                        }
-                    }
-
-                    // 第二次读取，从指定位置开始写入
-                    try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
-                        if (position != 0) {
-                            bis.skip(position);
+            try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outFile))) {
+                byte[] buffer = new byte[TS_PACKET_SIZE * 100]; // 每次读100个TS包
+                for (File tsFile : fileList) {
+                    try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(tsFile))) {
+                        int skip = findTsStartPosition(bis);
+                        if (skip > 0) {
+                            bis.skip(skip); // 跳过伪装头
+                            LogUtil.logInfo(tsFile.getName() + "存在伪装", "读取跳过前" + skip + "字节");
                         }
                         int bytesRead;
                         while ((bytesRead = bis.read(buffer)) != -1) {
-                            bos.write(buffer, 0, bytesRead);
+                            // 确保写入是 TS 包对齐
+                            int validBytes = (bytesRead / TS_PACKET_SIZE) * TS_PACKET_SIZE;
+                            bos.write(buffer, 0, validBytes);
                         }
                     }
                 }
-                bos.flush();
             }
 
             LogUtil.logInfo("TsMergeHandler", "合并TS成功");
@@ -245,36 +198,38 @@ public class VideoUtils {
      * 获取标准mpeg-ts开始的位置，需要记住位置跳过TS伪装成图片的文件头
      * <p>2022年6月1日22:07:50</p>
      * <p>参考 https://blog.csdn.net/feiyu361/article/details/121196667</p>
-     * @param src
-     * @return
+     * @return 第一个合法 TS 包起始位置
      */
-    public static int getPosition (byte[] src) {
-        /*StringBuffer sb = new StringBuffer("");
-        if (src == null || src.length == 0) {
-            return 0;
-        }
-        for (byte b : src) {
-            int v = b & 0xFF;
-            String hv = Integer.toHexString(v).toUpperCase();
-            if (hv.length() < 2) {
-                sb.append(0);
-            }
-            sb.append(hv);
-        }
-        Matcher matcher = Pattern.compile("47401110").matcher(sb.toString());
-        return matcher.find() ? matcher.start() / 2 : 0;*/
-        if (src == null || src.length < 4) return 0;
+    public static int findTsStartPosition(InputStream is) throws IOException {
+        is.mark(1024);
+        int firstByteIndex = 0;
+        int b;
+        int[] window = new int[3]; // 三字节窗口
+        int count = 0;
 
-        for (int i = 0; i < src.length - 3; i++) {
-            // 注意：byte 是有符号的，需要和 0xFF 做位运算
-            if ((src[i] & 0xFF) == 0x47 &&
-                    (src[i + 1] & 0xFF) == 0x40 &&
-                    (src[i + 2] & 0xFF) == 0x11 &&
-                    (src[i + 3] & 0xFF) == 0x10) {
-                return i; // 直接返回匹配位置
+        while ((b = is.read()) != -1 && firstByteIndex < 1024) {
+            window[count % 3] = b;
+            count++;
+
+            if (count >= 3) {
+                int i = count % 3;
+                // 判断窗口是否为 0x47 0x40 0x11
+                if (window[i % 3] == 0x47 &&
+                        window[(i + 1) % 3] == 0x40 &&
+                        window[(i + 2) % 3] == 0x11) {
+                    // 第一个合法字节位置
+                    int startPos = firstByteIndex - 2; // 减去窗口长度-1
+                    is.reset();
+                    is.skip(startPos);
+                    return startPos;
+                }
             }
+            firstByteIndex++;
         }
-        return 0; // 未找到，默认返回开头
+
+        // 没找到，直接从 0 开始
+        is.reset();
+        return 0;
     }
 
     /**
@@ -365,7 +320,7 @@ public class VideoUtils {
         FFmpeg.executeAsync(cmd, (executionId, returnCode) -> {
             long endTime = System.nanoTime();
             double durationInSeconds = (endTime - startTime) / 1_000_000_000.0;
-            String timeConsuming = String.format("转码耗时: %.2f 秒", durationInSeconds);
+            String timeConsuming = String.format("封装耗时: %.2f 秒", durationInSeconds);
             if (returnCode == RETURN_CODE_SUCCESS) {
                 LogUtil.logInfo("转换MP4成功，" + timeConsuming, null);
                 // 转换完成删除TS文件
@@ -390,6 +345,8 @@ public class VideoUtils {
                 EventBus.getDefault().post(new DownloadEvent(taskId, vodTitle, vodEpisodes, m3u8Path, 0, 2));
                 notificationUtils.uploadInfo(notificationId, vodTitle, vodEpisodes, String.format(Utils.getString(R.string.convertTSToMP4ErrorMsg), returnCode));
             }
+            Config.resetStatistics(); // 重置统计信息，释放部分 native 缓存
+            System.gc(); // 主动提示 GC
         });
     }
 

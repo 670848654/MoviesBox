@@ -1,4 +1,4 @@
-package my.project.moviesbox.view;
+package my.project.moviesbox.view.fragment;
 
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_TAB_COUNT;
 import static my.project.moviesbox.utils.ImageUpdateManager.UpdateImgEnum.FAVORITE;
@@ -6,10 +6,10 @@ import static my.project.moviesbox.utils.ImageUpdateManager.UpdateImgEnum.FAVORI
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.Button;
 import android.widget.ImageView;
 
@@ -25,8 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.FavoriteListAdapter;
 import my.project.moviesbox.config.ConfigManager;
@@ -37,6 +35,7 @@ import my.project.moviesbox.database.entity.TFavoriteWithFields;
 import my.project.moviesbox.database.enums.DirectoryTypeEnum;
 import my.project.moviesbox.database.manager.TDirectoryManager;
 import my.project.moviesbox.database.manager.TFavoriteManager;
+import my.project.moviesbox.databinding.FragmentMyListBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.event.RefreshFavoriteEvent;
@@ -45,6 +44,12 @@ import my.project.moviesbox.model.FavoriteModel;
 import my.project.moviesbox.presenter.FavoritePresenter;
 import my.project.moviesbox.utils.ImageUpdateManager;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.DetailsActivity;
+import my.project.moviesbox.view.DirectoryChangeActivity;
+import my.project.moviesbox.view.DirectoryConfigActivity;
+import my.project.moviesbox.view.HomeActivity;
+import my.project.moviesbox.view.base.BaseFragment;
+import my.project.moviesbox.view.base.BaseMvpFragment;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -54,12 +59,10 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:10
   * @版本: 1.0
  */
-public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContract.View, FavoritePresenter> implements FavoriteContract.View, BaseFragment.DirectoryPopupWindowAdapterClickListener {
+public class FavoriteFragment extends BaseMvpFragment<FavoriteModel, FavoriteContract.View, FavoritePresenter, FragmentMyListBinding> implements FavoriteContract.View, BaseFragment.DirectoryPopupWindowAdapterClickListener {
     private View headerView;
     private Button headerSelectView;
     private Button headerConfigView;
-    private View view;
-    @BindView(R.id.rv_list)
     RecyclerView mRecyclerView;
     private FavoriteListAdapter adapter;
     private String directoryId = "";
@@ -69,25 +72,37 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
     private boolean updateOrder; //
 
     @Override
-    protected void setConfigurationChanged() {
+    protected FragmentMyListBinding inflateBinding(LayoutInflater inflater, ViewGroup container) {
+        // 防止重复 inflate
+        if (binding == null) {
+            binding = FragmentMyListBinding.inflate(inflater, container, false);
+        } else {
+            // 从父容器移除
+            ViewParent parent = binding.getRoot().getParent();
+            if (parent instanceof ViewGroup) {
+                ((ViewGroup) parent).removeView(binding.getRoot());
+            }
+        }
+        return binding;
+    }
+
+
+    @Override
+    public void initViews() {
+        mRecyclerView = binding.rvList;
+        setDirectoryPopupWindowAdapterClickListener(this);
+        initAdapter();
+        loadFavoriteData();
+    }
+
+    @Override
+    public void initClickListeners() {
 
     }
 
     @Override
-    protected View initViews(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (view == null) {
-            view = inflater.inflate(R.layout.fragment_my_list, container, false);
-            mUnBinder = ButterKnife.bind(this, view);
-        } else {
-            ViewGroup parent = (ViewGroup) view.getParent();
-            if (parent != null) {
-                parent.removeView(view);
-            }
-        }
-        setDirectoryPopupWindowAdapterClickListener(this);
-        initAdapter();
-        loadFavoriteData();
-        return view;
+    protected void setConfigurationChanged() {
+
     }
 
     private void initAdapter() {
@@ -97,7 +112,7 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
         adapter = new FavoriteListAdapter(parserInterface.favoriteItemStyleLayout(), new ArrayList<>());
         headerSelectView.setOnClickListener(v -> {
             Utils.setVibration(v);
-            List<TDirectory> tDirectories = TDirectoryManager.queryFavoriteDirectoryList(false);
+            List<TDirectory> tDirectories = TDirectoryManager.queryFavoriteDirectoryList(false, true);
             showDirectoryPopupWindow(tDirectories, headerSelectView);
         });
         headerConfigView.setOnClickListener(v -> {
@@ -128,8 +143,7 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
                 switch (item.getItemId()) {
                     case R.id.refreshImage:
                         ImageView imageView = (ImageView) adapter.getViewByPosition(position+adapter.getHeaderLayoutCount(), R.id.img);
-                        imageView.setImageDrawable(getActivity().getDrawable(R.drawable.loading));
-//                        updateImgPresenter.loadData(favoriteList.get(position).getTFavorite().getVideoImgUrl(), favoriteList.get(position).getTFavorite().getVideoUrl());
+                        imageView.setImageResource(R.drawable.loading);
                         TFavoriteWithFields tFavoriteWithField = (TFavoriteWithFields) adapter.getData().get(position);
                         ImageUpdateManager.getInstance().addUpdateImgTask(
                                 tFavoriteWithField.getTFavorite().getVideoUrl(),
@@ -159,7 +173,7 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
         } else {
             if (isErr) {
                 isMain = false;
-                loadData();
+                loadDbData();
             } else {
                 isErr = true;
                 adapter.getLoadMoreModule().loadMoreFail();
@@ -185,7 +199,7 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
            /* mPresenter = new FavoritePresenter(0, application.animeUpdateInfoBeans, this);
             mPresenter.loadUpdateInfo();*/ // TODO
         } else
-            loadData();
+            loadDbData();
     }
 
     /**
@@ -211,6 +225,10 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
 
     @Override
     protected void loadData() {
+
+    }
+
+    private void loadDbData() {
         mPresenter.loadData(isMain, directoryId, adapter.getData().size(), ConfigManager.getInstance().getFavoriteQueryLimit(), updateOrder);
     }
 
@@ -247,7 +265,7 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
         getActivity().runOnUiThread(() -> {
             adapter.setNewInstance(new ArrayList<>());
             setRecyclerViewEmpty();
-            rvLoading();
+            rvLoading(false);
         });
     }
 
@@ -273,11 +291,8 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
                 tFavoriteWithFields.setBlurBg(parserInterface.favoriteItemBlurBg());
             }
             if (isMain) {
-                new Handler().postDelayed(() -> {
-                    hideProgress();
-                    adapter.setNewInstance(list);
-                    setRecyclerViewView();
-                }, 500);
+                adapter.setNewInstance(list);
+                setRecyclerViewView();
             } else
                 adapter.addData(list);
         });
@@ -330,6 +345,10 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
                     if (!Objects.equals(selectDirectoryId, directoryId)) {
                         TFavoriteWithFields tFavoriteWithField = adapter.getData().get(position);
                         TFavoriteManager.updateFavoriteDirectoryId(tFavoriteWithField.getVideoId(), selectDirectoryId);
+                        if (directoryId.equals("all")) {
+                            application.showToastMsg("变更清单目录成功", DialogXTipEnum.SUCCESS);
+                            return;
+                        }
                         adapter.removeAt(position);
                         favoriteCount = TFavoriteManager.queryFavoriteCountByDirectoryId(directoryId);
                         if (favoriteCount == 0) {
@@ -343,7 +362,7 @@ public class FavoriteFragment extends BaseFragment<FavoriteModel, FavoriteContra
                 if (tDirectory == null) {
                     // 被删除了回到默认清单
                     directoryId = null;
-                    List<TDirectory> tDirectories = TDirectoryManager.queryFavoriteDirectoryList(false);
+                    List<TDirectory> tDirectories = TDirectoryManager.queryFavoriteDirectoryList(false, true);
                     headerSelectView.setText(tDirectories.get(0).getName());
                 } else
                     headerSelectView.setText(tDirectory.getName());

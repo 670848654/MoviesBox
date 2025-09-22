@@ -1,17 +1,22 @@
 package my.project.moviesbox.adapter;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.chad.library.adapter.base.BaseMultiItemQuickAdapter;
 import com.chad.library.adapter.base.entity.MultiItemEntity;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
+import com.google.android.flexbox.FlexDirection;
+import com.google.android.flexbox.FlexWrap;
+import com.google.android.flexbox.FlexboxLayoutManager;
+import com.google.android.flexbox.JustifyContent;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import my.project.moviesbox.R;
-import my.project.moviesbox.custom.AutoLineFeedLayoutManager;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.utils.Utils;
 
@@ -24,10 +29,12 @@ import my.project.moviesbox.utils.Utils;
   * @版本: 1.0
  */
 public class ClassificationAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, BaseViewHolder> {
+    private final Context context;
     private final OnItemClick onItemClick;
 
-    public ClassificationAdapter(List<MultiItemEntity> data, OnItemClick onItemClick) {
+    public ClassificationAdapter(Context context, List<MultiItemEntity> data, OnItemClick onItemClick) {
         super(data);
+        this.context = context;
         this.onItemClick = onItemClick;
         addItemType(ClassificationDataBean.ITEM_TYPE, R.layout.item_classification);
     }
@@ -42,7 +49,11 @@ public class ClassificationAdapter extends BaseMultiItemQuickAdapter<MultiItemEn
                 boolean multipleChoices = classificationDataBean.isMultipleChoices();
                 List<ClassificationDataBean.Item> items = classificationDataBean.getItemList();
                 helper.setText(R.id.title, classificationDataBean.getClassificationTitle().replaceAll("：", "").replaceAll(":", ""));
-                recyclerView.setLayoutManager(new AutoLineFeedLayoutManager());
+                FlexboxLayoutManager layoutManager = new FlexboxLayoutManager(context);
+                layoutManager.setFlexDirection(FlexDirection.ROW); // 横向排布
+                layoutManager.setFlexWrap(FlexWrap.WRAP);         // 换行
+                layoutManager.setJustifyContent(JustifyContent.FLEX_START); // 起始对齐
+                recyclerView.setLayoutManager(layoutManager);
                 ClassificationItemAdapter classificationItemAdapter = new ClassificationItemAdapter(items);
                 classificationItemAdapter.setOnItemClickListener((adapter, view, position) -> {
                     // 如果当前为选中状态

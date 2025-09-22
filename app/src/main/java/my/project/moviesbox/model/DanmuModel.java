@@ -9,6 +9,7 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import my.project.moviesbox.R;
@@ -30,11 +31,12 @@ import okhttp3.Response;
 public class DanmuModel extends BaseModel implements DanmuContract.Model {
     @Override
     public void getDanmu(DanmuContract.LoadDataCallback callback, String... params) {
+        LogUtil.logInfo("调用弹幕接口,参数为", Arrays.toString(params));
         if (Utils.isNullOrEmpty(params))
             return;
         String url = parserInterface.getDanmuUrl(params);
         if (Utils.isNullOrEmpty(url)) {
-            callback.errorDanmu("获取弹幕接口出错");
+            callback.errorDanmu("弹幕接口定义错误，请检查配置");
             return;
         }
         /*if (SharedPreferencesUtils.getByPassCF()) {
@@ -45,7 +47,7 @@ public class DanmuModel extends BaseModel implements DanmuContract.Model {
                     break;
             }
         }*/
-        DanmuStrategy strategy = DanmuStrategyFactory.getStrategy(sourceEnum, parserInterface.getDanmuResultJson());
+        DanmuStrategy strategy = DanmuStrategyFactory.getStrategy(sourceEnum);
         strategy.getDanmu(url, callback);
     }
 
@@ -62,7 +64,7 @@ public class DanmuModel extends BaseModel implements DanmuContract.Model {
         OkHttpUtils.getInstance().doGet(url, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                callback.errorDanmu(e.getMessage());
+                callback.errorDanmu("访问弹幕接口失败：" + e.getMessage());
             }
 
             @Override

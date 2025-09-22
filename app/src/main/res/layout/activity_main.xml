@@ -28,7 +28,8 @@
             app:itemIconTint="@color/bottomnavigation_icon_color_selector"
             app:itemTextColor="@color/bottomnavigation_text_color_selector"
             app:itemActiveIndicatorStyle="@style/App.Custom.Indicator"
-            app:labelVisibilityMode="selected"
+            app:itemIconGravity="top"
+            app:labelVisibilityMode="labeled"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:menu="@menu/bottom_nav_menu" />

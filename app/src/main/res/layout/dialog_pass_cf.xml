@@ -1,8 +1,9 @@
-<RelativeLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,7 +17,7 @@
             android:id="@+id/enableByPassCF"
             style="@style/Widget.App.Switch"
             android:textSize="16sp"
-            android:text="@string/enableByPassCF"
+            android:text="@string/enableOrNot"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
@@ -34,22 +35,35 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <com.google.android.material.slider.Slider
-            android:id="@+id/setByPassCFTimeOut"
-            android:layout_marginTop="8dp"
-            android:enabled="false"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:trackHeight="24dp"
-            app:trackColorInactive="@color/pink50"
-            app:trackColorActive="@color/pinka100"
-            app:tickColorActive="@color/pink50"
-            app:tickColorInactive="@color/pinka100"
-            app:thumbColor="@color/pinka100"
-            android:value="10"
-            android:stepSize="1"
-            android:valueFrom="1.0"
-            android:valueTo="60.0" />
+    </LinearLayout>
+
+    <com.google.android.material.slider.Slider
+        android:id="@+id/setByPassCFTimeOut"
+        android:layout_marginTop="8dp"
+        android:enabled="false"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        app:trackHeight="18dp"
+        app:trackColorInactive="@color/pink50"
+        app:trackColorActive="@color/pinka100"
+        app:tickColorActive="@color/pink50"
+        app:tickColorInactive="@color/pinka100"
+        app:thumbColor="@color/pinka100"
+        android:value="10"
+        android:stepSize="1"
+        android:valueFrom="1.0"
+        android:valueTo="60.0" />
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="25dp"
+        android:paddingTop="8dp"
+        android:paddingRight="25dp">
 
         <ImageView
             android:src="@drawable/round_info_24"
@@ -76,4 +90,4 @@
 
     </LinearLayout>
 
-</RelativeLayout>
+</LinearLayout>

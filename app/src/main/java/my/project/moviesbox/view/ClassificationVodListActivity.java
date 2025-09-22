@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -25,8 +27,6 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.OnClick;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.ClassificationAdapter;
 import my.project.moviesbox.adapter.VodListAdapter;
@@ -35,6 +35,8 @@ import my.project.moviesbox.contract.ClassificationVodListContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
 import my.project.moviesbox.custom.FabExtendingOnScrollListener;
 import my.project.moviesbox.custom.VideoPreviewDialog;
+import my.project.moviesbox.databinding.ActivityVodListBinding;
+import my.project.moviesbox.databinding.DialogClassificationBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.model.ClassificationVodListModel;
 import my.project.moviesbox.parser.LogUtil;
@@ -43,6 +45,7 @@ import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.presenter.ClassificationVodListPresenter;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.base.BaseMvpActivity;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -52,14 +55,8 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:07
   * @版本: 1.0
  */
-public class ClassificationVodListActivity extends BaseActivity<ClassificationVodListModel, ClassificationVodListContract.View, ClassificationVodListPresenter>
+public class ClassificationVodListActivity extends BaseMvpActivity<ClassificationVodListModel, ClassificationVodListContract.View, ClassificationVodListPresenter, ActivityVodListBinding>
         implements ClassificationVodListContract.View, ClassificationAdapter.OnItemClick {
-    @BindView(R.id.toolbar)
-    Toolbar toolbar;
-    @BindView(R.id.rv_list)
-    RecyclerView mRecyclerView;
-    @BindView(R.id.mSwipe)
-    SwipeRefreshLayout mSwipe;
     private List<MultiItemEntity> multiItemEntities = new ArrayList<>();
     private ClassificationAdapter classificationAdapter;
     private RecyclerView classificationListRv;
@@ -71,9 +68,33 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
     private String[] paramsUrl; // 参数URL
     private  boolean groupMultipleChoices = parserInterface.setClassificationGroupMultipleChoices(); // 分类组是否为多选联动
     private LinearLayout buttonToggleGroup;
-    @BindView(R.id.classFab)
-    ExtendedFloatingActionButton classFab;
     private int fabHeight = 0;
+
+    @Override
+    protected ActivityVodListBinding inflateBinding(LayoutInflater inflater) {
+        return ActivityVodListBinding.inflate(inflater);
+    }
+
+    private Toolbar toolbar;
+    private RecyclerView mRecyclerView;
+    private SwipeRefreshLayout mSwipe;
+    private ExtendedFloatingActionButton classFab;
+    @Override
+    protected void findById() {
+        toolbar = binding.toolbarLayout.toolbar;
+        mRecyclerView = binding.contentLayout.rvList;
+        mSwipe = binding.contentLayout.mSwipe;
+        classFab = binding.classFab;
+    }
+
+    @Override
+    public void initClickListeners() {
+        classFab.setOnClickListener(v -> {
+            Utils.setVibration(v);
+            classificationBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+            classificationBottomSheetDialog.show();
+        });
+    }
 
     @Override
     protected ClassificationVodListPresenter createPresenter() {
@@ -84,11 +105,6 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
     protected void loadData() {
         vodMultiItemEntities.clear();
         mPresenter.loadMainData(true, paramsUrl);
-    }
-
-    @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_vod_list;
     }
 
     @Override
@@ -123,13 +139,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
                     Utils.getNavigationBarHeight(this) + 1);
             classFab.setLayoutParams(params);
         }
-    }
-
-    @OnClick(R.id.classFab)
-    public void openBSD(View view) {
-        Utils.setVibration(view);
-        classificationBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
-        classificationBottomSheetDialog.show();
+//        setMarginLayoutParams(classFab);
     }
 
     public void initDefaultAdapter() {
@@ -148,7 +158,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
             String title = bean.getTitle();
             String previewUrl = bean.getPreviewUrl();
             if (Utils.isNullOrEmpty(previewUrl)) return false;
-            VideoPreviewDialog dialog = new VideoPreviewDialog(this, title, previewUrl);
+            VideoPreviewDialog dialog = new VideoPreviewDialog(this, title, bean.getUrl(), previewUrl, bean.getImg());
             dialog.show();
             return true;
         });
@@ -181,9 +191,9 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
         mRecyclerView.addOnScrollListener(new FabExtendingOnScrollListener(classFab));
         adapter.setEmptyView(rvView);
 
-        View classificationView = LayoutInflater.from(this).inflate(R.layout.dialog_classification, null);
-        buttonToggleGroup = classificationView.findViewById(R.id.toggleButton);
-        Button restButton = classificationView.findViewById(R.id.rest);
+        DialogClassificationBinding dialogClassificationBinding = DialogClassificationBinding.inflate(LayoutInflater.from(this));
+        buttonToggleGroup = dialogClassificationBinding.toggleButton;
+        Button restButton = dialogClassificationBinding.rest;
         if (!groupMultipleChoices)
             restButton.setVisibility(View.GONE);
         restButton.setOnClickListener(view -> {
@@ -199,7 +209,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
             }
             classificationAdapter.notifyDataSetChanged();
         });
-        Button doneButton = classificationView.findViewById(R.id.done);
+        Button doneButton = dialogClassificationBinding.done;
         doneButton.setOnClickListener(view -> {
             StringBuilder stringBuilder = new StringBuilder();
             for (int i = 0, size = paramsTitle.length - 1; i < size; i++) {
@@ -221,19 +231,19 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
            loadData();
             classificationBottomSheetDialog.dismiss();
         });
-        Button closeButton = classificationView.findViewById(R.id.close);
+        Button closeButton = dialogClassificationBinding.close;
         closeButton.setOnClickListener(view -> {
             Utils.setVibration(view);
             classificationBottomSheetDialog.dismiss();
         });
-        classificationListRv = classificationView.findViewById(R.id.rv_list);
-        classificationAdapter = new ClassificationAdapter(multiItemEntities, this);
+        classificationListRv = dialogClassificationBinding.rvList;
+        classificationAdapter = new ClassificationAdapter(this, multiItemEntities, this);
         classificationAdapter.setAnimationEnable(true);
         classificationAdapter.setAdapterAnimation(new AlphaInAnimation());
         classificationListRv.setLayoutManager(new LinearLayoutManager(this));
         classificationListRv.setAdapter(classificationAdapter);
         classificationBottomSheetDialog = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
-        classificationBottomSheetDialog.setContentView(classificationView);
+        classificationBottomSheetDialog.setContentView(dialogClassificationBinding.getRoot());
     }
 
     private void setToolbarInfo() {
@@ -373,6 +383,7 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
                 mSwipe.setRefreshing(false);
                 rvError(msg);
                 Utils.showAlert(this,
+                        R.drawable.round_warning_24,
                         getString(R.string.errorDialogTitle),
                         msg,
                         false,
@@ -420,5 +431,22 @@ public class ClassificationVodListActivity extends BaseActivity<ClassificationVo
             }
 //            classificationAdapter.notifyDataSetChanged();
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.base_search_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_search) {
+            View view = findViewById(R.id.action_search);
+            Utils.setVibration(view);
+            startActivity(new Intent(this, parserInterface.searchOpenClass()));
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

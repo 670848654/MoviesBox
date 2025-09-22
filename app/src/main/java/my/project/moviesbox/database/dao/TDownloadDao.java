@@ -58,26 +58,22 @@ public interface TDownloadDao {
      * @param offset
      * @return
      */
-    @Query("SELECT\n" +
-            "       t1.*,\n" +
-            "       t2.videoTitle as videoTitle,\n" +
-            "       t2.videoSource as videoSource,\n" +
-            "       count(t3.downloadDataId) as downloadDataSize,\n" +
-            "       sum(t3.videoFileSize) as filesSize,\n" +
-            "       count(CASE WHEN t3.complete != 1 THEN t3.downloadDataId ELSE NULL END) as noCompleteSize, \n" +
-            "       GROUP_CONCAT(t3.ariaTaskId, ',') as ariaTaskIds  \n" +
-            "  FROM TDownload t1\n" +
-            "       LEFT JOIN\n" +
-            "       TVideo t2 ON t1.linkId = t2.videoId\n" +
-            "       LEFT JOIN\n" +
-            "       TDownloadData T3 ON t1.downloadId = T3.linkId\n" +
-            " WHERE (t1.directoryId IS NULL AND :directoryId = '') OR (t1.directoryId = :directoryId AND :directoryId != '')" +
-            "       GROUP BY \n" +
-            "       t1.downloadId,\n" +
-            "       t1.videoImgUrl,\n" +
-            "       t1.videoDescUrl,\n" +
-            "       t2.videoTitle\n" +
-            " ORDER BY t1.createTime DESC limit :limit offset :offset")
+    @Query("SELECT t1.*, " +
+            "       t2.videoTitle as videoTitle, " +
+            "       t2.videoSource as videoSource, " +
+            "       count(t3.downloadDataId) as downloadDataSize, " +
+            "       sum(t3.videoFileSize) as filesSize, " +
+            "       count(CASE WHEN t3.complete != 1 THEN t3.downloadDataId ELSE NULL END) as noCompleteSize, " +
+            "       GROUP_CONCAT(t3.ariaTaskId, ',') as ariaTaskIds " +
+            "  FROM TDownload t1 " +
+            "       LEFT JOIN TVideo t2 ON t1.linkId = t2.videoId " +
+            "       LEFT JOIN TDownloadData t3 ON t1.downloadId = t3.linkId " +
+            " WHERE (:directoryId = 'all' OR " +
+            "        (:directoryId = '' AND t1.directoryId IS NULL) OR " +
+            "        (:directoryId != '' AND :directoryId != 'all' AND t1.directoryId = :directoryId)) " +
+            " GROUP BY t1.downloadId, t1.videoImgUrl, t1.videoDescUrl, t2.videoTitle " +
+            " ORDER BY t1.createTime DESC " +
+            " LIMIT :limit OFFSET :offset")
     List<TDownloadWithFields> queryAllDownloads(@Nullable String directoryId, int limit, int offset);
 
     /**
@@ -85,11 +81,12 @@ public interface TDownloadDao {
      * @param directoryId
      * @return
      */
-    @Query("SELECT count(t1.downloadId) \n" +
-            "  FROM TDownload t1\n" +
-            "       INNER JOIN\n" +
-            "       TVideo t2 ON t1.linkId = t2.videoId \n" +
-            " WHERE (t1.directoryId IS NULL AND :directoryId = '') OR (t1.directoryId = :directoryId AND :directoryId != '')")
+    @Query("SELECT count(t1.downloadId) " +
+            "  FROM TDownload t1 " +
+            "       INNER JOIN TVideo t2 ON t1.linkId = t2.videoId " +
+            " WHERE (:directoryId = 'all' OR " +
+            "        (:directoryId = '' AND t1.directoryId IS NULL) OR " +
+            "        (:directoryId != '' AND :directoryId != 'all' AND t1.directoryId = :directoryId))")
     int queryDownloadCountByDirectoryId(String directoryId);
 
     /**

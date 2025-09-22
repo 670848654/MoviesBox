@@ -1,26 +1,28 @@
-package my.project.moviesbox.view;
+package my.project.moviesbox.view.base;
 
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.WindowCompat;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewbinding.ViewBinding;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.animation.AlphaInAnimation;
@@ -29,49 +31,46 @@ import com.chad.library.adapter.base.animation.SlideInBottomAnimation;
 import com.chad.library.adapter.base.animation.SlideInLeftAnimation;
 import com.chad.library.adapter.base.animation.SlideInRightAnimation;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import java.util.Locale;
 
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.config.ConfigManager;
+import my.project.moviesbox.databinding.BaseEmntyViewBinding;
 import my.project.moviesbox.enums.AdapterAnimationTypeEnum;
-import my.project.moviesbox.model.BaseModel;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
-import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.DarkModeUtils;
-import my.project.moviesbox.utils.StatusBarUtil;
 import my.project.moviesbox.utils.Utils;
-import my.project.moviesbox.view.lazyLoadImage.LazyLoadImgListener;
 
 /**
-  * @包名: my.project.moviesbox.view
-  * @类名: BaseActivity
-  * @描述: 视图基类
-  * @作者: Li Z
-  * @日期: 2024/2/4 17:06
-  * @版本: 1.0
+ * @author Li
+ * @version 1.0
+ * @description: UI基类
+ * @date 2025/8/28 16:24
  */
-public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V, M>> extends AppCompatActivity {
+public abstract class BaseActivity<VB extends ViewBinding> extends AppCompatActivity {
     protected static final int DIRECTORY_REQUEST_CODE = 0x10010;
     protected static final int DIRECTORY_CONFIG_RESULT_CODE = 0x10011;
-    protected P mPresenter;
     protected App application;
-    private Unbinder mUnBinder;
+    protected VB binding;
+    /**
+     * 弹出窗
+     */
+    protected AlertDialog alertDialog;
+    protected ParserInterface parserInterface = ParserInterfaceFactory.getParserInterface();
+    protected int change;
+    protected boolean isPortrait;
     protected static String PREVIDEOSTR = Utils.getString(R.string.preEpisode);
     protected static String NEXTVIDEOSTR = Utils.getString(R.string.nextEpisode);
     protected static String PAGE_AND_ALL_PAGE = Utils.getString(R.string.pageAndAllPage);
     protected static String LOAD_PAGE_AND_ALL_PAGE = Utils.getString(R.string.loadPageAndAllPage);
-    protected boolean isPortrait;
     protected int position = 0;
-    protected int change;
-    protected ParserInterface parserInterface = ParserInterfaceFactory.getParserInterface();
     /* 空布局视图相关 */
     protected View rvView;
-    protected ProgressBar progressBar; // 加载视图
+    protected LinearProgressIndicator linearProgressIndicator; // 加载视图
     protected RelativeLayout errorView; // 出错视图
     protected Button refDataBtn; // 重试按钮
     protected TextView errorMsgView; // 错误视图文本
@@ -80,25 +79,19 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
     protected int page =  parserInterface.startPageNum(); // 开始页码
     protected int pageCount = parserInterface.startPageNum(); // 结束页码
     protected boolean isErr = true;
-    /**
-     * 弹出窗
-     */
-    protected AlertDialog alertDialog;
-
-    protected LazyLoadImgListener lazyLoadImgListener;
-
-    protected void setLazyLoadImgListener(LazyLoadImgListener lazyLoadImgListener) {
-        this.lazyLoadImgListener = lazyLoadImgListener;
-    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (application == null)
+            application = (App) getApplication();
         Configuration configuration = getResources().getConfiguration();
         change = configuration.orientation;
         isPortrait = change == Configuration.ORIENTATION_PORTRAIT;
         initBeforeView();
-        setContentView(setLayoutRes());
+        // 初始化 ViewBinding
+        binding = inflateBinding(getLayoutInflater());
+        setContentView(binding.getRoot());
         if (Utils.checkHasNavigationBar(this)) {
             /*if (!getRunningActivityName().equals("PlayerActivity"))
                 getWindow().setFlags(
@@ -127,28 +120,33 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
             }
             window.setNavigationBarColor(Color.TRANSPARENT);
         }
-        mUnBinder = ButterKnife.bind(this);
-        if (application == null)
-            application = (App) getApplication();
-        build();
+        Utils.createDataFolders();
+        hideGap();
+        setStatusBarColor();
+        initCustomViews();
+        findById();
+        init();
+        initClickListeners();
     }
 
-    protected abstract P createPresenter();
-
-    protected abstract void loadData() ;
-
-    protected abstract int setLayoutRes();
-
-    protected abstract void init();
-
-    protected abstract void initBeforeView();
+    /**
+     * Android 9 异形屏适配
+     */
+    protected void hideGap() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(lp);
+        }
+    }
 
     /**
      * 通用设置toolbar方法
      * @param toolbar toolbar
      * @param title 标题
+     * @param subTitle 副标题
      */
-    protected void setToolbar(Toolbar toolbar, @NonNull String title, String subTitle) {
+    protected void setToolbar(@NonNull Toolbar toolbar, @NonNull String title, String subTitle) {
         toolbar.setTitle(title);
         if (!Utils.isNullOrEmpty(subTitle))
             toolbar.setSubtitle(subTitle);
@@ -160,6 +158,12 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
         });
     }
 
+    private String getRunningActivityName() {
+        String contextString = this.toString();
+        return contextString.substring(contextString.lastIndexOf(".") + 1,
+                contextString.indexOf("@"));
+    }
+
     /**
      * 设置视图方向
      * <p>手机 竖屏显示</p>
@@ -168,31 +172,60 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
     private void setDeviceOrientation() {
         if (!getRunningActivityName().equals("PlayerActivity") &&
                 !getRunningActivityName().equals("LocalPlayerActivity") &&
+                !getRunningActivityName().equals("LocalListPlayerActivity") &&
                 !getRunningActivityName().equals("VipParsingInterfacesPlayerActivity") &&
                 !getRunningActivityName().equals("UpnpActivity")) {
             setRequestedOrientation(Utils.isPad() ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
     }
 
-    /**
-     * 初始化自定义布局
-     */
-    protected void initCustomViews() {
-        rvView = getLayoutInflater().inflate(R.layout.base_emnty_view, null);
-        progressBar = rvView.findViewById(R.id.progress);
-        errorView = rvView.findViewById(R.id.error_view);
-        refDataBtn = rvView.findViewById(R.id.ref_data);
-        errorMsgView = rvView.findViewById(R.id.error_msg);
-        emptyView = rvView.findViewById(R.id.empty_view);
-        emptyMsg = rvView.findViewById(R.id.empty_msg);
-        refDataBtn.setOnClickListener(view -> retryListener());
+    private void setStatusBarColor() {
+        /*if (!getRunningActivityName().equals("SearchActivity") &&
+                !getRunningActivityName().equals("VerifySearchActivity") &&
+                !getRunningActivityName().equals("HomeActivity") &&
+                !getRunningActivityName().equals("DetailsActivity") &&
+                !getRunningActivityName().equals("PlayerActivity") &&
+                !getRunningActivityName().equals("LocalPlayerActivity") &&
+                !getRunningActivityName().equals("LocalListPlayerActivity") &&
+                !getRunningActivityName().equals("VipParsingInterfacesPlayerActivity") &&
+                !getRunningActivityName().equals("UpnpActivity") &&
+                !getRunningActivityName().equals("ImageActivity") &&
+                !getRunningActivityName().equals("ImagePreviewActivity")) {
+            StatusBarUtil.setColorForSwipeBack(this, DarkModeUtils.isDarkMode(this) ? getColor(R.color.night_color_primary) : getColor(R.color.light_color_primary), 0);
+        }*/
+        if (DarkModeUtils.isDarkMode(this) || getRunningActivityName().equals("DetailsActivity"))
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+        else
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
     }
+
+    /**
+     * 隐藏虚拟导航按键
+     */
+    protected void hideNavBar() {
+        View decorView = getWindow().getDecorView();
+        decorView.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+    }
+
+    /**
+     * 虚拟导航按键
+     */
+    protected void showNavBar() {
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+    }
+
 
     /**
      * 设置rvlist动画
      * @param adapter
      */
-    protected <T, VH extends BaseViewHolder> void setAdapterAnimation(BaseQuickAdapter<T, VH> adapter) {
+    public <T, VH extends BaseViewHolder> void setAdapterAnimation(BaseQuickAdapter<T, VH> adapter) {
         ConfigManager configManager = ConfigManager.getInstance();
         boolean enableAnimation = configManager.isAnimationEnable();
         if (enableAnimation) {
@@ -220,6 +253,50 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
         }
     }
 
+    protected void emptyRecyclerView(RecyclerView... recyclerViews) {
+        for (RecyclerView rv : recyclerViews) {
+            if (!Utils.isNullOrEmpty(rv))
+                rv.setAdapter(null);
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (newConfig.orientation == change) return;
+        change = newConfig.orientation;
+        isPortrait = newConfig.orientation == Configuration.ORIENTATION_PORTRAIT;
+        setConfigurationChanged();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setDeviceOrientation();
+    }
+
+    @Override
+    protected void onDestroy() {
+        alertDialog = null;
+        super.onDestroy();
+    }
+
+    /**
+     * 初始化自定义布局
+     */
+    protected BaseEmntyViewBinding emptyBinding;
+    protected void initCustomViews() {
+        emptyBinding = BaseEmntyViewBinding.inflate(getLayoutInflater());
+        rvView = emptyBinding.getRoot();
+        linearProgressIndicator = emptyBinding.progress;
+        errorView = emptyBinding.errorView;
+        refDataBtn = emptyBinding.refData;
+        errorMsgView = emptyBinding.errorMsg;
+        emptyView = emptyBinding.emptyView;
+        emptyMsg = emptyBinding.emptyMsg;
+        refDataBtn.setOnClickListener(view -> retryListener());
+    }
+
     protected <T, VH extends BaseViewHolder> void setLoadState(BaseQuickAdapter<T, VH> adapter, boolean loadState) {
         isErr = loadState;
         adapter.getLoadMoreModule().loadMoreComplete();
@@ -230,7 +307,10 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
      */
     protected void rvLoading() {
         if (isFinishing()) return;
-        progressBar.setVisibility(View.VISIBLE);
+        if (linearProgressIndicator.getVisibility() != View.VISIBLE) {
+            linearProgressIndicator.setVisibility(View.VISIBLE);
+        }
+        linearProgressIndicator.show();
         errorView.setVisibility(View.GONE);
         emptyView.setVisibility(View.GONE);
     }
@@ -240,7 +320,7 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
      */
     protected void hideProgress() {
         if (isFinishing()) return;
-        progressBar.setVisibility(View.GONE);
+        linearProgressIndicator.hide();
     }
 
     /**
@@ -249,7 +329,7 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
      */
     protected void rvEmpty(String msg) {
         if (isFinishing()) return;
-        progressBar.setVisibility(View.GONE);
+        hideProgress();
         errorView.setVisibility(View.GONE);
         emptyMsg.setText(msg);
         emptyView.setVisibility(View.VISIBLE);
@@ -261,80 +341,10 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
      */
     protected void rvError(String msg) {
         if (isFinishing()) return;
-        progressBar.setVisibility(View.GONE);
+        hideProgress();
         errorMsgView.setText(msg);
         errorView.setVisibility(View.VISIBLE);
         emptyView.setVisibility(View.GONE);
-    }
-
-
-    /**
-     * 隐藏虚拟导航按键
-     */
-    protected void hideNavBar() {
-        View decorView = getWindow().getDecorView();
-        decorView.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-    }
-
-    /**
-     * 虚拟导航按键
-     */
-    protected void showNavBar() {
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-    }
-
-    /**
-     * Android 9 异形屏适配
-     */
-    protected void hideGap() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            WindowManager.LayoutParams lp = getWindow().getAttributes();
-            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-            getWindow().setAttributes(lp);
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        setDeviceOrientation();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (null != mPresenter)
-            mPresenter.registerEventBus();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if (null != mPresenter)
-            mPresenter.unregisterEventBus();
-    }
-
-    @Override
-    protected void onDestroy() {
-        //取消View的关联
-        if (null != mPresenter)
-            mPresenter.detachView();
-        mUnBinder.unbind();
-        alertDialog = null;
-        super.onDestroy();
-    }
-
-    protected void emptyRecyclerView(RecyclerView... recyclerViews) {
-        for (RecyclerView rv : recyclerViews) {
-            if (!Utils.isNullOrEmpty(rv))
-                rv.setAdapter(null);
-        }
     }
 
     protected boolean gtSdk23() {
@@ -354,60 +364,32 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
     }
 
     /**
-     * 图片懒加载
+     * 初始化视图前的操作
      */
-    protected void lazyLoadImg() {
-        if (!Utils.isNullOrEmpty(lazyLoadImgListener))
-            lazyLoadImgListener.loadImg();
-    }
+    protected abstract void initBeforeView();
 
-    private String getRunningActivityName() {
-        String contextString = this.toString();
-        return contextString.substring(contextString.lastIndexOf(".") + 1,
-                contextString.indexOf("@"));
-    }
+    /**
+     * 子类实现，返回具体的 ViewBinding
+     * @param inflater
+     * @return
+     */
+    protected abstract VB inflateBinding(LayoutInflater inflater);
 
-    private void setStatusBarColor() {
-        if (!getRunningActivityName().equals("HomeActivity") &&
-                !getRunningActivityName().equals("DetailsActivity") &&
-                !getRunningActivityName().equals("PlayerActivity") &&
-                !getRunningActivityName().equals("LocalPlayerActivity") &&
-                !getRunningActivityName().equals("VipParsingInterfacesPlayerActivity") &&
-                !getRunningActivityName().equals("UpnpActivity") &&
-                !getRunningActivityName().equals("ImageActivity") &&
-                !getRunningActivityName().equals("ImagePreviewActivity")) {
-            StatusBarUtil.setColorForSwipeBack(this, DarkModeUtils.isDarkMode(this) ? getColor(R.color.night_color_primary) : getColor(R.color.light_color_primary), 0);
-        }
-        if (DarkModeUtils.isDarkMode(this) || getRunningActivityName().equals("DetailsActivity"))
-            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-        else
-            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-    }
+    /**
+     * 初始化控件
+     */
+    protected abstract void findById();
 
-    private void build() {
-        Utils.createDataFolders();
-        hideGap();
-        setStatusBarColor();
-        initCustomViews();
-        init();
-        mPresenter = createPresenter();
-        loadData();
-    }
+    public abstract void initClickListeners();
 
-    @Override
-    public void finish() {
-        super.finish();
-    }
+    /**
+     * 初始化数据/控件
+     */
+    protected abstract void init();
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        if (newConfig.orientation == change) return;
-        change = newConfig.orientation;
-        isPortrait = newConfig.orientation == Configuration.ORIENTATION_PORTRAIT;
-        setConfigurationChanged();
-    }
-
+    /**
+     * 横竖屏变化时实现
+     */
     protected abstract void setConfigurationChanged();
 
     /**
@@ -415,4 +397,30 @@ public abstract class BaseActivity<M extends BaseModel, V, P extends Presenter<V
      * @return
      */
     protected abstract void retryListener();
+
+    // activity动画
+    @Override
+    public void startActivity(Intent intent) {
+        super.startActivity(intent);
+        if (!getRunningActivityName().equals("ImagePreviewActivity")) {
+            overridePendingTransition(R.anim.scale_fade_in, R.anim.scale_fade_out);
+        }
+    }
+    @Override
+    public void startActivityForResult(Intent intent, int requestCode) {
+        super.startActivityForResult(intent, requestCode);
+        overridePendingTransition(R.anim.scale_fade_in, R.anim.scale_fade_out);
+    }
+    @Override
+    public void finish() {
+        super.finish();
+        if (!getRunningActivityName().equals("ImagePreviewActivity")) {
+            overridePendingTransition(R.anim.scale_fade_in, R.anim.scale_fade_out);
+        }
+    }
+    @Override
+    public void startActivityForResult(Intent intent, int requestCode, Bundle options) {
+        super.startActivityForResult(intent, requestCode, options);
+        overridePendingTransition(R.anim.scale_fade_in, R.anim.scale_fade_out);
+    }
 }

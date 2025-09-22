@@ -7,6 +7,7 @@ import my.project.moviesbox.database.dao.TDownloadDataDao;
 import my.project.moviesbox.database.dao.TVideoDao;
 import my.project.moviesbox.database.entity.TDownload;
 import my.project.moviesbox.database.entity.TDownloadData;
+import my.project.moviesbox.database.entity.TDownloadDataWithFields;
 import my.project.moviesbox.database.entity.TDownloadWithFields;
 import my.project.moviesbox.utils.Utils;
 
@@ -159,5 +160,25 @@ public class TDownloadManager extends BaseManager {
     public static void deleteAllDownloads() {
         tDownloadDao.deleteAllDownload();
         tDownloadDataDao.deleteAllDownloadData();
+    }
+
+    /**
+     * 查询清单下所有下载完成的文件总数
+     * @param directoryId
+     * @return
+     */
+    public static int countAllCompletedDownloadDataByDirectoryId(String directoryId) {
+        return tDownloadDataDao.countAllCompletedDownloadDataByDirectoryId(directoryId);
+    }
+
+    /**
+     * 查询清单下所有下载完成的文件
+     * @param directoryId
+     * @param limit
+     * @param offset
+     * @return
+     */
+    public static List<TDownloadDataWithFields> getDownloadDataListByDirectoryId(String directoryId, int limit, int offset) {
+        return tDownloadDataDao.queryAllDownloadDataByDirectoryId(directoryId, limit, offset);
     }
 }

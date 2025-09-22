@@ -1,17 +1,18 @@
-<RelativeLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
 
-        <androidx.core.widget.NestedScrollView
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -24,6 +25,7 @@
                 <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/ignoreTs"
                     style="@style/Widget.App.Switch"
+                    android:checked="true"
                     android:textSize="16sp"
                     android:text="@string/setM3u8QueueIgnoreTs"
                     android:layout_width="match_parent"
@@ -43,21 +45,33 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
-                <com.google.android.material.slider.Slider
-                    android:id="@+id/setM3u8QueueNumSlider"
-                    android:layout_marginTop="8dp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:trackHeight="24dp"
-                    app:trackColorInactive="@color/pink50"
-                    app:trackColorActive="@color/pinka100"
-                    app:tickColorActive="@color/pink50"
-                    app:tickColorInactive="@color/pinka100"
-                    app:thumbColor="@color/pinka100"
-                    android:value="20"
-                    android:stepSize="1"
-                    android:valueFrom="4.0"
-                    android:valueTo="100.0" />
+            </LinearLayout>
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/setM3u8QueueNumSlider"
+                android:layout_marginTop="8dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:trackHeight="18dp"
+                app:trackColorInactive="@color/pink50"
+                app:trackColorActive="@color/pinka100"
+                app:tickColorActive="@color/pink50"
+                app:tickColorInactive="@color/pinka100"
+                app:thumbColor="@color/pinka100"
+                android:value="20"
+                android:stepSize="1"
+                android:valueFrom="4.0"
+                android:valueTo="100.0" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:paddingLeft="25dp"
+                android:paddingRight="25dp"
+                android:orientation="vertical">
 
                 <ImageView
                     android:src="@drawable/round_info_24"
@@ -96,54 +110,10 @@
                     android:textColor="@color/sub_content_color"
                     android:text="@string/setM3u8RemoveAdInfo" />
 
-                <!--<LinearLayout
-                    android:id="@+id/removeAdBox"
-                    android:layout_marginTop="8dp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/regLayout"
-                        android:layout_marginTop="8dp"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/setM3u8RegRemoveAdTitle"
-                        android:focusableInTouchMode="true"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:inputType="textMultiLine"
-                            android:text="@string/setM3u8RegRemoveAdDefaultConfig"
-                            android:textCursorDrawable="@null"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <Button
-                        android:id="@+id/reset"
-                        android:text="@string/setM3u8RegRemoveAdRegsReset"
-                        style="@style/Button.Icon"
-                        app:iconGravity="start"
-                        android:layout_gravity="right"
-                        app:icon="@drawable/round_undo_24"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textSize="14sp"
-                        android:textColor="@color/pink200"
-                        android:text="@string/setM3u8RemoveAdRegs" />
-
-                </LinearLayout>-->
-
             </LinearLayout>
 
-        </androidx.core.widget.NestedScrollView>
+        </LinearLayout>
 
-    </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
-</RelativeLayout>
+</LinearLayout>

@@ -1,29 +1,15 @@
 package my.project.moviesbox.application;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.os.Handler;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.animation.BounceInterpolator;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import androidx.annotation.ColorInt;
-import androidx.annotation.DrawableRes;
 
 import com.arialyy.aria.core.Aria;
 import com.bumptech.glide.Glide;
-import com.google.android.material.snackbar.Snackbar;
 import com.kongzue.dialogx.DialogX;
 import com.kongzue.dialogx.dialogs.PopTip;
-import com.kongzue.dialogx.style.IOSStyle;
+import com.kongzue.dialogx.style.MaterialStyle;
 
 import org.conscrypt.Conscrypt;
 
@@ -39,7 +25,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import my.project.moviesbox.R;
 import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.config.MyExceptionHandler;
 import my.project.moviesbox.enums.DialogXTipEnum;
@@ -84,12 +69,13 @@ public class App extends Application {
         // 设置全局异常处理器
         Thread.setDefaultUncaughtExceptionHandler(new MyExceptionHandler());
         // 设置最大下载数为1，多个同时下载经常出现下载失败
-        Aria.get(this).getDownloadConfig().setMaxTaskNum(1);
+        Aria.get(this).getDownloadConfig().setMaxTaskNum(3);
         Aria.get(this).getDownloadConfig().setConvertSpeed(true);
         // 检查更新
 //        startService(new Intent(getInstance(), CheckUpdateService.class));
 //        DialogX.globalStyle = new MaterialYouStyle();
-        DialogX.globalStyle = new IOSStyle();
+//        DialogX.globalStyle = new IOSStyle();
+        DialogX.globalStyle = new MaterialStyle();
         DialogX.onlyOnePopTip = false;
         DialogX.init(this);
     }
@@ -152,59 +138,6 @@ public class App extends Application {
                 PopTip.show(msg);
                 break;
         }
-    }
-
-    public void showImgSnackbarMsg(View view, @DrawableRes int iconRes, @ColorInt int iconTintColor, String msg) {
-        Snackbar snackbar = Snackbar.make(view, "", Snackbar.LENGTH_SHORT);
-        Snackbar.SnackbarLayout layout = (Snackbar.SnackbarLayout) snackbar.getView();
-        // 设置自定义布局
-        LayoutInflater inflater = LayoutInflater.from(this);
-        View snackbarView = inflater.inflate(R.layout.custom_snackbar_layout, null);
-        layout.addView(snackbarView, 0);
-        // 设置图标
-        ImageView icon = snackbarView.findViewById(R.id.icon);
-        icon.setImageResource(iconRes);
-        icon.setImageTintList(ColorStateList.valueOf(iconTintColor));
-        // 设置文本
-        TextView textView = snackbarView.findViewById(R.id.title);
-        textView.setText(msg);
-        textView.setTextColor(appContext.getColor(R.color.night_text_color));
-        snackbar.setBackgroundTint(appContext.getColor(R.color.pink200));
-        snackbar.show();
-        performScaleAnimation(icon);
-    }
-
-    public static void performScaleAnimation(View v) {
-        v.setScaleX(0);
-        v.setScaleY(0);
-        v.setVisibility(View.INVISIBLE);
-        // 放大动画
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(v, View.SCALE_X, 0f, 1.2f);
-        scaleX.setDuration(500);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(v, View.SCALE_Y, 0f, 1.2f);
-        scaleY.setDuration(500);
-
-        // 弹性动画
-        ObjectAnimator scaleXBack = ObjectAnimator.ofFloat(v, View.SCALE_X, 1f, 0.8f, 1.2f, 1f);
-        scaleXBack.setDuration(500);
-        scaleXBack.setInterpolator(new BounceInterpolator());
-        ObjectAnimator scaleYBack = ObjectAnimator.ofFloat(v, View.SCALE_Y, 1f, 0.8f, 1.2f, 1f);
-        scaleYBack.setDuration(500);
-        scaleYBack.setInterpolator(new BounceInterpolator());
-
-        AnimatorSet scaleSet = new AnimatorSet();
-        scaleSet.play(scaleX).with(scaleY);
-        AnimatorSet bounceSet = new AnimatorSet();
-        bounceSet.play(scaleXBack).with(scaleYBack);
-
-        scaleSet.start();
-        v.setVisibility(View.VISIBLE);
-        scaleSet.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                bounceSet.start();
-            }
-        });
     }
 
     public static void addDestroyActivity(Activity activity, String activityName) {

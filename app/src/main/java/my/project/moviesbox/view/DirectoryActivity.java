@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
@@ -18,25 +17,27 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.shape.MaterialShapeDrawable;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import butterknife.BindView;
-import butterknife.OnClick;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.DirectoryAdapter;
 import my.project.moviesbox.custom.FabExtendingOnScrollListener;
 import my.project.moviesbox.database.entity.TDirectory;
 import my.project.moviesbox.database.enums.DirectoryTypeEnum;
 import my.project.moviesbox.database.manager.TDirectoryManager;
+import my.project.moviesbox.databinding.ActivityDirectoryListBinding;
+import my.project.moviesbox.databinding.DialogDirectoryBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
-import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.base.BaseActivity;
 
 /**
  * @author Li
@@ -44,36 +45,14 @@ import my.project.moviesbox.utils.Utils;
  * @description: 注释
  * @date 2024/11/1 15:42
  */
-public class DirectoryActivity extends BaseActivity {
-    @BindView(R.id.toolbar)
-    protected Toolbar toolbar;
-    @BindView(R.id.rv_list)
-    protected RecyclerView recyclerView;
+public class DirectoryActivity extends BaseActivity<ActivityDirectoryListBinding> {
     protected DirectoryAdapter directoryAdapter;
-    @BindView(R.id.mSwipe)
-    SwipeRefreshLayout mSwipe;
     protected String type;
     protected boolean showConfigBtn = false;
-    @BindView(R.id.addDirectory)
-    protected ExtendedFloatingActionButton addDirectory;
     protected int fabHeight = 0;
     protected List<TDirectory> list = new ArrayList<>();
     protected DirectoryTypeEnum directoryTypeEnum;
 
-    @Override
-    protected Presenter createPresenter() {
-        return null;
-    }
-
-    @Override
-    protected void loadData() {
-
-    }
-
-    @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_directory_list;
-    }
 
     @Override
     protected void init() {
@@ -87,6 +66,90 @@ public class DirectoryActivity extends BaseActivity {
     @Override
     protected void initBeforeView() {
 
+    }
+
+    /**
+     * 子类实现，返回具体的 ViewBinding
+     *
+     * @param inflater
+     * @return
+     */
+    @Override
+    protected ActivityDirectoryListBinding inflateBinding(LayoutInflater inflater) {
+        return ActivityDirectoryListBinding.inflate(inflater);
+    }
+
+    protected AppBarLayout appBar;
+    protected Toolbar toolbar;
+    protected RecyclerView recyclerView;
+    SwipeRefreshLayout mSwipe;
+    protected ExtendedFloatingActionButton addDirectory;
+    /**
+     * 初始化控件
+     */
+    @Override
+    protected void findById() {
+        appBar = binding.toolbarLayout.appBar;
+        appBar.setStatusBarForeground(MaterialShapeDrawable.createWithElevationOverlay(this));
+        toolbar = binding.toolbarLayout.toolbar;
+        recyclerView = binding.contentLayout.rvList;
+        mSwipe = binding.contentLayout.mSwipe;
+        addDirectory = binding.addDirectory;
+    }
+
+    @Override
+    public void initClickListeners() {
+        addDirectory.setOnClickListener(view -> {
+            Utils.setVibration(view);
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.DialogStyle);
+            builder.setTitle(getString(R.string.createNewList));
+            DialogDirectoryBinding dialogBinding = DialogDirectoryBinding.inflate(LayoutInflater.from(this));
+            TextInputLayout textInputLayout = dialogBinding.name;
+            textInputLayout.getEditText().addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                    textInputLayout.setError(null);
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+
+                }
+            });
+            final InputMethodManager imm = Objects.requireNonNull((InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE));
+            textInputLayout.getEditText().postDelayed(() -> imm.showSoftInput(textInputLayout.getEditText(), InputMethodManager.SHOW_IMPLICIT), 100);
+            textInputLayout.getEditText().setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus)
+                    Objects.requireNonNull(alertDialog.getWindow()).clearFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+            });
+            builder.setPositiveButton("创建并保存", (dialog, which) -> {
+                String text = textInputLayout.getEditText().getText().toString().replaceAll(" ", "");
+                if (text.equals(getString(R.string.defaultList))) {
+                    textInputLayout.setError(getString(R.string.listNameCannotBeTheDefaultName));
+                    application.showToastMsg(getString(R.string.listNameCannotBeTheDefaultName), DialogXTipEnum.ERROR);
+                } else if (!Utils.isNullOrEmpty(text)) {
+                    alertDialog.dismiss();
+                    String directoryId = TDirectoryManager.insert(text, parserInterface.getSource(), directoryTypeEnum);
+                    closeActivity(directoryId);
+                    onCreateResult(directoryId);
+                }
+                else {
+                    textInputLayout.setError(getString(R.string.listNameCannotBeEmpty));
+                    application.showToastMsg(getString(R.string.listNameCannotBeEmpty), DialogXTipEnum.ERROR);
+                }
+            });
+            builder.setNegativeButton(getString(R.string.defaultNegativeBtnText), null);
+            builder.setCancelable(false);
+            alertDialog = builder.setView(dialogBinding.getRoot()).create();
+            alertDialog.show();
+            Utils.dialogSetRenderEffect(this);
+            alertDialog.setOnDismissListener(dialog -> Utils.dialogClearRenderEffect(this));
+        });
     }
 
     @Override
@@ -110,11 +173,11 @@ public class DirectoryActivity extends BaseActivity {
         showConfigBtn = bundle.getBoolean("showConfigBtn");
         if (Objects.equals(type, DirectoryTypeEnum.FAVORITE.getName())) {
             directoryTypeEnum = DirectoryTypeEnum.FAVORITE;
-            list = TDirectoryManager.queryFavoriteDirectoryList(showConfigBtn);
+            list = TDirectoryManager.queryFavoriteDirectoryList(showConfigBtn, false);
         }
         else {
             directoryTypeEnum = DirectoryTypeEnum.DOWNLOAD;
-            list = TDirectoryManager.queryDownloadDirectoryList(showConfigBtn);
+            list = TDirectoryManager.queryDownloadDirectoryList(showConfigBtn, false);
         }
     }
 
@@ -161,57 +224,6 @@ public class DirectoryActivity extends BaseActivity {
                 }
             });
         }
-    }
-
-    @OnClick(R.id.addDirectory)
-    public void addDirectory() {
-        Utils.setVibration(addDirectory);
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.DialogStyle);
-        builder.setTitle(getString(R.string.createNewList));
-        View view = LayoutInflater.from(this).inflate(R.layout.dialog_directory, null);
-        TextInputLayout textInputLayout = view.findViewById(R.id.name);
-        textInputLayout.getEditText().addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                textInputLayout.setError(null);
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-
-            }
-        });
-        final InputMethodManager imm = Objects.requireNonNull((InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE));
-        textInputLayout.getEditText().postDelayed(() -> imm.showSoftInput(textInputLayout.getEditText(), InputMethodManager.SHOW_IMPLICIT), 100);
-        textInputLayout.getEditText().setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus)
-                Objects.requireNonNull(alertDialog.getWindow()).clearFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
-        });
-        builder.setPositiveButton("创建并保存", (dialog, which) -> {
-            String text = textInputLayout.getEditText().getText().toString().replaceAll(" ", "");
-            if (text.equals(getString(R.string.defaultList))) {
-                textInputLayout.setError(getString(R.string.listNameCannotBeTheDefaultName));
-                application.showToastMsg(getString(R.string.listNameCannotBeTheDefaultName), DialogXTipEnum.ERROR);
-            } else if (!Utils.isNullOrEmpty(text)) {
-                alertDialog.dismiss();
-                String directoryId = TDirectoryManager.insert(text, parserInterface.getSource(), directoryTypeEnum);
-                closeActivity(directoryId);
-                onCreateResult(directoryId);
-            }
-            else {
-                textInputLayout.setError(getString(R.string.listNameCannotBeEmpty));
-                application.showToastMsg(getString(R.string.listNameCannotBeEmpty), DialogXTipEnum.ERROR);
-            }
-        });
-        builder.setNegativeButton(getString(R.string.defaultNegativeBtnText), null);
-        builder.setCancelable(false);
-        alertDialog = builder.setView(view).create();
-        alertDialog.show();
     }
 
     protected void onCreateResult (String directoryId) {

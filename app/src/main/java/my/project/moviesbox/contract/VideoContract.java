@@ -22,7 +22,7 @@ public interface VideoContract {
         void cancelDialog();
         void successPlayUrl(List<DialogItemBean> urls);
         void errorPlayUrl();
-        void errorNet(String msg);
+        void errorNet(boolean onlyGetPlayUrl, String msg);
         void successDramasList(List<DetailsDataBean.DramasItem> dramasItems);
         void errorDramasList();
         void successOnlyPlayUrl(List<DialogItemBean> urls);
@@ -32,7 +32,7 @@ public interface VideoContract {
     interface LoadDataCallback extends BaseLoadDataCallback {
         void successPlayUrl(List<DialogItemBean> urls);
         void errorPlayUrl();
-        void errorNet(String msg);
+        void errorNet(boolean onlyGetPlayUrl, String msg);
         void successDramasList(List<DetailsDataBean.DramasItem> dramasItems);
         void errorDramasList();
         void successOnlyPlayUrl(List<DialogItemBean> urls);

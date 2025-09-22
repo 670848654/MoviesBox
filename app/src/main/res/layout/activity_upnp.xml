@@ -137,7 +137,8 @@
                     android:id="@+id/play"
                     style="?attr/materialButtonOutlinedStyle"
                     android:textColor="@color/pinka200"
-                    android:layout_width="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:padding="5dp"
                     android:text="@string/upnpPlayBtn" />
@@ -147,7 +148,8 @@
                     style="?attr/materialButtonOutlinedStyle"
                     android:backgroundTint="@color/button_group_background_selector"
                     android:textColor="@color/pinka200"
-                    android:layout_width="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:padding="5dp"
                     android:text="@string/upnpPauseBtn" />
@@ -157,7 +159,8 @@
                     style="?attr/materialButtonOutlinedStyle"
                     android:backgroundTint="@color/button_group_background_selector"
                     android:textColor="@color/pinka200"
-                    android:layout_width="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:padding="5dp"
                     android:text="@string/upnpStopBtn" />
@@ -167,7 +170,8 @@
                     style="?attr/materialButtonOutlinedStyle"
                     android:backgroundTint="@color/button_group_background_selector"
                     android:textColor="@color/pinka200"
-                    android:layout_width="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:padding="5dp"
                     android:text="@string/upnpExitBtn" />

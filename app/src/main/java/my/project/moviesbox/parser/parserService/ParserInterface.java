@@ -20,12 +20,14 @@ import my.project.moviesbox.parser.config.FavoriteItemStyleEnum;
 import my.project.moviesbox.parser.config.ItemStyleEnum;
 import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
+import my.project.moviesbox.strategy.danmu.DanmuResultEnum;
 import my.project.moviesbox.strategy.danmu.DanmuStrategyFactory;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
-import my.project.moviesbox.view.BaseActivity;
 import my.project.moviesbox.view.PlayerActivity;
 import my.project.moviesbox.view.SearchActivity;
 import my.project.moviesbox.view.VodListActivity;
+import my.project.moviesbox.view.base.BaseActivity;
+import my.project.moviesbox.view.fragment.HomeFragment;
 import okhttp3.FormBody;
 
 /**
@@ -93,6 +95,15 @@ public interface ParserInterface {
      * @return
      */
     Map<String,String> setImgHeaders();
+
+    /**
+     * 播放(预览视频)时请求头部
+     * 某些网站播放视频需要添加请求头部
+     * @return
+     */
+    default HashMap<String, String> setPreviewPlayerHeaders() {
+        return new HashMap<>();
+    }
 
     /**
      * 播放时请求头部
@@ -197,7 +208,7 @@ public interface ParserInterface {
     /**
      * 设置分类数据列表参数长度
      * <p>根据站点分类地址自行实现如何定义参数</p>
-     * <p>将在 {@link my.project.moviesbox.view.HomeFragment}中跳转
+     * <p>将在 {@link HomeFragment}中跳转
      * {@link my.project.moviesbox.view.ClassificationVodListActivity}时初始化数组，确保长度避免使用时出现下标越界</p>
      * @return
      */
@@ -238,12 +249,14 @@ public interface ParserInterface {
     String getDanmuUrl(String[] params);
 
     /**
-     * 弹幕接口返回是否为JSON
+     * 弹幕接口返回是否为JSON，默认使用返回XML
      * <p>注：弹幕只有两种格式 XML/JsonObject</p>
      * <p>JSON弹幕需自行实现弹幕解析{@link DanmuStrategyFactory#getStrategy}</p>
-     * @return true JSON格式 false XML格式
+     * @return {@link DanmuResultEnum#XML} Or {@link DanmuResultEnum#JSON}
      */
-    boolean getDanmuResultJson();
+    default DanmuResultEnum getDanmuResult() {
+        return DanmuResultEnum.XML;
+    }
 
     /**
      * <p>播放地址是否需要解析</p>
@@ -347,7 +360,7 @@ public interface ParserInterface {
      * @return 返回不能为0！！！
      */
     default int setDetailExpandListItemSize(boolean isPad) {
-        return isPad ? 8 : 4;
+        return isPad ? 6 : 4;
     }
     /****************************** 以下为通用横、竖屏列表数量接口 END ******************************/
 

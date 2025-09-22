@@ -30,6 +30,12 @@ public class DownloadModel extends BaseModel implements DownloadContract.Model {
         callback.downloadDataList(list);
     }
 
+    @Override
+    public void getDownloadDataListByDirectoryId(String directoryId, int offset, int limit, DownloadContract.LoadDataCallback callback) {
+        List<TDownloadDataWithFields> list = TDownloadManager.getDownloadDataListByDirectoryId(directoryId, limit, offset);
+        callback.downloadDataList(list);
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onWebViewEvent(HtmlSourceEvent event) {}
 }

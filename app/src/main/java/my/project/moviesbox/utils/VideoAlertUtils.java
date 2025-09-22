@@ -98,6 +98,8 @@ public class VideoAlertUtils {
         builder.setView(dialogView);
         alertDialog = builder.create();
         alertDialog.show();
+        Utils.dialogSetRenderEffect(activity);
+        alertDialog.setOnDismissListener(dialog -> Utils.dialogClearRenderEffect(activity));
         return alertDialog;
     }
 
@@ -127,6 +129,8 @@ public class VideoAlertUtils {
             builder.setNegativeButton(Utils.getString(R.string.defaultNegativeBtnText), null);
         alertDialog = builder.create();
         alertDialog.show();
+        Utils.dialogSetRenderEffect(activity);
+        alertDialog.setOnDismissListener(dialog -> Utils.dialogClearRenderEffect(activity));
         return alertDialog;
     }
 
@@ -136,11 +140,12 @@ public class VideoAlertUtils {
      * @param activityEnum EventBus订阅处理判断
      * @param sniffEnum 嗅探结果处理类型
      */
-    public void startSniffing(String url, VideoSniffEvent.ActivityEnum activityEnum, VideoSniffEvent.SniffEnum sniffEnum) {
+    public void startSniffing(String vodId, String url, VideoSniffEvent.ActivityEnum activityEnum, VideoSniffEvent.SniffEnum sniffEnum) {
         Activity activity = activityRef.get();
         if (activity == null || activity.isFinishing())
             return;
         Intent intent = new Intent(activity, SniffingVideoService.class);
+        intent.putExtra("vodId", vodId);
         intent.putExtra("url", url);
         intent.putExtra("activityEnum", activityEnum.name());
         intent.putExtra("sniffEnum", sniffEnum.name());
@@ -155,6 +160,7 @@ public class VideoAlertUtils {
         if (activity == null || activity.isFinishing())
             return;
         Utils.showAlert(activity,
+                R.drawable.round_warning_24,
                 activity.getString(R.string.errorDialogTitle),
                 activity.getString(R.string.sniffVodPlayUrlError),
                 false,

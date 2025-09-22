@@ -30,5 +30,17 @@
             app:layout_behavior=".custom.ScrollAwareBehavior"
             android:layout_margin="16dp" />
 
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/play_file_list"
+            android:src="@drawable/round_playlist_play_24"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            app:backgroundTint="@color/pinka200"
+            app:tint="@android:color/white"
+            android:visibility="gone"
+            app:layout_behavior=".custom.ScrollAwareBehavior"
+            android:layout_margin="16dp" />
+
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </LinearLayout>

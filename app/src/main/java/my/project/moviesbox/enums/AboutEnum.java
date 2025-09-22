@@ -41,8 +41,7 @@ public enum AboutEnum {
         for (AboutEnum aboutEnum : AboutEnum.values()) {
             if (turnOnHiddenFeatures
                     ||
-                    !aboutEnum.getTitle().equals(Utils.getString(R.string.vipVideoParserTitle))
-            )
+                    !aboutEnum.getTitle().equals(Utils.getString(R.string.vipVideoParserTitle)))
                 settingAboutBeans.add(new SettingAboutBean(aboutEnum.getIcon(), aboutEnum.getTitle(), aboutEnum.getSubTitle()));
         }
         return settingAboutBeans;

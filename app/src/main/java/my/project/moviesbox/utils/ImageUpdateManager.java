@@ -98,9 +98,9 @@ public class ImageUpdateManager implements UpdateImgContract.View {
                     for (int i=0,size=tFavoriteWithFields.size(); i<size; i++) {
                         if (task.getDescUrl().contains(tFavoriteWithFields.get(i).getTFavorite().getVideoUrl())) {
                             tFavoriteWithFields.get(i).getTFavorite().setVideoImgUrl(imgUrl);
-                            tFavoriteWithFields.get(i).setRefreshCover(false);
-                            LogUtil.logInfo("title", tFavoriteWithFields.get(i).getVideoTitle());
-                            LogUtil.logInfo("index", i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0) + "");
+                            tFavoriteWithFields.get(i).setRefreshCover(true);
+//                            LogUtil.logInfo("title", tFavoriteWithFields.get(i).getVideoTitle());
+//                            LogUtil.logInfo("index", i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0) + "");
                             adapter.notifyItemChanged(i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0));
                             TVideoManager.updateImg(tFavoriteWithFields.get(i).getVideoId(), imgUrl, 0);
                             break;
@@ -112,9 +112,9 @@ public class ImageUpdateManager implements UpdateImgContract.View {
                     for (int i=0,size=tHistoryWithFields.size(); i<size; i++) {
                         if (task.getDescUrl().contains(tHistoryWithFields.get(i).getTHistory().getVideoDescUrl())) {
                             tHistoryWithFields.get(i).getTHistory().setVideoImgUrl(imgUrl);
-                            tHistoryWithFields.get(i).setRefreshCover(false);
-                            LogUtil.logInfo("title", tHistoryWithFields.get(i).getVideoTitle());
-                            LogUtil.logInfo("index", i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0) + "");
+                            tHistoryWithFields.get(i).setRefreshCover(true);
+//                            LogUtil.logInfo("title", tHistoryWithFields.get(i).getVideoTitle());
+//                            LogUtil.logInfo("index", i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0) + "");
                             adapter.notifyItemChanged(i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0));
                             TVideoManager.updateImg(tHistoryWithFields.get(i).getVideoId(), imgUrl, 1);
                             break;
@@ -180,7 +180,7 @@ public class ImageUpdateManager implements UpdateImgContract.View {
         taskQueue.add(new ImageUpdateTask(descUrl, oldImgUrl, data, adapter, updateImgEnum));
         if (!isUpdating) {
             processNextTask(); // 如果当前没有任务在处理，开始处理下一个任务
-            LogUtil.logInfo("addUpdateImgTask start", oldImgUrl);
+//            LogUtil.logInfo("addUpdateImgTask start", oldImgUrl);
         }
     }
 
@@ -193,7 +193,7 @@ public class ImageUpdateManager implements UpdateImgContract.View {
                 isEventBusRegistered = false;
             }
             updateImgPresenter.detachView();
-            LogUtil.logInfo("No Tasks", "");
+//            LogUtil.logInfo("No Tasks", "");
             return;
         }
 

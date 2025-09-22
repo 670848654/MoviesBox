@@ -51,6 +51,7 @@ import master.flame.danmaku.danmaku.model.android.Danmakus;
 import master.flame.danmaku.danmaku.parser.BaseDanmakuParser;
 import master.flame.danmaku.danmaku.parser.android.AndroidFileSource;
 import master.flame.danmaku.danmaku.util.DanmakuUtils;
+import my.project.moviesbox.utils.Utils;
 
 /**
   * @包名: my.project.moviesbox.custom
@@ -176,7 +177,7 @@ public class DanmukuXmlParser extends BaseDanmakuParser {
                 if (values.length > 0) {
                     long time = (long) (parseFloat(values[0]) * 1000); // 出现时间
                     int type = parseInteger(values[1]); // 弹幕类型
-                    float textSize = parseFloat(values[2]); // 字体大小
+//                    float textSize = parseFloat(values[2]); // 字体大小
                     int color = (int) ((0x00000000ff000000 | parseLong(values[3])) & 0x00000000ffffffff); // 颜色
                     // int poolType = parseInteger(values[5]); // 弹幕池类型（忽略
                     item = mContext.mDanmakuFactory.createDanmaku(type, mContext);
@@ -189,7 +190,7 @@ public class DanmukuXmlParser extends BaseDanmakuParser {
                         item.underlineColor = Color.TRANSPARENT;
                         item.borderColor = Color.TRANSPARENT;
                         item.priority = 0; //  一旦设置 >0的属性，那个防止重叠和最大行数就会失效
-                        item.textSize = textSize * (mDispDensity - 0.6f);
+                        item.textSize = (Utils.isPad() ? 26f : 22f) * (mDispDensity - 0.6f);
                     }
                 }
             }

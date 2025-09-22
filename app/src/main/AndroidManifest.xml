@@ -69,6 +69,14 @@
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
 
         <activity
+            android:name=".view.VerifyWebActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
+
+        <activity
+            android:name=".view.UpdateDomainActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
+
+        <activity
             android:name=".view.lazyLoadImage.DetailsLazyImgActivity"
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
 
@@ -90,6 +98,17 @@
             android:supportsPictureInPicture="true"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.MoviesBox.FullScreenTheme"/>
+
+        <activity
+            android:name=".view.LocalListPlayerActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden|uiMode"
+            android:excludeFromRecents="true"
+            android:resizeableActivity="true"
+            android:launchMode="singleTask"
+            android:supportsPictureInPicture="true"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.MoviesBox.FullScreenTheme"/>
+
 
         <activity android:name=".view.VipParsingInterfacesPlayerActivity"
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden|uiMode"
@@ -174,10 +193,10 @@
         <activity
             android:name=".parser.sourceCustomView.VerifySearchActivity"
             android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
-        
-        <!--<activity
-            android:name=".view.WebViewActivity"
-            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />-->
+
+        <activity
+            android:name=".view.SniffingVideoActivity"
+            android:configChanges="screenLayout|orientation|screenSize|smallestScreenSize|keyboardHidden" />
 
         <activity
             android:name=".view.ImagePreviewActivity"

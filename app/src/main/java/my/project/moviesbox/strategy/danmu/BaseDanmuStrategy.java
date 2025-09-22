@@ -5,6 +5,8 @@ import java.util.List;
 import my.project.moviesbox.R;
 import my.project.moviesbox.contract.DanmuContract;
 import my.project.moviesbox.parser.bean.DanmuDataBean;
+import my.project.moviesbox.parser.parserService.ParserInterface;
+import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.utils.Utils;
 
 /**
@@ -14,13 +16,11 @@ import my.project.moviesbox.utils.Utils;
  * @date 2025/6/20 9:29
  */
 public abstract class BaseDanmuStrategy implements DanmuStrategy {
-    /**
-     * 接口返回弹幕格式 true:json格式 false:xml格式
-     */
-    protected final boolean resultIsJson;
-
-    public BaseDanmuStrategy(boolean resultIsJson) {
-        this.resultIsJson = resultIsJson;
+    protected static ParserInterface parserInterface;
+    protected static DanmuResultEnum danmuResult;
+    static {
+        parserInterface = ParserInterfaceFactory.getParserInterface();
+        danmuResult = parserInterface.getDanmuResult();
     }
 
     @Override
@@ -41,21 +41,23 @@ public abstract class BaseDanmuStrategy implements DanmuStrategy {
      * @param callback  回调
      */
     @Override
-    public void parseDanmu(String source, DanmuContract.LoadDataCallback callback) {
+    public void parseDanmu(String source, DanmuResultEnum danmuResult, DanmuContract.LoadDataCallback callback) {
         if (Utils.isNullOrEmpty(source)) {
             callback.errorDanmu(Utils.getString(R.string.errorDanmuMsg));
             return;
         }
-
-        if (resultIsJson) {
-            try {
-                List<DanmuDataBean> list = parseDanmuJson(source);
-                callback.successDanmuJson(list);
-            } catch (Exception e) {
-                callback.errorDanmu("JSON解析失败: " + e.getMessage());
-            }
-        } else {
-            callback.successDanmuXml(source);
+        switch (danmuResult) {
+            case XML:
+                callback.successDanmuXml(source);
+                break;
+            case JSON:
+                try {
+                    List<DanmuDataBean> list = parseDanmuJson(source);
+                    callback.successDanmuJson(list);
+                } catch (Exception e) {
+                    callback.errorDanmu("JSON解析失败: " + e.getMessage());
+                }
+                break;
         }
     }
 

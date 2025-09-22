@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.MoviesBox" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.MoviesBox" parent="Theme.Material3Expressive.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <!-- 应用的主要色调,actionBar默认使用该颜色，Toolbar导航栏的底色 -->
         <item name="colorPrimary">@color/pink500</item>
@@ -19,7 +19,7 @@
         <item name="android:windowTranslucentStatus">false</item>
         <!-- 改变status bar 文字颜色， true黑色， false白色，API23可用-->
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:windowTranslucentNavigation">false</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:textColorPrimary">@color/night_text_color</item>
 
@@ -69,16 +69,14 @@
     </style>
 
     <!-- BUTTON 主题 -->
-    <style name="Button.Icon" parent="Widget.Material3.Button.IconButton">
+    <style name="Button.Icon" parent="Widget.Material3Expressive.Button.IconButton">
         <item name="materialThemeOverlay">@style/TextButton</item>
         <item name="backgroundTint">@color/translucent</item>
-        <item name="rippleColor">@color/m3_text_button_ripple_color_selector</item>
     </style>
 
     <style name="Button.IconButton" parent="Widget.Material3.Button.Icon">
         <item name="materialThemeOverlay">@style/TextButton</item>
         <item name="backgroundTint">@color/night_text_button_background_color_selector</item>
-        <item name="rippleColor">@color/m3_text_button_ripple_color_selector</item>
     </style>
 
     <style name="Button.OutlinedButton.Icon" parent="Widget.Material3.Button.OutlinedButton.Icon">
@@ -87,18 +85,16 @@
         <item name="materialThemeOverlay">@style/TextButton</item>
         <item name="backgroundTint">@color/night_text_button_background_color_selector</item>
         <item name="strokeColor">?attr/colorOnSurface</item>
-        <item name="rippleColor">@color/m3_text_button_ripple_color_selector</item>
     </style>
 
     <style name="Button.TextButton" parent="Widget.Material3.Button.TextButton">
         <item name="materialThemeOverlay">@style/TextButton</item>
         <item name="backgroundTint">@color/night_text_button_background_color_selector</item>
-        <item name="rippleColor">@color/m3_text_button_ripple_color_selector</item>
     </style>
+
     <style name="Button.ElevatedButton" parent="Widget.Material3.Button.ElevatedButton">
         <item name="materialThemeOverlay">@style/TextButton</item>
         <item name="backgroundTint">@color/night_text_button_background_color_selector</item>
-        <item name="rippleColor">@color/m3_text_button_ripple_color_selector</item>
         <item name="shapeAppearance">@style/ShapeAppearance.App.SmallComponent</item>
     </style>
     <style name="TextButton">
@@ -115,6 +111,8 @@
     <!-- CARD 主题 -->
     <style name="CardView" parent="Widget.Material3.CardView.Elevated">
         <item name="cardBackgroundColor">@color/night_color_primary</item>
+        <!-- 设置圆角 -->
+        <item name="shapeAppearance">@style/ShapeAppearance.DefaultCard</item>
     </style>
 
     <style name="DefaultCardView" parent="Widget.Material3.CardView.Elevated">
@@ -122,12 +120,25 @@
         <item name="strokeColor">@color/defaultCardStrokeColor</item>
         <item name="strokeWidth">0.5dp</item>
         <item name="cardElevation">0dp</item>
+        <!-- 设置圆角 -->
+        <item name="shapeAppearance">@style/ShapeAppearance.DefaultCard</item>
+    </style>
+
+    <style name="HomeItem">
+        <item name="android:background">@color/night_color_home_tem</item>
     </style>
 
     <style name="CardTransparentView" parent="Widget.Material3.CardView.Elevated">
         <item name="cardBackgroundColor">@color/translucent</item>
         <item name="strokeColor">@null</item>
         <item name="cardElevation">0dp</item>
+        <!-- 设置圆角 -->
+        <item name="shapeAppearance">@style/ShapeAppearance.DefaultCard</item>
+    </style>
+
+    <!-- 自定义圆角样式 -->
+    <style name="ShapeAppearance.DefaultCard" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerSize">4dp</item>
     </style>
 
     <!-- SWITCH STYLE -->
@@ -161,15 +172,15 @@
         <item name="shapeAppearance">@style/ShapeAppearance.App.SmallComponent</item>
     </style>
 
-    <style name="DialogStyle" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+    <style name="DialogStyle" parent="ThemeOverlay.Material3.MaterialAlertDialog.Centered">
         <item name="android:windowSoftInputMode">stateVisible|adjustPan</item>
         <item name="colorPrimary">@color/night_text_color</item>
         <item name="android:background">@color/night_color_primary</item>
-        <item name="colorSecondary">@color/night_color_primary</item>
+        <item name="colorSecondary">@color/night_text_color</item>
+        <item name="colorOnSurfaceVariant">@color/night_text_color</item>
         <item name="colorSurface">@color/night_color_primary</item>
-        <item name="colorOnSurface">@color/night_color_primary</item>
-        <item name="alertDialogStyle">@style/MaterialAlertDialog.App</item>
-        <item name="materialAlertDialogTitleTextStyle">@style/MaterialAlertDialog.App.Title.Text</item>
+        <item name="colorOnSurface">@color/night_text_color</item>
+<!--        <item name="alertDialogStyle">@style/MaterialAlertDialog.App</item>-->
         <item name="buttonBarPositiveButtonStyle">@style/ThemeOverlay.App.Button</item>
         <item name="buttonBarNeutralButtonStyle">@style/ThemeOverlay.App.Button</item>
         <item name="buttonBarNegativeButtonStyle">@style/ThemeOverlay.App.Button</item>
@@ -225,7 +236,7 @@
         <item name="android:navigationBarColor" tools:ignore="NewApi">@android:color/transparent</item>
     </style>
 
-    <style name="BottomNavigationView">
+    <style name="BottomNavigationView" parent="Widget.Material3Expressive.BottomNavigationView">
         <item name="android:background">@color/night_color_primary</item>
     </style>
 
@@ -294,5 +305,20 @@
     <style name="BottomDialogAnimation" parent="android:Animation">
         <item name="android:windowEnterAnimation">@anim/translate_dialog_in</item>
         <item name="android:windowExitAnimation">@anim/translate_dialog_out</item>
+    </style>
+
+    <style name="ShapeAppearance.MyPoster" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="Widget.MyApp.SearchBar" parent="Widget.Material3Expressive.SearchBar.AppBarWithSearch">
+        <item name="android:background">#383838</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="adaptiveMaxWidthEnabled">false</item>
+    </style>
+
+    <style name="Widget.MyApp.SearchView" parent="Widget.Material3.SearchView">
+        <item name="backgroundTint">@color/night_color_primary</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 </resources>

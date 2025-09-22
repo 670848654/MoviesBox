@@ -161,4 +161,43 @@ public interface TDownloadDataDao {
      */
     @Query("select watchProgress from TDownloadData where downloadDataId=:id")
     long queryDownloadDataProgressById(String id);
+
+    /**
+     * 查询清单下所有下载完成的文件总数
+     * @param directoryId
+     * @return
+     */
+    @Query("SELECT COUNT(*) " +
+            "FROM TDownloadData t1 " +
+            "LEFT JOIN TDownload t2 ON t1.linkId = t2.downloadId " +
+            "WHERE t1.complete = 1 AND " +
+            "      (:directoryId = 'all' OR " +
+            "       (:directoryId = '' AND t2.directoryId IS NULL) OR " +
+            "       (:directoryId != '' AND :directoryId != 'all' AND t2.directoryId = :directoryId))")
+    int countAllCompletedDownloadDataByDirectoryId(String directoryId);
+
+    /**
+     * 查询清单下所有下载完成的文件
+     * @param directoryId
+     * @param limit
+     * @param offset
+     * @return
+     */
+    @Query("SELECT t1.*, " +
+            "       t2.videoImgUrl AS videoImgUrl, " +
+            "       t2.createTime AS createTime, " +
+            "       t3.videoTitle AS videoTitle, " +
+            "       t3.videoSource AS videoSource " +
+            "FROM TDownloadData t1 " +
+            "LEFT JOIN TDownload t2 ON t1.linkId = t2.downloadId " +
+            "LEFT JOIN TVideo t3 ON t2.linkId = t3.videoId " +
+            "WHERE t1.complete = 1 AND " +
+            "      (:directoryId = 'all' OR " +
+            "       (:directoryId = '' AND t2.directoryId IS NULL) OR " +
+            "       (:directoryId != '' AND :directoryId != 'all' AND t2.directoryId = :directoryId)) " +
+            "ORDER BY t2.createTime DESC, " +
+            "         t1.videoPlaySource ASC, " +
+            "         t1.videoNumber ASC " +
+            "LIMIT :limit OFFSET :offset")
+    List<TDownloadDataWithFields> queryAllDownloadDataByDirectoryId(String directoryId, int limit, int offset);
 }

@@ -7,7 +7,7 @@
     <string name="siteDomainName">站点域名</string>
     <string name="setDomainTitle">网站域名配置</string>
     <string name="setDomainDialogTitle">设置域名&lt;font color=\'red\'&gt;*PC端*&lt;/font&gt;</string>
-    <string name="setDomainDialogSubContent">该功能在网站域名变更后导致无法通过旧域名访问从而获取数据异常时使用。\n如果网站仅变更域名，网页布局无变动，你可在此输入相关站点的新域名保存即可。</string>
+    <string name="setDomainDialogSubContent">该功能在网站域名变更后导致无法通过旧域名访问从而获取数据异常时使用。\n如果网站仅变更域名，网页布局无变动，你可在此输入相关站点的新域名保存即可。\n注意：网站域名必须是PC端域名，绝大部分网站移动端与PC端网页布局是不同的！</string>
     <string name="setDomainReleaseSubContent">🚩站点发布页：</string>
     <string name="setDomainSuccessText">已修改域名为：%s</string>
     <string name="setDomainErrorText1">域名不能为空</string>
@@ -18,6 +18,17 @@
         <item>http://</item>
         <item>https://</item>
     </string-array>
+
+    <string name="updateDomainTitle">检查所有站点域名</string>
+    <string name="updateDomainSubContent">通过API检查所有站点域名是否更新</string>
+    <string name="updateDomainDescContent">我并不经常使用所以该API更新随缘，如需自己维护域名可以改为你自己的API地址（确保JSON格式一致，其中的站点标识KEY[index]不能变更）！</string>
+    <string name="updateDomainApiTitle">API地址</string>
+    <string name="updateDomainApiUrl">https://670848654.github.io/MoviesBoxApi/updateDomain.json</string>
+    <string name="updateDomainSaveBtn">保存API</string>
+    <string name="updateDomainGetBtn">获取数据</string>
+    <string name="updateDomainUpdateConnectMsg">获取数据中，请稍后…</string>
+    <string name="updateDomainUpdateBtn">确认变更</string>
+    <string name="updateDomainUpdateMsg">更新域名中，请稍后…</string>
 
     <string name="enableSniffTitle">是否开启视频嗅探</string>
     <string name="enableSniffSubContent">当常规解析失败时尝试视频资源嗅探</string>
@@ -32,6 +43,7 @@
     <string name="enableByPassCFTimeOut">超时时间</string>
     <string name="enableByPassCFTimeOutSubContent">设置超时时间，超过设定时间后无论是否成功强制中断访问，单位为秒，范围 1~60秒。</string>
     <string name="onlyEnableByPassCF">仅开启尝试绕过浏览器安全检测时可用</string>
+    <string name="enableOrNot">是否开启</string>
 
     <string name="setPlayerTitle">视频播放器</string>
     <string-array name="setPlayerItems">
@@ -39,7 +51,7 @@
         <item>外置</item>
     </string-array>
 
-    <string name="setPlayerKernelTitle">播放器内核</string>
+    <string name="setPlayerKernelTitle">内置播放器内核</string>
     <string-array name="setPlayerKernelItems">
         <item>ExoPlayer</item>
         <item>IjkPlayer</item>

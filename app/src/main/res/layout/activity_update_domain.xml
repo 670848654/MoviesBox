@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/toolbarLayout"
+        layout="@layout/toolbar" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:scrollbars="none"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:padding="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:text="@string/updateDomainDescContent" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/apiLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/updateDomainApiTitle"
+                    app:errorEnabled="true"
+                    android:textColorHint="@color/m3_textfield_label_color"
+                    app:boxStrokeColor="@color/m3_textfield_label_color"
+                    app:hintTextColor="@color/m3_textfield_label_color"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:inputType="text"
+                        android:text="@string/updateDomainApiUrl"
+                        android:textCursorDrawable="@null"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+
+                <com.google.android.material.button.MaterialButtonGroup
+                    android:id="@+id/buttonGroup"
+                    style="@style/Widget.Material3.MaterialButtonGroup.Connected"
+                    android:layout_marginBottom="10dp"
+                    android:layout_gravity="right"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <Button
+                        android:id="@+id/save"
+                        style="?attr/materialButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:icon="@drawable/round_done_24"
+                        app:iconTint="@color/white"
+                        app:strokeColor="@color/lightblue600"
+                        android:backgroundTint="@color/lightblue600"
+                        android:text="@string/updateDomainSaveBtn"
+                        android:textColor="@color/white"
+                        />
+
+                    <Button
+                        android:id="@+id/getData"
+                        style="?attr/materialButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:icon="@drawable/round_travel_explore_24"
+                        app:iconTint="@color/white"
+                        app:strokeColor="@color/pink200"
+                        android:backgroundTint="@color/pink200"
+                        android:text="@string/updateDomainGetBtn"
+                        android:textColor="@color/white"
+                        />
+
+                </com.google.android.material.button.MaterialButtonGroup>
+
+                <LinearLayout
+                    android:id="@+id/updateLayout"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/date"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.divider.MaterialDivider
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"/>
+
+                    <TextView
+                        android:id="@+id/desc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"
+                        android:lineSpacingExtra="4dp"
+                        android:layout_marginBottom="8dp" />
+
+                    <Button
+                        android:id="@+id/update"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        style="@style/Button.OutlinedButton.Icon"
+                        app:icon="@drawable/round_security_update_24"
+                        app:iconTint="@color/white"
+                        app:strokeColor="@color/pink200"
+                        android:backgroundTint="@color/pink200"
+                        android:text="@string/updateDomainUpdateBtn"
+                        android:textColor="@color/white" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

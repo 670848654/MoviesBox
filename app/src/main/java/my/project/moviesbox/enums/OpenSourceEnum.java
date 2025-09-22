@@ -28,7 +28,7 @@ public enum OpenSourceEnum {
     JZ_VIDEO("JZVideo", "Jzvd", "高度自定义的安卓视频框架 MediaPlayer exoplayer ijkplayer ffmpeg", "https://github.com/Jzvd/JZVideo"),
     EXO_PLAYER("ExoPlayer", "google", "An extensible media player for Android", "https://github.com/google/ExoPlayer"),
     IJK_PLAYER("Ijkplayer", "bilibili", "Android/iOS video player based on FFmpeg n3.4, with MediaCodec, VideoToolbox support.", "https://github.com/bilibili/ijkplayer"),
-    BUTTERKNIFE("butterknife", "JakeWharton", "Bind Android views and callbacks to fields and methods.", "https://github.com/JakeWharton/butterknife"),
+//    BUTTERKNIFE("butterknife", "JakeWharton", "Bind Android views and callbacks to fields and methods.", "https://github.com/JakeWharton/butterknife"),
     OKHTTP("okhttp", "square", "An HTTP+HTTP/2 client for Android and Java applications.", "https://github.com/square/okhttp"),
     ANDROID_UPNP_DEMO("AndroidUPnPDemo", "zaneCC", "android 投屏", "https://github.com/zaneCC/AndroidUPnPDemo"),
     CLING("cling", "4thline", "UPnP/DLNA library for Java and Android", "https://github.com/4thline/cling"),

@@ -54,7 +54,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
     @Override
     protected void setBundleData(Bundle bundle) {
         EventBus.getDefault().register(this);
-        url = bundle.getString("url");
+        videoPlayUrl = bundle.getString("url");
         dramaTitle = bundle.getString("dramaTitle");
         vodTitle = bundle.getString("vodTitle");
         dramaUrl = bundle.getString("dramaUrl");
@@ -80,12 +80,12 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
 
     @Override
     protected void playVideo() {
-        playNetworkVideo(url);
+        playNetworkVideo(videoPlayUrl);
     }
 
     @Override
     protected void setAdapter() {
-        dramaAdapter = new DramaAdapter(this, dramasItems);
+        dramaAdapter = new DramaAdapter(this, false, dramasItems);
         recyclerView.setAdapter(dramaAdapter);
         dramaAdapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
@@ -93,6 +93,14 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
             drawerLayout.closeDrawer(GravityCompat.END);
             changePlayUrl(VideoUrlChangeEnum.CLICK, position);
         });
+    }
+
+    /**
+     * 刷新当前观看的item
+     */
+    @Override
+    public void notifyItemChangedClickIndexData(int clickIndex) {
+
     }
 
     @Override
@@ -107,7 +115,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
                     alertDialog = Utils.getProDialog(this, R.string.parseVodPlayUrl);
                 break;
         }
-        EventBus.getDefault().post(new DramaEvent(nowSource, position));
+        EventBus.getDefault().post(new DramaEvent(vodId, nowSource, position));
         return dramaAdapter.getItem(position);
     }
 
@@ -141,7 +149,7 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
                 return new String[]{dramaUrl};
             case GIRI_GIRI_LOVE:
                 // ギリギリ愛 弹幕参数 [0] 视频播放地址
-                return new String[]{url};
+                return new String[]{videoPlayUrl};
             default:
                 return null;
         }
@@ -183,9 +191,10 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
             hideNavBar();
             if (SharedPreferencesUtils.getEnableSniff()) {
                 alertDialog = Utils.getProDialog(this, R.string.sniffVodPlayUrl);
-                videoAlertUtils.startSniffing(dramaUrl, VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.PLAY);
+                videoAlertUtils.startSniffing(vodId, dramaUrl, VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.PLAY);
             } else {
                 Utils.showAlert(this,
+                        R.drawable.round_warning_24,
                         getString(R.string.errorDialogTitle),
                         getString(R.string.parseVodPlayUrlError),
                         false,
@@ -200,23 +209,27 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
     }
 
     @Override
-    public void errorNet(String msg) {
+    public void errorNet(boolean onlyGetPlayUrl, String msg) {
         if (isFinishing()) return;
-        //网络出错
-        runOnUiThread(() -> {
-            player.onStateError();
-            hideNavBar();
-            Utils.showAlert(this,
-                    getString(R.string.errorDialogTitle),
-                    msg,
-                    false,
-                    getString(R.string.defaultPositiveBtnText),
-                    "",
-                    "",
-                    (dialog, which) -> dialog.dismiss(),
-                    null,
-                    null);
-        });
+        if (onlyGetPlayUrl)
+            errorOnlyPlayUrl();
+        else
+            //网络出错
+            runOnUiThread(() -> {
+                player.onStateError();
+                hideNavBar();
+                Utils.showAlert(this,
+                        R.drawable.round_warning_24,
+                        getString(R.string.errorDialogTitle),
+                        msg,
+                        false,
+                        getString(R.string.defaultPositiveBtnText),
+                        "",
+                        "",
+                        (dialog, which) -> dialog.dismiss(),
+                        null,
+                        null);
+            });
     }
 
     @Override
@@ -249,9 +262,9 @@ public class PlayerActivity extends BasePlayerActivity implements VideoContract.
                 // 延迟指定时间后重试
                 new Handler().postDelayed(() -> {
                     if (SharedPreferencesUtils.getEnableSniff())
-                        videoAlertUtils.startSniffing(dramasItems.get(clickIndex+1).getUrl(), VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.NEXT_PLAY);
+                        videoAlertUtils.startSniffing(vodId, dramasItems.get(clickIndex+1).getUrl(), VideoSniffEvent.ActivityEnum.PLAYER, VideoSniffEvent.SniffEnum.NEXT_PLAY);
                     else
-                    getNextPlayUrl();
+                        getNextPlayUrl();
             }, RETRY_DELAY_MILLIS);
         } else {
             // 达到最大重试次数，不再执行

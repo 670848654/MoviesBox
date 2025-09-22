@@ -18,6 +18,8 @@ public interface DownloadContract {
         void getDownloadList(String directoryId, int offset, int limit, DownloadContract.LoadDataCallback callback);
 
         void getDownloadDataList(String downloadId, int offset, int limit, DownloadContract.LoadDataCallback callback);
+
+        void getDownloadDataListByDirectoryId(String directoryId, int offset, int limit, DownloadContract.LoadDataCallback callback);
     }
 
     interface View extends BaseView {

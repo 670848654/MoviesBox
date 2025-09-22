@@ -28,7 +28,6 @@
         android:layout_margin="8dp"
         android:layout_gravity="bottom|right"
         android:text="已完成校验"
-        app:layout_anchor="@id/mSwipe"
         android:textColor="@color/white"
         app:iconTint="@color/white"
         app:backgroundTint="@color/pink200"

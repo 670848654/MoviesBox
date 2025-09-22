@@ -6,16 +6,19 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.FutureTarget;
-import com.bumptech.glide.request.target.Target;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
+import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
+import okhttp3.Headers;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * @author Li
@@ -73,7 +76,7 @@ public class ImageUtils {
             }
         } else {
             // 网络图片处理
-            FutureTarget<Bitmap> futureTarget = Glide.with(Utils.getContext())
+            /*FutureTarget<Bitmap> futureTarget = Glide.with(Utils.getContext())
                     .asBitmap()
                     .load(Utils.getGlideUrl(imageUrl))
                     .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL);
@@ -91,7 +94,50 @@ public class ImageUtils {
                 return false;
             } finally {
                 Glide.with(Utils.getContext()).clear(futureTarget);
+            }*/
+            return downloadImage(imageUrl, file);
+        }
+    }
+
+    public static boolean downloadImage(String imageUrl, File file) {
+        OkHttpClient client = new OkHttpClient();
+        Request request;
+        Headers.Builder builder = new Headers.Builder();
+        Map<String,String> headerMap = ParserInterfaceFactory.getParserInterface().setImgHeaders();
+        if (headerMap != null && headerMap.size() > 0) {
+            for (Map.Entry<String, String> entry : headerMap.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                builder.add(key, value);
             }
+        }
+        request =new Request.Builder()
+                .url(imageUrl)
+                .headers(builder.build())
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                return false;
+            }
+
+            InputStream inputStream = response.body().byteStream();
+            FileOutputStream outputStream = new FileOutputStream(file);
+
+            byte[] buffer = new byte[4096];
+            int len;
+            while ((len = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, len);
+            }
+
+            outputStream.flush();
+            outputStream.close();
+            inputStream.close();
+
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 

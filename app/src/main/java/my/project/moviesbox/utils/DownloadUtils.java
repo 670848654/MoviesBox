@@ -6,18 +6,15 @@ import static my.project.moviesbox.utils.Utils.DOWNLOAD_SAVE_PATH;
 import android.app.Activity;
 import android.content.Intent;
 
-import androidx.appcompat.app.AlertDialog;
-
 import com.arialyy.aria.core.Aria;
 import com.arialyy.aria.core.common.HttpOption;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -71,6 +68,7 @@ public class DownloadUtils {
             Activity activity = activityRef.get();
             if (activity != null && !activity.isFinishing()) {
                 Utils.showAlert(activity,
+                        R.drawable.round_warning_24,
                         Utils.getString(R.string.noWifiDialogTitle),
                         Utils.getString(R.string.noWifiDialogContent),
                         false,
@@ -155,20 +153,29 @@ public class DownloadUtils {
             return;
         }
         String fileSavePath = savePath + playNumber;
-        String localImgPath = savePath + "cover_" + new Date().getTime() + ".jpg";
-        ImageUtils.saveImageToLocalAsync(imgUrl, localImgPath, saveSuccess -> {
-            String img = saveSuccess ? localImgPath : imgUrl;
-            boolean isM3U8 = downloadUrl.contains("m3u8");
-            long taskId = createDownloadTask(isM3U8, downloadUrl, fileSavePath);
-            if (isM3U8) showInfoDialog(Utils.getString(R.string.downloadM3u8Tips));
-            TDownloadManager.insertDownload(detailsTitle,  img, detailsUrl, downloaDdirectoryId);
-            TDownloadDataManager.insertDownloadData(detailsTitle, playNumber, 0, taskId);
-            App.getInstance().showToastMsg(String.format( Utils.getString(R.string.downloadStart), playNumber), DialogXTipEnum.SUCCESS);
-            // 开启下载服务
-            activity.startService(new Intent(activity, DownloadService.class));
-            EventBus.getDefault().post(REFRESH_DOWNLOAD);
-            checkHasDownload();
-        });
+        String fileName = Utils.getHashedFileName(detailsTitle);
+        String localImgPath = savePath + "cover_" + fileName + ".jpg";
+        File file = new File(localImgPath);
+        if (!file.exists()) {
+            ImageUtils.saveImageToLocalAsync(imgUrl, localImgPath, saveSuccess -> {
+                String img = saveSuccess ? localImgPath : imgUrl;
+                go2Download(activity, downloadUrl, fileSavePath, detailsTitle, img, detailsUrl, downloaDdirectoryId, playNumber);
+            });
+        } else
+            go2Download(activity, downloadUrl, fileSavePath, detailsTitle, localImgPath, detailsUrl, downloaDdirectoryId, playNumber);
+    }
+
+    private void go2Download(Activity activity, String downloadUrl, String fileSavePath, String detailsTitle, String imgPath, String detailsUrl, String downloaDdirectoryId, String playNumber) {
+        boolean isM3U8 = downloadUrl.contains("m3u8");
+        long taskId = createDownloadTask(isM3U8, downloadUrl, fileSavePath);
+        if (isM3U8) showInfoDialog(Utils.getString(R.string.downloadM3u8Tips));
+        TDownloadManager.insertDownload(detailsTitle,  imgPath, detailsUrl, downloaDdirectoryId);
+        TDownloadDataManager.insertDownloadData(detailsTitle, playNumber, 0, taskId);
+        App.getInstance().showToastMsg(String.format( Utils.getString(R.string.downloadStart), playNumber), DialogXTipEnum.SUCCESS);
+        // 开启下载服务
+        activity.startService(new Intent(activity, DownloadService.class));
+        EventBus.getDefault().post(REFRESH_DOWNLOAD);
+        checkHasDownload();
     }
 
     /**
@@ -214,14 +221,18 @@ public class DownloadUtils {
         Activity activity = activityRef.get();
         if (activity == null || activity.isFinishing())
             return;
-        AlertDialog alertDialog;
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity, R.style.DialogStyle);
-        builder.setCancelable(true);
-        builder.setTitle(Utils.getString(R.string.otherOperation));
-        builder.setMessage(msg);
-        builder.setPositiveButton(Utils.getString(R.string.defaultPositiveBtnText), (dialog, which) -> dialog.dismiss());
-        alertDialog = builder.create();
-        alertDialog.show();
+        Utils.showAlert(activity,
+                R.drawable.round_warning_24,
+                Utils.getString(R.string.otherOperation),
+                msg,
+                true,
+                Utils.getString(R.string.defaultPositiveBtnText),
+                null,
+                null,
+                (dialog, which) -> dialog.dismiss(),
+                null,
+                null
+                );
     }
 
     /**

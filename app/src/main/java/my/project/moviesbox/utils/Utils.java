@@ -11,15 +11,17 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Environment;
 import android.text.Html;
 import android.text.Spanned;
+import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.HapticFeedbackConstants;
@@ -33,11 +35,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.ArrayRes;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
@@ -121,7 +125,6 @@ public class Utils {
     public static final String APP_DOWNLOAD_PATH = APP_DATA_PATH + File.separator + "Downloads";
     public final static String DOWNLOAD_SAVE_PATH = APP_DOWNLOAD_PATH + "/%s/%s/";
     public static final String APP_CRASH_LOGS_PATH = APP_DATA_PATH + File.separator + "CrashLogs";
-    public static final String APP_PARSER_LOGS_PATH = APP_DATA_PATH + File.separator + "ParserLogs";
 
     /**
      * 创建缓存目录
@@ -130,7 +133,6 @@ public class Utils {
         createDataFolder(APP_DATA_PATH);
         createDataFolder(APP_DOWNLOAD_PATH);
         createDataFolder(APP_CRASH_LOGS_PATH);
-        createDataFolder(APP_PARSER_LOGS_PATH);
     }
 
     /**
@@ -150,9 +152,8 @@ public class Utils {
      * @return 平板返回 True，手机返回 False
      */
     public static boolean isPad() {
-        return (getContext().getResources().getConfiguration().screenLayout
-                & Configuration.SCREENLAYOUT_SIZE_MASK)
-                >= Configuration.SCREENLAYOUT_SIZE_LARGE;
+        Configuration config = context.getResources().getConfiguration();
+        return config.smallestScreenWidthDp >= 600;
     }
 
     /**
@@ -188,6 +189,7 @@ public class Utils {
      * @param neutralButtonListener 中立按钮监听
      */
     public static void showAlert(@NotNull Activity activity,
+                                 @DrawableRes Integer icon,
                                  @NotNull String title, @NotNull String msg, boolean cancelable,
                                  String positiveButtonTitle,
                                  String negativeButtonTitle,
@@ -206,10 +208,14 @@ public class Utils {
             if (!isNullOrEmpty(neutralButtonTitle))
                 builder.setNeutralButton(neutralButtonTitle, neutralButtonListener);
             builder.setTitle(title);
+            if (!isNullOrEmpty(icon))
+                builder.setIcon(icon);
             builder.setMessage(msg);
             builder.setCancelable(cancelable);
             alertDialog = builder.create();
             alertDialog.show();
+            dialogSetRenderEffect(activity);
+            alertDialog.setOnDismissListener(dialog -> dialogClearRenderEffect(activity));
         }
     }
 
@@ -222,11 +228,14 @@ public class Utils {
      * @param defaultChoice 默认选择项下标
      * @param listener 点击监听
      */
-    public static void showSingleChoiceAlert(@NotNull Activity activity, @NotNull String title, @NotNull String[] items, boolean cancelable, int defaultChoice, @Nullable DialogInterface.OnClickListener listener) {
+    public static void showSingleChoiceAlert(@NotNull Activity activity, @DrawableRes Integer icon, @NotNull String title, @NotNull String[] items, boolean cancelable, int defaultChoice, @Nullable DialogInterface.OnClickListener listener) {
         WeakReference<Activity> weakActivity = new WeakReference<>(activity);
         if (weakActivity.get() != null && !weakActivity.get().isFinishing()) {
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity, R.style.DialogStyle);
-            builder.setTitle(title);
+            if (!isNullOrEmpty(title))
+                builder.setTitle(title);
+            if (!isNullOrEmpty(icon))
+                builder.setIcon(icon);
             Spanned[] spanned = new Spanned[items.length];
             for (int i=0,size=items.length; i<size; i++) {
                 spanned[i] = Html.fromHtml(items[i]);
@@ -235,6 +244,8 @@ public class Utils {
             builder.setCancelable(cancelable);
             AlertDialog alertDialog = builder.create();
             alertDialog.show();
+            dialogSetRenderEffect(activity);
+            alertDialog.setOnDismissListener(dialog -> dialogClearRenderEffect(activity));
         }
     }
 
@@ -245,12 +256,14 @@ public class Utils {
      * @param items 数据数组
      * @param listener 点击监听
      */
-    public static void showSingleListAlert(@NotNull Activity activity, String title, @NotNull String[] items, boolean cancelable, @Nullable DialogInterface.OnClickListener listener) {
+    public static void showSingleListAlert(@NotNull Activity activity, @DrawableRes Integer icon, String title, @NotNull String[] items, boolean cancelable, @Nullable DialogInterface.OnClickListener listener) {
         WeakReference<Activity> weakActivity = new WeakReference<>(activity);
         if (weakActivity.get() != null && !weakActivity.get().isFinishing()) {
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity, R.style.DialogStyle);
             if (!isNullOrEmpty(title))
                 builder.setTitle(title);
+            if (!isNullOrEmpty(icon))
+                builder.setIcon(icon);
             Spanned[] spanned = new Spanned[items.length];
             for (int i=0,size=items.length; i<size; i++) {
                 spanned[i] = Html.fromHtml(items[i]);
@@ -259,6 +272,8 @@ public class Utils {
             builder.setCancelable(cancelable);
             AlertDialog alertDialog = builder.create();
             alertDialog.show();
+            dialogSetRenderEffect(activity);
+            alertDialog.setOnDismissListener(dialog -> dialogClearRenderEffect(activity));
         }
     }
 
@@ -271,6 +286,7 @@ public class Utils {
     public static AlertDialog getProDialog(Activity activity, @StringRes int id) {
         WeakReference<Activity> weakActivity = new WeakReference<>(activity);
         if (weakActivity.get() != null && !weakActivity.get().isFinishing()) {
+            dialogSetRenderEffect(activity);
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(weakActivity.get());
             View view = LayoutInflater.from(weakActivity.get()).inflate(R.layout.dialog_proress, null);
             TextView msg = view.findViewById(R.id.msg);
@@ -278,6 +294,7 @@ public class Utils {
             builder.setCancelable(false);
             AlertDialog alertDialog = builder.setView(view).create();
             alertDialog.show();
+            alertDialog.setOnDismissListener(dialog -> dialogClearRenderEffect(activity));
             return alertDialog;
         }
         return null;
@@ -316,6 +333,7 @@ public class Utils {
      */
     public static GlideUrl getGlideUrl(String imgUrl) {
         LazyHeaders.Builder builder = new LazyHeaders.Builder();
+        builder.addHeader("Accept", "image/*");
         Map<String, String> headerMap = ParserInterfaceFactory.getParserInterface().setImgHeaders();
         if (headerMap != null && headerMap.size() > 0) {
             for (Map.Entry<String, String> entry : headerMap.entrySet()) {
@@ -324,7 +342,7 @@ public class Utils {
                 builder.addHeader(key, value);
             }
         }
-        return new GlideUrl(imgUrl, builder.build());
+        return new GlideUrl(imgUrl.trim(), builder.build());
     }
 
     /**
@@ -334,7 +352,7 @@ public class Utils {
      */
     public static void setDefaultImage(String imgUrl, ImageView imageView) {
         if (isNullOrEmpty(imgUrl)) {
-            imageView.setImageDrawable(context.getDrawable(R.drawable.loading_failed));
+            imageView.setImageResource(R.drawable.loading_failed);
             return;
         }
         if (!isNullOrEmpty(imageView))
@@ -346,8 +364,8 @@ public class Utils {
                 .load(getGlideUrl(imgUrl))
 //                .override(500)
                 .apply(options)
-                .placeholder(context.getDrawable(R.drawable.loading))
-                .error(context.getDrawable(R.drawable.loading_failed))
+                .placeholder(R.drawable.loading)
+                .error(R.drawable.loading_failed)
                 .transition(DrawableTransitionOptions.withCrossFade(500))
                 .into(imageView);
     }
@@ -361,99 +379,118 @@ public class Utils {
      * @param cardView
      * @param textView
      */
-    public static void setDefaultImage(String imgUrl, String descUrl, ImageView imageView, boolean setPalette, MaterialCardView cardView, TextView textView, boolean isFavorite) {
+    public static void setDefaultImage(String imgUrl, String descUrl, ImageView imageView, boolean setPalette, MaterialCardView cardView, TextView textView, boolean isFavorite, boolean isRefreshCover) {
         if (isNullOrEmpty(imgUrl)) {
-            imageView.setImageDrawable(context.getDrawable(R.drawable.loading_failed));
+            imageView.setImageResource(R.drawable.loading_failed);
             return;
         }
-        if (!isNullOrEmpty(imageView))
-            clearImageView(imageView);
-        if (imgUrl.contains("http")) {
-            imageView.setImageDrawable(context.getDrawable(R.drawable.loading));
-            GlideApp.with(context)
-                    .asBitmap()
-                    .load(getGlideUrl(imgUrl))
-                    .override(500)
-                    .apply(new RequestOptions()
-                            .encodeQuality(70)
-                    )
-                    .transition(BitmapTransitionOptions.withCrossFade(500))
-                    .listener(new RequestListener<>() {
-                        @Override
-                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
-                            imageView.setImageDrawable(context.getDrawable(R.drawable.loading_failed));
-                            if (!SharedPreferencesUtils.getByPassCF() && isFavorite) // 当开启绕过CF时不更新图片（效率低成功率不高，建议手动刷新）
-                            {
-                                imageView.setImageDrawable(context.getDrawable(R.drawable.loading));
-                                EventBus.getDefault().post(new UpdateImgEvent(imgUrl, descUrl));
-                            }
-                            return true;
-                        }
-
-                        @Override
-                        public boolean onResourceReady(Bitmap resource, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
-                            return false;
-                        }
-                    })
-                    .into(new CustomTarget<Bitmap>() {
-                        @Override
-                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                            if (imgUrl.equals(imageView.getTag(R.id.imageid))) {
-                                imageView.setImageBitmap(resource);
-                                if (setPalette && !DarkModeUtils.isDarkMode(context)) {
-                                    // 设置Palette
-                                    Palette.from(resource).generate(palette -> {
-                                        Palette.Swatch swatch = palette.getDominantSwatch();
-                                        if (swatch != null) {
-                                            int startColor = cardView.getCardBackgroundColor().getDefaultColor();
-                                            int endColor = swatch.getRgb();
-                                            ValueAnimator colorAnimator = ValueAnimator.ofArgb(startColor, endColor);
-                                            colorAnimator.setDuration(500);
-                                            colorAnimator.addUpdateListener(animator -> {
-                                                int animatedColor = (int) animator.getAnimatedValue();
-                                                cardView.setCardBackgroundColor(ColorStateList.valueOf(animatedColor));
-                                                cardView.setStrokeColor(ColorStateList.valueOf(animatedColor));
-                                            });
-                                            colorAnimator.start();
-
-                                            int startTextColor = textView.getCurrentTextColor();
-                                            int endTextColor = swatch.getTitleTextColor();
-                                            ValueAnimator textColorAnimator = ValueAnimator.ofArgb(startTextColor, endTextColor);
-                                            textColorAnimator.setDuration(500);
-                                            textColorAnimator.addUpdateListener(animator -> {
-                                                int animatedTextColor = (int) animator.getAnimatedValue();
-                                                textView.setTextColor(animatedTextColor);
-                                            });
-                                            textColorAnimator.start();
-                                        }
-                                    });
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onLoadCleared(@Nullable Drawable placeholder) {
-                            // 当图片加载被取消时调用，可以在这里清除或重置imageView
-                            imageView.setImageDrawable(null);
-                        }
-
-                        @Override
-                        public void onLoadFailed(@Nullable Drawable errorDrawable) {
-
-                        }
-                    });
-        } else if (imgUrl.contains("base64")) {
-            Glide.with(context)
-                    .load(imgUrl)
-                    .transition(DrawableTransitionOptions.withCrossFade(500))
-                    .into(imageView);
+        if (!isNullOrEmpty(imageView)) clearImageView(imageView);
+        if (imgUrl.startsWith("http")) {
+            loadBitmapWithPalette(getGlideUrl(imgUrl), imgUrl, descUrl, imageView, setPalette, cardView, textView, isFavorite, isRefreshCover);
+        } else if (imgUrl.startsWith("base64") || imgUrl.contains("base64,")) {
+            String base64Data = imgUrl.contains(",") ? (imgUrl.split(",").length > 1 ? imgUrl.split(",")[1] : "") : imgUrl;
+            byte[] imageBytes = Base64.decode(base64Data, Base64.DEFAULT);
+            imageView.setTag(R.id.imageid, imgUrl);
+            loadBitmapWithPalette(imageBytes, imgUrl, descUrl, imageView, setPalette, cardView, textView, isFavorite, isRefreshCover);
         } else {
             File file = new File(imgUrl);
-            Glide.with(context)
-                    .load(file)
-                    .transition(DrawableTransitionOptions.withCrossFade(500))
-                    .into(imageView);
+            loadBitmapWithPalette(file, imgUrl, descUrl, imageView, setPalette, cardView, textView, isFavorite, isRefreshCover);
         }
+    }
+
+    /**
+     * CustomTarget<Bitmap> + Palette 抽离公共方法
+     * @param source
+     * @param checkUrl
+     * @param descUrl
+     * @param imageView
+     * @param setPalette
+     * @param cardView
+     * @param textView
+     * @param isFavorite
+     * @param isRefreshCover
+     */
+    private static void loadBitmapWithPalette(Object source, String checkUrl, String descUrl, ImageView imageView,
+                                              boolean setPalette, MaterialCardView cardView,
+                                              TextView textView, boolean isFavorite, boolean isRefreshCover) {
+
+        imageView.setImageResource(R.drawable.loading);
+
+        Glide.with(context)
+                .asBitmap()
+                .load(source) // 这里可以传 URL、byte[]、File 都行
+                .transition(BitmapTransitionOptions.withCrossFade(500))
+                .listener(new RequestListener<>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
+                        imageView.setImageResource(R.drawable.loading_failed);
+                        // 如果是 URL 并且收藏状态，可以额外处理
+                        if (source instanceof GlideUrl && ((GlideUrl) source).toStringUrl().startsWith("http") &&
+                                !SharedPreferencesUtils.getByPassCF() && isFavorite && !isRefreshCover) {
+                            imageView.setImageResource(R.drawable.loading);
+                            EventBus.getDefault().post(new UpdateImgEvent(((GlideUrl) source).toStringUrl(), descUrl));
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(Bitmap resource, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
+                        return false; // 交给 CustomTarget 处理
+                    }
+                })
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        Object tagObj = imageView.getTag(R.id.imageid);
+                        if (tagObj != null && tagObj.equals(checkUrl)) {
+                            imageView.setImageBitmap(resource);
+                            setImageViewAnim(imageView);
+                            if (setPalette && !DarkModeUtils.isDarkMode(context)) {
+                                Palette.from(resource).generate(palette -> {
+                                    Palette.Swatch swatch = palette.getDominantSwatch();
+                                    if (swatch != null) {
+                                        int startColor = cardView.getCardBackgroundColor().getDefaultColor();
+                                        int endColor = swatch.getRgb();
+                                        ValueAnimator colorAnimator = ValueAnimator.ofArgb(startColor, endColor);
+                                        colorAnimator.setDuration(500);
+                                        colorAnimator.addUpdateListener(animator -> {
+                                            int animatedColor = (int) animator.getAnimatedValue();
+                                            cardView.setCardBackgroundColor(ColorStateList.valueOf(animatedColor));
+                                            cardView.setStrokeColor(ColorStateList.valueOf(animatedColor));
+                                        });
+                                        colorAnimator.start();
+
+                                        int startTextColor = textView.getCurrentTextColor();
+                                        int endTextColor = swatch.getTitleTextColor();
+                                        ValueAnimator textColorAnimator = ValueAnimator.ofArgb(startTextColor, endTextColor);
+                                        textColorAnimator.setDuration(500);
+                                        textColorAnimator.addUpdateListener(animator -> {
+                                            int animatedTextColor = (int) animator.getAnimatedValue();
+                                            textView.setTextColor(animatedTextColor);
+                                        });
+                                        textColorAnimator.start();
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        Object tagObj = imageView.getTag(R.id.imageid);
+                        if (tagObj != null && tagObj.equals(checkUrl)) {
+                            imageView.setImageDrawable(null);
+                        }
+                    }
+
+                    @Override
+                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                        Object tagObj = imageView.getTag(R.id.imageid);
+                        if (tagObj != null && tagObj.equals(checkUrl)) {
+                            imageView.setImageResource(R.drawable.loading_failed);
+                        }
+                    }
+                });
     }
 
     /**
@@ -474,13 +511,13 @@ public class Utils {
 
     public static void setImgViewBg(String imgUrl, String descUrl, ImageView imageView) {
         if (isNullOrEmpty(imgUrl)) {
-            imageView.setImageDrawable(context.getDrawable(R.drawable.loading_failed));
+            imageView.setImageResource(R.drawable.loading_failed);
             return;
         }
         if (!isNullOrEmpty(imageView))
             clearImageView(imageView);
         if (imgUrl.contains("http")) {
-            imageView.setImageDrawable(context.getDrawable(R.drawable.loading));
+            imageView.setImageResource(R.drawable.loading);
             GlideApp.with(context)
                     .asBitmap()
                     .override(500)
@@ -490,19 +527,25 @@ public class Utils {
                     .into(new CustomTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                            if (imgUrl.equals(imageView.getTag(R.id.imageid)))
+                            if (imgUrl.equals(imageView.getTag(R.id.imageid))) {
                                 imageView.setImageBitmap(resource);
+                                setImageViewAnim(imageView);
+                            }
                         }
 
                         @Override
                         public void onLoadCleared(@Nullable Drawable placeholder) {
-                            // 当图片加载被取消时调用，可以在这里清除或重置imageView
-                            imageView.setImageDrawable(null);
+                            if (imgUrl.equals(imageView.getTag(R.id.imageid))) {
+                                // 当图片加载被取消时调用，可以在这里清除或重置imageView
+                                imageView.setImageDrawable(null);
+                            }
                         }
 
                         @Override
                         public void onLoadFailed(@Nullable @org.jetbrains.annotations.Nullable Drawable errorDrawable) {
-                            EventBus.getDefault().post(new UpdateImgEvent(imgUrl, descUrl));
+                            if (imgUrl.equals(imageView.getTag(R.id.imageid))) {
+                                EventBus.getDefault().post(new UpdateImgEvent(imgUrl, descUrl));
+                            }
                         }
                     });
         } else {
@@ -526,8 +569,10 @@ public class Utils {
                 .into(new CustomTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        if (resource.getAllocationByteCount() > 100)
+                        if (resource.getAllocationByteCount() > 100 && uri.equals(imageView.getTag(R.id.imageid))) {
                             imageView.setImageBitmap(resource);
+                            setImageViewAnim(imageView);
+                        }
                         else
                             onLoadFailed(null);
                     }
@@ -547,6 +592,28 @@ public class Utils {
 
     private static void clearImageView(ImageView imageView) {
         GlideApp.with(context).clear(imageView);
+    }
+
+    public static void setImageViewAnim(ImageView imageView) {
+        // 渐变 + 缩放
+        /*imageView.setScaleX(0.8f);
+        imageView.setScaleY(0.8f);
+        imageView.setAlpha(0f);
+
+        imageView.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(500)
+                .setInterpolator(new OvershootInterpolator()) // 带点回弹
+                .start();*/
+        // 添加渐变淡入动画
+        imageView.setAlpha(0f);
+        imageView.animate()
+                .alpha(1f)
+                .setDuration(500)
+                .setInterpolator(new FastOutSlowInInterpolator())
+                .start();
     }
 
     /**
@@ -695,8 +762,6 @@ public class Utils {
 
     /**
      * 检查网络是否是wifi
-     *
-     * @param context
      * @return
      */
     public static boolean isWifi() {
@@ -710,38 +775,6 @@ public class Utils {
     }
 
     /**
-     * 获取当前ip地址
-     *
-     * @param context
-     * @return
-     */
-    public static String getLocalIpAddress() {
-        try {
-            WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-            int i = wifiInfo.getIpAddress();
-            return "http://"+int2ip(i)+":8080";
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    /**
-     * 将ip的整数形式转换成ip形式
-     *
-     * @param ipInt
-     * @return
-     */
-    public static String int2ip(int ipInt) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(ipInt & 0xFF).append(".");
-        sb.append((ipInt >> 8) & 0xFF).append(".");
-        sb.append((ipInt >> 16) & 0xFF).append(".");
-        sb.append((ipInt >> 24) & 0xFF);
-        return sb.toString();
-    }
-
-    /**
      * 隐藏软键盘
      * @param view
      */
@@ -749,6 +782,18 @@ public class Utils {
         InputMethodManager imm = (InputMethodManager) view.getContext()
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) {
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+    /**
+     * 隐藏软键盘
+     * @param view
+     */
+    public static void hideKeyboard(Activity activity) {
+        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        View view = activity.getCurrentFocus();
+        if (imm != null && view != null) {
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
@@ -796,7 +841,6 @@ public class Utils {
 
     /**
      * 判断是否连接WIFI
-     * @param context
      * @return
      */
     public static boolean isWifiConnected() {
@@ -881,5 +925,19 @@ public class Utils {
     public static void setVibration(View view) {
         if (!isNullOrEmpty(view))
             view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+    }
+
+    public static void dialogSetRenderEffect(Activity activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            View decorView = activity.getWindow().getDecorView();
+            decorView.setRenderEffect(RenderEffect.createBlurEffect(25F, 25F, Shader.TileMode.CLAMP));
+        }
+    }
+
+    public static void dialogClearRenderEffect(Activity activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            View decorView = activity.getWindow().getDecorView();
+            decorView.setRenderEffect(null);
+        }
     }
 }

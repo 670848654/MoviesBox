@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 import my.project.moviesbox.parser.config.ItemStyleEnum;
 import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
-import my.project.moviesbox.view.BaseActivity;
+import my.project.moviesbox.view.base.BaseActivity;
 
 /**
   * @包名: my.project.moviesbox.parser.bean
@@ -53,6 +53,7 @@ public class DetailsDataBean implements Serializable {
     private int source;
     private boolean hasDetailFab;                               // 是否显示右下角浮动按钮
     private DetailsFabBren detailsFabBren;
+    private String noDramaListFoundMsg;                         // 没有剧集时提示文本
     private String vodId;                                       // 数据库ID
     private List<Dramas> dramasList = new ArrayList<>();        // 播放列表集合
     private List<Recommend> multiList = new ArrayList<>();      // 剧集多季集合 预留
@@ -98,6 +99,11 @@ public class DetailsDataBean implements Serializable {
         private Integer index;          // 集数列表下标，用于弹幕接口 预留
         private boolean selected;       // 是否选中
         private String downloadDataId;  // 下载ID
+        // 用于本地播放文件列表使用
+        private String videoTitle;
+        private String videoImgUrl;
+        private long videoDuration;
+        private long videoFileSize;
 
         // 在线播放器使用
         public DramasItem(int index, String title, String url, boolean selected) {
@@ -113,6 +119,18 @@ public class DetailsDataBean implements Serializable {
             this.url = url;
             this.selected = selected;
             this.downloadDataId = downloadDataId;
+        }
+
+        // 本地播放器使用(文件列表)
+        public DramasItem(String title, String url, boolean selected, String downloadDataId, String videoTitle, String videoImgUrl, long videoDuration, long videoFileSize) {
+            this.title = title;
+            this.url = url;
+            this.selected = selected;
+            this.downloadDataId = downloadDataId;
+            this.videoTitle = videoTitle;
+            this.videoImgUrl = videoImgUrl;
+            this.videoDuration = videoDuration;
+            this.videoFileSize = videoFileSize;
         }
 
         @Override
@@ -144,12 +162,29 @@ public class DetailsDataBean implements Serializable {
          * 默认为竖屏样式
          */
         private int vodItemStyleType = VodItemStyleEnum.STYLE_1_1_DOT_4.getType();
+        private String topLeftTag; // 左上角TAG
 
         public Recommend(String title, String img, String url) {
             this.title = title;
             this.img = img;
             this.url = url;
         }
+
+        public Recommend(String title, String img, String url, String episodes) {
+            this.title = title;
+            this.img = img;
+            this.url = url;
+            this.episodes = episodes;
+        }
+
+        public Recommend(String title, String img, String url, String episodes, String topLeftTag) {
+            this.title = title;
+            this.img = img;
+            this.url = url;
+            this.episodes = episodes;
+            this.topLeftTag = topLeftTag;
+        }
+
 
         public Recommend(String title, String img, String url, int vodItemStyleType) {
             this.title = title;

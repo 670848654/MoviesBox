@@ -43,15 +43,14 @@ import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
-import my.project.moviesbox.strategy.danmu.DanmuStrategyFactory;
 import my.project.moviesbox.utils.Utils;
-import my.project.moviesbox.view.BaseActivity;
 import my.project.moviesbox.view.ClassificationVodListActivity;
-import my.project.moviesbox.view.HomeFragment;
 import my.project.moviesbox.view.PlayerActivity;
 import my.project.moviesbox.view.TopticListActivity;
 import my.project.moviesbox.view.VodListActivity;
 import my.project.moviesbox.view.WeekActivity;
+import my.project.moviesbox.view.base.BaseActivity;
+import my.project.moviesbox.view.fragment.HomeFragment;
 import okhttp3.FormBody;
 
 /**
@@ -151,6 +150,25 @@ public class GiriGiriLoveImpl implements ParserInterface {
         return null;
     }
 
+    @Override
+    public HashMap<String, String> setPlayerHeaders() {
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("accept", "*/*");
+        headers.put("accept-encoding", "gzip, deflate, br, zstd");
+        headers.put("accept-language", "zh-CN,zh;q=0.9");
+        headers.put("connection", "keep-alive");
+        headers.put("host", "love.girigirilove.com");
+        headers.put("origin", "https://m3u8.girigirilove.com");
+        headers.put("sec-ch-ua", "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Microsoft Edge\";v=\"138\"");
+        headers.put("sec-ch-ua-mobile", "?0");
+        headers.put("sec-ch-ua-platform", "\"Windows\"");
+        headers.put("sec-fetch-dest", "empty");
+        headers.put("sec-fetch-mode", "cors");
+        headers.put("sec-fetch-site", "same-site");
+        headers.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0");
+        return headers;
+    }
+
     /**
      * 站点分页开始页码
      *
@@ -218,6 +236,8 @@ public class GiriGiriLoveImpl implements ParserInterface {
             mainDataBeans.add(mainDataBean);
             // banner内容解析
             Elements bannerEle = document.select("div.slid-e-list > .slid-e-list-box");
+            if (bannerEle.size() == 0)
+                return null;
             mainDataBean = new MainDataBean();
             mainDataBean.setTitle("动漫推荐");
             mainDataBean.setHasMore(false);
@@ -234,6 +254,13 @@ public class GiriGiriLoveImpl implements ParserInterface {
                     String style = imgDiv.attr("style");  // e.g. background-image: url(/upload/vod/xxx.jpg);
                     imageUrl = style.replaceAll(".*url\\(['\"]?(.*?)['\"]?\\).*", "$1");
                     item.setImg(getImg(imageUrl));
+                } else {
+                    // 2025年9月20日19:50:06 新版获取图片
+                    Element el = element.selectFirst(".swiper-lazy.slid-e-bj");
+                    if (el != null) {
+                        imageUrl = el.attr("data-background");
+                        item.setImg(getImg(imageUrl));
+                    }
                 }
                 // 提取“影片详情”的 href 链接
                 Element detailLink = element.selectFirst("a:contains(影片详情)");
@@ -265,10 +292,12 @@ public class GiriGiriLoveImpl implements ParserInterface {
                     String url = item.select("a.time-title").attr("href");
                     String img = getImg(item.select("img").attr("data-src"));
                     String episodes = item.select("span.public-list-prb").text();
+                    String topLeftTag = item.select("span.public-prt").text();
                     homeItemBean.setTitle(title);
                     homeItemBean.setUrl(url);
                     homeItemBean.setImg(img);
                     homeItemBean.setEpisodes(episodes);
+                    homeItemBean.setTopLeftTag(topLeftTag);
                     items.add(homeItemBean);
                 }
                 mainDataBean.setItems(items);
@@ -364,7 +393,8 @@ public class GiriGiriLoveImpl implements ParserInterface {
                         String recommendUrl = item.select("a.time-title").attr("href");
                         String recommendImg = getImg(item.select("img").attr("data-src"));
                         String recommendEpisodes = item.select("span.public-list-prb").text();
-                        recommendList.add(new DetailsDataBean.Recommend(recommendTitle, recommendImg, recommendUrl));
+                        String topLeftTag = item.select("span.public-prt").text();
+                        recommendList.add(new DetailsDataBean.Recommend(recommendTitle, recommendImg, recommendUrl, recommendEpisodes, topLeftTag));
                     }
                     detailsDataBean.setRecommendList(recommendList);
                 }
@@ -539,6 +569,7 @@ public class GiriGiriLoveImpl implements ParserInterface {
                     item.setUrl(elements.get(i).select("a.time-title").attr("href"));
                     item.setImg(getImg(elements.get(i).select("img").attr("data-src")));
                     item.setEpisodesTag(elements.get(i).select("span.public-list-prb").text());
+                    item.setTopLeftTag(elements.get(i).select("span.public-prt").text());
                     items.add(item);
                 }
                 logInfo("分类列表数据", items.toString());
@@ -571,6 +602,7 @@ public class GiriGiriLoveImpl implements ParserInterface {
                     bean.setUrl(item.select("a.public-list-exp").attr("href"));
                     bean.setImg(getImg(item.select("img").attr("data-src")));
                     bean.setEpisodesTag(item.select("span.public-list-prb").text());
+                    bean.setTopLeftTag(item.select("span.public-prt").text());
                     items.add(bean);
                 }
                 logInfo("搜索列表数据", items.toString());
@@ -602,6 +634,7 @@ public class GiriGiriLoveImpl implements ParserInterface {
                     bean.setUrl(item.select("a.time-title").attr("href"));
                     bean.setImg(getImg(item.select("img").attr("data-src")));
                     bean.setEpisodesTag(item.select("span.public-list-prb").text());
+                    bean.setTopLeftTag(item.select("span.public-prt").text());
                     items.add(bean);
                 }
                 logInfo("搜索列表数据", items.toString());
@@ -728,17 +761,6 @@ public class GiriGiriLoveImpl implements ParserInterface {
     }
 
     /**
-     * 弹幕接口返回是否为JSON
-     * <p>注：弹幕只有两种格式 XML/JsonObject</p>
-     * <p>JSON弹幕需自行实现弹幕解析{@link DanmuStrategyFactory#getStrategy}</p>
-     * @return true JSON格式 false XML格式
-     */
-    @Override
-    public boolean getDanmuResultJson() {
-        return false;
-    }
-
-    /**
      * 获取影视播放地址
      * <p>注：可能存在多个播放地址，兼容返回LIST</p>
      *
@@ -849,12 +871,14 @@ public class GiriGiriLoveImpl implements ParserInterface {
                     String url = item.select("a.time-title").attr("href");
                     String img = getImg(item.select("img").attr("data-src"));
                     String episodes = item.select("span.public-list-prb").text();
+                    String topLeftTag = item.select("span.public-prt").text();
                     weekItems.add(new WeekDataBean.WeekItem(
                             title,
                             img,
                             url,
                             episodes,
-                            ""
+                            "",
+                            topLeftTag
                     ));
                 }
                 weekDataBeans.add(new WeekDataBean(week, weekItems));

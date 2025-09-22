@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="#F3EAEB"/>
     <stroke
@@ -9,4 +10,25 @@
     <padding
         android:bottom="8dp"
         android:top="8dp"/>
+</shape>-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- 背景色使用主题 surface -->
+    <solid android:color="?attr/colorSurface" />
+
+    <!-- 圆角 12dp，MD3 推荐 -->
+    <corners android:radius="12dp"/>
+
+    <!-- 可选边框 -->
+    <!--<stroke
+        android:width="1dp"
+        android:color="?attr/colorOutline" />-->
+
+    <!-- 内边距 -->
+    <padding
+        android:left="8dp"
+        android:top="4dp"
+        android:right="8dp"
+        android:bottom="4dp"/>
 </shape>

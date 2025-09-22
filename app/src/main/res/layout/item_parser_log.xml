@@ -4,29 +4,29 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
-    android:layout_marginLeft="4dp"
-    android:layout_marginTop="6dp"
-    android:layout_marginRight="4dp"
-    android:layout_marginBottom="2dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
     android:foreground="?android:attr/selectableItemBackground"
     style="@style/DefaultCardView">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="5dp"
+        android:padding="12dp"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/date_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingStart="4dp" />
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
-        <com.google.android.material.divider.MaterialDivider
+        <!--<com.google.android.material.divider.MaterialDivider
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="3dp"/>
+            android:layout_margin="3dp"/>-->
 
         <com.ctetin.expandabletextviewlibrary.ExpandableTextView
             android:id="@+id/content"
@@ -37,6 +37,8 @@
             app:ep_need_expand="true"
             app:ep_max_line="4"
             android:lineSpacingExtra="4dp"
+            android:paddingTop="6dp"
+            android:textSize="14sp"
             app:ep_need_contract="true"
             app:ep_need_animation="true"
             app:ep_expand_color="@color/pink100" />

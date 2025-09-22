@@ -17,6 +17,7 @@ import my.project.moviesbox.parser.bean.DialogItemBean;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VideoSniffEvent {
+    private String vodId;
     private ActivityEnum activityEnum;
     private SniffEnum sniffEnum;
     /**
@@ -27,6 +28,18 @@ public class VideoSniffEvent {
      * 成功/失败匹配到的所有链接集合
      */
     private List<DialogItemBean> urls;
+    /**
+     * 集数名称
+     */
+    private String dramaTitle;
+
+    public VideoSniffEvent(String vodId, ActivityEnum activityEnum, SniffEnum sniffEnum, boolean isSuccess, List<DialogItemBean> urls) {
+        this.vodId = vodId;
+        this.activityEnum = activityEnum;
+        this.sniffEnum = sniffEnum;
+        this.isSuccess = isSuccess;
+        this.urls = urls;
+    }
 
     /**
      * EventBus订阅处理判断枚举

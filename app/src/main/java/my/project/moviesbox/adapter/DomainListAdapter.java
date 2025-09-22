@@ -20,11 +20,13 @@ import my.project.moviesbox.parser.bean.DomainDataBean;
 public class DomainListAdapter extends BaseQuickAdapter<DomainDataBean.Domain, BaseViewHolder> {
 
     public DomainListAdapter(List<DomainDataBean.Domain> list) {
-        super(R.layout.item_domain, list);
+        super(R.layout.item_single_line, list);
     }
 
     @Override
     protected void convert(BaseViewHolder helper, DomainDataBean.Domain item) {
-        helper.setText(R.id.title, item.getTitle());
+        String title = item.getTitle();
+        String url = item.getUrl();
+        helper.setText(R.id.title, title.equals(url) ? title : title+"\n"+url);
     }
 }

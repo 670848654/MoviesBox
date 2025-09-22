@@ -37,11 +37,10 @@ import my.project.moviesbox.parser.config.ItemStyleEnum;
 import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
-import my.project.moviesbox.strategy.danmu.DanmuStrategyFactory;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
-import my.project.moviesbox.view.HomeFragment;
 import my.project.moviesbox.view.PlayerActivity;
+import my.project.moviesbox.view.fragment.HomeFragment;
 import okhttp3.FormBody;
 
 /**
@@ -152,13 +151,14 @@ public class LibvioImpl implements ParserInterface {
         headers.put("priority", "i");
         headers.put("range", "bytes=0-");
         headers.put("referer", getDefaultDomain());
-        headers.put("sec-ch-ua", "\"Microsoft Edge\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"");
+        headers.put("sec-ch-ua", "\"Not;A=Brand\";v=\"99\", \"Microsoft Edge\";v=\"139\", \"Chromium\";v=\"139\"");
         headers.put("sec-ch-ua-mobile", "?0");
         headers.put("sec-ch-ua-platform", "\"Windows\"");
         headers.put("sec-fetch-dest", "video");
         headers.put("sec-fetch-mode", "no-cors");
         headers.put("sec-fetch-site", "cross-site");
-        headers.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0");
+        headers.put("sec-fetch-storage-access", "active");
+        headers.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0");
         return headers;
     }
 
@@ -562,17 +562,6 @@ public class LibvioImpl implements ParserInterface {
     @Override
     public String getDanmuUrl(String[] params) {
         return null;
-    }
-
-    /**
-     * 弹幕接口返回是否为JSON
-     * <p>注：弹幕只有两种格式 XML/JsonObject</p>
-     * <p>JSON弹幕需自行实现弹幕解析{@link DanmuStrategyFactory#getStrategy}</p>
-     * @return true JSON格式 false XML格式
-     */
-    @Override
-    public boolean getDanmuResultJson() {
-        return false;
     }
 
     /**

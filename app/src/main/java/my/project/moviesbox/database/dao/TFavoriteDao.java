@@ -100,15 +100,15 @@ public interface TFavoriteDao {
      * @param limit
      * @return
      */
-    @Query("SELECT t2.videoId as videoId,\n" +
-            "       t2.videoTitle as videoTitle,\n" +
-            "       t1.* \n" +
-            "  FROM TFavorite t1\n" +
-            "       INNER JOIN\n" +
-            "       TVideo t2 ON t1.linkId = t2.videoId AND \n" +
-            "       t2.videoSource =:videoSource\n" +
-            " WHERE (t1.directoryId IS NULL AND :directoryId = '') OR (t1.directoryId = :directoryId AND :directoryId != '')" +
-            " ORDER BY t1.`index` DESC\n" +
+    @Query("SELECT t2.videoId as videoId, " +
+            "       t2.videoTitle as videoTitle, " +
+            "       t1.* " +
+            "  FROM TFavorite t1 " +
+            "       INNER JOIN TVideo t2 ON t1.linkId = t2.videoId AND t2.videoSource = :videoSource " +
+            " WHERE (:directoryId = 'all' OR " +
+            "        (:directoryId = '' AND t1.directoryId IS NULL) OR " +
+            "        (:directoryId != '' AND :directoryId != 'all' AND t1.directoryId = :directoryId)) " +
+            " ORDER BY t1.`index` DESC " +
             " LIMIT :limit OFFSET :offset")
     List<TFavoriteWithFields> queryFavorite(int videoSource, String directoryId, int offset, int limit);
 
@@ -118,12 +118,12 @@ public interface TFavoriteDao {
      * @param directoryId
      * @return
      */
-    @Query("SELECT count(t1.favoriteId) \n" +
-            "  FROM TFavorite t1\n" +
-            "       INNER JOIN\n" +
-            "       TVideo t2 ON t1.linkId = t2.videoId AND \n" +
-            "       t2.videoSource =:videoSource\n" +
-            " WHERE (t1.directoryId IS NULL AND :directoryId = '') OR (t1.directoryId = :directoryId AND :directoryId != '')")
+    @Query("SELECT count(t1.favoriteId) " +
+            "  FROM TFavorite t1 " +
+            "       INNER JOIN TVideo t2 ON t1.linkId = t2.videoId AND t2.videoSource = :videoSource " +
+            " WHERE (:directoryId = 'all' OR " +
+            "        (:directoryId = '' AND t1.directoryId IS NULL) OR " +
+            "        (:directoryId != '' AND :directoryId != 'all' AND t1.directoryId = :directoryId))")
     int queryFavoriteCountByDirectoryId(int videoSource, String directoryId);
 
     /**

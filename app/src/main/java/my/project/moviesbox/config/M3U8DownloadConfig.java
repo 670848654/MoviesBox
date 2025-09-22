@@ -109,6 +109,7 @@ public class M3U8DownloadConfig {
     public static class VodTsUrlConverter implements IVodTsUrlConverter {
         @Override
         public List<String> convert(String m3u8Url, List<String> tsUrls) {
+            LogUtil.logInfo("m3u8Url", m3u8Url);
             // 转换ts文件的url地址
             String domain = "";
             try {

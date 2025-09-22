@@ -3,6 +3,7 @@
     <string name="defaultToolbarTitle">清单列表</string>
     <string name="saveToList">保存到清单</string>
     <string name="saveToListSplicing">保存到清单：%s</string>
+    <string name="allList">全部</string>
     <string name="defaultList">默认清单</string>
     <string name="createNewList">创建新的清单</string>
     <string name="enterListName">输入清单名称</string>

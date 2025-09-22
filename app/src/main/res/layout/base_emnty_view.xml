@@ -60,7 +60,7 @@
         android:layout_centerHorizontal="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>-->
-    <com.google.android.material.progressindicator.LinearProgressIndicator
+    <!--<com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/progress"
         android:visibility="gone"
         android:layout_marginTop="4dp"
@@ -69,7 +69,22 @@
         android:layout_height="wrap_content"
         app:showAnimationBehavior="inward"
         app:hideAnimationBehavior="outward"
-        android:indeterminate="true" />
+        android:indeterminate="true" />-->
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progress"
+        android:visibility="gone"
+        style="@style/Widget.Material3Expressive.LinearProgressIndicator.Wavy"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:showDelay="500"
+        app:minHideDelay="500"
+        app:indeterminateAnimatorDurationScale="3"
+        app:showAnimationBehavior="inward"
+        app:hideAnimationBehavior="escape"
+        android:indeterminate="true"
+        app:trackCornerRadius="4dp"
+        app:trackThickness="6dp" />
 
     <!-- 数据为空视图 -->
     <LinearLayout

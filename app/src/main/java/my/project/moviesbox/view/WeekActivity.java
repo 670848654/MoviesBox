@@ -1,28 +1,35 @@
 package my.project.moviesbox.view;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.shape.MaterialShapeDrawable;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.WeekPageAdapter;
 import my.project.moviesbox.contract.WeekContract;
+import my.project.moviesbox.databinding.ActivityWeekBinding;
 import my.project.moviesbox.model.WeekModel;
 import my.project.moviesbox.parser.bean.WeekDataBean;
 import my.project.moviesbox.presenter.WeekPresenter;
 import my.project.moviesbox.utils.DateUtils;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.base.BaseMvpActivity;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -32,18 +39,47 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/1/26 10:22
   * @版本: 1.0
  */
-public class WeekActivity extends BaseActivity<WeekModel, WeekContract.View, WeekPresenter> implements WeekContract.View {
-    @BindView(R.id.toolbar)
-    Toolbar toolbar;
-    @BindView(R.id.progress)
-    LinearProgressIndicator progressIndicator;
-    @BindView(R.id.tab)
-    TabLayout tabLayout;
-    @BindView(R.id.viewpage2)
-    ViewPager2 viewPager2;
+public class WeekActivity extends BaseMvpActivity<WeekModel, WeekContract.View, WeekPresenter, ActivityWeekBinding> implements WeekContract.View {
     private String title, url;
     private List<WeekDataBean> weekDataBeans = new ArrayList<>();
     private WeekPageAdapter weekPageAdapter;
+
+    @Override
+    protected void initBeforeView() {}
+
+    /**
+     * 子类实现，返回具体的 ViewBinding
+     *
+     * @param inflater
+     * @return
+     */
+    @Override
+    protected ActivityWeekBinding inflateBinding(LayoutInflater inflater) {
+        return ActivityWeekBinding.inflate(inflater);
+    }
+
+    private AppBarLayout appBar;
+    private Toolbar toolbar;
+    private LinearProgressIndicator progressIndicator;
+    private TabLayout tabLayout;
+    private ViewPager2 viewPager2;
+    /**
+     * 初始化控件
+     */
+    @Override
+    protected void findById() {
+        appBar = binding.appBar;
+        appBar.setStatusBarForeground(MaterialShapeDrawable.createWithElevationOverlay(this));
+        toolbar = binding.toolbar;
+        progressIndicator = binding.progress;
+        tabLayout = binding.tab;
+        viewPager2 = binding.viewpage2;
+    }
+
+    @Override
+    public void initClickListeners() {
+
+    }
 
     @Override
     protected WeekPresenter createPresenter() {
@@ -53,11 +89,6 @@ public class WeekActivity extends BaseActivity<WeekModel, WeekContract.View, Wee
     @Override
     protected void loadData() {
         mPresenter.loadData(true, url);
-    }
-
-    @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_week;
     }
 
     @Override
@@ -91,11 +122,6 @@ public class WeekActivity extends BaseActivity<WeekModel, WeekContract.View, Wee
     }
 
     @Override
-    protected void initBeforeView() {
-
-    }
-
-    @Override
     public void loadingView() {
         if (isFinishing()) return;
         progressIndicator.setVisibility(View.VISIBLE);
@@ -107,6 +133,7 @@ public class WeekActivity extends BaseActivity<WeekModel, WeekContract.View, Wee
         runOnUiThread(() -> {
             progressIndicator.setVisibility(View.GONE);
             Utils.showAlert(this,
+                    R.drawable.round_warning_24,
                     getString(R.string.errorDialogTitle),
                     msg,
                     false,
@@ -159,5 +186,22 @@ public class WeekActivity extends BaseActivity<WeekModel, WeekContract.View, Wee
         super.onDestroy();
         if (viewPager2 != null)
             viewPager2.setAdapter(null);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.base_search_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_search) {
+            View view = findViewById(R.id.action_search);
+            Utils.setVibration(view);
+            startActivity(new Intent(this, parserInterface.searchOpenClass()));
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

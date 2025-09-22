@@ -33,7 +33,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:navigationIcon="@drawable/round_arrow_back_ios_24"
+            app:navigationIcon="@drawable/round_arrow_back_white_24"
             app:titleTextColor="@color/white" />
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -208,7 +208,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:visibility="gone"
                             android:id="@+id/preview"
                             style="@style/Widget.Material3.Button.TextButton.Icon"
@@ -225,7 +225,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"/>
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/favorite"
                             style="@style/Widget.Material3.Button.TextButton.Icon"
                             android:textColor="@color/white"
@@ -239,7 +239,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"/>
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/download"
                             style="@style/Widget.Material3.Button.TextButton.Icon"
                             android:textColor="@color/white"
@@ -255,7 +255,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"/>
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/browser"
                             style="@style/Widget.Material3.Button.TextButton.Icon"
                             android:textColor="@color/white"
@@ -358,8 +358,25 @@
                         android:layout_marginEnd="4dp">
 
                         <TextView
+                            android:id="@+id/last_watch"
+                            android:visibility="visible"
+                            app:drawableStartCompat="@drawable/round_access_time_filled_24"
+                            app:drawableTint="@color/white"
+                            android:drawablePadding="2dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_marginBottom="5dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:textStyle="bold"
+                            android:textColor="@color/white"
+                            />
+
+                        <TextView
                             android:id="@+id/order"
                             android:layout_toStartOf="@+id/drama"
+                            android:layout_below="@+id/last_watch"
                             android:layout_marginEnd="15dp"
                             app:drawableEndCompat="@drawable/round_swap_vert_24"
                             app:drawableTint="@color/white"
@@ -374,6 +391,7 @@
 
                         <TextView
                             android:id="@+id/drama"
+                            android:layout_below="@+id/last_watch"
                             android:layout_alignParentEnd="true"
                             app:drawableEndCompat="@drawable/round_keyboard_arrow_down_24"
                             app:drawableTint="@color/white"

@@ -84,85 +84,56 @@
 
         </RelativeLayout>
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="6"
             android:layout_marginTop="2dp"
             android:layout_marginBottom="2dp"
             android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
-            android:orientation="vertical">
+            android:layout_marginRight="5dp">
 
             <TextView
                 android:id="@+id/title"
+                android:textSize="15sp"
+                android:lineSpacingMultiplier='1.2'
+                android:paddingBottom="4dp"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="2"
+                android:layout_height="wrap_content"
                 android:maxLines="2"
-                android:ellipsize="end"
-                android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="14sp"
-                android:autoSizeMaxTextSize="16sp"
-                android:textSize="16sp"/>
+                android:ellipsize="end" />
 
-            <RelativeLayout
+            <!--<TextView
+                android:id="@+id/all_size"
+                android:layout_below="@+id/title"
+                android:drawablePadding="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#bdbdbd"
+                app:drawableLeftCompat="@drawable/round_percent_24" />-->
+
+            <TextView
+                android:id="@+id/all_size"
+                android:layout_below="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#bdbdbd" />
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/bottom_progress"
+                android:visibility="visible"
+                app:trackCornerRadius="2dp"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1">
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                app:indicatorColor="#fff85959"
+                app:showAnimationBehavior="inward"
+                app:hideAnimationBehavior="outward"
+                android:max="100"/>
 
-                <TextView
-                    android:id="@+id/file_size"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:autoSizeTextType="uniform"
-                    android:autoSizeMinTextSize="10sp"
-                    android:autoSizeMaxTextSize="14sp"
-                    android:textSize="12sp"
-                    android:layout_alignParentStart="true"
-                    android:layout_above="@+id/bottom_progress"
-                    android:textColor="#bdbdbd"/>
-
-                <TextView
-                    android:id="@+id/all_size"
-                    android:drawablePadding="5dp"
-                    android:gravity="center_vertical|end"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:autoSizeTextType="uniform"
-                    android:autoSizeMinTextSize="10sp"
-                    android:autoSizeMaxTextSize="14sp"
-                    android:textSize="12sp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_above="@+id/bottom_progress"
-                    android:textColor="#bdbdbd"
-                    app:drawableLeftCompat="@drawable/round_percent_24" />
-
-                <!--<ProgressBar
-                    android:id="@+id/bottom_progress"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_alignParentBottom="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="3dp"
-                    android:max="100"
-                    android:visibility="visible"
-                    android:progressDrawable="@drawable/progress_bg" />-->
-
-                <com.google.android.material.progressindicator.LinearProgressIndicator
-                    android:id="@+id/bottom_progress"
-                    android:visibility="visible"
-                    app:trackCornerRadius="2dp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
-                    app:indicatorColor="#fff85959"
-                    app:showAnimationBehavior="inward"
-                    app:hideAnimationBehavior="outward"
-                    android:max="100"/>
-
-            </RelativeLayout>
-
-        </LinearLayout>
+        </RelativeLayout>
 
     </LinearLayout>
 

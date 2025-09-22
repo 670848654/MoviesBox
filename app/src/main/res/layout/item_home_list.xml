@@ -1,57 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    android:id="@+id/root"
+<LinearLayout android:id="@+id/root"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="5dp">
+    style="@style/HomeItem"
+    android:layout_marginTop="10dp"
+    android:paddingBottom="10dp"
+    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <RelativeLayout
-        android:id="@+id/more"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
+        android:id="@+id/moreLayout"
         android:layout_marginBottom="5dp"
-        android:foreground="?android:attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="40dp">
 
-        <ImageView
+        <View
+            android:id="@+id/leftView"
+            android:layout_width="3dp"
+            android:layout_height="18dp"
+            android:layout_marginStart="10dp"
+            android:layout_centerVertical="true"
+            android:background="@color/pinka200" />
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_toEndOf="@id/leftView"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!--<ImageView
             android:id="@+id/tv_icon"
             android:layout_width="24dp"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             app:tint="@color/pink200"
-            android:src="@drawable/icon_tv" />
+            android:src="@drawable/icon_tv" />-->
 
-        <TextView
+        <!--<TextView
             android:id="@+id/title"
             android:textSize="18sp"
-            android:layout_toEndOf="@+id/tv_icon"
+            android:text="asdasd"
             android:layout_marginStart="8dp"
             android:layout_centerVertical="true"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content" />-->
 
-        <ImageView
+        <!--<ImageView
             android:id="@+id/img"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:src="@drawable/sharp_expand_circle_down_24"
-            app:tint="@color/pink200"
-            android:rotation="-90"/>
+            android:src="@drawable/more" />-->
+
+
+       <!-- <TextView
+            android:id="@+id/moreBtn"
+            android:text="更多"
+            android:textSize="12sp"
+            android:layout_marginStart="8dp"
+            android:gravity="center"
+            android:layout_centerVertical="true"
+            android:layout_alignParentEnd="true"
+            android:textColor="@color/pinka200"
+            android:drawableEnd="@drawable/more"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />-->
+
+        <Button
+            android:id="@+id/moreBtn"
+            style="@style/Button.IconButton"
+            app:backgroundTint="@android:color/transparent"
+            android:text="查看更多"
+            android:textSize="12sp"
+            android:textColor="@color/pinka200"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            app:icon="@drawable/round_keyboard_arrow_right_24"
+            app:iconTint="@color/pinka200"
+            app:iconGravity="end"
+            app:iconPadding="0dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            />
+
 
     </RelativeLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_list"
-        android:layout_below="@+id/more"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:clipToPadding="false"
         android:fadingEdge="none" />
-
-</RelativeLayout>
+</LinearLayout>

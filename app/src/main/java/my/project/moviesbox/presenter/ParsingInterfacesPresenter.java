@@ -22,9 +22,9 @@ public class ParsingInterfacesPresenter extends Presenter<ParsingInterfacesContr
         model = new ParsingInterfacesModel();
     }
 
-    public void parser(String url) {
+    public void parser(String parserUrl, String url) {
         view.loadingView();
-        model.parser(url, this);
+        model.parser(parserUrl, url, this);
     }
 
     /**

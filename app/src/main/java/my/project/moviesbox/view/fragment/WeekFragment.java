@@ -1,10 +1,11 @@
-package my.project.moviesbox.view;
+package my.project.moviesbox.view.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,14 +15,14 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.WeekAdapter;
+import my.project.moviesbox.databinding.FragmentWeekBinding;
 import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.parser.bean.WeekDataBean;
-import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.DetailsActivity;
+import my.project.moviesbox.view.WeekActivity;
+import my.project.moviesbox.view.base.BaseFragment;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -31,9 +32,8 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:14
   * @版本: 1.0
  */
-public class WeekFragment extends BaseFragment {
+public class WeekFragment extends BaseFragment<FragmentWeekBinding> {
     private View view;
-    @BindView(R.id.rv_list)
     RecyclerView recyclerView;
     private List<WeekDataBean.WeekItem> weekItems;
     private WeekAdapter adapter;
@@ -43,24 +43,31 @@ public class WeekFragment extends BaseFragment {
     }
 
     @Override
-    protected void setConfigurationChanged() {
-
+    protected FragmentWeekBinding inflateBinding(LayoutInflater inflater, ViewGroup container) {
+        // 防止重复 inflate
+        if (binding == null) {
+            binding = FragmentWeekBinding.inflate(inflater, container, false);
+        } else {
+            // 从父容器移除
+            ViewParent parent = binding.getRoot().getParent();
+            if (parent instanceof ViewGroup) {
+                ((ViewGroup) parent).removeView(binding.getRoot());
+            }
+        }
+        return binding;
     }
 
     @Override
-    protected View initViews(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (view == null) {
-            view = inflater.inflate(R.layout.fragment_week, container, false);
-            mUnBinder = ButterKnife.bind(this, view);
-        } else {
-            ViewGroup parent = (ViewGroup) view.getParent();
-            if (parent != null) {
-                parent.removeView(view);
-            }
-        }
+    public void initViews() {
+        recyclerView = binding.rvList;
         initAdapter();
-        return view;
     }
+
+    @Override
+    public void initClickListeners() {}
+
+    @Override
+    protected void setConfigurationChanged() {}
 
     public void initAdapter() {
         if (adapter == null) {
@@ -82,11 +89,6 @@ public class WeekFragment extends BaseFragment {
                 recyclerView.setPadding(0,0,0, Utils.getNavigationBarHeight(getActivity()));
             setRecyclerViewView();
         }
-    }
-
-    @Override
-    protected Presenter createPresenter() {
-        return null;
     }
 
     @Override

@@ -3,6 +3,10 @@ package my.project.moviesbox.view;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -10,21 +14,24 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.chad.library.adapter.base.entity.MultiItemEntity;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.shape.MaterialShapeDrawable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.VodListAdapter;
 import my.project.moviesbox.contract.TopTicListContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
+import my.project.moviesbox.databinding.ActivityVodListBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.model.TopticListModel;
 import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.presenter.TopticListPresenter;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.base.BaseMvpActivity;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -34,17 +41,44 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:13
   * @版本: 1.0
  */
-public class TopticListActivity extends BaseActivity<TopticListModel, TopTicListContract.View, TopticListPresenter> implements TopTicListContract.View {
-    @BindView(R.id.toolbar)
-    Toolbar toolbar;
-    @BindView(R.id.rv_list)
-    RecyclerView mRecyclerView;
-    @BindView(R.id.mSwipe)
-    SwipeRefreshLayout mSwipe;
+public class TopticListActivity extends BaseMvpActivity<TopticListModel, TopTicListContract.View, TopticListPresenter, ActivityVodListBinding> implements TopTicListContract.View {
     private VodListAdapter adapter;
     private final List<MultiItemEntity> multiItemEntities = new ArrayList<>();
     private String title, url;
     private boolean isVodList; // 是否是子视频列表
+
+    @Override
+    protected void initBeforeView() {}
+
+    /**
+     * 子类实现，返回具体的 ViewBinding
+     *
+     * @param inflater
+     * @return
+     */
+    @Override
+    protected ActivityVodListBinding inflateBinding(LayoutInflater inflater) {
+        return ActivityVodListBinding.inflate(inflater);
+    }
+
+    private AppBarLayout appBar;
+    private Toolbar toolbar;
+    private RecyclerView mRecyclerView;
+    private SwipeRefreshLayout mSwipe;
+    /**
+     * 初始化控件
+     */
+    @Override
+    protected void findById() {
+        appBar = binding.toolbarLayout.appBar;
+        appBar.setStatusBarForeground(MaterialShapeDrawable.createWithElevationOverlay(this));
+        toolbar = binding.toolbarLayout.toolbar;
+        mRecyclerView = binding.contentLayout.rvList;
+        mSwipe = binding.contentLayout.mSwipe;
+    }
+
+    @Override
+    public void initClickListeners() {}
 
     @Override
     protected TopticListPresenter createPresenter() {
@@ -58,11 +92,6 @@ public class TopticListActivity extends BaseActivity<TopticListModel, TopTicList
     }
 
     @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_vod_list;
-    }
-
-    @Override
     protected void init() {
         Bundle bundle = getIntent().getExtras();
         title = bundle.getString("title");
@@ -71,11 +100,6 @@ public class TopticListActivity extends BaseActivity<TopticListModel, TopTicList
         setToolbar(toolbar, title, "");
         initSwipe();
         initDefaultAdapter();
-    }
-
-    @Override
-    protected void initBeforeView() {
-
     }
 
     public void initSwipe() {
@@ -220,6 +244,7 @@ public class TopticListActivity extends BaseActivity<TopticListModel, TopTicList
             mSwipe.setRefreshing(false);
             rvError(msg);
             Utils.showAlert(this,
+                    R.drawable.round_warning_24,
                     getString(R.string.errorDialogTitle),
                     msg,
                     false,
@@ -250,5 +275,22 @@ public class TopticListActivity extends BaseActivity<TopticListModel, TopTicList
     protected void onDestroy() {
         super.onDestroy();
         emptyRecyclerView(mRecyclerView);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.base_search_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_search) {
+            View view = findViewById(R.id.action_search);
+            Utils.setVibration(view);
+            startActivity(new Intent(this, parserInterface.searchOpenClass()));
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

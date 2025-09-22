@@ -34,12 +34,11 @@ import okhttp3.Response;
  * @date 2024/2/21 8:37
  */
 public class ParsingInterfacesModel extends BaseModel implements ParsingInterfacesContract.Model {
-    private final static String XMJX = "https://59.153.166.174:4433/xmflv.js";
     private static final String IV = "https://t.me/xmflv666";
     private static final String TIME_URL = "https://data.video.iqiyi.com/v.f4v";
 
     @Override
-    public void parser(String url, ParsingInterfacesContract.LoadDataCallback callback) {
+    public void parser(String parserUrl, String url, ParsingInterfacesContract.LoadDataCallback callback) {
         try {
             String encodedUrl = URLEncoder.encode(url, "UTF-8");
             // Step 1: 构造公共请求头
@@ -70,7 +69,7 @@ public class ParsingInterfacesModel extends BaseModel implements ParsingInterfac
                                 .add("key", sign)
                                 .add("area", area)
                                 .build();
-                        OkHttpUtils.getInstance().doPostDefault(XMJX, postHeaders, body, new Callback() {
+                        OkHttpUtils.getInstance().doPostDefault(parserUrl, postHeaders, body, new Callback() {
                             @Override
                             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                                 callback.error("POST请求失败：" + e.getMessage());

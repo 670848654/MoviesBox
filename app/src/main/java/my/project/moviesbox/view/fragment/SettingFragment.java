@@ -1,4 +1,4 @@
-package my.project.moviesbox.view;
+package my.project.moviesbox.view.fragment;
 
 import static android.app.Activity.RESULT_OK;
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_DOWNLOAD;
@@ -8,7 +8,6 @@ import static my.project.moviesbox.event.RefreshEnum.REFRESH_INDEX;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 import android.text.Editable;
@@ -23,6 +22,7 @@ import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -41,6 +41,7 @@ import com.chad.library.adapter.base.animation.AlphaInAnimation;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.divider.MaterialDividerItemDecoration;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.textfield.TextInputLayout;
@@ -62,9 +63,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.DomainListAdapter;
 import my.project.moviesbox.adapter.SettingAboutAdapter;
@@ -78,6 +76,7 @@ import my.project.moviesbox.database.entity.TVideo;
 import my.project.moviesbox.database.manager.BackupsManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.database.manager.TFavoriteManager;
+import my.project.moviesbox.databinding.FragmentSettingBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.enums.SettingEnum;
 import my.project.moviesbox.event.CheckUpdateEvent;
@@ -91,6 +90,11 @@ import my.project.moviesbox.utils.DarkModeUtils;
 import my.project.moviesbox.utils.SAFUtils;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.AboutActivity;
+import my.project.moviesbox.view.HomeActivity;
+import my.project.moviesbox.view.ParserLogActivity;
+import my.project.moviesbox.view.UpdateDomainActivity;
+import my.project.moviesbox.view.base.BaseMvpFragment;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -100,47 +104,55 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/1/23 19:55
   * @版本: 1.0
  */
-public class SettingFragment extends BaseFragment<DomainListModel, DomainListContract.View, DomainListPresenter> implements DomainListContract.View {
+public class SettingFragment extends BaseMvpFragment<DomainListModel, DomainListContract.View, DomainListPresenter, FragmentSettingBinding> implements DomainListContract.View {
     private static final int REQUEST_DOCUMENT_TREE = 10000;
-    @BindView(R.id.title)
-    TextView titleView;
-    private View view;
     private final int source = parserInterface.getSource();
     private String defaultDomain;
-//    private String defaultPrefix;
     private final String[] themeItems = Utils.getArray(R.array.theme);
-    @BindView(R.id.rv_list)
-    RecyclerView recyclerView;
+    private RecyclerView recyclerView;
     private SettingAboutAdapter adapter;
     private final List<SettingAboutBean> list = SettingEnum.getSettingAboutBeanList();
     private CheckUpdateEvent checkUpdateEvent;
     private HomeActivity homeActivity;
     private int adapterItemPosition;
     private AlertDialog alertDialog;
+    private RecyclerView sourceListRecyclerView;
     private DomainListAdapter domainListAdapter;
     private BottomSheetDialog domainListBottomSheetDialog;
 
     @Override
-    protected void setConfigurationChanged() {
-
+    protected FragmentSettingBinding inflateBinding(LayoutInflater inflater, ViewGroup container) {
+        // 防止重复 inflate
+        if (binding == null) {
+            binding = FragmentSettingBinding.inflate(inflater, container, false);
+        } else {
+            // 从父容器移除
+            ViewParent parent = binding.getRoot().getParent();
+            if (parent instanceof ViewGroup) {
+                ((ViewGroup) parent).removeView(binding.getRoot());
+            }
+        }
+        return binding;
     }
 
     @Override
-    protected View initViews(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (view == null) {
-            view = inflater.inflate(R.layout.fragment_setting, container, false);
-            mUnBinder = ButterKnife.bind(this, view);
-        } else {
-            ViewGroup parent = (ViewGroup) view.getParent();
-            if (parent != null) {
-                parent.removeView(view);
-            }
-        }
+    public void initViews() {
+        recyclerView = binding.rvList;
         homeActivity = (HomeActivity) getActivity();
         initData();
         initAdapter();
-        return view;
     }
+
+    @Override
+    public void initClickListeners() {
+        binding.parserLog.setOnClickListener(view -> {
+            Utils.setVibration(view);
+            startActivity(new Intent(getActivity(), ParserLogActivity.class));
+        });
+    }
+
+    @Override
+    protected void setConfigurationChanged() {}
 
     /**
      * 用户保存的设置信息
@@ -164,17 +176,6 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
                 bean.setSubTitle(Utils.getASVersionName());
             }
         }
-        /*saveParserLogsSwitch.setChecked(SharedPreferencesUtils.getSaveParserLogs());
-        saveParserLogsSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            SharedPreferencesUtils.setSaveParserLogs(isChecked);
-            application.showToastMsg(isChecked ? "开启保存记录解析日志" : "关闭保存记录解析日志", DialogXTipEnum.SUCCESS);
-            if (isChecked) LogUtil.deleteLogFile();
-        });*/
-    }
-
-    @OnClick(R.id.parser_log)
-    public void openParserLogView() {
-        startActivity(new Intent(getActivity(), ParserLogActivity.class));
     }
 
     private void initAdapter() {
@@ -186,6 +187,8 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
             String title = list.get(position).getTitle();
             if (title.equals(getString(R.string.setDomainTitle)))
                 setDomain(position);
+            if (title.equals(getString(R.string.updateDomainTitle)))
+                startActivity(new Intent(getActivity(), UpdateDomainActivity.class).putExtra("title", getString(R.string.updateDomainTitle)));
             else if (title.equals(getString(R.string.enableByPassCF)))
                 enableByPassCF(position);
             else if (title.equals(getString(R.string.enableSniffTitle)))
@@ -242,6 +245,7 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         defaultDomain = parserInterface.getDefaultDomain();
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(), R.style.DialogStyle);
         builder.setTitle(Html.fromHtml(getString(R.string.setDomainDialogTitle)));
+        builder.setIcon(SettingEnum.SET_DOMAIN.getIcon());
         View view = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_domain, null);
         TextView websiteView = view.findViewById(R.id.website);
         String websiteReleaseHref = SourceEnum.getWebsiteReleaseBySource(source);
@@ -268,9 +272,11 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         }
         getDomainView.setOnClickListener(v -> {
             domainListAdapter.setNewInstance(new ArrayList<>());
-            View domainListView = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_source_list, null);
-            RecyclerView sourceListRecyclerView = domainListView.findViewById(R.id.rv_list);
-
+            View domainListView = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_single_line, null);
+            sourceListRecyclerView = domainListView.findViewById(R.id.data_list);
+            MaterialDividerItemDecoration divider = new MaterialDividerItemDecoration(getActivity(), LinearLayoutManager.VERTICAL);
+            divider.setLastItemDecorated(false);
+            sourceListRecyclerView.addItemDecoration(divider);
             sourceListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
             sourceListRecyclerView.setAdapter(domainListAdapter);
             domainListBottomSheetDialog = new BottomSheetDialog(getActivity(), R.style.BottomSheetDialogTheme);
@@ -339,7 +345,9 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         });
         builder.setCancelable(true);
         alertDialog = builder.setView(view).create();
+        alertDialog.setOnDismissListener(dialog -> Utils.dialogClearRenderEffect(getActivity()));
         alertDialog.show();
+        Utils.dialogSetRenderEffect(getActivity());
     }
 
     /**
@@ -382,6 +390,7 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         AlertDialog alertDialog;
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(), R.style.DialogStyle);
         builder.setTitle(list.get(position).getTitle());
+        builder.setIcon(SettingEnum.FUCK_CF.getIcon());
         View view = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_pass_cf, null);
         MaterialSwitch materialSwitch = view.findViewById(R.id.enableByPassCF);
         Slider setByPassCFTimeOutSlider = view.findViewById(R.id.setByPassCFTimeOut);
@@ -409,8 +418,12 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         builder.setPositiveButton(getString(R.string.defaultPositiveBtnText), (dialog, which) -> dialog.dismiss());
         builder.setCancelable(true);
         alertDialog = builder.setView(view).create();
-        alertDialog.setOnDismissListener(dialog -> application.showToastMsg(getString(R.string.setSuccess), DialogXTipEnum.SUCCESS));
+        alertDialog.setOnDismissListener(dialog -> {
+            application.showToastMsg(getString(R.string.setSuccess), DialogXTipEnum.SUCCESS);
+            Utils.dialogClearRenderEffect(getActivity());
+        });
         alertDialog.show();
+        Utils.dialogSetRenderEffect(getActivity());
     }
 
     /**
@@ -425,6 +438,7 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         AlertDialog alertDialog;
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(), R.style.DialogStyle);
         builder.setTitle(list.get(position).getTitle());
+        builder.setIcon(SettingEnum.SNIFF.getIcon());
         View view = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_sniff, null);
         MaterialSwitch materialSwitch = view.findViewById(R.id.enableSniff);
         Slider setSniffTimeoutSlider = view.findViewById(R.id.setSniffTimeout);
@@ -452,8 +466,12 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         builder.setPositiveButton(getString(R.string.defaultPositiveBtnText), (dialog, which) -> dialog.dismiss());
         builder.setCancelable(true);
         alertDialog = builder.setView(view).create();
-        alertDialog.setOnDismissListener(dialog -> application.showToastMsg(getString(R.string.setSuccess), DialogXTipEnum.SUCCESS));
+        alertDialog.setOnDismissListener(dialog -> {
+            Utils.dialogClearRenderEffect(getActivity());
+            application.showToastMsg(getString(R.string.setSuccess), DialogXTipEnum.SUCCESS);
+        });
         alertDialog.show();
+        Utils.dialogSetRenderEffect(getActivity());
     }
 
     /**
@@ -466,7 +484,8 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
     public void setDefaultPlayer(int position) {
         String[] items = (String[]) list.get(position).getOption();
         Utils.showSingleChoiceAlert(getActivity(),
-                list.get(position).getTitle(),
+                SettingEnum.SET_VIDEO_PLAYER.getIcon(),
+                SettingEnum.SET_VIDEO_PLAYER.getTitle(),
                 items,
                 true,
                 SharedPreferencesUtils.getUserSetOpenVidePlayer(),
@@ -487,7 +506,8 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
     public void setTheme(int position) {
         int chooseIndex = DarkModeUtils.chooseIndex(getActivity());
         Utils.showSingleChoiceAlert(getActivity(),
-                list.get(position).getTitle(),
+                SettingEnum.SET_THEME.getIcon(),
+                SettingEnum.SET_THEME.getTitle(),
                 themeItems,
                 true,
                 chooseIndex,
@@ -520,7 +540,8 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
     public void setPlayerKernel(int position) {
         String[] items = (String[]) list.get(position).getOption();
         Utils.showSingleChoiceAlert(getActivity(),
-                list.get(position).getTitle(),
+                SettingEnum.SET_PLAYER_KERNEL.getIcon(),
+                SettingEnum.SET_PLAYER_KERNEL.getTitle(),
                 items,
                 true,
                 SharedPreferencesUtils.getUserSetPlayerKernel(),
@@ -541,7 +562,8 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
     public void setDanmu(int position) {
         String[] items = (String[]) list.get(position).getOption();
         Utils.showSingleChoiceAlert(getActivity(),
-                list.get(position).getTitle(),
+                SettingEnum.SET_OPEN_DANMU.getIcon(),
+                SettingEnum.SET_OPEN_DANMU.getTitle(),
                 items,
                 true,
                 SharedPreferencesUtils.getUserSetOpenDanmu() ? 0 : 1,
@@ -560,6 +582,7 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
         AlertDialog alertDialog;
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(), R.style.DialogStyle);
         builder.setTitle(list.get(position).getTitle());
+        builder.setIcon(SettingEnum.M3U8_QUEUE_NUM.getIcon());
         View view = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_m3u8_download_config, null);
         MaterialSwitch materialSwitch = view.findViewById(R.id.ignoreTs);
         materialSwitch.setChecked(SharedPreferencesUtils.getIgnoreTs());
@@ -603,9 +626,11 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
 //            if (removeAdTsSwitch.isChecked())
 //                SharedPreferencesUtils.setRemoveAdTsRegs(regLayout.getEditText().getText().toString());
 //            application.showToastMsg(getString(R.string.setM3u8QueueNumSuccess));
+            Utils.dialogClearRenderEffect(getActivity());
             application.showToastMsg(getString(R.string.setM3u8QueueNumSuccess), DialogXTipEnum.SUCCESS);
         });
         alertDialog.show();
+        Utils.dialogSetRenderEffect(getActivity());
     }
 
     private static final int READ_REQUEST_CODE = 42;
@@ -617,22 +642,27 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
      */
     private void backups(int position) {
         if (inProgress) {
-            application.showToastMsg(getString(R.string.setBackupsInProgress), DialogXTipEnum.SUCCESS);
+            application.showToastMsg(getString(R.string.setBackupsInProgress), DialogXTipEnum.WARNING);
             return;
         }
-        Utils.showSingleListAlert(getActivity(), getString(R.string.setBackupsTitle), Utils.getArray(R.array.backupsItems), true, (dialogInterface, i) -> {
-            switch (i) {
-                case 0:
-                    // 创建备份文件
-                    createBackupsFile(position);
-                    break;
-                case 1:
-                    // 恢复数据
-                    performFileSearch(position);
-                    break;
-            }
-            dialogInterface.dismiss();
-        });
+        Utils.showSingleListAlert(getActivity(),
+                SettingEnum.BACKUPS.getIcon(),
+                SettingEnum.BACKUPS.getTitle(),
+                Utils.getArray(R.array.backupsItems),
+                true,
+                (dialogInterface, i) -> {
+                    switch (i) {
+                        case 0:
+                            // 创建备份文件
+                            createBackupsFile(position);
+                            break;
+                        case 1:
+                            // 恢复数据
+                            performFileSearch(position);
+                            break;
+                    }
+                dialogInterface.dismiss();
+            });
     }
 
     /**
@@ -795,6 +825,7 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
      */
     private void removeDownloads() {
         Utils.showAlert(getActivity(),
+                SettingEnum.REMOVE_ALL_DOWNLOADS.getIcon(),
                 getString(R.string.setRemoveDownloadsTitle),
                 getString(R.string.setRemoveDownloadsDialogSubContent),
                 true,
@@ -821,22 +852,25 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
      */
     private void checkUpdate(int position) {
         if (checkUpdateEvent != null && checkUpdateEvent.isHasUpdate()) {
-            Utils.showAlert(getActivity(),
-                    checkUpdateEvent.getVersionTitle(),
-                    checkUpdateEvent.getVersionContent(),
-                    true,
-                    getString(R.string.go2TheReleasePageBtnText),
-                    getString(R.string.defaultNegativeBtnText),
-                    null,
-                    (dialog, which) -> Utils.viewInChrome(getActivity(), checkUpdateEvent.getReleaseUrl()),
-                    (dialog, which) -> dialog.dismiss(),
-                    null);
+            showUpdateAlert(checkUpdateEvent);
         } else if (!Utils.isServiceRunning(getContext(), CheckUpdateService.class)) {
             adapter.getViewByPosition(position, R.id.progress).setVisibility(View.VISIBLE);
-            new Handler().postDelayed(() -> {
-                getActivity().startService(new Intent(getActivity(), CheckUpdateService.class));
-            }, 500);
+            new Handler().postDelayed(() -> getActivity().startService(new Intent(getActivity(), CheckUpdateService.class)), 500);
         }
+    }
+
+    private void showUpdateAlert(CheckUpdateEvent checkUpdateEvent) {
+        Utils.showAlert(getActivity(),
+                SettingEnum.SET_DOMAIN.getIcon(),
+                checkUpdateEvent.getVersionTitle(),
+                checkUpdateEvent.getVersionContent(),
+                true,
+                getString(R.string.go2TheReleasePageBtnText),
+                getString(R.string.defaultNegativeBtnText),
+                null,
+                (dialog, which) -> Utils.viewInChrome(getActivity(), checkUpdateEvent.getReleaseUrl()),
+                (dialog, which) -> dialog.dismiss(),
+                null);
     }
 
     @Override
@@ -872,6 +906,18 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
                     }
                 }
                 break;
+            case REFRESH_DOMAIN:
+                for (int index = 0; index < list.size(); index++) {
+                    SettingAboutBean bean = list.get(index);
+                    if (bean.getTitle().equals(getString(R.string.setDomainTitle))) {
+                        String s = parserInterface.getDefaultDomain();
+                        bean.setSubTitle(s);
+                        adapter.notifyItemChanged(index);
+                        break;
+                    }
+                }
+                EventBus.getDefault().post(REFRESH_INDEX);
+                break;
         }
     }
 
@@ -887,6 +933,8 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
                 break;
             }
         }
+        if (checkUpdateEvent.isHasUpdate())
+            showUpdateAlert(this.checkUpdateEvent);
     }
 
     /**
@@ -898,7 +946,7 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
      */
     @Override
     public void loadingView() {
-        rvLoading();
+        rvLoading(true);
     }
 
     /**
@@ -928,6 +976,12 @@ public class SettingFragment extends BaseFragment<DomainListModel, DomainListCon
 
     @Override
     public void success(List<DomainDataBean.Domain> domainList) {
-        getActivity().runOnUiThread(() -> domainListAdapter.setNewInstance(domainList));
+        getActivity().runOnUiThread(() -> {
+            hideProgress();
+            new Handler().postDelayed(() -> {
+                domainListAdapter.setNewInstance(domainList);
+                sourceListRecyclerView.invalidateItemDecorations();
+            }, 500);
+        });
     }
 }

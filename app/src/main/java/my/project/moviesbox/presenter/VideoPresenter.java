@@ -44,9 +44,9 @@ public class VideoPresenter extends Presenter<VideoContract.View, VideoModel> im
     }
 
     @Override
-    public void errorNet(String msg) {
+    public void errorNet(boolean onlyGetPlayUrl, String msg) {
         view.cancelDialog();
-        view.errorNet(msg);
+        view.errorNet(onlyGetPlayUrl, msg);
     }
 
     @Override

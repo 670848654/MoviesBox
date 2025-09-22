@@ -66,7 +66,7 @@ public class LocalPlayerActivity extends BasePlayerActivity {
 
     @Override
     protected void playVideo() {
-        playLocalVideo(localFilePath, dramaTitle);
+        playLocalVideo(vodTitle, localFilePath, dramaTitle);
     }
 
     @Override
@@ -83,7 +83,7 @@ public class LocalPlayerActivity extends BasePlayerActivity {
                 break;
             }
         }
-        dramaAdapter = new DramaAdapter(this, dramasItems);
+        dramaAdapter = new DramaAdapter(this, false, dramasItems);
         recyclerView.setAdapter(dramaAdapter);
         dramaAdapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
@@ -91,6 +91,14 @@ public class LocalPlayerActivity extends BasePlayerActivity {
             drawerLayout.closeDrawer(GravityCompat.END);
             changePlayUrl(VideoUrlChangeEnum.CLICK, position);
         });
+    }
+
+    /**
+     * 刷新当前观看的item
+     */
+    @Override
+    public void notifyItemChangedClickIndexData(int clickIndex) {
+
     }
 
     @Override

@@ -21,6 +21,7 @@ import lombok.Getter;
 import my.project.moviesbox.R;
 import my.project.moviesbox.model.DownloadVideoModel;
 import my.project.moviesbox.model.VideoModel;
+import my.project.moviesbox.parser.bean.MainDataBean;
 import my.project.moviesbox.parser.bean.SourceDataBean;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.utils.DateUtils;
@@ -116,7 +117,7 @@ public enum SourceEnum {
             MOVIES.bg,
             "质量高但只有热门电影/电视剧（无国产），无广告，可能存在Cloudflare、域名可能经常变更（可通过网站发布页查看最新域名）",
             "zxzj",
-            "https://www.zxzja.com",
+            "https://www.zxzjhd.com",
             "https://www.zxzj.site",
             "/vodsearch/%s----------%s---.html",
             true,
@@ -131,8 +132,8 @@ public enum SourceEnum {
             MOVIES.bg,
             "存在广告，资源一般，可能存在Cloudflare、域名可能经常变更（可通过网站发布页查看最新域名）",
             "fiveMovie",
-            "https://www.555zxdy.com",
-            "https://5wuga.com",
+            "https://www.55i5m2t9p6.shop",
+            "https://55s9q8.com",
             "/vodsearch/%s----------%s---.html",
             true,
             "/vodshow/%s-%s-%s-%s-%s----%s---%s.html",
@@ -195,7 +196,7 @@ public enum SourceEnum {
             "/search/%s----------%s---/", // 搜索参数.分页
             true,
             "/show/%s-%s-%s-%s-%s----%s-%s--%s%s", // 频道.季度.排序.类型.语言.分页.改编.年份.类别
-            "https://m3u8.girigirilove.com/api.php/Scrolling/getVodOutScrolling", // 弹幕API接口,POST请求{"play_url":"https://m3u8.girigirilove.com/zijian/oldanime/2025/04/cht/YourFormaCHT/01/playlist.m3u8"}参数为当前播放地址
+            "https://m3u8.girigirilove.com/api.php/Scrolling/getVodOutScrolling,https://m3u8.girigirilove.com/api.php/Scrolling/getScrolling", // 该站点存在两个弹幕接口（默认使用第一个貌似站外弹幕数据，第二个貌似本站弹幕数据）弹幕API接口,POST请求{"play_url":"https://m3u8.girigirilove.com/zijian/oldanime/2025/04/cht/YourFormaCHT/01/playlist.m3u8"}参数为当前播放地址
             "",
             new ArrayList<>())
     ;
@@ -292,13 +293,42 @@ public enum SourceEnum {
 
     /**
      * 获取默认站点列表
+     * @param title 源类型名称
      * @return
      */
-    public static List<SourceDataBean> getSourceDataBeanList() {
+    public static List<SourceDataBean> getSourceDataBeanList(String title) {
         List<SourceDataBean> sourceDataBeans = new ArrayList<>();
         boolean turnOnHiddenFeatures = SharedPreferencesUtils.getTurnOnHiddenFeatures();
         for (SourceEnum sourceEnum : SourceEnum.values()) {
             int sourceIndex = sourceEnum.sourceIndexEnum.index;
+            // 过滤网站已关闭的资源
+            if (sourceEnum.sourceIndexEnum.stateEnum == WEBSITE_SHUTDOWN)
+                continue;
+            String sourceTypeTitle = sourceEnum.getSourceType();
+            if (sourceTypeTitle.equals(title))
+                sourceDataBeans.add(new SourceDataBean(
+                        sourceEnum.getSourceName(),
+                        sourceEnum.getSourceIndexEnum(),
+                        sourceEnum.getSourceType(),
+                        sourceEnum.getSourceTypeBg(),
+                        sourceEnum.getSourceInfo(),
+                        !Utils.isNullOrEmpty(sourceEnum.getDanmuUrl()),
+                        !Utils.isNullOrEmpty(sourceEnum.getWebsiteRelease()),
+                        sourceEnum.getWebsiteRelease(),
+                        !Utils.isNullOrEmpty(sourceEnum.getRss()),
+                        sourceEnum.getRss()
+                ));
+        }
+        return sourceDataBeans;
+    }
+
+    /**
+     * 获取所有源
+     * @return
+     */
+    public static List<SourceDataBean> getTurnOnHiddenFeaturesList() {
+        List<SourceDataBean> sourceDataBeans = new ArrayList<>();
+        for (SourceEnum sourceEnum : SourceEnum.values()) {
             // 过滤网站已关闭的资源
             if (sourceEnum.sourceIndexEnum.stateEnum == WEBSITE_SHUTDOWN)
                 continue;
@@ -316,6 +346,22 @@ public enum SourceEnum {
             ));
         }
         return sourceDataBeans;
+    }
+
+
+    /**
+     * 获取源类型名称集合
+     * @return
+     */
+    public static List<MainDataBean.Tag> getSourceTypeTitle() {
+        List<MainDataBean.Tag> titles = new ArrayList<>();
+        boolean turnOnHiddenFeatures = SharedPreferencesUtils.getTurnOnHiddenFeatures();
+        for (SourceTypeEnum sourceTypeEnum : SourceTypeEnum.values()) {
+            if (!turnOnHiddenFeatures && (sourceTypeEnum.getIndex() == 2 || sourceTypeEnum.getIndex() == 3))
+                continue;
+            titles.add(new MainDataBean.Tag(sourceTypeEnum.getTitle()));
+        }
+        return titles;
     }
 
     /**
@@ -375,7 +421,7 @@ public enum SourceEnum {
     @AllArgsConstructor
     public enum SourceIndexEnum {
         // 拖布影视
-        TBYS(0, NORMAL, ""),
+        TBYS(0, ABNORMAL, "挂代理后貌似无法访问，请勿使用代理"),
         // 嘶哩嘶哩
         SILISILI(1, NORMAL, ""),
         // 樱花动漫
@@ -396,7 +442,7 @@ public enum SourceEnum {
         // 纽约影院
         NYYY(12, ABNORMAL, "影视搜索存在服务器验证请手动验证（无数据请刷新重试，这个网站有时返回的就是无数据~）"),
         // ギリギリ愛
-        GIRI_GIRI_LOVE(16, ABNORMAL, "仅添加支持未深入测试是否存在问题"),
+        GIRI_GIRI_LOVE(16, ABNORMAL, "仅添加支持未深入测试是否可用\n官方所述：北美和日本地区用专属域名anime.girigirilove.icu。如果是江苏之类有墙中墙的地方用vpn"),
         ;
         public int index;
         public SourceStateEnum stateEnum;
@@ -445,9 +491,10 @@ public enum SourceEnum {
     @Getter
     @AllArgsConstructor
     public enum SourceTypeEnum {
-        MOVIES("影视", R.drawable.source_type_movie),
-        ANIME("动漫", R.drawable.source_type_anime),
+        MOVIES(0, "影视", R.drawable.source_type_movie),
+        ANIME(1, "动漫", R.drawable.source_type_anime)
         ;
+        public int index;
         public String title;
         @DrawableRes
         private int bg;

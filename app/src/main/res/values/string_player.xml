@@ -17,7 +17,7 @@
     <string name="neverWatched">从未观看</string>
     <string name="watchTo">观看至%s</string>
     <string name="finishedReading">已看完</string>
-    <string name="playbackError">播放错误</string>
+    <string name="playbackError">播放出错</string>
     <string name="playSource">%s | 播放源%s</string>
 
     <string name="getPlaylistErrorMsg">获取播放列表时出错</string>

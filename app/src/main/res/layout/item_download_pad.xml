@@ -113,7 +113,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <TextView
+                <!--<TextView
                     android:id="@+id/file_size"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -122,7 +122,7 @@
                     android:autoSizeMaxTextSize="14sp"
                     android:textSize="14sp"
                     android:layout_alignParentStart="true"
-                    android:textColor="#bdbdbd"/>
+                    android:textColor="#bdbdbd"/>-->
 
                 <TextView
                     android:id="@+id/all_size"

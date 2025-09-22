@@ -29,5 +29,13 @@ public enum RefreshEnum {
     /** 开启隐藏功能 **/
     REFRESH_ON_HIDDEN_FEATURES,
     /** 关闭隐藏功能 **/
-    REFRESH_OFF_HIDDEN_FEATURES
+    REFRESH_OFF_HIDDEN_FEATURES,
+    /**
+     * 刷新网站域名
+     */
+    REFRESH_DOMAIN,
+    /**
+     * 刷新当前影视最后观看信息
+     */
+    REFRESH_LAST_WATCH
 }

@@ -3,6 +3,10 @@ package my.project.moviesbox.view;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -10,24 +14,27 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.chad.library.adapter.base.entity.MultiItemEntity;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.shape.MaterialShapeDrawable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.VodListAdapter;
 import my.project.moviesbox.contract.VodListContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
 import my.project.moviesbox.custom.FabExtendingOnScrollListener;
 import my.project.moviesbox.custom.VideoPreviewDialog;
+import my.project.moviesbox.databinding.ActivityVodListBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.model.VodListModel;
 import my.project.moviesbox.parser.bean.VodDataBean;
 import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.presenter.VodListPresenter;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.base.BaseMvpActivity;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -37,19 +44,48 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:13
   * @版本: 1.0
  */
-public class VodListActivity extends BaseActivity<VodListModel, VodListContract.View, VodListPresenter> implements VodListContract.View {
-    @BindView(R.id.toolbar)
-    protected Toolbar toolbar;
-    @BindView(R.id.rv_list)
-    protected RecyclerView mRecyclerView;
-    @BindView(R.id.mSwipe)
-    SwipeRefreshLayout mSwipe;
+public class VodListActivity extends BaseMvpActivity<VodListModel, VodListContract.View, VodListPresenter, ActivityVodListBinding> implements VodListContract.View {
     protected VodListAdapter adapter;
     protected List<MultiItemEntity> multiItemEntities = new ArrayList<>();
     protected String title, url;
-    @BindView(R.id.classFab)
-    protected ExtendedFloatingActionButton classFab;
     protected int fabHeight = 0;
+
+    @Override
+    protected void initBeforeView() {}
+
+    /**
+     * 子类实现，返回具体的 ViewBinding
+     *
+     * @param inflater
+     * @return
+     */
+    @Override
+    protected ActivityVodListBinding inflateBinding(LayoutInflater inflater) {
+        return ActivityVodListBinding.inflate(inflater);
+    }
+
+    protected AppBarLayout appBar;
+    protected Toolbar toolbar;
+    protected RecyclerView mRecyclerView;
+    protected SwipeRefreshLayout mSwipe;
+    protected ExtendedFloatingActionButton classFab;
+    /**
+     * 初始化控件
+     */
+    @Override
+    protected void findById() {
+        appBar = binding.toolbarLayout.appBar;
+        appBar.setStatusBarForeground(MaterialShapeDrawable.createWithElevationOverlay(this));
+        toolbar = binding.toolbarLayout.toolbar;
+        mRecyclerView = binding.contentLayout.rvList;
+        mSwipe = binding.contentLayout.mSwipe;
+        classFab = binding.classFab;
+    }
+
+    @Override
+    public void initClickListeners() {
+
+    }
 
     @Override
     protected VodListPresenter createPresenter() {
@@ -63,11 +99,6 @@ public class VodListActivity extends BaseActivity<VodListModel, VodListContract.
     }
 
     @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_vod_list;
-    }
-
-    @Override
     protected void init() {
         Bundle bundle = getIntent().getExtras();
         title = bundle.getString("title");
@@ -75,11 +106,6 @@ public class VodListActivity extends BaseActivity<VodListModel, VodListContract.
         setToolbar(toolbar, title, "");
         initSwipe();
         initDefaultAdapter();
-    }
-
-    @Override
-    protected void initBeforeView() {
-
     }
 
     public void initSwipe() {
@@ -103,7 +129,7 @@ public class VodListActivity extends BaseActivity<VodListModel, VodListContract.
             String title = bean.getTitle();
             String previewUrl = bean.getPreviewUrl();
             if (Utils.isNullOrEmpty(previewUrl)) return false;
-            VideoPreviewDialog dialog = new VideoPreviewDialog(this, title, previewUrl);
+            VideoPreviewDialog dialog = new VideoPreviewDialog(this, title, bean.getUrl(), previewUrl, bean.getImg());
             dialog.show();
             return true;
         });
@@ -234,6 +260,7 @@ public class VodListActivity extends BaseActivity<VodListModel, VodListContract.
             mSwipe.setRefreshing(false);
             rvError(msg);
             Utils.showAlert(this,
+                    R.drawable.round_warning_24,
                     getString(R.string.errorDialogTitle),
                     msg,
                     false,
@@ -268,5 +295,22 @@ public class VodListActivity extends BaseActivity<VodListModel, VodListContract.
     protected void onDestroy() {
         super.onDestroy();
         emptyRecyclerView(mRecyclerView);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.base_search_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_search) {
+            View view = findViewById(R.id.action_search);
+            Utils.setVibration(view);
+            startActivity(new Intent(this, parserInterface.searchOpenClass()));
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

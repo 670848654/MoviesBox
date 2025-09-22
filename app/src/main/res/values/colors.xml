@@ -301,4 +301,9 @@
     <color name="movie">#1E9FFF</color>
     <color name="anime">#8cba04</color>
     <color name="adult">#ffb10d</color>
+
+    <color name="light_color_home_tem">#FFF8F5</color>
+    <color name="night_color_home_tem">#383838</color>
+
+    <color name="colorPrimary">#f3eaeb</color>
 </resources>

@@ -76,6 +76,18 @@ public class WeekDataBean implements Serializable {
          * 集数地址 暂未支持跳转
          */
         private String episodesUrl;
+        /**
+         * 左上角TAG
+         */
+        private String topLeftTag;
+
+        public WeekItem(String title, int titleLines, String url, String episodes, String episodesUrl) {
+            this.title = title;
+            this.titleLines = titleLines;
+            this.url = url;
+            this.episodes = episodes;
+            this.episodesUrl = episodesUrl;
+        }
 
         public WeekItem(String title, String imgUrl, String url, String episodes, String episodesUrl) {
             this.title = title;
@@ -83,6 +95,15 @@ public class WeekDataBean implements Serializable {
             this.url = url;
             this.episodes = episodes;
             this.episodesUrl = episodesUrl;
+        }
+
+        public WeekItem(String title, String imgUrl, String url, String episodes, String episodesUrl, String topLeftTag) {
+            this.title = title;
+            this.imgUrl = imgUrl;
+            this.url = url;
+            this.episodes = episodes;
+            this.episodesUrl = episodesUrl;
+            this.topLeftTag = topLeftTag;
         }
 
         @Override

@@ -24,13 +24,13 @@
     <!-- 开启播放器弹幕 站点支持弹幕才有效 -->
     <bool name="openDanmu">true</bool>
     <!-- 收藏列表数据每页数量 -->
-    <integer name="favoriteQueryLimit">20</integer>
+    <integer name="favoriteQueryLimit">100</integer>
     <!-- 历史列表数据每页数量 -->
-    <integer name="historyQueryLimit">20</integer>
+    <integer name="historyQueryLimit">100</integer>
     <!-- 下载列表数据每页数量 -->
-    <integer name="downloadQueryLimit">20</integer>
+    <integer name="downloadQueryLimit">100</integer>
     <!-- 下载子列表数据每页数量 -->
-    <integer name="downloadDataQueryLimit">20</integer>
+    <integer name="downloadDataQueryLimit">100</integer>
 
     <!-- BRVAH列表适配器动画配置 -->
     <!-- 是否开启动画 -->

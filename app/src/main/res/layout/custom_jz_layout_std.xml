@@ -21,11 +21,19 @@
 
     </my.project.moviesbox.custom.LongPressEventView>
 
+    <master.flame.danmaku.ui.widget.DanmakuView
+        android:id="@+id/jz_danmu"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="48dp"
+        android:layout_marginBottom="80dp" />
+
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_marginEnd="14dp"
+        android:layout_marginBottom="8dp"
         android:layout_above="@+id/layout_bottom">
 
         <TextView
@@ -33,6 +41,9 @@
             android:visibility="gone"
             android:padding="8dp"
             android:textColor="#ffffff"
+            android:shadowColor="#80000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
             android:gravity="center_vertical"
             android:background="@drawable/change_drama_bg"
             android:layout_width="wrap_content"
@@ -47,6 +58,9 @@
             android:layout_marginStart="14dp"
             android:padding="8dp"
             android:textColor="#ffffff"
+            android:shadowColor="#80000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
             android:gravity="center_vertical"
             android:background="@drawable/change_drama_bg"
             android:layout_width="wrap_content"
@@ -93,8 +107,6 @@
                 android:minHeight="8dp"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
                 android:splitTrack="false"
                 android:thumb="@drawable/icon_seek_thumb"
                 android:progressDrawable="@drawable/custom_jz_bottom_seek_progress" />
@@ -113,21 +125,23 @@
 
         <RelativeLayout
             android:id="@+id/custom_view"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
             android:layout_alignParentBottom="true"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true">
+            android:layout_height="wrap_content">
 
-            <RelativeLayout
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true">
+                android:layout_alignParentEnd="true"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
                 <TextView
                     android:id="@+id/clarity"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
                     android:clickable="true"
                     android:text="clarity"
                     android:paddingEnd="14dp"
@@ -136,52 +150,43 @@
 
                 <TextView
                     android:id="@+id/danmu_info"
-                    android:layout_toEndOf="@+id/clarity"
                     android:visibility="gone"
-                    android:layout_centerVertical="true"
-                    android:layout_alignParentStart="true"
-                    android:textColor="#d1d1d1"
+                    android:textColor="@color/white"
+                    android:shadowColor="#80000000"
+                    android:shadowDx="1"
+                    android:shadowDy="1"
                     android:layout_marginEnd="20dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
 
                 <ImageView
                     android:id="@+id/danmu"
-                    android:layout_toEndOf="@+id/danmu_info"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
                     android:layout_marginEnd="20dp"
                     android:src="@drawable/round_subtitles_24"
                     android:clickable="true" />
 
                 <ImageView
-                    android:id="@+id/flip"
-                    android:layout_toRightOf="@+id/danmu"
+                    android:id="@+id/danmu_config"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="20dp"
+                    android:src="@drawable/danmu_config"
+                    android:clickable="true" />
+
+                <ImageView
+                    android:id="@+id/flip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_marginEnd="20dp"
                     android:src="@drawable/round_flip_24"
                     android:clickable="true" />
 
-                <!--<TextView
-                    android:id="@+id/query_danmu"
-                    android:layout_toRightOf="@+id/danmu"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:text="手动查询弹幕"
-                    android:clickable="true"
-                    android:paddingRight="20dp"
-                    android:textColor="#ffffff" />-->
-
                 <TextView
                     android:id="@+id/display"
-                    android:layout_toEndOf="@+id/flip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
                     android:text="@string/adaptiveScale"
                     android:clickable="true"
                     android:paddingEnd="20dp"
@@ -189,38 +194,44 @@
 
                 <TextView
                     android:id="@+id/tvSpeed"
-                    android:layout_toEndOf="@+id/display"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
                     android:text="@string/doubleSpeed"
                     android:clickable="true"
                     android:paddingEnd="20dp"
+                    android:shadowColor="#80000000"
+                    android:shadowDx="1"
+                    android:shadowDy="1"
+                    android:shadowRadius="4"
                     android:textColor="#ffffff" />
 
                 <TextView
                     android:id="@+id/select_drama"
-                    android:layout_toEndOf="@+id/tvSpeed"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
                     android:text="@string/selectEpisodes"
                     android:clickable="true"
                     android:paddingEnd="20dp"
+                    android:shadowColor="#80000000"
+                    android:shadowDx="1"
+                    android:shadowDy="1"
+                    android:shadowRadius="4"
                     android:textColor="#ffffff" />
 
                 <ImageView
                     android:id="@+id/fullscreen"
                     android:visibility="gone"
-                    android:layout_toEndOf="@+id/select_drama"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
                     android:paddingEnd="14dp"
+                    android:shadowColor="#80000000"
+                    android:shadowDx="1"
+                    android:shadowDy="1"
+                    android:shadowRadius="4"
                     android:scaleType="centerInside"
                     android:src="@drawable/baseline_view_selections_white_48dp" />
 
-            </RelativeLayout>
+            </LinearLayout>
 
         </RelativeLayout>
 
@@ -265,7 +276,7 @@
             android:layout_marginEnd="12dp"
             android:padding="3dp"
             android:scaleType="centerInside"
-            android:src="@drawable/round_arrow_back_ios_24" />
+            android:src="@drawable/round_arrow_back_white_24" />
 
         <TextView
             android:id="@+id/title"
@@ -302,6 +313,15 @@
                 app:iconTint="@color/white"
                 android:visibility="invisible"
                 app:icon="@drawable/round_airplay_24"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <Button
+                android:id="@+id/kernel"
+                style="?attr/materialIconButtonStyle"
+                app:iconTint="@color/white"
+                android:visibility="invisible"
+                app:icon="@drawable/round_video_stable_24"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
 
@@ -392,6 +412,8 @@
         android:layout_height="@dimen/jz_start_button_w_h_normal"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
+        android:indeterminateDrawable="@drawable/video_progress_ring"
+        style="?android:attr/progressBarStyleLarge"
         android:visibility="gone" />
 
     <!--<com.google.android.material.loadingindicator.LoadingIndicator
@@ -455,6 +477,9 @@
                 android:layout_marginEnd="5dp"
                 android:layout_centerVertical="true"
                 android:textColor="@android:color/white"
+                android:shadowColor="#80000000"
+                android:shadowDx="1"
+                android:shadowDy="1"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -493,6 +518,9 @@
                 android:gravity="center"
                 android:layout_centerVertical="true"
                 android:textColor="@android:color/white"
+                android:shadowColor="#80000000"
+                android:shadowDx="1"
+                android:shadowDy="1"
                 android:textSize="16sp"
                 android:textStyle="bold"
          />
@@ -580,15 +608,6 @@
             android:textColor="@color/orange800"
             android:textSize="14sp" />
     </LinearLayout>
-
-    <master.flame.danmaku.ui.widget.DanmakuView
-        android:id="@+id/jz_danmu"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp" />
 
     <TextView
         android:id="@+id/tips"

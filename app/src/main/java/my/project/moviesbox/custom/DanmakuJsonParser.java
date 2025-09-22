@@ -10,6 +10,7 @@ import master.flame.danmaku.danmaku.model.IDanmakus;
 import master.flame.danmaku.danmaku.model.android.Danmakus;
 import master.flame.danmaku.danmaku.parser.BaseDanmakuParser;
 import master.flame.danmaku.danmaku.parser.android.JSONSource;
+import my.project.moviesbox.utils.Utils;
 
 /**
   * @包名: my.project.moviesbox.custom
@@ -73,7 +74,7 @@ public class DanmakuJsonParser extends BaseDanmakuParser {
                     item.borderColor = Color.TRANSPARENT;
                     item.priority = 0;
 //                    item.textSize = Utils.dpToPx(Utils.getContext(), 14);
-                    item.textSize = textSize * (mDispDensity - 0.6f);
+                    item.textSize = (Utils.isPad() ? 26f : 22f) * (mDispDensity - 0.6f);
                     danmakus.addItem(item);
                 }
             }

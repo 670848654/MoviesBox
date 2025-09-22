@@ -33,6 +33,7 @@ import okhttp3.Response;
 public class CheckUpdateService extends Service {
     private Context context;
     private NotificationUtils mNotify;
+    private final static int NOTIFICATION_ID = 99;
 
     @Nullable
     @Override
@@ -50,12 +51,13 @@ public class CheckUpdateService extends Service {
         super.onCreate();
         context = this;
         mNotify = new NotificationUtils(context);
-        int notificationId = mNotify.showCheckUpdateNotification(99, getString(R.string.checkUpdateTitle), getString(R.string.checkForUpdates), "");
+        mNotify.cancelNotification(NOTIFICATION_ID);
+        mNotify.showCheckUpdateNotification(NOTIFICATION_ID, getString(R.string.checkUpdateTitle), getString(R.string.checkForUpdates), "");
         LogUtil.logInfo(getClass().getName(), "Service onCreate");
         OkHttpUtils.getInstance().doGet(getString(R.string.githubApi), new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                mNotify.uploadCheckUpdateInfo(notificationId, getString(R.string.checkUpdateTitle), getString(R.string.connection2GithubTimedOut), "");
+                mNotify.uploadCheckUpdateInfo(NOTIFICATION_ID, getString(R.string.checkUpdateTitle), getString(R.string.connection2GithubTimedOut), "");
                 EventBus.getDefault().post(new CheckUpdateEvent().fail(getString(R.string.connection2GithubTimedOut)));
                 stopSelf();
             }
@@ -67,18 +69,18 @@ public class CheckUpdateService extends Service {
                     JSONObject jsonObject = JSONObject.parseObject(jsonBody);
                     String latestVersion = jsonObject.getString("tag_name");
                     if (latestVersion.equals(Utils.getASVersionName())) {
-                        mNotify.cancelNotification(notificationId);
+                        mNotify.cancelNotification(NOTIFICATION_ID);
                         EventBus.getDefault().post(new CheckUpdateEvent().fail(getString(R.string.alreadyTheLatestVersion)));
                     } else {
                         String url = jsonObject.getString("html_url");
                         String body = jsonObject.getString("body");
-                        mNotify.uploadCheckUpdateInfo(notificationId, getString(R.string.checkUpdateTitle), String.format(getString(R.string.newVersionFound), latestVersion, getString(R.string.go2TheReleasePage)), url);
+                        mNotify.uploadCheckUpdateInfo(NOTIFICATION_ID, getString(R.string.checkUpdateTitle), String.format(getString(R.string.newVersionFound), latestVersion, getString(R.string.go2TheReleasePage)), url);
                         String newVersionMsg = String.format(getString(R.string.newVersionFound), latestVersion, "");
                         EventBus.getDefault().post(new CheckUpdateEvent().success(newVersionMsg, newVersionMsg, body, url));
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    mNotify.uploadCheckUpdateInfo(notificationId, getString(R.string.checkUpdateTitle), String.format(getString(R.string.checkUpdateError), e.getMessage()), "");
+                    mNotify.uploadCheckUpdateInfo(NOTIFICATION_ID, getString(R.string.checkUpdateTitle), String.format(getString(R.string.checkUpdateError), e.getMessage()), "");
                     EventBus.getDefault().post(new CheckUpdateEvent().fail(String.format(getString(R.string.checkUpdateError), e.getMessage())));
                 }
                 stopSelf();

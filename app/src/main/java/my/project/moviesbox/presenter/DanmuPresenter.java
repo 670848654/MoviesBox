@@ -47,4 +47,9 @@ public class DanmuPresenter extends Presenter<DanmuContract.View, DanmuModel> im
     public void errorDanmu(String msg) {
         view.errorDanmu(msg);
     }
+
+    @Override
+    public void netErrorDanmu(String msg) {
+        view.netErrorDanmu(msg);
+    }
 }

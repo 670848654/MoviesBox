@@ -1,5 +1,6 @@
 package my.project.moviesbox.adapter;
 
+import android.view.View;
 import android.widget.ImageView;
 
 import com.chad.library.adapter.base.BaseMultiItemQuickAdapter;
@@ -35,7 +36,21 @@ public class DetailsExpandListItemAdapter extends BaseMultiItemQuickAdapter<Mult
         String imgUrl = recommend.getImg();
         ImageView imageView = helper.getView(R.id.img);
         imageView.setTag(R.id.imageid, imgUrl);
-        Utils.setDefaultImage(recommend.getImg(), recommend.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), false);
+        String episodes = recommend.getEpisodes();
+        if (Utils.isNullOrEmpty(episodes))
+            helper.getView(R.id.episodesTag).setVisibility(View.GONE);
+        else {
+            helper.getView(R.id.episodesTag).setVisibility(View.VISIBLE);
+            helper.setText(R.id.episodesTag, episodes);
+        }
+        String topLeftTag = recommend.getTopLeftTag();
+        if (Utils.isNullOrEmpty(topLeftTag))
+            helper.getView(R.id.topLeftTag).setVisibility(View.GONE);
+        else {
+            helper.getView(R.id.topLeftTag).setVisibility(View.VISIBLE);
+            helper.setText(R.id.topLeftTag, topLeftTag);
+        }
+        Utils.setDefaultImage(recommend.getImg(), recommend.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), false, false);
         helper.setText(R.id.title, recommend.getTitle());
     }
 }

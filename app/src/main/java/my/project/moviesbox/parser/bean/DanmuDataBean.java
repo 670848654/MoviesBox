@@ -1,11 +1,12 @@
 package my.project.moviesbox.parser.bean;
 
 import lombok.Data;
+import my.project.moviesbox.utils.Utils;
 
 /**
  * @author Li
  * @version 1.0
- * @description: 每个站点json数据结构肯定是不一样的，这里统一弹幕数据实体规则
+ * @description: 每个站点自有的弹幕json数据结构肯定是不一样的，这里统一弹幕数据实体规则
  * @date 2024/9/14 10:19
  */
 @Data
@@ -63,7 +64,7 @@ public class DanmuDataBean {
      */
     public DanmuDataBean(String text, String color, int type, Long time) {
         this.text = text;
-        this.color = color;
+        this.setColor(color);
         this.setType(type);
         this.time = time;
     }
@@ -82,6 +83,13 @@ public class DanmuDataBean {
         this.setType(type);
         this.time = time;
         this.textSize = textSize;
+    }
+
+    public void setColor(String color) {
+        if (Utils.isNullOrEmpty(color))
+            this.color = DEFAULT_COLOR;
+        else
+            this.color = color;
     }
 
     public void setType(int type) {

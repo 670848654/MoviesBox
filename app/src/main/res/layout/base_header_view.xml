@@ -10,16 +10,18 @@
         android:layout_marginStart="8dp"
         android:textSize="20sp"
         android:text="@string/defaultList"
-        android:gravity="center_vertical|start"
-        android:layout_centerVertical="true"
         app:icon="@drawable/directory_icon"
+        android:ellipsize="end"
+        android:singleLine="true"
         app:iconGravity="textEnd"
         app:iconPadding="8dp"
+        app:iconTintMode="src_in"
+        app:iconSize="0dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
 
-    <com.google.android.material.button.MaterialButton
+    <Button
         android:id="@+id/config"
         style="@style/Button.Icon"
         android:layout_marginEnd="8dp"

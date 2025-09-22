@@ -26,13 +26,11 @@ import okhttp3.OkHttpClient;
 @GlideModule
 public class GlideCache extends AppGlideModule {
     private String appRootPath = null;
-    private GlideBuilder builder;
 
     @Override
     public void applyOptions(Context context, GlideBuilder builder) {
         //手机app路径
         appRootPath = context.getFilesDir().getPath();
-        this.builder = builder;
         // 100 MB
         int diskCacheSizeBytes = 1024 * 1024 * 100;
         builder.setDiskCache(new DiskLruCacheFactory(appRootPath + "/GlideDisk", diskCacheSizeBytes));

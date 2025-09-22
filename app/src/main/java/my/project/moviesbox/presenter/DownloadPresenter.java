@@ -46,6 +46,19 @@ public class DownloadPresenter extends Presenter<DownloadContract.View, Download
         model.getDownloadDataList(downloadId, offset, limit, this);
     }
 
+    /**
+     * 查询清单下所有下载完成的文件
+     * @param isMain
+     * @param directoryId
+     * @param offset
+     * @param limit
+     */
+    public void loadDownloadDataListByDirectoryId(boolean isMain, String directoryId, int offset, int limit) {
+        if (isMain)
+            view.loadingView();
+        model.getDownloadDataListByDirectoryId(directoryId, offset, limit, this);
+    }
+
     @Override
     public void error(String msg) {
         view.errorView(msg);

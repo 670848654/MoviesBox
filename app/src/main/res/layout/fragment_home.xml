@@ -25,6 +25,8 @@
                 app:icon="@drawable/sharp_expand_circle_down_24"
                 android:textSize="24sp"
                 app:iconGravity="end"
+                app:iconTintMode="src_in"
+                app:iconSize="0dp"
                 android:paddingLeft="8dp"
                 android:paddingRight="8dp"
                 android:layout_marginStart="8dp"

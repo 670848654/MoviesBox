@@ -6,7 +6,7 @@
     android:layout_marginStart="4dp"
     android:layout_marginEnd="4dp"
     android:foreground="?attr/selectableItemBackground"
-    app:shapeAppearance="?attr/shapeAppearanceCornerMedium">
+    app:shapeAppearance="@style/ShapeAppearance.MyPoster">
 
     <RelativeLayout
         android:layout_width="match_parent"

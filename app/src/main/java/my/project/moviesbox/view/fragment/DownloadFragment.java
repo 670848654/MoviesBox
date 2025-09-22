@@ -1,4 +1,4 @@
-package my.project.moviesbox.view;
+package my.project.moviesbox.view.fragment;
 
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_DOWNLOAD;
 
@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.Button;
 
 import androidx.annotation.Nullable;
@@ -20,6 +21,7 @@ import com.arialyy.annotations.Download;
 import com.arialyy.aria.core.Aria;
 import com.arialyy.aria.core.download.DownloadEntity;
 import com.arialyy.aria.core.task.DownloadTask;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -28,8 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.DownloadAdapter;
 import my.project.moviesbox.config.ConfigManager;
@@ -43,6 +43,9 @@ import my.project.moviesbox.database.enums.DirectoryTypeEnum;
 import my.project.moviesbox.database.manager.TDirectoryManager;
 import my.project.moviesbox.database.manager.TDownloadDataManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
+import my.project.moviesbox.databinding.BaseHeaderViewBinding;
+import my.project.moviesbox.databinding.FragmentMyListBinding;
+import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.event.DownloadEvent;
 import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.model.DownloadModel;
@@ -50,6 +53,13 @@ import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.presenter.DownloadPresenter;
 import my.project.moviesbox.service.DownloadService;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.DirectoryChangeActivity;
+import my.project.moviesbox.view.DirectoryConfigActivity;
+import my.project.moviesbox.view.DownloadDataActivity;
+import my.project.moviesbox.view.HomeActivity;
+import my.project.moviesbox.view.LocalListPlayerActivity;
+import my.project.moviesbox.view.base.BaseFragment;
+import my.project.moviesbox.view.base.BaseMvpFragment;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -59,14 +69,10 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:10
   * @版本: 1.0
  */
-public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContract.View, DownloadPresenter> implements
+public class DownloadFragment extends BaseMvpFragment<DownloadModel, DownloadContract.View, DownloadPresenter, FragmentMyListBinding> implements
         DownloadContract.View, BaseFragment.DirectoryPopupWindowAdapterClickListener {
-    private View headerView;
     private Button headerSelectView;
     private Button headerConfigView;
-    private View view;
-    @BindView(R.id.rv_list)
-    RecyclerView recyclerView;
     private String directoryId = "";
     private int downloadCount = 0;
     private boolean isMain = true;
@@ -74,28 +80,45 @@ public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContra
     private DownloadAdapter adapter;
     private List<TDownloadWithFields> downloadList = new ArrayList<>();
 
+
+    @Override
+    protected FragmentMyListBinding inflateBinding(LayoutInflater inflater, ViewGroup container) {
+        // 防止重复 inflate
+        if (binding == null) {
+            binding = FragmentMyListBinding.inflate(inflater, container, false);
+        } else {
+            // 从父容器移除
+            ViewParent parent = binding.getRoot().getParent();
+            if (parent instanceof ViewGroup) {
+                ((ViewGroup) parent).removeView(binding.getRoot());
+            }
+        }
+        return binding;
+    }
+
+    RecyclerView recyclerView;
+    FloatingActionButton playFileListFAB;
+    @Override
+    public void initViews() {
+        recyclerView = binding.rvList;
+        playFileListFAB = binding.playFileList;
+        setDirectoryPopupWindowAdapterClickListener(this);
+        initAdapter();
+        initFab();
+        Aria.download(this).register();
+        checkNotCompleteDownloadTask();
+    }
+
+    @Override
+    public void initClickListeners() {
+
+    }
+
     @Override
     protected void setConfigurationChanged() {
 
     }
 
-    @Override
-    protected View initViews(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (view == null) {
-            view = inflater.inflate(R.layout.fragment_my_list, container, false);
-            mUnBinder = ButterKnife.bind(this, view);
-        } else {
-            ViewGroup parent = (ViewGroup) view.getParent();
-            if (parent != null) {
-                parent.removeView(view);
-            }
-        }
-        setDirectoryPopupWindowAdapterClickListener(this);
-        initAdapter();
-        Aria.download(this).register();
-        checkNotCompleteDownloadTask();
-        return view;
-    }
 
     @Override
     protected DownloadPresenter createPresenter() {
@@ -125,6 +148,7 @@ public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContra
                         LogUtil.logInfo("savePath", d.getFilePath());
                     }
                     Utils.showAlert(getActivity(),
+                            R.drawable.round_warning_24,
                             getString(R.string.downloadTaskOperationTitle),
                             String.format(getString(R.string.downloadTaskOperationContent), list.size()),
                             false,
@@ -154,13 +178,13 @@ public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContra
 
     @SuppressLint("RestrictedApi")
     private void initAdapter() {
-        headerView = getLayoutInflater().inflate(R.layout.base_header_view, null);
-        headerSelectView = headerView.findViewById(R.id.select);
-        headerConfigView = headerView.findViewById(R.id.config);
+        BaseHeaderViewBinding baseHeaderViewBinding = BaseHeaderViewBinding.inflate(LayoutInflater.from(getActivity()));
+        headerSelectView = baseHeaderViewBinding.select;
+        headerConfigView = baseHeaderViewBinding.config;
         adapter = new DownloadAdapter(downloadList);
         headerSelectView.setOnClickListener(v -> {
             Utils.setVibration(v);
-            List<TDirectory> tDirectories = TDirectoryManager.queryDownloadDirectoryList(false);
+            List<TDirectory> tDirectories = TDirectoryManager.queryDownloadDirectoryList(false, true);
             showDirectoryPopupWindow(tDirectories, headerSelectView);
         });
         headerConfigView.setOnClickListener(v -> {
@@ -173,7 +197,7 @@ public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContra
         HomeActivity homeActivity = (HomeActivity) getActivity();
         if (homeActivity != null)
             homeActivity.setAdapterAnimation(adapter);
-        adapter.setHeaderView(headerView);
+        adapter.setHeaderView(baseHeaderViewBinding.getRoot());
         adapter.setEmptyView(rvView);
         adapter.setHeaderWithEmptyEnable(true);
         adapter.setOnItemClickListener((adapter, view, position) -> {
@@ -228,6 +252,13 @@ public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContra
         loadData();
     }
 
+    private void initFab() {
+        playFileListFAB.setOnClickListener(view -> {
+            Utils.setVibration(view);
+            startActivity(new Intent(getActivity(), LocalListPlayerActivity.class).putExtra("directoryId", directoryId));
+        });
+    }
+
     @Override
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(RefreshEnum refresh) {
@@ -264,6 +295,7 @@ public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContra
 
     private void setRecyclerViewEmpty() {
         recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 1));
+        playFileListFAB.setVisibility(View.GONE);
     }
 
     private void setRecyclerViewView() {
@@ -286,7 +318,7 @@ public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContra
         downloadList.clear();
         adapter.notifyDataSetChanged();
         setRecyclerViewEmpty();
-        rvLoading();
+        rvLoading(false);
     }
 
     @Override
@@ -308,14 +340,12 @@ public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContra
         if (getActivity().isFinishing()) return;
         setLoadState(true);
         getActivity().runOnUiThread(() -> {
+            playFileListFAB.setVisibility(TDownloadManager.countAllCompletedDownloadDataByDirectoryId(directoryId) > 0 ? View.VISIBLE : View.GONE);
             if (isMain) {
-                new Handler().postDelayed(() -> {
-                    hideProgress();
-                    downloadList = list;
-                    setRecyclerViewView();
-                    adapter.setNewInstance(downloadList);
-                    setRecyclerViewView();
-                }, 500);
+                downloadList = list;
+                setRecyclerViewView();
+                adapter.setNewInstance(downloadList);
+                setRecyclerViewView();
             } else
                 adapter.addData(list);
         });
@@ -337,6 +367,10 @@ public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContra
                 if (Objects.equals(type, DirectoryTypeEnum.DOWNLOAD.getName())) {
                     if (!Objects.equals(selectDirectoryId, directoryId)) {
                         TDownloadManager.updateDownloadDirectoryId(downloadList.get(position).getTDownload().getDownloadId(), selectDirectoryId);
+                        if (directoryId.equals("all")) {
+                            application.showToastMsg("变更清单目录成功", DialogXTipEnum.SUCCESS);
+                            return;
+                        }
                         adapter.removeAt(position);
                         downloadCount = TDownloadManager.queryDownloadCountByDirectoryId(directoryId);
                         if (downloadCount == 0) {
@@ -350,7 +384,7 @@ public class DownloadFragment extends BaseFragment<DownloadModel, DownloadContra
                 if (tDirectory == null) {
                     // 被删除了回到默认清单
                     directoryId = null;
-                    List<TDirectory> tDirectories = TDirectoryManager.queryDownloadDirectoryList(false);
+                    List<TDirectory> tDirectories = TDirectoryManager.queryDownloadDirectoryList(false, true);
                     headerSelectView.setText(tDirectories.get(0).getName());
                 } else
                     headerSelectView.setText(tDirectory.getName());

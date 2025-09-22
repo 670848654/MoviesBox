@@ -7,9 +7,9 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 import java.util.List;
 
-import my.project.moviesbox.view.DownloadFragment;
-import my.project.moviesbox.view.FavoriteFragment;
-import my.project.moviesbox.view.HistoryFragment;
+import my.project.moviesbox.view.fragment.DownloadFragment;
+import my.project.moviesbox.view.fragment.FavoriteFragment;
+import my.project.moviesbox.view.fragment.HistoryFragment;
 
 /**
   * @包名: my.project.moviesbox.adapter

@@ -62,9 +62,10 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
         this.onItemClick = onItemClick;
         /**
          * 添加视图类型
-         * R.layout.item_home_header为首页CHIP列表布局 {@link MultiItemEnum TAG_LIST}
-         * R.layout.item_home_banner为首页轮播列表布局 {@link MultiItemEnum BANNER_LIST}
-         * R.layout.item_home_list为首页通用列表布局 {@link MultiItemEnum ITEM_LIST} {@link MultiItemEnum VOD_LIST}
+         * R.layout.item_home_header为首页CHIP列表布局 {@link MultiItemEnum#TAG_LIST}
+         * R.layout.item_home_header为首页CHIP列表布局（弹出menu） {@link MultiItemEnum#DROP_DOWN_TAG}
+         * R.layout.item_home_banner为首页轮播列表布局 {@link MultiItemEnum#BANNER_LIST}
+         * R.layout.item_home_list为首页通用列表布局 {@link MultiItemEnum#ITEM_LIST} {@link MultiItemEnum#VOD_LIST}
          */
         addItemType(MultiItemEnum.TAG_LIST.getType(), R.layout.item_home_header);
         addItemType(MultiItemEnum.DROP_DOWN_TAG.getType(), R.layout.item_home_header);
@@ -139,16 +140,20 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                 onItemClick.onVideoClick(bannerItem.get(position));
             });
             bannerRecyclerView.setAdapter(homeBannerAdapter);
+            CarouselLayoutManager layoutManager;
+            if (Utils.isPad()) {
+                // 平板模式下数量小于3时不使用滚动策略
+                if (bannerItem.size() > 3)
+                    layoutManager = new CarouselLayoutManager(new HeroCarouselStrategy());
+                else
+                    layoutManager = new CarouselLayoutManager(new UncontainedCarouselStrategy());
+            } else
+                layoutManager = new CarouselLayoutManager(new HeroCarouselStrategy());
+            bannerRecyclerView.setLayoutManager(layoutManager);
             snapHelper.attachToRecyclerView(bannerRecyclerView);
-            bannerRecyclerView.setLayoutManager(new CarouselLayoutManager(
-                    Utils.isPad() ? (bannerItem.size() > 3 ? new HeroCarouselStrategy() : new UncontainedCarouselStrategy())
-                            :
-                            new HeroCarouselStrategy()
-                    ));
-                /*CarouselLayoutManager layoutManager = new CarouselLayoutManager();
-                layoutManager.setCarouselAlignment(CarouselLayoutManager.ALIGNMENT_CENTER);
-                layoutManager.setCarouselStrategy(new HeroCarouselStrategy());
-                bannerRecyclerView.setLayoutManager(layoutManager);*/
+            if (bannerItem.size() > 3)
+                // 自动轮播绑定
+                new BannerAutoPlayHelper(bannerRecyclerView, snapHelper);
         } else if (helper.getItemViewType() == MultiItemEnum.ITEM_LIST.getType() ||
                 helper.getItemViewType() == MultiItemEnum.VOD_LIST.getType()) {
             // 列表布局
@@ -156,15 +161,15 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
             mainDataBean = (MainDataBean) item;
             List<MainDataBean.Item> items = mainDataBean.getItems();
             if (Utils.isNullOrEmpty(mainDataBean.getTitle()))
-                helper.getView(R.id.more).setVisibility(View.GONE);
+                helper.getView(R.id.moreLayout).setVisibility(View.GONE);
             else {
                 helper.setText(R.id.title, mainDataBean.getTitle());
-                helper.getView(R.id.more).setVisibility(View.VISIBLE);
+                helper.getView(R.id.moreLayout).setVisibility(View.VISIBLE);
             }
             if (mainDataBean.isHasMore())
-                helper.getView(R.id.img).setVisibility(View.VISIBLE);
+                helper.getView(R.id.moreBtn).setVisibility(View.VISIBLE);
             else
-                helper.getView(R.id.img).setVisibility(View.GONE);
+                helper.getView(R.id.moreBtn).setVisibility(View.GONE);
             if (helper.getItemViewType() == MultiItemEnum.ITEM_LIST.getType()) {
                 // 横向列表
                 recyclerView.setLayoutManager(new LinearLayoutManager(context, RecyclerView.HORIZONTAL, false));

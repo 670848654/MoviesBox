@@ -26,7 +26,7 @@
     <string name="downloadM3u8Tips">该视频资源类型为M3U8，可能无法正常下载成功！</string>
     <string name="downloadStart">开始下载 -> %s</string>
     <string name="episodeSize">%s [共%d集]</string>
-    <string name="noEpisode">!*未解析出该剧集播放列表*!\n请检查网站是否存在播放列表或尝试刷新~</string>
+    <string name="noEpisode">😵未解析出该剧集播放列表!\n请检查网站是否存在播放列表或尝试刷新~</string>
     <string name="playUrlParserError">%s -> 播放地址解析失败</string>
 
     <string name="loadVodDescInfo">请在影视详情加载完毕后再进行操作</string>

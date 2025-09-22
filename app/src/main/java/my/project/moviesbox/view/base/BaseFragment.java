@@ -1,13 +1,17 @@
-package my.project.moviesbox.view;
+package my.project.moviesbox.view.base;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextPaint;
 import android.text.style.ForegroundColorSpan;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,34 +19,36 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.MenuRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewbinding.ViewBinding;
+
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import org.greenrobot.eventbus.EventBus;
 
 import java.util.List;
 
-import butterknife.Unbinder;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.DirectoryAdapter;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.database.entity.TDirectory;
+import my.project.moviesbox.databinding.BaseEmntyViewBinding;
 import my.project.moviesbox.event.RefreshEnum;
-import my.project.moviesbox.model.BaseModel;
+import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
-import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.utils.VideoAlertUtils;
-import my.project.moviesbox.view.lazyLoadImage.LazyLoadImgListener;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -52,98 +58,87 @@ import my.project.moviesbox.view.lazyLoadImage.LazyLoadImgListener;
   * @日期: 2024/2/4 17:06
   * @版本: 1.0
  */
-public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V, M>> extends Fragment {
+public abstract class BaseFragment<VB extends ViewBinding> extends Fragment {
+    protected VB binding;
+    protected App application;
     protected static final int DIRECTORY_REQUEST_CODE = 0x10010;
     protected static final int DIRECTORY_CONFIG_RESULT_CODE = 0x10011;
-    protected DirectoryPopupWindowAdapterClickListener directoryPopupWindowAdapterClickListener;
-    protected P mPresenter;
-    protected App application;
-    protected Unbinder mUnBinder;
-    protected int position = 0;
-    protected boolean isPortrait;
+    protected int position;
     protected int change;
+    protected boolean isPortrait;
     protected ParserInterface parserInterface = ParserInterfaceFactory.getParserInterface();
+    protected PopupWindow popupWindow;
+    protected DirectoryPopupWindowAdapterClickListener directoryPopupWindowAdapterClickListener;
+    protected VideoAlertUtils videoAlertUtils;
     /* 空布局视图相关 */
     protected View rvView;
-    protected ProgressBar progressBar; // 加载视图
-    protected RelativeLayout errorView; // 出错视图
-    protected Button refDataBtn; // 重试按钮
-    protected TextView errorMsgView; // 错误视图文本
-    private LinearLayout emptyView; // 空布局
-    private TextView emptyMsg; // 空布局视图文本
-    protected PopupWindow popupWindow;
-
-    protected LazyLoadImgListener lazyLoadImgListener;
-
-    protected VideoAlertUtils videoAlertUtils;
-
-    protected void setLazyLoadImgListener(LazyLoadImgListener lazyLoadImgListener) {
-        this.lazyLoadImgListener = lazyLoadImgListener;
-    }
+    protected LinearProgressIndicator linearProgressIndicator;
+    protected RelativeLayout errorView;
+    protected Button refDataBtn;
+    protected TextView errorMsgView;
+    private LinearLayout emptyView;
+    private TextView emptyMsg;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        if (application == null) application = (App) getActivity().getApplication();
         Configuration mConfiguration = getResources().getConfiguration();
         change = mConfiguration.orientation;
         if (change == mConfiguration.ORIENTATION_LANDSCAPE) isPortrait = false;
         else if (change == mConfiguration.ORIENTATION_PORTRAIT) isPortrait = true;
-        mPresenter = createPresenter();
-        initCustomViews();
-        if (application == null) application = (App) getActivity().getApplication();
-        View view = initViews(inflater, container, savedInstanceState);
-        EventBus.getDefault().register(this);
+        binding = inflateBinding(inflater, container);
         videoAlertUtils = new VideoAlertUtils(this.getActivity());
+        EventBus.getDefault().register(this);
+        return binding.getRoot();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        initCustomViews();
+        initViews();
         loadData();
-        return view;
+        initClickListeners();
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (null != mPresenter)
-            mPresenter.registerEventBus();
-    }
+    public abstract void initViews();
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (null != mPresenter)
-            mPresenter.unregisterEventBus();
-    }
+    public abstract void initClickListeners();
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        //取消View的关联
-        if (null != mPresenter)
-            mPresenter.detachView();
         if (null != videoAlertUtils)
             videoAlertUtils.release();
         EventBus.getDefault().unregister(this);
-        try {
-            mUnBinder.unbind();
-        } catch (IllegalStateException e) {}
     }
 
     /**
      * 初始化自定义视图
      */
+    protected BaseEmntyViewBinding emptyBinding;
     protected void initCustomViews() {
-        rvView = getLayoutInflater().inflate(R.layout.base_emnty_view, null);
-        progressBar = rvView.findViewById(R.id.progress);
-        errorView = rvView.findViewById(R.id.error_view);
-        refDataBtn = rvView.findViewById(R.id.ref_data);
-        errorMsgView = rvView.findViewById(R.id.error_msg);
-        emptyView = rvView.findViewById(R.id.empty_view);
-        emptyMsg = rvView.findViewById(R.id.empty_msg);
+        emptyBinding = BaseEmntyViewBinding.inflate(getLayoutInflater());
+        rvView = emptyBinding.getRoot();
+        linearProgressIndicator = emptyBinding.progress;
+        errorView = emptyBinding.errorView;
+        refDataBtn = emptyBinding.refData;
+        errorMsgView = emptyBinding.errorMsg;
+        emptyView = emptyBinding.emptyView;
+        emptyMsg = emptyBinding.emptyMsg;
         refDataBtn.setOnClickListener(view -> retryListener());
     }
 
     /**
      * 刷新视图
      */
-    protected void rvLoading() {
-        progressBar.setVisibility(View.VISIBLE);
+    protected void rvLoading(boolean showProgress) {
+        if (showProgress) {
+            if (linearProgressIndicator.getVisibility() != View.VISIBLE) {
+                linearProgressIndicator.setVisibility(View.VISIBLE);
+            }
+            linearProgressIndicator.show();
+        }
         errorView.setVisibility(View.GONE);
         emptyView.setVisibility(View.GONE);
     }
@@ -152,7 +147,7 @@ public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V
      * 隐藏加载进度条
      */
     protected void hideProgress() {
-        progressBar.setVisibility(View.GONE);
+        linearProgressIndicator.hide();
     }
 
     /**
@@ -211,19 +206,9 @@ public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V
         registerForContextMenu(view);
     }
 
-    /**
-     * 图片懒加载
-     */
-    protected void lazyLoadImg() {
-        if (!Utils.isNullOrEmpty(lazyLoadImgListener))
-            lazyLoadImgListener.loadImg();
-    }
-
     protected abstract void setConfigurationChanged();
 
-    protected abstract View initViews(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState);
-
-    protected abstract P createPresenter();
+    protected abstract VB inflateBinding(LayoutInflater inflater, ViewGroup container);
 
     protected abstract void loadData();
 
@@ -257,7 +242,11 @@ public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         DirectoryAdapter directoryAdapter = new DirectoryAdapter(false, tDirectories);
         recyclerView.setAdapter(directoryAdapter);
-        popupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        int maxItemWidth = getMaxItemWidth(getActivity(), tDirectories, 16); // 16sp 对应 textSize
+        LogUtil.logInfo("maxItemWidth", maxItemWidth+"");
+        int finalWidth = maxItemWidth + Utils.dpToPx(getActivity(), 16); // 补上左右 padding
+        LogUtil.logInfo("finalWidth", finalWidth+"");
+        popupWindow = new PopupWindow(popupView, finalWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
         // 设置 PopupWindow 背景变暗
         WindowManager.LayoutParams layoutParams = getActivity().getWindow().getAttributes();
         layoutParams.alpha = 0.5f; // 设置透明度，值越小背景越暗
@@ -278,4 +267,32 @@ public abstract class BaseFragment< M extends BaseModel,V, P extends Presenter<V
             directoryPopupWindowAdapterClickListener.onItemClickListener(tDirectories.get(position));
         });
     }
+
+    private int getMaxItemWidth(Context context, List<TDirectory> tDirectories, float textSizeSp) {
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_SP, 16, context.getResources().getDisplayMetrics()));
+        paint.setTypeface(Typeface.defaultFromStyle(Typeface.BOLD));
+
+        int maxTextWidth = 0;
+        for (TDirectory d : tDirectories) {
+            if (d.getName() != null) {
+                int w = (int) paint.measureText(d.getName());
+                if (w > maxTextWidth) maxTextWidth = w;
+            }
+        }
+
+        // TextView padding
+        int textPadding = Utils.dpToPx(context, 8 + 8); // paddingStart + paddingEnd
+
+        // 两个按钮宽度（假设每个按钮 36dp + margin，可根据实际调整）
+        int buttonWidth = Utils.dpToPx(context, 36);
+
+        int totalWidth = maxTextWidth + textPadding + buttonWidth;
+
+        // 限制最大宽度为屏幕宽度 90%
+        int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+        return Math.min(totalWidth, (int) (screenWidth * 0.9f));
+    }
+
 }

@@ -10,5 +10,5 @@
         android:color="#C2C2C2" /> &lt;!&ndash; 不透明黑色边框 &ndash;&gt;-->
 
     <!-- 圆角 -->
-    <corners android:radius="4dp" />
+    <corners android:radius="8dp" />
 </shape>

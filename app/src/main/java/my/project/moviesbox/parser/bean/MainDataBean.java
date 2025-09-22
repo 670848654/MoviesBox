@@ -62,6 +62,10 @@ public class MainDataBean implements MultiItemEntity, Serializable {
         private int img; // 图标 预留
         private Class openClass; // 打开的class
 
+        public Tag(String title) {
+            this.title = title;
+        }
+
         public Tag(String title, String url, Class openClass) {
             this.title = title;
             this.url = url;
@@ -149,6 +153,7 @@ public class MainDataBean implements MultiItemEntity, Serializable {
         private String episodesUrl; // 集数跳转地址 -> 一般为播放地址
         private String previewUrl; // 视频预览地址
         private Class openClass = DetailsActivity.class; // 一般为详情界面
+        private String topLeftTag; // 左上角TAG
 
         @Override
         public String toString() {

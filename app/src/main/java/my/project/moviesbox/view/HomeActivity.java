@@ -7,6 +7,7 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.view.LayoutInflater;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.RequiresApi;
@@ -23,16 +24,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import butterknife.BindView;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.HomeViewPageAdapter;
+import my.project.moviesbox.databinding.ActivityMainBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.event.RefreshEnum;
-import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.service.DownloadService;
 import my.project.moviesbox.service.RssService;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
 import my.project.moviesbox.utils.Utils;
+import my.project.moviesbox.view.base.BaseActivity;
+import my.project.moviesbox.view.fragment.HomeFragment;
+import my.project.moviesbox.view.fragment.MyFragment;
+import my.project.moviesbox.view.fragment.SettingFragment;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -42,27 +46,38 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/2/4 17:11
   * @版本: 1.0
  */
-public class HomeActivity extends BaseActivity {
-    @BindView(R.id.nav_view)
-    BottomNavigationView bottomNavigationView;
-    @BindView(R.id.viewpage2)
-    ViewPager2 viewPager2;
+public class HomeActivity extends BaseActivity<ActivityMainBinding> {
+    private BottomNavigationView bottomNavigationView;
+    private ViewPager2 viewPager2;
     private HomeViewPageAdapter homeViewPageAdapter;
     private List<Fragment> list = new ArrayList<>();
 
     @Override
-    protected Presenter createPresenter() {
-        return null;
+    protected void initBeforeView() {}
+
+    /**
+     * 子类实现，返回具体的 ViewBinding
+     *
+     * @param inflater
+     * @return
+     */
+    @Override
+    protected ActivityMainBinding inflateBinding(LayoutInflater inflater) {
+        return ActivityMainBinding.inflate(inflater);
+    }
+
+    /**
+     * 初始化控件
+     */
+    @Override
+    protected void findById() {
+        bottomNavigationView = binding.navView;
+        viewPager2 = binding.viewpage2;
     }
 
     @Override
-    protected void loadData() {
+    public void initClickListeners() {
 
-    }
-
-    @Override
-    protected int setLayoutRes() {
-        return R.layout.activity_main;
     }
 
     @Override
@@ -114,6 +129,7 @@ public class HomeActivity extends BaseActivity {
         if (!SharedPreferencesUtils.appMainInfo()) {
             Utils.showAlert(
                     this,
+                    R.drawable.round_warning_24,
                     getString(R.string.statementTitle),
                     getString(R.string.firstOpenAppDialogContent),
                     false,
@@ -158,11 +174,6 @@ public class HomeActivity extends BaseActivity {
     }
 
     @Override
-    protected void initBeforeView() {
-
-    }
-
-    @Override
     protected void setConfigurationChanged() {
 
     }
@@ -196,9 +207,8 @@ public class HomeActivity extends BaseActivity {
     private void createShortcut() {
         ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
         if (shortcutManager != null) {
-            shortcutManager.removeDynamicShortcuts(Arrays.asList("open_favorite", "open_download"));
+            shortcutManager.removeDynamicShortcuts(Arrays.asList("open_91"));
             List<ShortcutInfo> shortcuts = new ArrayList<>();
-            shortcuts.add(createFragmentShortcut("open_91", "91吃瓜中心", "91吃瓜中心", R.drawable.ic_shortcut_insert_link, "app://open_91"));
             shortcuts.add(createFragmentShortcut("open_vip", "VIP视频解析助手", "VIP视频解析助手", R.drawable.ic_shortcut_insert_link, "app://open_vip"));
             shortcutManager.setDynamicShortcuts(shortcuts);
         }
@@ -222,4 +232,5 @@ public class HomeActivity extends BaseActivity {
                 .setIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(location)))  // 设置启动时的 Intent
                 .build();
     }
+
 }

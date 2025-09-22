@@ -26,6 +26,8 @@ public interface DanmuContract {
         void successDanmuXml(String content);
 
         void errorDanmu(String msg);
+
+        void netErrorDanmu(String msg);
     }
 
     interface LoadDataCallback extends BaseLoadDataCallback {
@@ -34,5 +36,7 @@ public interface DanmuContract {
         void successDanmuXml(String content);
 
         void errorDanmu(String msg);
+
+        void netErrorDanmu(String msg);
     }
 }

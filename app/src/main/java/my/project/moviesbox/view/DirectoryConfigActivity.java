@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.WindowManager;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -14,6 +13,7 @@ import java.util.Objects;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.database.manager.TDirectoryManager;
+import my.project.moviesbox.databinding.DialogDirectoryBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.utils.Utils;
 
@@ -73,8 +73,8 @@ public class DirectoryConfigActivity extends DirectoryActivity {
     private void editDirectory(int position, String name, String type, int source) {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.DialogStyle);
         builder.setTitle(getString(R.string.editListName));
-        View view = LayoutInflater.from(this).inflate(R.layout.dialog_directory, null);
-        TextInputLayout textInputLayout = view.findViewById(R.id.name);
+        DialogDirectoryBinding dialogBinding = DialogDirectoryBinding.inflate(LayoutInflater.from(this));
+        TextInputLayout textInputLayout = dialogBinding.name;
         textInputLayout.getEditText().setText(name);
         textInputLayout.getEditText().addTextChangedListener(new TextWatcher() {
             @Override
@@ -118,8 +118,10 @@ public class DirectoryConfigActivity extends DirectoryActivity {
         });
         builder.setNegativeButton(getString(R.string.defaultNegativeBtnText), null);
         builder.setCancelable(false);
-        alertDialog = builder.setView(view).create();
+        alertDialog = builder.setView(dialogBinding.getRoot()).create();
         alertDialog.show();
+        Utils.dialogSetRenderEffect(this);
+        alertDialog.setOnDismissListener(dialog -> Utils.dialogClearRenderEffect(this));
     }
 
     /**
@@ -130,6 +132,7 @@ public class DirectoryConfigActivity extends DirectoryActivity {
      */
     private void deleteDirectory(int position, String directoryId, String type) {
         Utils.showAlert(this,
+                R.drawable.round_warning_24,
                 getString(R.string.otherOperation),
                 getString(R.string.listDeletePrompt),
                 true,

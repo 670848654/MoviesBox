@@ -144,4 +144,18 @@ public class TVideoManager extends BaseManager {
                 break;*/
         }
     }
+
+    /**
+     * 获取上次观看集数和时间
+     * @param videoId
+     * @return
+     */
+    public static THistoryData queryLastWatchData(String videoId) {
+        // 查询在历史记录中是否存在
+        THistory tHistory = tHistoryDao.queryByVideoId(videoId);
+        if (!Utils.isNullOrEmpty(tHistory)) {
+            return tHistoryDataDao.querySingleData(tHistory.getHistoryId());
+        }
+        return null;
+    }
 }

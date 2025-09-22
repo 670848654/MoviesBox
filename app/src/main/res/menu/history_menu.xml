@@ -3,17 +3,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item android:id="@+id/refreshImage"
         android:title="@string/refreshImageText"
-        android:icon="@drawable/round_image_24"/>
+        android:icon="@drawable/round_image_24"
+        app:showAsAction="never"/>
     <item
         android:id="@+id/desc"
         android:orderInCategory="60"
         android:title="@string/historyDescMenuText"
         android:icon="@drawable/round_web_24"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/delete"
         android:orderInCategory="60"
         android:title="@string/historyDeleteMenuText"
         android:icon="@drawable/round_delete_sweep_24"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
 </menu>

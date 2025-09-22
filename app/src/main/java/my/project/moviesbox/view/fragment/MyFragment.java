@@ -1,10 +1,9 @@
-package my.project.moviesbox.view;
+package my.project.moviesbox.view.fragment;
 
 import android.graphics.PorterDuff;
-import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -19,16 +18,15 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.MyViewPageAdapter;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.THistoryManager;
+import my.project.moviesbox.databinding.FragmentMyBinding;
 import my.project.moviesbox.event.RefreshEnum;
-import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.DarkModeUtils;
+import my.project.moviesbox.view.base.BaseFragment;
 
 /**
   * @包名: my.project.moviesbox.view
@@ -38,33 +36,42 @@ import my.project.moviesbox.utils.DarkModeUtils;
   * @日期: 2024/2/4 17:12
   * @版本: 1.0
  */
-public class MyFragment extends BaseFragment {
-    private View view;
-    @BindView(R.id.tab)
-    TabLayout tabLayout;
-    @BindView(R.id.viewpage2)
-    ViewPager2 viewPager2;
+public class MyFragment extends BaseFragment<FragmentMyBinding> {
+    private TabLayout tabLayout;
+    private ViewPager2 viewPager2;
     private MyViewPageAdapter myViewPageAdapter;
     private List<Fragment> list = new ArrayList<>();
 
     @Override
-    protected void setConfigurationChanged() {
+    protected FragmentMyBinding inflateBinding(LayoutInflater inflater, ViewGroup container) {
+        // 防止重复 inflate
+        if (binding == null) {
+            binding = FragmentMyBinding.inflate(inflater, container, false);
+        } else {
+            // 从父容器移除
+            ViewParent parent = binding.getRoot().getParent();
+            if (parent instanceof ViewGroup) {
+                ((ViewGroup) parent).removeView(binding.getRoot());
+            }
+        }
+        return binding;
+    }
+
+    @Override
+    public void initViews() {
+        tabLayout = binding.tab;
+        viewPager2 = binding.viewpage2;
+        initViewPage();
+    }
+
+    @Override
+    public void initClickListeners() {
 
     }
 
     @Override
-    protected View initViews(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (view == null) {
-            view = inflater.inflate(R.layout.fragment_my, container, false);
-            mUnBinder = ButterKnife.bind(this, view);
-        } else {
-            ViewGroup parent = (ViewGroup) view.getParent();
-            if (parent != null) {
-                parent.removeView(view);
-            }
-        }
-        initViewPage();
-        return view;
+    protected void setConfigurationChanged() {
+
     }
 
     private void initViewPage() {
@@ -131,11 +138,6 @@ public class MyFragment extends BaseFragment {
             badgeDrawable.setNumber(count);
         else
             tabLayout.getTabAt(index).removeBadge();
-    }
-
-    @Override
-    protected Presenter createPresenter() {
-        return null;
     }
 
     @Override

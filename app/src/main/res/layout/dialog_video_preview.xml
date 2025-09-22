@@ -12,15 +12,29 @@
 
     <TextView
         android:id="@+id/title"
-        android:textSize="16sp"
+        android:textSize="22dp"
+        android:layout_gravity="center_vertical"
+        android:gravity="center_vertical"
         android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="16sp"
-        android:autoSizeMaxTextSize="20sp"
+        android:autoSizeMinTextSize="22sp"
+        android:autoSizeMaxTextSize="26sp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="8dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/detail"
+        style="@style/Button.TextButton"
+        android:layout_gravity="end"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="资源详情"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        app:icon="@drawable/round_details_24" />
 
     <FrameLayout
         android:layout_width="match_parent"

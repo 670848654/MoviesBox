@@ -120,40 +120,43 @@ public class NotificationUtils {
       */
     public void showDefaultNotification(int notificationId, String title, String videoNumber) {
         if (!notifications.containsKey(notificationId)) {
-            Notification notification = null;
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
-                oldBuilder = new Notification.Builder(context);
-                oldBuilder.setAutoCancel(true).setSmallIcon(R.drawable.round_download_for_offline_24);
-                notification = oldBuilder
-                        .setPriority(Notification.PRIORITY_LOW)
-                        .setContentTitle(videoNumber)
-                        .setSubText(title)
-                        .setContentText("下载中")
-                        .setOngoing(true)
-                        .setProgress(progressMax, 0, false)
-                        .build();
-                mManager.notify(notificationId, notification);
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationChannel mChannel = new NotificationChannel(CHANNEL_INFO_ID, CHANNEL_INFO_NAME, NotificationManager.IMPORTANCE_LOW);
-                mChannel.setDescription(CHANNEL_INFO_DESCRIPTION);
-                mChannel.enableLights(true);
-                mChannel.setLightColor(Color.RED);
-                mChannel.enableVibration(true);
-                mChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
-                mChannel.setShowBadge(false);
-                mManager.createNotificationChannel(mChannel);
+            Notification notification;
 
-                newBuilder = new NotificationCompat.Builder(context, CHANNEL_INFO_ID);
-                newBuilder.setAutoCancel(true).setSmallIcon(R.drawable.round_download_for_offline_24);
-                notification = newBuilder
-                        .setContentTitle(videoNumber)
-                        .setSubText(title)
-                        .setContentText("下载中")
-                        .setOngoing(true)
-                        .setProgress(progressMax, 0, false)
-                        .build();
-                mManager.notify(notificationId, notification);
+            NotificationCompat.Builder builder;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // Android 8.0 及以上创建 Channel
+                NotificationChannel channel = new NotificationChannel(
+                        CHANNEL_INFO_ID,
+                        CHANNEL_INFO_NAME,
+                        NotificationManager.IMPORTANCE_LOW
+                );
+                channel.setDescription(CHANNEL_INFO_DESCRIPTION);
+                channel.enableLights(true);
+                channel.setLightColor(Color.RED);
+                channel.enableVibration(true);
+                channel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+                channel.setShowBadge(false);
+                mManager.createNotificationChannel(channel);
+
+                builder = new NotificationCompat.Builder(context, CHANNEL_INFO_ID);
+            } else {
+                // 低版本直接用 NotificationCompat.Builder
+                builder = new NotificationCompat.Builder(context);
+                builder.setPriority(NotificationCompat.PRIORITY_LOW);
             }
+
+            // 通用属性
+            builder.setAutoCancel(true)
+                    .setSmallIcon(R.drawable.round_download_for_offline_24)
+                    .setContentTitle(title + " · " + videoNumber)
+                    .setOngoing(true)
+                    .setProgress(progressMax, 0, false);
+
+            // 构建通知并发送
+            notification = builder.build();
+            mManager.notify(notificationId, notification);
+
             notifications.put(notificationId, notification);
         }
     }
@@ -169,14 +172,9 @@ public class NotificationUtils {
     public void upload(int notificationId, int progress) {
         Notification notification = notifications.get(notificationId);
         if (notification != null) {
-            if (Build.VERSION.SDK_INT >= 24) {
-                Notification.Builder builder = Notification.Builder.recoverBuilder(context, notification);
-                builder.setProgress(100, progress,false);
-                mManager.notify(notificationId, notification);
-            } else {
-                notification.contentView.setProgressBar(android.R.id.progress, 100, progress, false);
-                mManager.notify(notificationId, notification);
-            }
+            Notification.Builder builder = Notification.Builder.recoverBuilder(context, notification);
+            builder.setProgress(100, progress,false);
+            mManager.notify(notificationId, notification);
         }
     }
 
@@ -217,36 +215,41 @@ public class NotificationUtils {
       */
     public int showUploadNotification(int notificationId, String title, String videoNumber, String msg) {
         if (!notifications.containsKey(notificationId)) {
-            Notification notification = null;
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
-                oldBuilder = new Notification.Builder(context);
-                oldBuilder.setAutoCancel(true).setSmallIcon(R.drawable.round_download_for_offline_24);
-                notification = oldBuilder
-                        .setPriority(Notification.PRIORITY_DEFAULT)
-                        .setContentTitle(videoNumber)
-                        .setSubText(title)
-                        .setContentText(msg)
-                        .build();
-                mManager.notify(notificationId, notification);
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-                mChannel.setDescription(CHANNEL_DESCRIPTION);
-                mChannel.enableLights(true);
-                mChannel.setLightColor(Color.RED);
-                mChannel.enableVibration(true);
-                mChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
-                mChannel.setShowBadge(false);
-                mManager.createNotificationChannel(mChannel);
+            Notification notification;
 
-                newBuilder = new NotificationCompat.Builder(context, CHANNEL_ID);
-                newBuilder.setAutoCancel(true).setSmallIcon(R.drawable.round_download_for_offline_24);
-                notification = newBuilder
-                        .setContentTitle(videoNumber)
-                        .setSubText(title)
-                        .setContentText(msg)
-                        .build();
-                mManager.notify(notificationId, notification);
+            NotificationCompat.Builder builder;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // Android 8.0 及以上创建 Channel
+                NotificationChannel channel = new NotificationChannel(
+                        CHANNEL_ID,
+                        CHANNEL_NAME,
+                        NotificationManager.IMPORTANCE_DEFAULT
+                );
+                channel.setDescription(CHANNEL_DESCRIPTION);
+                channel.enableLights(true);
+                channel.setLightColor(Color.RED);
+                channel.enableVibration(true);
+                channel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+                channel.setShowBadge(false);
+                mManager.createNotificationChannel(channel);
+
+                builder = new NotificationCompat.Builder(context, CHANNEL_ID);
+            } else {
+                builder = new NotificationCompat.Builder(context);
+                builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
             }
+
+            // 通用属性
+            builder.setAutoCancel(true)
+                    .setSmallIcon(R.drawable.round_download_for_offline_24)
+                    .setContentTitle(title + " · " + videoNumber)
+                    .setContentText(msg);
+
+            // 构建通知并发送
+            notification = builder.build();
+            mManager.notify(notificationId, notification);
+
             notifications.put(notificationId, notification);
         }
         return notificationId;
@@ -281,39 +284,55 @@ public class NotificationUtils {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         }
-        if (!notifications.containsKey(notificationId)) {
-            Notification notification = null;
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
-                oldBuilder = new Notification.Builder(context);
-                oldBuilder.setAutoCancel(true).setSmallIcon(R.drawable.round_cloud_sync_24);
-                if (!Utils.isNullOrEmpty(pendingIntent))
-                    oldBuilder.setContentIntent(pendingIntent);
-                notification = oldBuilder
-                        .setPriority(Notification.PRIORITY_DEFAULT)
-                        .setContentTitle(title)
-                        .setContentText(content)
-                        .build();
-                mManager.notify(notificationId, notification);
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationChannel mChannel = new NotificationChannel(CHANNEL_CHECK_SERVICE_INFO_ID, CHANNEL_CHECK_SERVICE_INFO_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-                mChannel.setDescription(CHANNEL_CHECK_SERVICE_INFO_Description);
-                mChannel.enableLights(true);
-                mChannel.setLightColor(Color.RED);
-                mChannel.enableVibration(true);
-                mChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
-                mChannel.setShowBadge(false);
-                mManager.createNotificationChannel(mChannel);
 
-                newBuilder = new NotificationCompat.Builder(context, CHANNEL_CHECK_SERVICE_INFO_ID);
-                newBuilder.setAutoCancel(true).setSmallIcon(R.drawable.round_cloud_sync_24);
-                if (!Utils.isNullOrEmpty(pendingIntent))
-                    newBuilder.setContentIntent(pendingIntent);
-                notification = newBuilder
+        if (!notifications.containsKey(notificationId)) {
+            Notification notification;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // Android 8.0及以上
+                NotificationChannel channel = new NotificationChannel(
+                        CHANNEL_CHECK_SERVICE_INFO_ID,
+                        CHANNEL_CHECK_SERVICE_INFO_NAME,
+                        NotificationManager.IMPORTANCE_DEFAULT
+                );
+                channel.setDescription(CHANNEL_CHECK_SERVICE_INFO_Description);
+                channel.enableLights(true);
+                channel.setLightColor(Color.RED);
+                channel.enableVibration(true);
+                channel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+                channel.setShowBadge(false);
+                mManager.createNotificationChannel(channel);
+
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_CHECK_SERVICE_INFO_ID)
+                        .setAutoCancel(true)
+                        .setSmallIcon(R.drawable.round_cloud_sync_24)
                         .setContentTitle(title)
-                        .setContentText(content)
-                        .build();
+                        .setContentText(content);
+
+                if (pendingIntent != null) {
+                    builder.setContentIntent(pendingIntent);
+                }
+
+                notification = builder.build();
+                mManager.notify(notificationId, notification);
+
+            } else {
+                // Android 8.0以下
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+                        .setAutoCancel(true)
+                        .setSmallIcon(R.drawable.round_cloud_sync_24)
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setContentTitle(title)
+                        .setContentText(content);
+
+                if (pendingIntent != null) {
+                    builder.setContentIntent(pendingIntent);
+                }
+
+                notification = builder.build();
                 mManager.notify(notificationId, notification);
             }
+
             notifications.put(notificationId, notification);
         }
         return notificationId;
@@ -335,45 +354,66 @@ public class NotificationUtils {
      */
     public int showRSSNotification(String title, String content, String url) {
         int notificationId = generateUniqueRandom();
+
         PendingIntent pendingIntent = null;
         if (!Utils.isNullOrEmpty(url)) {
             Intent intent = new Intent(context, DetailsActivity.class);
             intent.putExtra("title", title);
             intent.putExtra("url", url);
             pendingIntent = PendingIntent.getActivity(
-                    context, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                    context,
+                    notificationId,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
         }
-        Notification notification = null;
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
-            oldBuilder = new Notification.Builder(context);
-            oldBuilder.setAutoCancel(true).setSmallIcon(R.drawable.round_fiber_new_24);
-            if (!Utils.isNullOrEmpty(pendingIntent))
-                oldBuilder.setContentIntent(pendingIntent);
-            notification = oldBuilder
-                    .setPriority(Notification.PRIORITY_LOW)
-                    .setContentTitle(title)
-                    .setContentText(content)
-                    .build();
-            mManager.notify(notificationId, notification);
-        } else {
-            NotificationChannel mChannel = new NotificationChannel(CHANNEL_RSS_SERVICE_INFO_ID, CHANNEL_RSS_SERVICE_INFO_NAME, NotificationManager.IMPORTANCE_LOW);
-            mChannel.setDescription(CHANNEL_RSS_SERVICE_INFO_DESCRIPTION);
-            mChannel.enableLights(true);
-            mChannel.setLightColor(Color.RED);
-            mChannel.setShowBadge(false);
-            mManager.createNotificationChannel(mChannel);
 
-            newBuilder = new NotificationCompat.Builder(context, CHANNEL_RSS_SERVICE_INFO_ID);
-            newBuilder.setAutoCancel(true).setSmallIcon(R.drawable.round_fiber_new_24);
-            if (!Utils.isNullOrEmpty(pendingIntent))
-                newBuilder.setContentIntent(pendingIntent);
-            notification = newBuilder
+        Notification notification;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // 高版本
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_RSS_SERVICE_INFO_ID,
+                    CHANNEL_RSS_SERVICE_INFO_NAME,
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription(CHANNEL_RSS_SERVICE_INFO_DESCRIPTION);
+            channel.enableLights(true);
+            channel.setLightColor(Color.RED);
+            channel.setShowBadge(false);
+            mManager.createNotificationChannel(channel);
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_RSS_SERVICE_INFO_ID)
+                    .setAutoCancel(true)
+                    .setSmallIcon(R.drawable.round_fiber_new_24)
                     .setContentTitle(title)
-                    .setContentText(content)
-                    .build();
+                    .setContentText(content);
+
+            if (pendingIntent != null) {
+                builder.setContentIntent(pendingIntent);
+            }
+
+            notification = builder.build();
+            mManager.notify(notificationId, notification);
+
+        } else {
+            // 低版本
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+                    .setAutoCancel(true)
+                    .setSmallIcon(R.drawable.round_fiber_new_24)
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
+                    .setContentTitle(title)
+                    .setContentText(content);
+
+            if (pendingIntent != null) {
+                builder.setContentIntent(pendingIntent);
+            }
+
+            notification = builder.build();
             mManager.notify(notificationId, notification);
         }
+
+        notifications.put(notificationId, notification);
         return notificationId;
     }
 }

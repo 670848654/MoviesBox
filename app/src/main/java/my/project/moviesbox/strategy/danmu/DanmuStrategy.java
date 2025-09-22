@@ -19,7 +19,8 @@ public interface DanmuStrategy {
     /**
      * 解析弹幕内容
      * @param source
+     * @param danmuResult
      * @param callback
      */
-    void parseDanmu(String source, DanmuContract.LoadDataCallback callback);
+    void parseDanmu(String source, DanmuResultEnum danmuResult, DanmuContract.LoadDataCallback callback);
 }
