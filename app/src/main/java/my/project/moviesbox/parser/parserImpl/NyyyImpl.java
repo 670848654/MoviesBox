@@ -199,8 +199,10 @@ public class NyyyImpl implements ParserInterface {
                 if (aElements.size() > 0) {
                     MainDataBean.Item item = new MainDataBean.Item();
                     // 名称
-                    item.setTitle(aElements.select(".slide-info-title").text());
-                    Elements remarks = aElements.select(".slide-info-remarks");
+                    String title = aElements.select(".slide-info-title").text();
+                    if (title.contains("微信")) continue;
+                    item.setTitle(title);
+                    Elements remarks = slide.select(".slide-info .slide-info-remarks");
                     item.setEpisodes(remarks.size() > 1 ? remarks.get(1).text() : remarks.get(0).text());
                     // 地址
                     item.setUrl(aElements.attr("href"));
