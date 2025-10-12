@@ -275,7 +275,7 @@ public class GiriGiriLoveImpl implements ParserInterface {
             Elements boxs = document.select(".box-width.wow.fadeInUp");
             for (Element box : boxs) {
                 String boxTitle = box.select("h4.title-h").text();
-                if (Utils.isNullOrEmpty(boxTitle) || boxTitle.contains("本周推荐"))
+                if (Utils.isNullOrEmpty(boxTitle) || boxTitle.contains("本周推荐") || boxTitle.contains("周期表"))
                     continue;
                 mainDataBean = new MainDataBean();
                 mainDataBean.setTitle(boxTitle);
@@ -358,7 +358,8 @@ public class GiriGiriLoveImpl implements ParserInterface {
             }*/
             String playScore = document.select("div.play-score").select(".text-site").text() + " " + document.select("div.play-score").select(".fraction").text();
             detailsDataBean.setScore(playScore);
-            detailsDataBean.setIntroduction(document.getElementById("height_limit").text());
+            Element introductionElement = document.getElementById("height_limit");
+            detailsDataBean.setIntroduction(Utils.isNullOrEmpty(introductionElement) ? "" : introductionElement.text());
             // 获取所有播放列表
             Elements playTitleList = document.select("div.anthology").select(".swiper-wrapper").select("a");
             playTitleList.select("span.badge").remove();
@@ -593,16 +594,16 @@ public class GiriGiriLoveImpl implements ParserInterface {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
-            Elements elements = document.select("div.public-list-box");
+            Elements elements = document.select("div.search-list");
             if (elements.size() > 0) {
                 for (Element item : elements) {
                     VodDataBean bean = new VodDataBean();
-                    String title = item.select("a.public-list-exp").attr("title");
-                    bean.setTitle(Utils.isNullOrEmpty(title) ? item.select(".thumb-content .thumb-txt").text() : title);
-                    bean.setUrl(item.select("a.public-list-exp").attr("href"));
+                    String title = item.select("h3.slide-info-title").text();
+                    bean.setTitle(title);
+                    bean.setUrl(item.select("div.detail-info > a").attr("href"));
                     bean.setImg(getImg(item.select("img").attr("data-src")));
-                    bean.setEpisodesTag(item.select("span.public-list-prb").text());
-                    bean.setTopLeftTag(item.select("span.public-prt").text());
+                    bean.setEpisodesTag(item.select("span.slide-info-remarks").text());
+//                    bean.setTopLeftTag(item.select("span.public-prt").text());
                     items.add(bean);
                 }
                 logInfo("搜索列表数据", items.toString());
