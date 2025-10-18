@@ -177,6 +177,7 @@ public abstract class BasePlayerActivity extends BaseActivity<ActivityPlayerBind
         speedsStrItems = Utils.getArray(R.array.fast_forward_item);
         speedsIntItems = Utils.getIntArray(R.array.fast_forward_set_item);
         autoPlayNextVideoSwitch = binding.autoPlayNextVideo;
+        player.danmuInfoView.setOnClickListener(v -> getDanmu());
     }
 
     @Override
@@ -572,12 +573,12 @@ public abstract class BasePlayerActivity extends BaseActivity<ActivityPlayerBind
         if (isLocalVideo()) // 本地视频不支持弹幕
             return;
         if (player.openDamuConfig && player.hasDanmuConfig) {
-            new Thread(() -> {
-                player.danmuInfoView.setClickable(false);
+            runOnUiThread(() -> {
                 player.danmuInfoView.setText("正在获取弹幕数据");
                 player.danmuInfoView.setVisibility(View.VISIBLE);
-                danmuPresenter.loadDanmu(getDanmuParams());
-            }).start();
+                player.danmuInfoView.setClickable(false);
+            });
+            new Thread(() -> danmuPresenter.loadDanmu(getDanmuParams())).start();
         }
     }
 
@@ -974,7 +975,6 @@ public abstract class BasePlayerActivity extends BaseActivity<ActivityPlayerBind
                 application.showToastMsg(msg, DialogXTipEnum.WARNING);
                 player.danmuInfoView.setText("点击重新获取弹幕数据");
                 player.danmuInfoView.setClickable(true);
-                player.danmuInfoView.setOnClickListener(v -> getDanmu());
             } catch (Exception e) {
                 application.showToastMsg(e.getMessage(), DialogXTipEnum.ERROR);
             }
