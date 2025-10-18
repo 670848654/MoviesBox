@@ -65,7 +65,7 @@ public class GiriGiriLoveDanmuStrategy extends BaseDanmuStrategy {
             }
 
             String info = result.getString("info");
-            if (Utils.isNullOrEmpty(info)) {
+            if (Utils.isNullOrEmpty(info) || info.endsWith("m3u8")) {
                 // 获取本站JSON格式弹幕
                 parseScrollingApi(scrollingApi, headers, json, callback);
             } else if (info.contains(".xml")) {
