@@ -146,7 +146,7 @@ public enum SourceEnum {
             MOVIES.bg,
             "质量高，无广告但更新随缘",
             "yjys",
-            "https://v.xlys.ltd.ua",
+            "https://xl01.com.de",
             "",
             "/search/%s/%s",
             false,
@@ -191,7 +191,7 @@ public enum SourceEnum {
             ANIME.bg,
             "质量高，无国产动漫",
             "girigirilove",
-            "https://anime.girigirilove.com",
+            "https://bgm.girigirilove.com",
             "https://girigirilove.top/",
             "/search/%s----------%s---/", // 搜索参数.分页
             true,
