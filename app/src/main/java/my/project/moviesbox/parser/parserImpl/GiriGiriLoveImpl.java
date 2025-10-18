@@ -275,7 +275,7 @@ public class GiriGiriLoveImpl implements ParserInterface {
             Elements boxs = document.select(".box-width.wow.fadeInUp");
             for (Element box : boxs) {
                 String boxTitle = box.select("h4.title-h").text();
-                if (Utils.isNullOrEmpty(boxTitle) || boxTitle.contains("本周推荐") || boxTitle.contains("周期表"))
+                if (Utils.isNullOrEmpty(boxTitle) || boxTitle.contains("本周推荐") || boxTitle.contains("每周推荐") || boxTitle.contains("周期表"))
                     continue;
                 mainDataBean = new MainDataBean();
                 mainDataBean.setTitle(boxTitle);
