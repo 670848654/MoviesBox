@@ -4,7 +4,7 @@ import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.net.Uri;
 import android.os.Handler;
-import android.os.HandlerThread;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Surface;
 
@@ -23,25 +23,20 @@ import com.google.android.exoplayer2.audio.AudioAttributes;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.video.VideoListener;
 
 import java.io.File;
-import java.util.Map;
+import java.util.HashMap;
 
 import cn.jzvd.JZMediaInterface;
 import cn.jzvd.Jzvd;
 import my.project.moviesbox.R;
-import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.utils.Utils;
 
 /**
@@ -71,102 +66,88 @@ public class JZExoPlayer extends JZMediaInterface implements Player.EventListene
     public void prepare() {
         Log.e(TAG, "prepare");
         Context context = jzvd.getContext();
-
         release();
-        mMediaHandlerThread = new HandlerThread("JZVD");
-        mMediaHandlerThread.start();
-        mMediaHandler = new Handler(mMediaHandlerThread.getLooper());//主线程还是非主线程，就在这里
-        handler = new Handler();
-        mMediaHandler.post(() -> {
-            TrackSelection.Factory videoTrackSelectionFactory =
-                    new AdaptiveTrackSelection.Factory();
-            TrackSelector trackSelector =
-                    new DefaultTrackSelector(context, videoTrackSelectionFactory);
 
-            LoadControl loadControl = new DefaultLoadControl(new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE),
-                    360000, 600000, 1000, 5000,
-                    C.LENGTH_UNSET,
-                    false);
-            BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter.Builder(context).build();
+        // 不再使用子线程
+        mMediaHandlerThread = null;
+        mMediaHandler = new Handler(Looper.getMainLooper());
+        handler = new Handler(Looper.getMainLooper());
+        // 直接执行
+        initExoPlayerOnMainThread(context);
+    }
 
-            // 2. Create the player
-            RenderersFactory renderersFactory = new DefaultRenderersFactory(context);
-            /*simpleExoPlayer = new SimpleExoPlayer.Builder(context, renderersFactory)
-                    .setTrackSelector(trackSelector)
-                    .setLoadControl(loadControl)
-                    .setBandwidthMeter(bandwidthMeter)
-                    .build();*/
-            simpleExoPlayer = new SimpleExoPlayer.Builder(context, renderersFactory)
-                    .setTrackSelector(trackSelector)
-                    .setLoadControl(loadControl)
-                    .setBandwidthMeter(bandwidthMeter)
-                    .build();
-            // Produces DataSource instances through which media data is loaded.
-            /*DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(context,
-                    Util.getUserAgent(context, context.getResources().getString(R.string.app_name)));*/
-            String currUrl = jzvd.jzDataSource.getCurrentUrl().toString();
-            MediaSource videoSource;
-            // 自定义 DefaultHttpDataSourceFactory
-            DefaultHttpDataSourceFactory httpDataSourceFactory = new DefaultHttpDataSourceFactory(
-                    Util.getUserAgent(context, context.getResources().getString(R.string.app_name)), // user-agent
-                    null,
-                    15000,
-                    15000,
-                    true
-            );
-            // 添加 headers
-            Map<String, String> headers = ParserInterfaceFactory.getParserInterface().setPlayerHeaders();
-            if (headers != null) {
-                httpDataSourceFactory.getDefaultRequestProperties().set(headers);
+    private void initExoPlayerOnMainThread(Context context) {
+        DefaultAllocator allocator = new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE);
+
+        LoadControl loadControl = new DefaultLoadControl.Builder()
+                .setAllocator(allocator)
+                .setBufferDurationsMs(360000, 600000, 1000, 5000) // min/max buffer
+                .setTargetBufferBytes(C.LENGTH_UNSET)
+                .setPrioritizeTimeOverSizeThresholds(false)
+                .build();
+        BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter.Builder(context).build();
+
+        // 2. Create the player
+        RenderersFactory renderersFactory = new DefaultRenderersFactory(context);
+        simpleExoPlayer = new SimpleExoPlayer.Builder(context, renderersFactory)
+                .setLoadControl(loadControl)
+                .setBandwidthMeter(bandwidthMeter)
+                .setLooper(Looper.getMainLooper()) // 强制使用主线程Looper
+                .build();
+        String currUrl = jzvd.jzDataSource.getCurrentUrl().toString();
+        MediaSource videoSource;
+        HashMap<String, String> headerMap = jzvd.jzDataSource.headerMap;
+        DefaultHttpDataSource.Factory httpDataSourceFactory =
+                new DefaultHttpDataSource.Factory()
+                        .setUserAgent(Util.getUserAgent(context, context.getString(R.string.app_name)))
+                        .setConnectTimeoutMs(15000)
+                        .setReadTimeoutMs(15000)
+                        .setAllowCrossProtocolRedirects(true)
+                        .setDefaultRequestProperties(headerMap); // 替代 getDefaultRequestProperties()
+
+        // 包装成 DefaultDataSourceFactory
+        DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(context, null, httpDataSourceFactory);
+
+        if (currUrl.contains(".m3u8")) {
+            if (currUrl.startsWith("file")) // 播放本地M3U8
+                videoSource = new HlsMediaSource.Factory(dataSourceFactory)
+                        .createMediaSource(MediaItem.fromUri(Uri.fromFile(new File(currUrl.replace("file:/", "")))));
+            else // 播放网络M3U8
+                videoSource = new HlsMediaSource.Factory(httpDataSourceFactory)
+                        .setAllowChunklessPreparation(false)  // 禁止直接跳 segment
+                        .createMediaSource(Uri.parse(currUrl));
+        } else
+            // 播放网络/本地视频
+            videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory)
+                    .createMediaSource(currUrl.startsWith("file") ? Uri.fromFile(new File(currUrl.replace("file:/", ""))) : Uri.parse(currUrl));
+        simpleExoPlayer.addVideoListener(this);
+
+        Log.e(TAG, "URL Link = " + currUrl);
+
+        simpleExoPlayer.addListener(this);
+
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setContentType(C.CONTENT_TYPE_MOVIE)
+                .setUsage(C.USAGE_MEDIA)
+                .build();
+        simpleExoPlayer.setAudioAttributes(audioAttributes, false); // 👈 这句很关键！
+
+        Boolean isLoop = jzvd.jzDataSource.looping;
+        if (isLoop) {
+            simpleExoPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
+        } else {
+            simpleExoPlayer.setRepeatMode(Player.REPEAT_MODE_OFF);
+        }
+        simpleExoPlayer.prepare(videoSource);
+        simpleExoPlayer.setPlayWhenReady(true);
+        callback = new onBufferingUpdate();
+
+        if (jzvd.textureView != null) {
+            SurfaceTexture surfaceTexture = jzvd.textureView.getSurfaceTexture();
+            if (surfaceTexture != null) {
+                simpleExoPlayer.setVideoSurface(new Surface(surfaceTexture));
             }
-
-            // 包装成 DefaultDataSourceFactory
-            DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(context, null, httpDataSourceFactory);
-
-            if (currUrl.contains(".m3u8")) {
-//                videoSource = new HlsMediaSource.Factory(httpDataSourceFactory)
-//                        .createMediaSource(Uri.parse(currUrl), handler, null);
-                if (currUrl.startsWith("file")) // 播放本地M3U8
-                    videoSource = new HlsMediaSource.Factory(dataSourceFactory)
-                            .createMediaSource(MediaItem.fromUri(Uri.fromFile(new File(currUrl.replace("file:/", "")))));
-                else // 播放网络M3U8
-                    videoSource = new HlsMediaSource.Factory(httpDataSourceFactory)
-                            .setAllowChunklessPreparation(false)  // 禁止直接跳 segment
-                            .createMediaSource(Uri.parse(currUrl));
-            } else
-                // 播放网络/本地视频
-                videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory)
-                        .createMediaSource(currUrl.startsWith("file") ? Uri.fromFile(new File(currUrl.replace("file:/", ""))) : Uri.parse(currUrl));
-            simpleExoPlayer.addVideoListener(this);
-
-            Log.e(TAG, "URL Link = " + currUrl);
-
-            simpleExoPlayer.addListener(this);
-
-            AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                    .setContentType(C.CONTENT_TYPE_MOVIE)
-                    .setUsage(C.USAGE_MEDIA)
-                    .build();
-            simpleExoPlayer.setAudioAttributes(audioAttributes, false); // 👈 这句很关键！
-
-            Boolean isLoop = jzvd.jzDataSource.looping;
-            if (isLoop) {
-                simpleExoPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
-            } else {
-                simpleExoPlayer.setRepeatMode(Player.REPEAT_MODE_OFF);
-            }
-            simpleExoPlayer.prepare(videoSource);
-            simpleExoPlayer.setPlayWhenReady(true);
-            callback = new onBufferingUpdate();
-
-            if (jzvd.textureView != null) {
-                SurfaceTexture surfaceTexture = jzvd.textureView.getSurfaceTexture();
-                if (surfaceTexture != null) {
-                    simpleExoPlayer.setVideoSurface(new Surface(surfaceTexture));
-                }
-            }
-        });
-
+        }
     }
 
     @Override
@@ -202,14 +183,14 @@ public class JZExoPlayer extends JZMediaInterface implements Player.EventListene
 
     @Override
     public void release() {
-        if (mMediaHandler != null && mMediaHandlerThread != null && simpleExoPlayer != null) {//不知道有没有妖孽
-            HandlerThread tmpHandlerThread = mMediaHandlerThread;
+        if (mMediaHandler != null && simpleExoPlayer != null) {//不知道有没有妖孽
+//            HandlerThread tmpHandlerThread = mMediaHandlerThread;
             ExoPlayer tmpMediaPlayer = simpleExoPlayer;
             JZMediaInterface.SAVED_SURFACE = null;
 
             mMediaHandler.post(() -> {
                 tmpMediaPlayer.release();//release就不能放到主线程里，界面会卡顿
-                tmpHandlerThread.quit();
+//                tmpHandlerThread.quit();
             });
             simpleExoPlayer = null;
         }
@@ -269,7 +250,7 @@ public class JZExoPlayer extends JZMediaInterface implements Player.EventListene
 
     @Override
     public void onPlayerStateChanged(final boolean playWhenReady, final int playbackState) {
-        Log.e(TAG, "onPlayerStateChanged" + playbackState + "/ready=" + String.valueOf(playWhenReady));
+        Log.e(TAG, "onPlayerStateChanged" + playbackState + "/ready=" + playWhenReady);
         handler.post(() -> {
             switch (playbackState) {
                 case Player.STATE_IDLE: {
