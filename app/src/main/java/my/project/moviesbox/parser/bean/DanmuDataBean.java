@@ -1,5 +1,7 @@
 package my.project.moviesbox.parser.bean;
 
+import android.graphics.Color;
+
 import lombok.Data;
 import my.project.moviesbox.utils.Utils;
 
@@ -86,10 +88,30 @@ public class DanmuDataBean {
     }
 
     public void setColor(String color) {
-        if (Utils.isNullOrEmpty(color))
+        if (Utils.isNullOrEmpty(color)) {
             this.color = DEFAULT_COLOR;
-        else
-            this.color = color;
+            return;
+        }
+
+        try {
+            int parsed = Color.parseColor(color);
+            int r = Color.red(parsed);
+            int g = Color.green(parsed);
+            int b = Color.blue(parsed);
+
+            // 亮度算法（加权平均）
+            double brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+
+            // 如果颜色太暗（亮度<60），就改成白色
+            if (brightness < 60) {
+                this.color = DEFAULT_COLOR;
+            } else {
+                this.color = color;
+            }
+        } catch (IllegalArgumentException e) {
+            // 无效颜色格式
+            this.color = DEFAULT_COLOR;
+        }
     }
 
     public void setType(int type) {

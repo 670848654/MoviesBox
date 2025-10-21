@@ -400,7 +400,7 @@ public class JZPlayer extends JzvdStd {
                     danmakuContext.mGlobalFlagValues.updateFilterFlag();
                     danmakuView.invalidateDanmaku(null, true);
 
-                    String tip = showTopDanmaku ? "底部弹幕已显示" : "底部弹幕已屏蔽";
+                    String tip = showBottomDanmaku ? "底部弹幕已显示" : "底部弹幕已屏蔽";
                     TextViewAnimator.showMultipleWithFade(tipsView, tip, 300, 1000);
                 });
 
@@ -976,9 +976,10 @@ public class JZPlayer extends JzvdStd {
     @Override
     public void onSeekComplete() {
         super.onSeekComplete();
-        if (danmakuView != null) {
+        /*if (danmakuView != null) {
             danmakuView.seekTo(getCurrentPositionWhenPlaying());
-        }
+        }*/
+        seekDanmu(getCurrentPositionWhenPlaying());
     }
 
     public void seekDanmu(long time) {
@@ -1045,15 +1046,12 @@ public class JZPlayer extends JzvdStd {
 
     private void tryStartDanmaku() {
         if (danmakuView != null && danmakuView.isPrepared()) {
+            // 同步视频进度
+            danmakuView.seekTo(getCurrentPositionWhenPlaying());
             if (isVideoPrepared && isDanmakuPrepared) {
-                if (state == STATE_PREPARED) {
-                    // 同步视频进度
-                    long position = getCurrentPositionWhenPlaying();
-                    danmakuView.seekTo(position);
-                    danmakuView.start();
-                }
-                else {
-                    danmakuView.resume();
+                switch (state) {
+                    case STATE_PREPARED -> danmakuView.start();
+                    default -> danmakuView.resume();
                 }
             }
         }

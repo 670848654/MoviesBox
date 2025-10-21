@@ -178,7 +178,19 @@ public class DanmukuXmlParser extends BaseDanmakuParser {
                     long time = (long) (parseFloat(values[0]) * 1000); // 出现时间
                     int type = parseInteger(values[1]); // 弹幕类型
 //                    float textSize = parseFloat(values[2]); // 字体大小
-                    int color = (int) ((0x00000000ff000000 | parseLong(values[3])) & 0x00000000ffffffff); // 颜色
+//                    int color = (int) ((0x00000000ff000000 | parseLong(values[3])) & 0x00000000ffffffff); // 颜色
+                    long rawColor = Long.parseLong(values[3]);  // 原始颜色值
+                    int color = (int) ((0xFF000000L | rawColor) & 0xFFFFFFFFL); // 保持不透明
+                    // 提取RGB分量
+                    int r = Color.red(color);
+                    int g = Color.green(color);
+                    int b = Color.blue(color);
+
+                    // 判断是否是黑色或接近黑色（亮度过低）
+                    double brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+                    if (brightness < 60) {  // 可调阈值
+                        color = Color.WHITE;
+                    }
                     // int poolType = parseInteger(values[5]); // 弹幕池类型（忽略
                     item = mContext.mDanmakuFactory.createDanmaku(type, mContext);
                     if (item != null) {
