@@ -14,6 +14,20 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RefreshFavoriteEvent {
+    /**
+     * 影视ID
+     */
     private String vodId;
+    /**
+     * 下载目录ID
+     */
+    private String downloadId;
+    /**
+     * 下载数量
+     */
+    private Integer downloadCount;
+    /**
+     * 最后观看集数
+     */
     private String lastPlayNumber;
 }

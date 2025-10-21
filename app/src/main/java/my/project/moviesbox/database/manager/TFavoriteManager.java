@@ -87,7 +87,7 @@ public class TFavoriteManager extends BaseManager {
             tFavorite.setLastVideoPlayNumberUrl(lastVideoPlayNumberUrl);
             tFavorite.setLastVideoUpdateNumber(lastVideoPlayNumber);
             tFavoriteDao.update(tFavorite);
-            EventBus.getDefault().post(new RefreshFavoriteEvent(videoId, lastVideoPlayNumber));
+            EventBus.getDefault().post(new RefreshFavoriteEvent(videoId, null, null, lastVideoPlayNumber));
         }
     }
 

@@ -44,7 +44,6 @@ import my.project.moviesbox.application.App;
 import my.project.moviesbox.database.entity.TDirectory;
 import my.project.moviesbox.databinding.BaseEmntyViewBinding;
 import my.project.moviesbox.event.RefreshEnum;
-import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.utils.Utils;
@@ -243,9 +242,7 @@ public abstract class BaseFragment<VB extends ViewBinding> extends Fragment {
         DirectoryAdapter directoryAdapter = new DirectoryAdapter(false, tDirectories);
         recyclerView.setAdapter(directoryAdapter);
         int maxItemWidth = getMaxItemWidth(getActivity(), tDirectories, 16); // 16sp 对应 textSize
-        LogUtil.logInfo("maxItemWidth", maxItemWidth+"");
         int finalWidth = maxItemWidth + Utils.dpToPx(getActivity(), 16); // 补上左右 padding
-        LogUtil.logInfo("finalWidth", finalWidth+"");
         popupWindow = new PopupWindow(popupView, finalWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
         // 设置 PopupWindow 背景变暗
         WindowManager.LayoutParams layoutParams = getActivity().getWindow().getAttributes();

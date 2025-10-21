@@ -102,12 +102,16 @@ public interface TFavoriteDao {
      */
     @Query("SELECT t2.videoId as videoId, " +
             "       t2.videoTitle as videoTitle, " +
+            "       t3.downloadId as downloadId, " +
+            "       count(t3.downloadId) as hasDownload, " +
             "       t1.* " +
             "  FROM TFavorite t1 " +
             "       INNER JOIN TVideo t2 ON t1.linkId = t2.videoId AND t2.videoSource = :videoSource " +
+            "       LEFT JOIN TDownload t3 ON t3.linkId = t2.videoId" +
             " WHERE (:directoryId = 'all' OR " +
             "        (:directoryId = '' AND t1.directoryId IS NULL) OR " +
             "        (:directoryId != '' AND :directoryId != 'all' AND t1.directoryId = :directoryId)) " +
+            " GROUP BY t1.`index` " +
             " ORDER BY t1.`index` DESC " +
             " LIMIT :limit OFFSET :offset")
     List<TFavoriteWithFields> queryFavorite(int videoSource, String directoryId, int offset, int limit);

@@ -205,6 +205,7 @@ public class DownloadFragment extends BaseMvpFragment<DownloadModel, DownloadCon
             Utils.setVibration(view);
             Bundle bundle = new Bundle();
             bundle.putString("vodTitle", downloadList.get(position).getVideoTitle());
+            bundle.putString("vodId", downloadList.get(position).getTDownload().getLinkId());
             bundle.putString("downloadId", downloadList.get(position).getTDownload().getDownloadId());
             startActivity(new Intent(getActivity(), DownloadDataActivity.class).putExtras(bundle));
         });

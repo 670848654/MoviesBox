@@ -67,6 +67,7 @@ import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.event.DownloadEvent;
 import my.project.moviesbox.event.DownloadStateEvent;
 import my.project.moviesbox.event.RefreshDownloadEvent;
+import my.project.moviesbox.event.RefreshFavoriteEvent;
 import my.project.moviesbox.model.DownloadModel;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.DownloadPresenter;
@@ -90,6 +91,7 @@ public class DownloadDataActivity extends BaseMvpActivity<DownloadModel, Downloa
     private DownloadDataAdapter adapter;
     private String downloadId;
     private String vodTitle;
+    private String vodId;
     private int downloadDataCount = 0;
     private boolean isMain = true;
     private static final String[] DOWNLOAD_STR = getArray(R.array.downloadItems);
@@ -154,6 +156,7 @@ public class DownloadDataActivity extends BaseMvpActivity<DownloadModel, Downloa
         Bundle bundle = getIntent().getExtras();
         downloadId = bundle.getString("downloadId");
         vodTitle = bundle.getString("vodTitle");
+        vodId = bundle.getString("vodId");
         setToolbar(toolbar, vodTitle, "");
         initSwipe();
         initFab();
@@ -419,6 +422,7 @@ public class DownloadDataActivity extends BaseMvpActivity<DownloadModel, Downloa
         if (downloadDataBeans.size() == 0) {
             shouldDeleteDownloadDir();
             TDownloadManager.deleteDownload(downloadId);
+            EventBus.getDefault().post(new RefreshFavoriteEvent(vodId, null, 0, null));
             finish();
         }
         EventBus.getDefault().post(REFRESH_DOWNLOAD);

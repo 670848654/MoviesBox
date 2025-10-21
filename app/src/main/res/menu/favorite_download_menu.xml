@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/refreshImage"
+        android:title="@string/refreshImageText"
+        android:icon="@drawable/round_image_24"
+        app:showAsAction="never" />
+    <item android:id="@+id/moveDirectory"
+        android:title="@string/moveDirectory"
+        android:icon="@drawable/round_drive_file_move_24"
+        app:showAsAction="never"/>
+    <item android:id="@+id/openDownload"
+        android:title="@string/openDownload"
+        android:icon="@drawable/round_download_for_offline_24"
+        app:showAsAction="never"/>
+    <item android:id="@+id/remove"
+        android:title="@string/removeFavoriteBtnText"
+        android:icon="@drawable/round_bookmark_remove_24"
+        app:showAsAction="never"/>
+</menu>

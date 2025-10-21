@@ -47,6 +47,7 @@ import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.DetailsActivity;
 import my.project.moviesbox.view.DirectoryChangeActivity;
 import my.project.moviesbox.view.DirectoryConfigActivity;
+import my.project.moviesbox.view.DownloadDataActivity;
 import my.project.moviesbox.view.HomeActivity;
 import my.project.moviesbox.view.base.BaseFragment;
 import my.project.moviesbox.view.base.BaseMvpFragment;
@@ -139,12 +140,14 @@ public class FavoriteFragment extends BaseMvpFragment<FavoriteModel, FavoriteCon
         });
         adapter.setOnItemLongClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return false;
-            setMenu(view, R.menu.favorite_menu, R.id.remove, item -> {
+            TFavoriteWithFields tFavoriteWithField = (TFavoriteWithFields) adapter.getData().get(position);
+            boolean hasDownload = tFavoriteWithField.getHasDownload() > 0;
+            Bundle bundle = new Bundle();
+            setMenu(view, hasDownload ? R.menu.favorite_download_menu : R.menu.favorite_menu, R.id.remove, item -> {
                 switch (item.getItemId()) {
                     case R.id.refreshImage:
                         ImageView imageView = (ImageView) adapter.getViewByPosition(position+adapter.getHeaderLayoutCount(), R.id.img);
                         imageView.setImageResource(R.drawable.loading);
-                        TFavoriteWithFields tFavoriteWithField = (TFavoriteWithFields) adapter.getData().get(position);
                         ImageUpdateManager.getInstance().addUpdateImgTask(
                                 tFavoriteWithField.getTFavorite().getVideoUrl(),
                                 tFavoriteWithField.getTFavorite().getVideoImgUrl(),
@@ -153,10 +156,20 @@ public class FavoriteFragment extends BaseMvpFragment<FavoriteModel, FavoriteCon
                                 FAVORITE);
                         break;
                     case R.id.moveDirectory:
-                        Bundle bundle = new Bundle();
                         bundle.putString("type", DirectoryTypeEnum.FAVORITE.getName());
                         bundle.putInt("position", position);
                         startActivityForResult(new Intent(getActivity(), DirectoryChangeActivity.class).putExtras(bundle), DIRECTORY_REQUEST_CODE);
+                        break;
+                    case R.id.openDownload:
+                        String downloadId = tFavoriteWithField.getDownloadId();
+                        if (Utils.isNullOrEmpty(downloadId)) {
+                            application.showToastMsg("下载数据不存在！", DialogXTipEnum.ERROR);
+                            return false;
+                        }
+                        bundle.putString("vodTitle", tFavoriteWithField.getVideoTitle());
+                        bundle.putString("vodId", tFavoriteWithField.getVideoId());
+                        bundle.putString("downloadId", downloadId);
+                        startActivity(new Intent(getActivity(), DownloadDataActivity.class).putExtras(bundle));
                         break;
                     case R.id.remove:
                         removeFavorite(position);
@@ -252,7 +265,12 @@ public class FavoriteFragment extends BaseMvpFragment<FavoriteModel, FavoriteCon
         for (int i=0,size=adapter.getData().size(); i<size; i++) {
             TFavoriteWithFields tFavoriteWithField = adapter.getData().get(i);
             if (tFavoriteWithField.getVideoId().equals(refreshFavoriteEvent.getVodId())) {
-                tFavoriteWithField.getTFavorite().setLastVideoUpdateNumber(refreshFavoriteEvent.getLastPlayNumber());
+                if (!Utils.isNullOrEmpty(refreshFavoriteEvent.getLastPlayNumber()))
+                    tFavoriteWithField.getTFavorite().setLastVideoUpdateNumber(refreshFavoriteEvent.getLastPlayNumber());
+                if (!Utils.isNullOrEmpty(refreshFavoriteEvent.getDownloadCount())) {
+                    tFavoriteWithField.setDownloadId(refreshFavoriteEvent.getDownloadId());
+                    tFavoriteWithField.setHasDownload(refreshFavoriteEvent.getDownloadCount());
+                }
                 adapter.notifyItemChanged(i);
                 break;
             }

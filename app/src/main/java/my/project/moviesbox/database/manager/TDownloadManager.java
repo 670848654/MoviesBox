@@ -77,7 +77,7 @@ public class TDownloadManager extends BaseManager {
      * @param imgUrl
      * @param descUrl
      */
-    public static void insertDownload(String videoTitle, String imgUrl, String descUrl, String directoryId) {
+    public static String insertDownload(String videoTitle, String imgUrl, String descUrl, String directoryId) {
         String videoId = tVideoDao.queryId(videoTitle, source);
         TDownload tDownload = tDownloadDao.queryByVideoId(videoId);
         if (Utils.isNullOrEmpty(tDownload)) {
@@ -94,6 +94,7 @@ public class TDownloadManager extends BaseManager {
             tDownload.setUpdateTime(getDateTimeStr());
             tDownloadDao.update(tDownload);
         }
+        return tDownload.getDownloadId();
     }
 
     /**

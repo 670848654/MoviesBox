@@ -31,6 +31,14 @@ public class TFavoriteWithFields implements MultiItemEntity, Serializable {
      */
     private String videoTitle;
     /**
+     * 下载ID
+     */
+    private String downloadId;
+    /**
+     * 是否存在下载 =0未下载 >0存在下载
+     */
+    private int hasDownload;
+    /**
      * 是否需要背景模糊
      */
     @Ignore

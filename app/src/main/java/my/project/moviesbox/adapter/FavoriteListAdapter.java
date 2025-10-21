@@ -1,5 +1,6 @@
 package my.project.moviesbox.adapter;
 
+import android.view.View;
 import android.widget.ImageView;
 
 import androidx.annotation.LayoutRes;
@@ -53,6 +54,6 @@ import my.project.moviesbox.utils.Utils;
             helper.setText(R.id.lastPlayNumber, String.format(Utils.getString(R.string.watchTo), lastPlayNumber));
         }
         helper.setVisible(R.id.lastPlayNumber, true);
-//        helper.getView(R.id.new_view).setVisibility(item.getState() == 1 ? View.VISIBLE : View.GONE);
+        helper.getView(R.id.hasDownload).setVisibility(item.getHasDownload() > 0 ? View.VISIBLE : View.GONE);
     }
 }

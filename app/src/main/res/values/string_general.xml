@@ -21,5 +21,6 @@
     <string name="noMoreContent">没有更多内容</string>
 
     <string name="moveDirectory">变更清单目录</string>
+    <string name="openDownload">打开下载目录</string>
     <string name="refreshImageText">刷新封面</string>
 </resources>

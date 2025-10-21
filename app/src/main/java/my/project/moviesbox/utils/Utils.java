@@ -19,10 +19,13 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Html;
 import android.text.Spanned;
 import android.util.Base64;
 import android.util.DisplayMetrics;
+import android.util.LruCache;
 import android.view.Display;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
@@ -74,6 +77,8 @@ import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import jp.wasabeef.glide.transformations.BlurTransformation;
 import my.project.moviesbox.BuildConfig;
@@ -398,6 +403,8 @@ public class Utils {
         }
     }
 
+    private static final ExecutorService paletteExecutor = Executors.newFixedThreadPool(2);
+    private static final LruCache<String, Palette.Swatch> paletteCache = new LruCache<>(80);
     /**
      * CustomTarget<Bitmap> + Palette 抽离公共方法
      * @param source
@@ -446,7 +453,7 @@ public class Utils {
                             imageView.setImageBitmap(resource);
                             setImageViewAnim(imageView);
                             if (setPalette && !DarkModeUtils.isDarkMode(context)) {
-                                Palette.from(resource).generate(palette -> {
+                                /*Palette.from(resource).generate(palette -> {
                                     Palette.Swatch swatch = palette.getDominantSwatch();
                                     if (swatch != null) {
                                         int startColor = cardView.getCardBackgroundColor().getDefaultColor();
@@ -470,7 +477,26 @@ public class Utils {
                                         });
                                         textColorAnimator.start();
                                     }
-                                });
+                                });*/
+                                String cacheKey = checkUrl;
+                                Palette.Swatch cached = paletteCache.get(cacheKey);
+                                if (cached != null) {
+                                    // 已缓存主色
+                                    applyPaletteAnim(cardView, textView, cached);
+                                } else {
+                                    // 异步生成调色板
+                                    paletteExecutor.execute(() -> {
+                                        Palette palette = Palette.from(resource)
+                                                .resizeBitmapArea(100 * 100)
+                                                .generate();
+                                        Palette.Swatch swatch = palette.getDominantSwatch();
+                                        if (swatch != null) {
+                                            paletteCache.put(cacheKey, swatch);
+                                            new Handler(Looper.getMainLooper()).post(() ->
+                                                    applyPaletteAnim(cardView, textView, swatch));
+                                        }
+                                    });
+                                }
                             }
                         }
                     }
@@ -491,6 +517,32 @@ public class Utils {
                         }
                     }
                 });
+    }
+
+
+    private static void applyPaletteAnim(MaterialCardView cardView, TextView textView, Palette.Swatch swatch) {
+        int startColor = cardView.getCardBackgroundColor().getDefaultColor();
+        int endColor = swatch.getRgb();
+        if (Math.abs(startColor - endColor) < 10000) return; // 差异太小跳过动画
+
+        ValueAnimator colorAnimator = ValueAnimator.ofArgb(startColor, endColor);
+        colorAnimator.setDuration(400);
+        colorAnimator.addUpdateListener(animator -> {
+            int color = (int) animator.getAnimatedValue();
+            cardView.setCardBackgroundColor(ColorStateList.valueOf(color));
+            cardView.setStrokeColor(ColorStateList.valueOf(color));
+        });
+        colorAnimator.start();
+
+        int startTextColor = textView.getCurrentTextColor();
+        int endTextColor = swatch.getTitleTextColor();
+        if (Math.abs(startTextColor - endTextColor) >= 5000) {
+            ValueAnimator textColorAnimator = ValueAnimator.ofArgb(startTextColor, endTextColor);
+            textColorAnimator.setDuration(400);
+            textColorAnimator.addUpdateListener(animator ->
+                    textView.setTextColor((int) animator.getAnimatedValue()));
+            textColorAnimator.start();
+        }
     }
 
     /**
@@ -788,7 +840,7 @@ public class Utils {
 
     /**
      * 隐藏软键盘
-     * @param view
+     * @param activity
      */
     public static void hideKeyboard(Activity activity) {
         InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
