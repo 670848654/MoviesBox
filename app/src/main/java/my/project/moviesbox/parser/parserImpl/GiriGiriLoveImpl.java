@@ -594,7 +594,10 @@ public class GiriGiriLoveImpl implements ParserInterface {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
+            // 新版
             Elements elements = document.select("div.search-list");
+            // 旧版
+            Elements oldElements = document.select("div.public-list-box");
             if (elements.size() > 0) {
                 for (Element item : elements) {
                     VodDataBean bean = new VodDataBean();
@@ -604,6 +607,17 @@ public class GiriGiriLoveImpl implements ParserInterface {
                     bean.setImg(getImg(item.select("img").attr("data-src")));
                     bean.setEpisodesTag(item.select("span.slide-info-remarks").text());
 //                    bean.setTopLeftTag(item.select("span.public-prt").text());
+                    items.add(bean);
+                }
+                logInfo("搜索列表数据", items.toString());
+            } else if (oldElements.size() >0) {
+                for (Element item : oldElements) {
+                    VodDataBean bean = new VodDataBean();
+                    String title = item.select("a.public-list-exp").attr("title");
+                    bean.setTitle(Utils.isNullOrEmpty(title) ? item.select(".thumb-content .thumb-txt").text() : title);
+                    bean.setUrl(item.select("a.public-list-exp").attr("href"));
+                    bean.setImg(getImg(item.select("img").attr("data-src")));
+                    bean.setEpisodesTag(item.select("span.public-list-prb").text());
                     items.add(bean);
                 }
                 logInfo("搜索列表数据", items.toString());
@@ -723,12 +737,13 @@ public class GiriGiriLoveImpl implements ParserInterface {
      */
     @Override
     public String getVodListUrl(String url, int page) {
-        if (url.contains("map")) {
+        if (url.contains("map"))
             // 排行榜
             return getDefaultDomain() + url;
-        } else if (url.contains("search")) {
+        else if (url.contains("search"))
             return getDefaultDomain() + insertBeforeThirdLastDash(url, String.valueOf(page));
-        }
+        else if (!url.startsWith("http") && !url.startsWith("/"))
+            return getDefaultDomain() + String.format(SourceEnum.GIRI_GIRI_LOVE.getSearchUrl(), url, page);
         return null;
     }
 
