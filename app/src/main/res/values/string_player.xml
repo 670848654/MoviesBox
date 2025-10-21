@@ -43,6 +43,7 @@
     <string name="playWithExternalPlayer">使用外部播放器播放</string>
     <string name="openExternalBrowser">通过浏览器访问原地址</string>
     <string name="change_player_kernel">切换播放器内核</string>
+    <string name="remove_referer_header">移除Referer请求头</string>
     <string name="selectVideoSource">选择播放源</string>
     <string name="open_drama_list">打开选集列表</string>
     <string name="tipsNotWifi">您当前正在使用移动网络，继续播放将消耗流量</string>

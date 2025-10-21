@@ -242,6 +242,12 @@ public abstract class BasePlayerActivity extends BaseActivity<ActivityPlayerBind
             player.selectDramaView.setVisibility(View.GONE);*/
         player.configView.setOnClickListener(v -> setDrawerOpen(GravityCompat.START));
         player.openDrama.setOnClickListener(view -> setDrawerOpen(GravityCompat.END));
+        player.editHeader.setOnClickListener(view -> {
+            Jzvd.releaseAllVideos();
+            player.setUp(player.jzDataSource, Jzvd.SCREEN_FULLSCREEN, VideoUtils.getUserPlayerKernel(), true);
+            player.startVideo();
+            player.startButton.performClick();//响应点击事件
+        });
         player.selectDramaView.setOnClickListener(view -> setDrawerOpen(GravityCompat.END));
         player.setListener(this, this, this, this, this, this, this, this, this, this, this);
         player.backButton.setOnClickListener(v -> {

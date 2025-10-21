@@ -150,7 +150,7 @@ public class LibvioImpl implements ParserInterface {
         headers.put("accept-language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6");
         headers.put("priority", "i");
         headers.put("range", "bytes=0-");
-//        headers.put("referer", getDefaultDomain());
+        headers.put("referer", getDefaultDomain());
         headers.put("sec-ch-ua", "\"Not;A=Brand\";v=\"99\", \"Microsoft Edge\";v=\"139\", \"Chromium\";v=\"139\"");
         headers.put("sec-ch-ua-mobile", "?0");
         headers.put("sec-ch-ua-platform", "\"Windows\"");

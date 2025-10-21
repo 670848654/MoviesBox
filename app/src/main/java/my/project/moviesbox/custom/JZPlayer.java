@@ -55,6 +55,7 @@ import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
 import my.project.moviesbox.bean.MenuBean;
 import my.project.moviesbox.enums.DialogXTipEnum;
+import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
@@ -89,7 +90,7 @@ public class JZPlayer extends JzvdStd {
     private RelativeLayout quickRetreatLayout, fastForwardLayout;
     public TextView quickRetreatText, fastForwardText;
     public ImageView fastForward, quickRetreat, flip;
-    public TextView openDrama, preVideo, nextVideo, displayView, tvSpeedView, selectDramaView, changePlayerKernel;
+    public TextView editHeader, openDrama, preVideo, nextVideo, displayView, tvSpeedView, selectDramaView, changePlayerKernel;
     public Button pipView, airplayView, kernelView, configView;
     public int currentSpeedIndex = 1;
     public float speedRet = DEFAULT_SPEED;
@@ -188,6 +189,7 @@ public class JZPlayer extends JzvdStd {
         airplayView = findViewById(R.id.airplay);
         airplayView.setOnClickListener(this);
         changePlayerKernel = findViewById(R.id.change_player_kernel);
+        editHeader = findViewById(R.id.edit_header);
         openDrama = findViewById(R.id.open_drama_list);
         preVideo = findViewById(R.id.pre_video);
         nextVideo = findViewById(R.id.next_video);
@@ -721,6 +723,9 @@ public class JZPlayer extends JzvdStd {
         super.onStateError();
         loadError = true;
         if (danmakuView != null) danmakuView.release();
+        // LIBVIO这个站点有些视频需要Referer 有些不需要，当视频播放错误时显示这个移除选项，移除后尝试播放
+        if (parserInterface.getSource() == SourceEnum.SourceIndexEnum.LIBVIO.index)
+            editHeader.setVisibility(VISIBLE);
     }
 
     //这里是暂停的时候点击屏幕消失的UI,只显示下面底部的进度条UI
@@ -846,7 +851,14 @@ public class JZPlayer extends JzvdStd {
     public void setUp(JZDataSource jzDataSource, int screen, Class mediaInterfaceClass) {
         super.setUp(jzDataSource, screen, mediaInterfaceClass);
         jzDataSource.headerMap = parserInterface.setPlayerHeaders();
-//        LogUtil.logInfo("setUp", JSONObject.toJSONString(jzDataSource.headerMap));
+        batteryTimeLayout.setVisibility(GONE);
+    }
+
+    public void setUp(JZDataSource jzDataSource, int screen, Class mediaInterfaceClass, boolean removeReferer) {
+        super.setUp(jzDataSource, screen, mediaInterfaceClass);
+        jzDataSource.headerMap = parserInterface.setPlayerHeaders();
+        if (removeReferer && !Utils.isNullOrEmpty(jzDataSource.headerMap))
+            jzDataSource.headerMap.keySet().removeIf(k -> k.equalsIgnoreCase("Referer"));
         batteryTimeLayout.setVisibility(GONE);
     }
 
