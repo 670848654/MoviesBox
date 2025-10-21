@@ -41,6 +41,30 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <LinearLayout
+        android:id="@+id/libvioView"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:text="该站点（Libvio）资源特殊，当资源存在时某些视频无法下载，可移除Referer请求头后尝试下载！"
+            android:textColor="#C53A54"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/removeReferer"
+            style="@style/Widget.App.Switch"
+            android:text="@string/remove_referer_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/download_list"
         android:layout_marginLeft="8dp"

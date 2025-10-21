@@ -378,7 +378,7 @@
                             android:layout_toStartOf="@+id/drama"
                             android:layout_below="@+id/last_watch"
                             android:layout_marginEnd="15dp"
-                            app:drawableEndCompat="@drawable/round_swap_vert_24"
+                            app:drawableEndCompat="@drawable/round_sort_by_alpha_24"
                             app:drawableTint="@color/white"
                             android:drawablePadding="2dp"
                             android:layout_width="wrap_content"

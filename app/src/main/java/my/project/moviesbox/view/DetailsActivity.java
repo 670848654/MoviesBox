@@ -1,5 +1,6 @@
 package my.project.moviesbox.view;
 
+import static android.view.View.VISIBLE;
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_DOWNLOAD;
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_FAVORITE;
 import static my.project.moviesbox.utils.Utils.isPad;
@@ -59,6 +60,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputLayout;
 
 import org.greenrobot.eventbus.EventBus;
@@ -106,6 +108,7 @@ import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.parser.bean.DialogItemBean;
 import my.project.moviesbox.parser.config.ItemStyleEnum;
+import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.DetailsPresenter;
 import my.project.moviesbox.presenter.DownloadVideoPresenter;
 import my.project.moviesbox.presenter.VideoPresenter;
@@ -272,6 +275,8 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
      */
     private final DownloadVideoPresenter downloadVideoPresenter = new DownloadVideoPresenter(this); // 下载适配器
     private RecyclerView downloadListRv;
+    private MaterialSwitch removeRefererSwitch;
+    private boolean removeReferer;
     private BottomSheetDialog downloadBottomSheetDialog;
     private List<DownloadDramaBean> downloadBean = new ArrayList<>();
     private DownloadDramaAdapter downloadAdapter;
@@ -350,7 +355,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         initSwipe();
         initFab();
         initAdapter();
-        previewBtn.setVisibility(Utils.isPad() ? View.GONE : View.VISIBLE);
+        previewBtn.setVisibility(Utils.isPad() ? View.GONE : VISIBLE);
         videoAlertUtils = new VideoAlertUtils(this);
     }
 
@@ -622,8 +627,12 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
             startActivityForResult(new Intent(this, DirectoryActivity.class).putExtra("type", DirectoryTypeEnum.DOWNLOAD.getName()), DIRECTORY_REQUEST_CODE);
         });
         setSelectDirectoryData();
+        removeRefererSwitch = dialogDownloadDramaBinding.removeReferer;
+        if (parserInterface.getSource() == SourceEnum.SourceIndexEnum.LIBVIO.index)
+            dialogDownloadDramaBinding.libvioView.setVisibility(VISIBLE);
+        removeRefererSwitch.setChecked(removeReferer);
+        removeRefererSwitch.setOnCheckedChangeListener((compoundButton, checked) -> removeReferer = checked);
         downloadListRv = dialogDownloadDramaBinding.downloadList;
-
         downloadAdapter = new DownloadDramaAdapter(this, new ArrayList<>());
         downloadAdapter.setOnItemClickListener((adapter, view, position) -> {
             Utils.setVibration(view);
@@ -637,7 +646,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
             downloadUtils.createDownloadConfig(detailsTitle);
             // 下载开始
             if (!parserInterface.playUrlNeedParser()) {
-                downloadUtils.startDownload(detailsTitle, detailsUrl, downloadDramaUrl, downloadDramaNumber, detailsDataBean.getImg(), downloaDdirectoryId);
+                downloadUtils.startDownload(detailsTitle, detailsUrl, downloadDramaUrl, downloadDramaNumber, detailsDataBean.getImg(), downloaDdirectoryId, removeReferer);
                 return;
             }
             alertDialog = Utils.getProDialog(this, R.string.parseVodPlayUrl);
@@ -754,18 +763,6 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         if (Utils.isNullOrEmpty(detailsDataBean.getImg())) {
             bgView.setVisibility(View.GONE);
         } else {
-            // 获取屏幕高度
-            DisplayMetrics displayMetrics = new DisplayMetrics();
-            getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-            int screenHeight = displayMetrics.heightPixels;
-
-            // 计算高度的二分之一
-            int height = screenHeight / 2;
-
-            // 设置ImageView的高度
-            ViewGroup.LayoutParams params = bgView.getLayoutParams();
-            params.height = height;
-            bgView.setLayoutParams(params);
             // 设置图片信息
             if (isPad()) {
                 // 如果是平板 设置背景模糊
@@ -777,7 +774,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
                         .error(getDrawable(R.drawable.default_bg))
                         .apply(RequestOptions.bitmapTransform(new BlurTransformation(15, 5)))
                         .into(bgView);
-                bgView.setVisibility(View.VISIBLE);
+                bgView.setVisibility(VISIBLE);
                 GlideApp.with(this)
                         .asBitmap()
                         .load(Utils.getGlideUrl(detailsDataBean.getImg()))
@@ -793,17 +790,17 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
                                 int width = resource.getWidth();
                                 int height = resource.getHeight();
                                 // 显示图片
-                                padImgBoxView.setVisibility(View.VISIBLE);
+                                padImgBoxView.setVisibility(VISIBLE);
                                 // 回调结果
                                 if (width > height) {
                                     vodImgType1View.setTag(R.id.imageid, detailsDataBean.getImg());
                                     vodImgType1View.setImageBitmap(resource);
-                                    imgType1View.setVisibility(View.VISIBLE);
+                                    imgType1View.setVisibility(VISIBLE);
                                     Utils.setImageViewAnim(vodImgType1View);
                                 } else {
                                     vodImgType0View.setTag(R.id.imageid, detailsDataBean.getImg());
                                     vodImgType0View.setImageBitmap(resource);
-                                    imgType0View.setVisibility(View.VISIBLE);
+                                    imgType0View.setVisibility(VISIBLE);
                                     Utils.setImageViewAnim(vodImgType0View);
                                 }
                             }
@@ -817,6 +814,16 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
                             }
                         });
             } else {
+                // 获取屏幕高度
+                DisplayMetrics displayMetrics = new DisplayMetrics();
+                getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+                int screenHeight = displayMetrics.heightPixels;
+                // 计算高度的二分之一
+                int height = screenHeight / 2;
+                // 设置ImageView的高度
+                ViewGroup.LayoutParams params = bgView.getLayoutParams();
+                params.height = height;
+                bgView.setLayoutParams(params);
                 // 手机设备显示原图
                 GlideApp.with(this)
                         .load(Utils.getGlideUrl(detailsDataBean.getImg()))
@@ -825,7 +832,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
                         .apply(options)
                         .error(getDrawable(R.drawable.default_bg))
                         .into(bgView);
-                bgView.setVisibility(View.VISIBLE);
+                bgView.setVisibility(VISIBLE);
                 // 不显示图片
                 padImgBoxView.setVisibility(View.GONE);
                 // 将标题完全显示 调整字体大小
@@ -863,7 +870,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
             textView.setVisibility(View.GONE);
         else {
             textView.setText("\uD83D\uDD38 "+content);
-            textView.setVisibility(View.VISIBLE);
+            textView.setVisibility(VISIBLE);
         }
     }
 
@@ -874,7 +881,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
 
     private void showView(View view) {
         Utils.fadeIn(view);
-        view.setVisibility(View.VISIBLE);
+        view.setVisibility(VISIBLE);
     }
 
     private void initTitleAdapter() {
@@ -1261,7 +1268,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
                 percentStr = String.format(Locale.getDefault(), "进度%.1f%%", percent);
             }
             lastWatchView.setText(String.format(msg, tHistoryData.getVideoNumber(), percentStr));
-            lastWatchView.setVisibility(View.VISIBLE);
+            lastWatchView.setVisibility(VISIBLE);
         } else
             lastWatchView.setVisibility(View.GONE);
     }
@@ -1342,12 +1349,12 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
                 alertDialog = videoAlertUtils.showMultipleVideoSources4Download(
                         urls,
                         (adapter, view, position) -> {
-                            downloadUtils.startDownload(detailsTitle, detailsUrl, urls.get(position).getUrl(), playNumber, detailsDataBean.getImg(), downloaDdirectoryId);
+                            downloadUtils.startDownload(detailsTitle, detailsUrl, urls.get(position).getUrl(), playNumber, detailsDataBean.getImg(), downloaDdirectoryId, removeReferer);
                             Utils.cancelDialog(alertDialog);
                         }
                 );
             } else
-                downloadUtils.startDownload(detailsTitle, detailsUrl, urls.get(0).getUrl(), playNumber, detailsDataBean.getImg(), downloaDdirectoryId);
+                downloadUtils.startDownload(detailsTitle, detailsUrl, urls.get(0).getUrl(), playNumber, detailsDataBean.getImg(), downloaDdirectoryId, removeReferer);
         });
     }
 

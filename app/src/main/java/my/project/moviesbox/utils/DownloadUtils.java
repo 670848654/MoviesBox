@@ -10,6 +10,7 @@ import com.arialyy.aria.core.Aria;
 import com.arialyy.aria.core.common.HttpOption;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -26,6 +27,7 @@ import my.project.moviesbox.config.M3U8DownloadConfig;
 import my.project.moviesbox.database.manager.TDownloadDataManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.enums.DialogXTipEnum;
+import my.project.moviesbox.event.RefreshFavoriteEvent;
 import my.project.moviesbox.parser.parserService.ParserInterface;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
 import my.project.moviesbox.service.DownloadService;
@@ -143,8 +145,9 @@ public class DownloadUtils {
      * @param playNumber            下载集数
      * @param imgUrl                影视图片
      * @param downloaDdirectoryId   保存清单ID
+     * @param removeReferer         是否移除Referer请求头
      */
-    public void startDownload(String detailsTitle, String detailsUrl, String downloadUrl, String playNumber, String imgUrl, String downloaDdirectoryId) {
+    public void startDownload(String detailsTitle, String detailsUrl, String downloadUrl, String playNumber, String imgUrl, String downloaDdirectoryId, boolean removeReferer) {
         Activity activity = activityRef.get();
         if (activity == null || activity.isFinishing())
             return;
@@ -159,21 +162,23 @@ public class DownloadUtils {
         if (!file.exists()) {
             ImageUtils.saveImageToLocalAsync(imgUrl, localImgPath, saveSuccess -> {
                 String img = saveSuccess ? localImgPath : imgUrl;
-                go2Download(activity, downloadUrl, fileSavePath, detailsTitle, img, detailsUrl, downloaDdirectoryId, playNumber);
+                go2Download(activity, downloadUrl, fileSavePath, detailsTitle, img, detailsUrl, downloaDdirectoryId, playNumber, removeReferer);
             });
         } else
-            go2Download(activity, downloadUrl, fileSavePath, detailsTitle, localImgPath, detailsUrl, downloaDdirectoryId, playNumber);
+            go2Download(activity, downloadUrl, fileSavePath, detailsTitle, localImgPath, detailsUrl, downloaDdirectoryId, playNumber, removeReferer);
     }
 
-    private void go2Download(Activity activity, String downloadUrl, String fileSavePath, String detailsTitle, String imgPath, String detailsUrl, String downloaDdirectoryId, String playNumber) {
+    private void go2Download(Activity activity, String downloadUrl, String fileSavePath, String detailsTitle, String imgPath, String detailsUrl, String downloaDdirectoryId, String playNumber, boolean removeReferer) {
         boolean isM3U8 = downloadUrl.contains("m3u8");
-        long taskId = createDownloadTask(isM3U8, downloadUrl, fileSavePath);
+        long taskId = createDownloadTask(isM3U8, downloadUrl, fileSavePath, removeReferer);
         if (isM3U8) showInfoDialog(Utils.getString(R.string.downloadM3u8Tips));
-        TDownloadManager.insertDownload(detailsTitle,  imgPath, detailsUrl, downloaDdirectoryId);
+        String downloadId = TDownloadManager.insertDownload(detailsTitle,  imgPath, detailsUrl, downloaDdirectoryId);
         TDownloadDataManager.insertDownloadData(detailsTitle, playNumber, 0, taskId);
-        App.getInstance().showToastMsg(String.format( Utils.getString(R.string.downloadStart), playNumber), DialogXTipEnum.SUCCESS);
+//        App.getInstance().showToastMsg(String.format( Utils.getString(R.string.downloadStart), playNumber), DialogXTipEnum.SUCCESS);
+        Snackbar.make(dialogRef.get().findViewById(android.R.id.content), String.format( Utils.getString(R.string.downloadStart), playNumber), Snackbar.LENGTH_SHORT).show();
         // 开启下载服务
         activity.startService(new Intent(activity, DownloadService.class));
+        EventBus.getDefault().post(new RefreshFavoriteEvent(videoId, downloadId, 1, null));
         EventBus.getDefault().post(REFRESH_DOWNLOAD);
         checkHasDownload();
     }
@@ -185,14 +190,18 @@ public class DownloadUtils {
      * @param savePath  保存路劲
      * @return
      */
-    public long createDownloadTask(boolean isM3u8, String url, String savePath) {
+    public long createDownloadTask(boolean isM3u8, String url, String savePath, boolean removeReferer) {
         Activity activity = activityRef.get();
         if (activity == null || activity.isFinishing()) return -1;
         url = url.replaceAll("\\\\", "");
         HttpOption httpOption = new HttpOption();
         HashMap<String, String> headerMap = parserInterface.setPlayerHeaders();
-        if (!Utils.isNullOrEmpty(headerMap))
+        if (!Utils.isNullOrEmpty(headerMap)) {
+            if (removeReferer)
+                headerMap.keySet().removeIf(k -> k.equalsIgnoreCase("Referer"));
             httpOption.addHeaders(headerMap);
+        }
+
         if (isM3u8)
             KeyDownloader.downloadKey(url, savePath);
         return isM3u8 ?
