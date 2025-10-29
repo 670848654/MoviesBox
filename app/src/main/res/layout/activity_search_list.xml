@@ -31,8 +31,7 @@
                     app:elevation="4dp"
                     app:hideNavigationIcon="true"
                     app:liftOnScroll="false"
-                    app:liftOnScrollColor="@android:color/transparent"
-                    android:layout_marginEnd="60dp" />
+                    app:liftOnScrollColor="@android:color/transparent" />
 
             </com.google.android.material.appbar.MaterialToolbar>
 

@@ -21,7 +21,7 @@ import my.project.moviesbox.database.entity.THistoryWithFields;
  */
 @Dao
 public interface THistoryDao {
-    @Query("select * from THistory")
+    @Query("select * from THistory where videoImgUrl NOT LIKE 'data:image%'")
     List<THistory> queryAll();
 
     /**

@@ -200,4 +200,27 @@ public interface TDownloadDataDao {
             "         t1.videoNumber ASC " +
             "LIMIT :limit OFFSET :offset")
     List<TDownloadDataWithFields> queryAllDownloadDataByDirectoryId(String directoryId, int limit, int offset);
+
+    /**
+     * 根据下载ID查询非下载完成的数据
+     * @param downloadId
+     * @return
+     */
+    @Query("select * from TDownloadData where linkId =:downloadId AND ariaTaskId != 99 AND ariaTaskId !=-1")
+    List<TDownloadData> queryNotCompleteDataByDownloadId(String downloadId);
+
+    /**
+     * 根据下载ID删除所有数据
+     * @param downloadId
+     */
+    @Query("delete from TDownloadData where linkId =:downloadId")
+    void deleteAllDownloadData(String downloadId);
+
+    /**
+     * 根据下载ID获取第一条数据
+     * @param downloadId
+     * @return
+     */
+    @Query("select * from TDownloadData where linkId=:downloadId order by createTime desc limit 1")
+    TDownloadData querySingleDataByDownloadId(String downloadId);
 }

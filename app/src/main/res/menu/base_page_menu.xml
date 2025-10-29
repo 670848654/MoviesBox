@@ -6,9 +6,4 @@
         android:icon="@drawable/round_numbers_24"
         android:title="跳转页"
         app:showAsAction="always" />
-    <item
-        android:id="@+id/action_search"
-        android:icon="@drawable/round_search_24"
-        android:title="搜索"
-        app:showAsAction="always" />
 </menu>

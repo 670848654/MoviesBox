@@ -63,14 +63,29 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <TextView
-            android:id="@+id/title"
+            android:id="@+id/directory"
             android:layout_below="@+id/img_box"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
+            android:minLines="1"
+            android:drawableLeft="@drawable/round_bookmark_24"
+            android:drawablePadding="5dp"
+            android:padding="5dp"
+            android:gravity="center_vertical"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_below="@+id/directory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
+            android:paddingBottom="5dp"
             android:minLines="2"
             android:maxLines="2"
-            android:padding="5dp"
             android:textSize="14sp" />
 
         <TextView
@@ -85,9 +100,6 @@
             android:shadowDy="1"
             android:shadowRadius="4"
             android:text="已下载"
-            android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="12sp"
-            android:autoSizeMaxTextSize="14sp"
             android:textSize="12sp"
             android:paddingLeft="4dp"
             android:paddingRight="4dp"

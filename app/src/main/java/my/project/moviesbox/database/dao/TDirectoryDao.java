@@ -108,4 +108,12 @@ public interface TDirectoryDao {
      */
     @Query("delete from TDirectory where id=:id")
     void deleteById(String id);
+
+    /**
+     * 通过ID获取清单名称
+     * @param id
+     * @return
+     */
+    @Query("select name from TDirectory where id=:id")
+    String queryNameById(String id);
 }

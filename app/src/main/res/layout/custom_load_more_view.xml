@@ -38,7 +38,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="@string/failedToLoad"
-            android:textColor="#bdbdbd" />
+            android:textColor="@color/defaultTextColor" />
 
     </FrameLayout>
 

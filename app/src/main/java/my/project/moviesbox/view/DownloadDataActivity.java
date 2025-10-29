@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -231,7 +230,7 @@ public class DownloadDataActivity extends BaseMvpActivity<DownloadModel, Downloa
                                     Utils.selectVideoPlayer(this, savePath);
                                     break;
                                 case 2:
-                                    if (SAFUtils.checkHasSetDataSaveUri()) {
+                                    if (SAFUtils.checkHasSetDataSaveUri(this)) {
                                         application.showToastMsg(videoNumber + " 开始执行导出，请稍后...", DialogXTipEnum.DEFAULT);
                                         executorService.submit(() -> {
                                             SAFUtils.copyConfigFileToSAF(DownloadDataActivity.this, savePath, "video/mp4", false);
@@ -312,7 +311,7 @@ public class DownloadDataActivity extends BaseMvpActivity<DownloadModel, Downloa
         adapter.setEmptyView(rvView);
     }
 
-    private void showSingleListBottomSheet(Context context, String[] items, OnItemClickWithTypeListener onItemClickWithTypeListener) {
+    public void showSingleListBottomSheet(Context context, String[] items, OnItemClickWithTypeListener onItemClickWithTypeListener) {
         BottomSheetDialog dialog = new BottomSheetDialog(context);
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_single_line, null);
         dialog.setContentView(view);
@@ -420,7 +419,7 @@ public class DownloadDataActivity extends BaseMvpActivity<DownloadModel, Downloa
         }
         downloadDataCount = TDownloadDataManager.queryDownloadDataCount(downloadId);
         if (downloadDataBeans.size() == 0) {
-            shouldDeleteDownloadDir();
+            deleteDownloadDir();
             TDownloadManager.deleteDownload(downloadId);
             EventBus.getDefault().post(new RefreshFavoriteEvent(vodId, null, 0, null));
             finish();
@@ -436,19 +435,12 @@ public class DownloadDataActivity extends BaseMvpActivity<DownloadModel, Downloa
      * @param position
      */
     private void deleteDownloadData(boolean removeFile, TDownloadDataWithFields tDownloadDataWithFields, int position) {
-        String imgPath = tDownloadDataWithFields.getVideoImgUrl();
         // 如果已完成的任务
         if (tDownloadDataWithFields.getTDownloadData().getComplete() == 1 && removeFile) {
             File mp4File = new File(tDownloadDataWithFields.getTDownloadData().getSavePath());
             if (mp4File.exists()) mp4File.delete();
             File m3u8File = new File(tDownloadDataWithFields.getTDownloadData().getSavePath().replaceAll("mp4", "m3u8"));
             if (m3u8File.exists()) m3u8File.delete();
-            // 删除封面
-            if (!Utils.isNullOrEmpty(imgPath) && imgPath.contains("cover_")) {
-                File imgFile = new File(imgPath);
-                if (imgFile.exists())
-                    imgFile.delete();
-            }
         }
         removeAdapterByPosition(position);
     }
@@ -461,16 +453,17 @@ public class DownloadDataActivity extends BaseMvpActivity<DownloadModel, Downloa
     }
 
     /**
-     * 是否应该删除下载主目录
+     * 删除下载目录中的文件
      */
-    private void shouldDeleteDownloadDir() {
+    private void deleteDownloadDir() {
         try {
-            // 文件夹下没有任何文件才删除主目录
-            if (Objects.requireNonNull(downloadDirOld.list()).length == 0)
-                downloadDirOld.delete();
-            if (Objects.requireNonNull(downloadDirNew.list()).length == 0)
-                downloadDirNew.delete();
-        } catch (Exception e) {}
+            if (downloadDirOld!= null  && downloadDirOld.exists())
+                Utils.deleteFolderWithDialog(downloadDirOld);
+            if (downloadDirNew!= null  && downloadDirNew.exists())
+                Utils.deleteFolderWithDialog(downloadDirNew);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Download.onTaskRunning
@@ -530,7 +523,7 @@ public class DownloadDataActivity extends BaseMvpActivity<DownloadModel, Downloa
 
     @Download.onTaskCancel
     public void onTaskCancel(DownloadTask downloadTask) {
-        shouldDeleteDownloadDir();
+//        shouldDeleteDownloadDir();
         EventBus.getDefault().post(REFRESH_DOWNLOAD);
     }
 

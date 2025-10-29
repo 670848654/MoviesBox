@@ -125,4 +125,21 @@ public class TDownloadDataManager extends BaseManager {
     public static long queryDownloadDataProgressById(String downloadDataId) {
         return tDownloadDataDao.queryDownloadDataProgressById(downloadDataId);
     }
+
+    /**
+     * 根据下载ID查询非下载完成的数据
+     * @param downloadId
+     * @return
+     */
+    public static List<TDownloadData> queryNotCompleteDataByDownloadId(String downloadId) {
+        return tDownloadDataDao.queryNotCompleteDataByDownloadId(downloadId);
+    }
+
+    /**
+     * 根据下载ID删除所有数据
+     * @param downloadId
+     */
+    public static void deleteAllDownloadData(String downloadId) {
+        tDownloadDataDao.deleteAllDownloadData(downloadId);
+    }
 }

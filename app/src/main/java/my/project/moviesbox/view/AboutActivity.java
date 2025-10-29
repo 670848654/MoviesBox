@@ -113,7 +113,7 @@ public class AboutActivity extends BaseActivity<ActivitySingleListBinding> {
                 String subTitle = String.format(getString(R.string.cacheDirectorySubContent), savePath);
                 bean.setSubTitle(subTitle);
             } else if (bean.getTitle().equals(getString(R.string.authorizationDirectoryTitle))) {
-                String authorizationDirectory = SAFUtils.checkHasSetDataSaveUri() ? "<font color=\"#31BDEC\">"+SAFUtils.getUriDirectoryName()+"</font>" : "无授权";
+                String authorizationDirectory = SAFUtils.checkHasSetDataSaveUri(this) ? "<font color=\"#31BDEC\">"+SAFUtils.getUriDirectoryName()+"</font>" : "无授权";
                 bean.setSubTitle(authorizationDirectory);
             } else if (bean.getTitle().equals(getString(R.string.testModelTitle)) && turnOnHiddenFeatures) {
                 bean.setEndIcon(R.drawable.round_restart_alt_24);

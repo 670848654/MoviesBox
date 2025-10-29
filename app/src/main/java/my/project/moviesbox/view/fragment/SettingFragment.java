@@ -671,7 +671,7 @@ public class SettingFragment extends BaseMvpFragment<DomainListModel, DomainList
     private void createBackupsFile(int position) {
         inProgress = true;
         String backupsFileName = getString(R.string.app_name) + System.currentTimeMillis()+".backups";
-        String filePath = SAFUtils.checkHasSetDataSaveUri() ? getActivity().getFilesDir().getAbsolutePath()+ File.separator + backupsFileName : Utils.APP_DATA_PATH + File.separator + backupsFileName;
+        String filePath = SAFUtils.checkHasSetDataSaveUri(getActivity()) ? getActivity().getFilesDir().getAbsolutePath()+ File.separator + backupsFileName : Utils.APP_DATA_PATH + File.separator + backupsFileName;
         adapter.getViewByPosition(position, R.id.progress).setVisibility(View.VISIBLE);
         Executor executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {

@@ -25,6 +25,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import lombok.Getter;
 import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.config.MyExceptionHandler;
 import my.project.moviesbox.enums.DialogXTipEnum;
@@ -46,6 +47,7 @@ public class App extends Application {
     private static App appContext;
     private static Map<String, Activity> destoryMap = new HashMap<>();
     public static Handler mainHandler;
+    @Getter
     private static Map<String, String> cookies;
 
     public static App getInstance() {
@@ -71,6 +73,7 @@ public class App extends Application {
         // 设置最大下载数为1，多个同时下载经常出现下载失败
         Aria.get(this).getDownloadConfig().setMaxTaskNum(3);
         Aria.get(this).getDownloadConfig().setConvertSpeed(true);
+        Aria.get(this).getDownloadConfig().setUseHeadRequest(true);
         // 检查更新
 //        startService(new Intent(getInstance(), CheckUpdateService.class));
 //        DialogX.globalStyle = new MaterialYouStyle();
@@ -169,9 +172,5 @@ public class App extends Application {
     public static void setCookies(String cookie) {
         cookies = new HashMap<>();
         cookies.put("Cookie", cookie);
-    }
-
-    public static Map<String, String> getCookies() {
-        return cookies;
     }
 }

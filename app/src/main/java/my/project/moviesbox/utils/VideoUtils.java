@@ -183,6 +183,18 @@ public class VideoUtils {
                         }
                     }
                 }
+                /*for (File tsFile : fileList) {
+                    try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(tsFile))) {
+                        // 打印前 32 字节内容（调试阶段使用）
+                        *//*byte[] preview = new byte[32];
+                        bis.mark(preview.length);
+                        bis.read(preview);
+                        bis.reset();
+                        M3U8Cleaner.debugHeader(preview);*//*
+                        // 调用清理方法，自动检测伪装头并写入对齐数据
+                        M3U8Cleaner.clean(tsFile.getName(), bis, bos);
+                    }
+                }*/
             }
 
             LogUtil.logInfo("TsMergeHandler", "合并TS成功");

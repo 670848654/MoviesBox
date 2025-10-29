@@ -48,7 +48,7 @@ public class DetailsListItemAdapter extends BaseQuickAdapter<DetailsDataBean.Rec
             helper.getView(R.id.topLeftTag).setVisibility(View.VISIBLE);
             helper.setText(R.id.topLeftTag, topLeftTag);
         }
-        Utils.setDefaultImage(item.getImg(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), false, false);
+        Utils.setDefaultImage(item.getImg(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), false, false, null);
         helper.setText(R.id.title, item.getTitle());
     }
 }

@@ -25,6 +25,11 @@
         <item><![CDATA[<font color="#ff0000">删除任务<font>]]></item>
     </string-array>
 
+    <string-array name="completePlayerItems">
+        <item>使用内置播放器播放</item>
+        <item>使用外部播放器播放</item>
+    </string-array>
+
     <string-array name="completeExportItems">
         <item>使用内置播放器播放</item>
         <item>使用外部播放器播放</item>
@@ -52,8 +57,8 @@
     <string name="resumeDownloadDialogSubPositiveBtnText">继续下载</string>
     <string name="resumeDownloadDialogSubNegativeBtnText">忽略</string>
 
-    <string name="downloadVodNotCompleteListContent">其中有 %s 个未完成</string>
-    <string name="downloadVodListContent">共 %s 个内容</string>
+    <string name="downloadVodNotCompleteListContent">其中有%s个未完成</string>
+    <string name="downloadVodListContent">共%s个内容</string>
     <string name="downloadFileSize">存储占用约: %s</string>
 
     <string name="waitState">等待下载</string>
@@ -61,10 +66,15 @@
     <string name="successState">下载成功</string>
     <string name="errorState">下载失败</string>
 
-    <string name="downloadErrorMsg">❌下载失败 →%s</string>
+    <string name="downloadErrorMsg">⚠️下载失败 →%s</string>
     <string name="downloadDefaultErrorMsg">未知错误，可能下载的资源不存在或文件路劲不可写！</string>
     <string name="downloadSuccessMsg">下载成功</string>
     <string name="downloadTsSuccessMsg">下载成功&amp;合并TS完成，开始封装为MP4格式</string>
     <string name="convertTSToMP4SuccessMsg">🎉🎉🎉 TS封装MP4完成</string>
-    <string name="convertTSToMP4ErrorMsg">❌转换出错，错误代码：%s</string>
+    <string name="convertTSToMP4ErrorMsg">⚠️转换出错，错误代码：%s</string>
+
+    <string name="deleteAllMsg">删除全部数据</string>
+    <string name="deleteAlertTitle">是否删除全部数据？</string>
+    <string name="deleteAlertContent">将删除该任务下的所有数据（包括已下载的文件），是否继续？</string>
+    <string name="deletingMag">正在删除文件，请稍后...</string>
 </resources>

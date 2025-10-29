@@ -285,11 +285,31 @@ public class TopticListActivity extends BaseMvpActivity<TopticListModel, TopTicL
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_search) {
-            View view = findViewById(R.id.action_search);
-            Utils.setVibration(view);
-            startActivity(new Intent(this, parserInterface.searchOpenClass()));
-            return true;
+        switch (item.getItemId()) {
+            case R.id.action_page -> {
+                View view = findViewById(R.id.action_page);
+                Utils.setVibration(view);
+                if (mSwipe.isRefreshing()) {
+                    application.showToastMsg("请等待数据加载完成后进行操作", DialogXTipEnum.WARNING);
+                    return false;
+                }
+                if (pageCount == 0 || pageCount == 1)
+                    return false;
+                showSelectPage(page, pageCount, selectedPage -> {
+                    adapter.getData().clear();
+                    adapter.notifyDataSetChanged();
+                    page = (parserInterface.startPageNum() == 0 ? selectedPage+1 : selectedPage);
+                    mPresenter.loadPageData(url, isVodList, page);
+                    application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, (parserInterface.startPageNum() == 0 ? page+1 : page), pageCount), DialogXTipEnum.DEFAULT);
+                });
+                return true;
+            }
+            case R.id.action_search -> {
+                View view = findViewById(R.id.action_search);
+                Utils.setVibration(view);
+                startActivity(new Intent(this, parserInterface.searchOpenClass()));
+                return true;
+            }
         }
         return super.onOptionsItemSelected(item);
     }

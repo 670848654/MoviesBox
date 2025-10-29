@@ -3,6 +3,7 @@ package my.project.moviesbox.utils;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.UriPermission;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.DocumentsContract;
@@ -40,8 +41,20 @@ public class SAFUtils {
      * 检查是否授权保存目录
      * @return
      */
-    public static boolean checkHasSetDataSaveUri() {
-        return !SharedPreferencesUtils.getDataSaveUri().isEmpty();
+    public static boolean checkHasSetDataSaveUri(Context context) {
+        String uriStr = SharedPreferencesUtils.getDataSaveUri();
+        if (uriStr.isEmpty()) return false;
+
+        Uri treeUri = Uri.parse(uriStr);
+        // 检查系统是否还持有持久化权限
+        for (UriPermission perm : context.getContentResolver().getPersistedUriPermissions()) {
+            if (perm.getUri().equals(treeUri) && perm.isWritePermission()) {
+                return true;
+            }
+        }
+
+        // 如果没有权限了，需要重新授权
+        return false;
     }
 
     /**

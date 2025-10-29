@@ -78,4 +78,12 @@ public interface TVideoDao {
             "       TVideo t3 ON t2.linkId = t3.videoId\n" +
             " WHERE t1.ariaTaskId =:ariaTaskId\n")
     TVideo queryDownloadVodInfo(long ariaTaskId);
+
+    /**
+     * 根据ID查询影视名称
+     * @param videoId
+     * @return
+     */
+    @Query("select videoTitle from TVideo where videoId =:videoId")
+    String queryTitleById(String videoId);
 }

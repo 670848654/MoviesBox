@@ -155,6 +155,8 @@ public class DownloadUtils {
             showInfoDialog(String.format(Utils.getString(R.string.notSupportDownloadMsg), downloadUrl));
             return;
         }
+        // 覆盖写入
+        Utils.writeTextFileIfNotExists(savePath, "资源名称.txt", detailsTitle);
         String fileSavePath = savePath + playNumber;
         String fileName = Utils.getHashedFileName(detailsTitle);
         String localImgPath = savePath + "cover_" + fileName + ".jpg";

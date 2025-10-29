@@ -39,6 +39,10 @@ public class TFavoriteWithFields implements MultiItemEntity, Serializable {
      */
     private int hasDownload;
     /**
+     * 清单目录名称
+     */
+    private String directoryName;
+    /**
      * 是否需要背景模糊
      */
     @Ignore

@@ -11,6 +11,7 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.RenderEffect;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
@@ -44,6 +45,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.palette.graphics.Palette;
 
@@ -68,6 +70,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.security.MessageDigest;
@@ -291,7 +294,6 @@ public class Utils {
     public static AlertDialog getProDialog(Activity activity, @StringRes int id) {
         WeakReference<Activity> weakActivity = new WeakReference<>(activity);
         if (weakActivity.get() != null && !weakActivity.get().isFinishing()) {
-            dialogSetRenderEffect(activity);
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(weakActivity.get());
             View view = LayoutInflater.from(weakActivity.get()).inflate(R.layout.dialog_proress, null);
             TextView msg = view.findViewById(R.id.msg);
@@ -299,6 +301,7 @@ public class Utils {
             builder.setCancelable(false);
             AlertDialog alertDialog = builder.setView(view).create();
             alertDialog.show();
+            dialogSetRenderEffect(activity);
             alertDialog.setOnDismissListener(dialog -> dialogClearRenderEffect(activity));
             return alertDialog;
         }
@@ -382,24 +385,24 @@ public class Utils {
      * @param imageView
      * @param setPalette
      * @param cardView
-     * @param textView
+     * @param titleView
      */
-    public static void setDefaultImage(String imgUrl, String descUrl, ImageView imageView, boolean setPalette, MaterialCardView cardView, TextView textView, boolean isFavorite, boolean isRefreshCover) {
+    public static void setDefaultImage(String imgUrl, String descUrl, ImageView imageView, boolean setPalette, MaterialCardView cardView, TextView titleView, boolean isFavorite, boolean isRefreshCover, TextView directoryView) {
         if (isNullOrEmpty(imgUrl)) {
             imageView.setImageResource(R.drawable.loading_failed);
             return;
         }
         if (!isNullOrEmpty(imageView)) clearImageView(imageView);
         if (imgUrl.startsWith("http")) {
-            loadBitmapWithPalette(getGlideUrl(imgUrl), imgUrl, descUrl, imageView, setPalette, cardView, textView, isFavorite, isRefreshCover);
+            loadBitmapWithPalette(getGlideUrl(imgUrl), imgUrl, descUrl, imageView, setPalette, cardView, titleView, isFavorite, isRefreshCover, directoryView);
         } else if (imgUrl.startsWith("base64") || imgUrl.contains("base64,")) {
             String base64Data = imgUrl.contains(",") ? (imgUrl.split(",").length > 1 ? imgUrl.split(",")[1] : "") : imgUrl;
             byte[] imageBytes = Base64.decode(base64Data, Base64.DEFAULT);
             imageView.setTag(R.id.imageid, imgUrl);
-            loadBitmapWithPalette(imageBytes, imgUrl, descUrl, imageView, setPalette, cardView, textView, isFavorite, isRefreshCover);
+            loadBitmapWithPalette(imageBytes, imgUrl, descUrl, imageView, setPalette, cardView, titleView, isFavorite, isRefreshCover, directoryView);
         } else {
             File file = new File(imgUrl);
-            loadBitmapWithPalette(file, imgUrl, descUrl, imageView, setPalette, cardView, textView, isFavorite, isRefreshCover);
+            loadBitmapWithPalette(file, imgUrl, descUrl, imageView, setPalette, cardView, titleView, isFavorite, isRefreshCover, directoryView);
         }
     }
 
@@ -413,13 +416,14 @@ public class Utils {
      * @param imageView
      * @param setPalette
      * @param cardView
-     * @param textView
+     * @param titleView
      * @param isFavorite
      * @param isRefreshCover
+     * @param directoryView
      */
     private static void loadBitmapWithPalette(Object source, String checkUrl, String descUrl, ImageView imageView,
                                               boolean setPalette, MaterialCardView cardView,
-                                              TextView textView, boolean isFavorite, boolean isRefreshCover) {
+                                              TextView titleView, boolean isFavorite, boolean isRefreshCover, TextView directoryView) {
 
         imageView.setImageResource(R.drawable.loading);
 
@@ -482,7 +486,7 @@ public class Utils {
                                 Palette.Swatch cached = paletteCache.get(cacheKey);
                                 if (cached != null) {
                                     // 已缓存主色
-                                    applyPaletteAnim(cardView, textView, cached);
+                                    applyPaletteAnim(cardView, titleView, directoryView, cached);
                                 } else {
                                     // 异步生成调色板
                                     paletteExecutor.execute(() -> {
@@ -493,7 +497,7 @@ public class Utils {
                                         if (swatch != null) {
                                             paletteCache.put(cacheKey, swatch);
                                             new Handler(Looper.getMainLooper()).post(() ->
-                                                    applyPaletteAnim(cardView, textView, swatch));
+                                                    applyPaletteAnim(cardView, titleView, directoryView, swatch));
                                         }
                                     });
                                 }
@@ -520,28 +524,97 @@ public class Utils {
     }
 
 
-    private static void applyPaletteAnim(MaterialCardView cardView, TextView textView, Palette.Swatch swatch) {
+    private static void applyPaletteAnim(
+            MaterialCardView cardView,
+            TextView titleView,
+            TextView directoryView,
+            Palette.Swatch swatch) {
+
+        if (swatch == null) return;
+
         int startColor = cardView.getCardBackgroundColor().getDefaultColor();
         int endColor = swatch.getRgb();
-        if (Math.abs(startColor - endColor) < 10000) return; // 差异太小跳过动画
 
-        ValueAnimator colorAnimator = ValueAnimator.ofArgb(startColor, endColor);
-        colorAnimator.setDuration(400);
-        colorAnimator.addUpdateListener(animator -> {
-            int color = (int) animator.getAnimatedValue();
-            cardView.setCardBackgroundColor(ColorStateList.valueOf(color));
-            cardView.setStrokeColor(ColorStateList.valueOf(color));
-        });
-        colorAnimator.start();
+        // --- 计算 RGB 欧氏距离作为色差度量 ---
+        int sr = Color.red(startColor), sg = Color.green(startColor), sb = Color.blue(startColor);
+        int er = Color.red(endColor), eg = Color.green(endColor), eb = Color.blue(endColor);
+        double colorDist = Math.sqrt(
+                (sr - er) * (sr - er) +
+                        (sg - eg) * (sg - eg) +
+                        (sb - eb) * (sb - eb)
+        );
 
-        int startTextColor = textView.getCurrentTextColor();
+        // 阈值可调：30 左右通常足够感知变化；更大阈值会更严格（认为“差异小”）
+        final double BG_COLOR_THRESHOLD = 30.0;
+
+        // --- 卡片背景渐变（只有色差足够大才动画） ---
+        if (colorDist >= BG_COLOR_THRESHOLD) {
+            ValueAnimator colorAnimator = ValueAnimator.ofArgb(startColor, endColor);
+            colorAnimator.setDuration(400);
+            colorAnimator.addUpdateListener(animator -> {
+                int color = (int) animator.getAnimatedValue();
+                cardView.setCardBackgroundColor(ColorStateList.valueOf(color));
+                cardView.setStrokeColor(ColorStateList.valueOf(color));
+            });
+            colorAnimator.start();
+        }
+
+        // --- 标题文字渐变（仍然执行） ---
+        int startTextColor = titleView.getCurrentTextColor();
         int endTextColor = swatch.getTitleTextColor();
-        if (Math.abs(startTextColor - endTextColor) >= 5000) {
+
+        // 使用文字色差阈值（可以与背景独立控制）
+        final double TEXT_COLOR_THRESHOLD = 10.0;
+        int textColorDeltaR = Color.red(startTextColor) - Color.red(endTextColor);
+        int textColorDeltaG = Color.green(startTextColor) - Color.green(endTextColor);
+        int textColorDeltaB = Color.blue(startTextColor) - Color.blue(endTextColor);
+        double textColorDist = Math.sqrt(
+                textColorDeltaR * textColorDeltaR +
+                        textColorDeltaG * textColorDeltaG +
+                        textColorDeltaB * textColorDeltaB
+        );
+
+        if (textColorDist >= TEXT_COLOR_THRESHOLD) {
             ValueAnimator textColorAnimator = ValueAnimator.ofArgb(startTextColor, endTextColor);
             textColorAnimator.setDuration(400);
-            textColorAnimator.addUpdateListener(animator ->
-                    textView.setTextColor((int) animator.getAnimatedValue()));
+            textColorAnimator.addUpdateListener(animator -> {
+                int animatedColor = (int) animator.getAnimatedValue();
+
+                // 主标题颜色渐变
+                titleView.setTextColor(animatedColor);
+
+                // 目录文字和图标同步更新
+                updateDirectoryViewColor(directoryView, animatedColor);
+            });
             textColorAnimator.start();
+        } else {
+            // 色差太小，直接保持最终颜色
+            titleView.setTextColor(endTextColor);
+            updateDirectoryViewColor(directoryView, endTextColor);
+        }
+    }
+
+    /**
+     * 更新目录文字颜色和 drawable tint + 根据字体大小调整图标尺寸
+     * @param directoryView
+     * @param color
+     */
+    public static void updateDirectoryViewColor(TextView directoryView, Integer color) {
+        if (isNullOrEmpty(directoryView)) return;
+        if (!isNullOrEmpty(color)) directoryView.setTextColor(color);
+
+        Drawable[] drawables = directoryView.getCompoundDrawables();
+        Drawable leftDrawable = drawables[0];
+        if (leftDrawable != null) {
+            leftDrawable = DrawableCompat.wrap(leftDrawable).mutate();
+            if (!isNullOrEmpty(color)) DrawableCompat.setTint(leftDrawable, color);
+            // 动态根据字体大小调整图标尺寸
+            float textSizePx = directoryView.getTextSize();
+            int iconSize = (int) (textSizePx * 1.2f); // 可按比例调整
+            leftDrawable.setBounds(0, 0, iconSize, iconSize);
+            directoryView.setCompoundDrawables(leftDrawable, null, null, null);
+            // 强制 TextView 重新测量和布局
+            directoryView.requestLayout();
         }
     }
 
@@ -980,16 +1053,115 @@ public class Utils {
     }
 
     public static void dialogSetRenderEffect(Activity activity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && activity != null) {
+            if (activity.isFinishing() || activity.isDestroyed()) return;
             View decorView = activity.getWindow().getDecorView();
-            decorView.setRenderEffect(RenderEffect.createBlurEffect(25F, 25F, Shader.TileMode.CLAMP));
+            decorView.setRenderEffect(RenderEffect.createBlurEffect(25f, 25f, Shader.TileMode.CLAMP));
         }
     }
 
     public static void dialogClearRenderEffect(Activity activity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            View decorView = activity.getWindow().getDecorView();
-            decorView.setRenderEffect(null);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && activity != null) {
+            try {
+                View decorView = activity.getWindow().getDecorView();
+                decorView.setRenderEffect(null);
+            } catch (Exception ignore) {}
         }
     }
+
+    /**
+     * 如果指定文件不存在，则创建文件并写入内容。
+     *
+     * @param savePath  文件保存目录路径
+     * @param fileName  文件名
+     * @param content   要写入的文本内容
+     * @return true 写入成功；false 文件已存在或写入失败
+     */
+    public static boolean writeTextFileIfNotExists(String savePath, String fileName, String content) {
+        if (savePath == null || fileName == null || content == null) {
+            LogUtil.logInfo("FileUtil", "参数为空，无法写入文件");
+            return false;
+        }
+
+        try {
+            // 确保路径以 / 结尾
+            if (!savePath.endsWith(File.separator)) {
+                savePath += File.separator;
+            }
+
+            File dir = new File(savePath);
+            if (!dir.exists() && !dir.mkdirs()) {
+                LogUtil.logInfo("writeTextFileIfNotExists", "目录创建失败：" + savePath);
+                return false;
+            }
+
+            File file = new File(savePath + fileName);
+            if (file.exists()) {
+                LogUtil.logInfo("writeTextFileIfNotExists", "文件已存在，跳过写入：" + file.getAbsolutePath());
+                return false;
+            }
+
+            try (FileWriter writer = new FileWriter(file, false)) {
+                writer.write(content);
+                writer.flush();
+            }
+
+            LogUtil.logInfo("writeTextFileIfNotExists", "文件创建并写入成功：" + file.getAbsolutePath());
+            return true;
+
+        } catch (IOException e) {
+            LogUtil.logInfo("writeTextFileIfNotExists", "写入文件失败：" + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+    /**
+     * 递归删除目录及其所有内容
+     *
+     * @param dir 要删除的文件夹
+     */
+    public static void deleteDirectoryRecursive(File dir) {
+        if (dir == null || !dir.exists()) return;
+
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                // 递归删除子目录（包括隐藏目录）
+                if (file.isDirectory()) {
+                    LogUtil.logInfo("DeleteDir", "正在删除子目录：" + file.getAbsolutePath());
+                    deleteDirectoryRecursive(file);
+                } else {
+                    if (file.delete()) {
+                        LogUtil.logInfo("DeleteDir", "删除文件成功：" + file.getAbsolutePath());
+                    } else {
+                        LogUtil.logInfo("DeleteDir", "删除文件失败：" + file.getAbsolutePath());
+                    }
+                }
+            }
+        }
+
+        // 尝试删除当前目录本身
+        for (int i = 0; i < 3; i++) {
+            if (dir.delete()) {
+                LogUtil.logInfo("DeleteDir", "成功删除目录：" + dir.getAbsolutePath());
+                return;
+            } else {
+                LogUtil.logInfo("DeleteDir", "删除目录失败：" + dir.getAbsolutePath() + "，重试中...");
+                try { Thread.sleep(100); } catch (InterruptedException ignored) {}
+            }
+        }
+
+        LogUtil.logInfo("DeleteDir", "删除目录失败（可能存在隐藏文件）：" + dir.getAbsolutePath());
+    }
+
+    public static void deleteFolderWithDialog(File dir) {
+        if (dir == null || !dir.exists()) return;
+        // 后台线程执行删除
+        new Thread(() -> {
+            deleteDirectoryRecursive(dir);
+        }).start();
+    }
+
 }

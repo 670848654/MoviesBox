@@ -1,10 +1,20 @@
 package my.project.moviesbox.view.base;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.widget.NumberPicker;
 
 import androidx.annotation.Nullable;
+import androidx.core.util.Consumer;
 import androidx.viewbinding.ViewBinding;
 
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textview.MaterialTextView;
+
+import my.project.moviesbox.R;
+import my.project.moviesbox.databinding.DialogPagePickerBinding;
 import my.project.moviesbox.model.BaseModel;
 import my.project.moviesbox.presenter.Presenter;
 import my.project.moviesbox.utils.Utils;
@@ -64,5 +74,47 @@ public abstract class BaseMvpActivity<M extends BaseModel, V, P extends Presente
     protected void lazyLoadImg() {
         if (!Utils.isNullOrEmpty(lazyLoadImgListener))
             lazyLoadImgListener.loadImg();
+    }
+
+    /**
+     * 弹出页码选择对话框
+     * @param currentPage 当前页码
+     * @param totalPage 总页数
+     * @param onPageSelected 用户选择回调
+     */
+    protected void showSelectPage(int currentPage, int totalPage, Consumer<Integer> onPageSelected) {
+        if (isFinishing()) return;
+
+        BottomSheetDialog dialog = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
+        DialogPagePickerBinding dialogPagePickerBinding = DialogPagePickerBinding.inflate(LayoutInflater.from(this));
+        dialog.setContentView(dialogPagePickerBinding.getRoot());
+
+        NumberPicker picker = dialogPagePickerBinding.pagePicker;
+        MaterialTextView pageInfo = dialogPagePickerBinding.pageInfo;
+        MaterialButton btnCancel = dialogPagePickerBinding.btnCancel;
+        MaterialButton btnConfirm = dialogPagePickerBinding.btnConfirm;
+
+        picker.setMinValue(1);
+        picker.setMaxValue(totalPage);
+        picker.setValue(currentPage);
+        picker.setWrapSelectorWheel(false);
+
+        pageInfo.setText("第 " + currentPage + " / " + totalPage + " 页");
+
+        picker.setOnValueChangedListener((pickerView, oldVal, newVal) ->
+                pageInfo.setText("第 " + newVal + " / " + totalPage + " 页"));
+
+        btnCancel.setOnClickListener(v -> {
+            Utils.setVibration(v);
+            dialog.dismiss();
+        });
+        btnConfirm.setOnClickListener(v -> {
+            Utils.setVibration(v);
+            dialog.dismiss();
+            if (onPageSelected != null)
+                onPageSelected.accept(picker.getValue());
+        });
+        dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+        dialog.show();
     }
 }

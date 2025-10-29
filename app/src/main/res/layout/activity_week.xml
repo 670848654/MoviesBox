@@ -82,13 +82,17 @@
             <com.google.android.material.progressindicator.LinearProgressIndicator
                 android:id="@+id/progress"
                 android:visibility="gone"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp"
+                style="@style/Widget.Material3Expressive.LinearProgressIndicator.Wavy"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                app:showDelay="500"
+                app:minHideDelay="500"
+                app:indeterminateAnimatorDurationScale="3"
                 app:showAnimationBehavior="inward"
-                app:hideAnimationBehavior="outward"
-                android:indeterminate="true" />
+                app:hideAnimationBehavior="escape"
+                android:indeterminate="true"
+                app:trackCornerRadius="4dp"
+                app:trackThickness="6dp" />
 
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/viewpage2"

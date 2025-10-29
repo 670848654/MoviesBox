@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.os.Environment;
 
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.JSONWriter;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -135,25 +134,6 @@ public class BackupsManager extends BaseManager {
             if(key.equals("data_name_suffix"))
                 continue;
             jsonObject.put(key, value);
-        }
-    }
-
-    /**
-     * 封装JSONObject
-     * @param key
-     * @param list
-     * @return
-     */
-    private static void setTableData2JSONArray(String filePath, List<?> data) {
-        try {
-            JSONWriter writer = new JSONWriter(new FileWriter(filePath));
-            writer.startArray();
-            for (Object obj : data) {
-                writer.writeValue(obj);
-            }
-            writer.endArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 

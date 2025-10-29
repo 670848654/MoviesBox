@@ -271,7 +271,7 @@ public class FavoriteFragment extends BaseMvpFragment<FavoriteModel, FavoriteCon
                     tFavoriteWithField.setDownloadId(refreshFavoriteEvent.getDownloadId());
                     tFavoriteWithField.setHasDownload(refreshFavoriteEvent.getDownloadCount());
                 }
-                adapter.notifyItemChanged(i);
+                adapter.notifyItemChanged(i + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0));
                 break;
             }
         }
@@ -363,11 +363,17 @@ public class FavoriteFragment extends BaseMvpFragment<FavoriteModel, FavoriteCon
                     if (!Objects.equals(selectDirectoryId, directoryId)) {
                         TFavoriteWithFields tFavoriteWithField = adapter.getData().get(position);
                         TFavoriteManager.updateFavoriteDirectoryId(tFavoriteWithField.getVideoId(), selectDirectoryId);
+                        TDirectory tDirectory = TDirectoryManager.queryById(selectDirectoryId, false);
+                        String selectDirectoryTitle = selectDirectoryId.isEmpty()
+                                ? getString(R.string.defaultList)
+                                : tDirectory.getName();
+                        application.showToastMsg(String.format("已变更到 [%s] 中", selectDirectoryTitle), DialogXTipEnum.SUCCESS);
                         if (directoryId.equals("all")) {
-                            application.showToastMsg("变更清单目录成功", DialogXTipEnum.SUCCESS);
+                            tFavoriteWithField.setDirectoryName(selectDirectoryTitle);
+                            adapter.notifyItemChanged(position + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0));
                             return;
                         }
-                        adapter.removeAt(position);
+                        adapter.removeAt(position + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0));
                         favoriteCount = TFavoriteManager.queryFavoriteCountByDirectoryId(directoryId);
                         if (favoriteCount == 0) {
                             setRecyclerViewEmpty();

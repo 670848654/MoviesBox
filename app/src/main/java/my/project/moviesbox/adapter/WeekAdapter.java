@@ -43,7 +43,7 @@ public class WeekAdapter extends BaseQuickAdapter<WeekDataBean.WeekItem, BaseVie
             String imgUrl = item.getImgUrl();
             ImageView imageView = helper.getView(R.id.img);
             imageView.setTag(R.id.imageid, imgUrl);
-            Utils.setDefaultImage(item.getImgUrl(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), false, false);
+            Utils.setDefaultImage(item.getImgUrl(), item.getUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), false, false, null);
             helper.setVisible(R.id.episodesLayout, true);
             String topLeftTag = item.getTopLeftTag();
             if (Utils.isNullOrEmpty(topLeftTag))

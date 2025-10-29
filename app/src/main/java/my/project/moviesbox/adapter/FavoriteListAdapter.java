@@ -23,7 +23,7 @@ import my.project.moviesbox.utils.Utils;
   * @日期: 2024/1/22 14:39
   * @版本: 1.0
  */
-    public class FavoriteListAdapter extends BaseQuickAdapter<TFavoriteWithFields, BaseViewHolder> implements LoadMoreModule {
+public class FavoriteListAdapter extends BaseQuickAdapter<TFavoriteWithFields, BaseViewHolder> implements LoadMoreModule {
     public FavoriteListAdapter(@LayoutRes int layout, List<TFavoriteWithFields> list) {
         super(layout, list);
     }
@@ -45,7 +45,7 @@ import my.project.moviesbox.utils.Utils;
         }
         else
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        Utils.setDefaultImage(imgUrl, item.getTFavorite().getVideoUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), true, item.isRefreshCover());
+        Utils.setDefaultImage(imgUrl, item.getTFavorite().getVideoUrl(), imageView, true, helper.getView(R.id.card_view), helper.getView(R.id.title), true, item.isRefreshCover(), helper.getView(R.id.directory));
         helper.setText(R.id.title, item.getVideoTitle());
         String lastPlayNumber = item.getTFavorite().getLastVideoUpdateNumber();
         if (Utils.isNullOrEmpty(lastPlayNumber))
@@ -55,5 +55,7 @@ import my.project.moviesbox.utils.Utils;
         }
         helper.setVisible(R.id.lastPlayNumber, true);
         helper.getView(R.id.hasDownload).setVisibility(item.getHasDownload() > 0 ? View.VISIBLE : View.GONE);
+        Utils.updateDirectoryViewColor(helper.getView(R.id.directory), null);
+        helper.setText(R.id.directory, item.getDirectoryName());
     }
 }

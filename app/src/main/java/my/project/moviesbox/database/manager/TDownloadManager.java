@@ -1,7 +1,13 @@
 package my.project.moviesbox.database.manager;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+
 import java.util.List;
 
+import my.project.moviesbox.R;
+import my.project.moviesbox.database.dao.TDirectoryDao;
 import my.project.moviesbox.database.dao.TDownloadDao;
 import my.project.moviesbox.database.dao.TDownloadDataDao;
 import my.project.moviesbox.database.dao.TVideoDao;
@@ -21,6 +27,7 @@ public class TDownloadManager extends BaseManager {
     public static TDownloadDao tDownloadDao = getInstance().tDownloadDao();
     public static TVideoDao tVideoDao = getInstance().tVodDao();
     public static TDownloadDataDao tDownloadDataDao = getInstance().tDownloadDataDao();
+    public static TDirectoryDao tDirectoryDao = getInstance().tDirectoryDao();
 
     /**
      * 查询所有下载任务
@@ -181,5 +188,34 @@ public class TDownloadManager extends BaseManager {
      */
     public static List<TDownloadDataWithFields> getDownloadDataListByDirectoryId(String directoryId, int limit, int offset) {
         return tDownloadDataDao.queryAllDownloadDataByDirectoryId(directoryId, limit, offset);
+    }
+
+    /**
+     * 根据下载ID获取第一条数据
+     * @param downloadId
+     * @return
+     */
+    public static TDownloadData querySingleDataByDownloadId(String downloadId) {
+        return tDownloadDataDao.querySingleDataByDownloadId(downloadId);
+    }
+
+    public static String queryDownloadInfo() {
+        JSONArray jsonArray = new JSONArray();
+        List<TDownload> tDownloads = tDownloadDao.queryAllData();
+        for (TDownload tDownload : tDownloads) {
+            JSONObject jsonObject = new JSONObject();
+            String directoryName = tDirectoryDao.queryNameById(tDownload.getDirectoryId());
+            TDownloadData tDownloadData = querySingleDataByDownloadId(tDownload.getDownloadId());
+            String hashTitle = tDownloadData.getSavePath();
+            if (!Utils.isNullOrEmpty(hashTitle)) {
+                String[] parts = hashTitle.split("/");
+                String hash = parts[parts.length - 2];
+                jsonObject.put("videoHash", hash);
+            }
+            jsonObject.put("directory", Utils.isNullOrEmpty(directoryName) ? Utils.getString(R.string.defaultList) : directoryName);
+            jsonObject.put("videoName", tVideoDao.queryTitleById(tDownload.getLinkId()));
+            jsonArray.add(jsonObject);
+        }
+        return JSON.toJSONString(jsonArray);
     }
 }

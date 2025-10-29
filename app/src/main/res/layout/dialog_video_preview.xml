@@ -23,9 +23,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/detail"
-        style="@style/Button.TextButton"
+        app:strokeColor="@color/pinka200"
+        app:iconTint="@color/pinka200"
+        android:textColor="@color/pinka200"
+        style="@style/Button.OutlinedButton.Icon"
         android:layout_gravity="end"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

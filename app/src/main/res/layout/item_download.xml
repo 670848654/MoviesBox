@@ -7,6 +7,26 @@
     android:padding="5dp"
     android:foreground="?android:attr/selectableItemBackground">
 
+    <Button
+        android:id="@+id/option"
+        style="@style/Button.Icon"
+        app:icon="@drawable/round_more_vert_24"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:padding="0dp"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:insetLeft="0dp"
+        android:insetRight="-8dp"
+        android:insetTop="20dp"
+        android:insetBottom="0dp"
+        android:foreground="@null"
+        app:rippleColor="@android:color/transparent"
+        app:iconTint="@color/defaultTextColor"
+        app:iconGravity="textEnd"/>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -119,7 +139,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
-                android:textColor="#bdbdbd" />
+                android:textColor="@color/defaultTextColor" />
 
             <com.google.android.material.progressindicator.LinearProgressIndicator
                 android:id="@+id/bottom_progress"

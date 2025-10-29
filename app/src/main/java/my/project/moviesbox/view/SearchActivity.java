@@ -1,5 +1,8 @@
 package my.project.moviesbox.view;
 
+import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum.HSTV;
+import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum.PORNA_91;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,6 +11,9 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 
@@ -436,5 +442,36 @@ public class SearchActivity extends BaseMvpActivity<SearchModel, SearchContract.
     protected void onDestroy() {
         emptyRecyclerView(mRecyclerView);
         super.onDestroy();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.base_page_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_page -> {
+                View view = findViewById(R.id.action_page);
+                Utils.setVibration(view);
+                if (mSwipe.isRefreshing()) {
+                    application.showToastMsg("请等待数据加载完成后进行操作", DialogXTipEnum.WARNING);
+                    return false;
+                }
+                if (pageCount == 0 || pageCount == 1)
+                    return false;
+                showSelectPage(page, pageCount, selectedPage -> {
+                    adapter.getData().clear();
+                    adapter.notifyDataSetChanged();
+                    page = (parserInterface.startPageNum() == 0 ? selectedPage+1 : selectedPage);
+                    mPresenter.loadPageData(searchContent, String.valueOf(page));
+                    application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, (parserInterface.startPageNum() == 0 ? page+1 : page), pageCount), DialogXTipEnum.DEFAULT);
+                });
+                return true;
+            }
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

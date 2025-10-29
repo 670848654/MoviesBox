@@ -46,7 +46,6 @@ public class VideoPreviewDialog extends BottomSheetDialog {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_video_preview, null);
         setContentView(view);
         TextView titleView = view.findViewById(R.id.title);
-//        titleView.setText(title);
         TextViewDrawableHelper.setDrawableLeftWithText(
                 context,
                 titleView,
@@ -61,6 +60,7 @@ public class VideoPreviewDialog extends BottomSheetDialog {
             bundle.putString("title", title);
             bundle.putString("url", detailUrl);
             context.startActivity(new Intent(context, DetailsActivity.class).putExtras(bundle));
+            dismiss();
         });
         jzvdStd = view.findViewById(R.id.jz_video);
         ImageView closeBtn = view.findViewById(R.id.btn_close);

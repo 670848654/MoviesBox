@@ -22,7 +22,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         style="@style/Button.Icon"
-        app:iconTint="#bdbdbd"
+        app:iconTint="@color/defaultTextColor"
         app:icon="@drawable/round_close_24" />
 
 

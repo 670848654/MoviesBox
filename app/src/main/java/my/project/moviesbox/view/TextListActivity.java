@@ -213,6 +213,8 @@ public class TextListActivity extends BaseMvpActivity<TextListModel, TextListCon
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.base_search_menu, menu);
+        MenuItem searchItem = menu.findItem(R.id.action_page);
+        searchItem.setVisible(false);
         return true;
     }
 

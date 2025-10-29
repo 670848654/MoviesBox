@@ -191,6 +191,8 @@ public class WeekActivity extends BaseMvpActivity<WeekModel, WeekContract.View, 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.base_search_menu, menu);
+        MenuItem searchItem = menu.findItem(R.id.action_page);
+        searchItem.setVisible(false);
         return true;
     }
 

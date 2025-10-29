@@ -97,6 +97,7 @@ public class JZExoPlayer extends JZMediaInterface implements Player.EventListene
         String currUrl = jzvd.jzDataSource.getCurrentUrl().toString();
         MediaSource videoSource;
         HashMap<String, String> headerMap = jzvd.jzDataSource.headerMap;
+        if (Utils.isNullOrEmpty(headerMap)) headerMap = new HashMap<>();
         DefaultHttpDataSource.Factory httpDataSourceFactory =
                 new DefaultHttpDataSource.Factory()
                         .setUserAgent(Util.getUserAgent(context, context.getString(R.string.app_name)))

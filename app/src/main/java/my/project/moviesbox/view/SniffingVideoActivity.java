@@ -53,6 +53,7 @@ public class SniffingVideoActivity extends BaseActivity<ActivitySniffingVideoBin
     private boolean shouldSniff = false;
     private String vodId;
     private String currentUrl;
+    private boolean showAlert;
 
     @Override
     protected void initBeforeView() {}
@@ -105,6 +106,15 @@ public class SniffingVideoActivity extends BaseActivity<ActivitySniffingVideoBin
                 if (newProgress < 100) {
                     linearProgressIndicator.setVisibility(View.VISIBLE);
                     linearProgressIndicator.setProgress(newProgress, true);
+                } else if (newProgress >= 90) {
+                    view.evaluateJavascript("javascript:(function(){" +
+                            "var activeA = document.querySelector('a.active');" +
+                            "if(activeA) {" +
+                            "  AndroidJs.onReceiveActiveText(activeA.innerText);" +
+                            "} else {" +
+                            "  AndroidJs.onReceiveActiveText('');" +
+                            "}" +
+                            "})()", null);
                 } else
                     linearProgressIndicator.setVisibility(View.GONE);
 
@@ -126,6 +136,7 @@ public class SniffingVideoActivity extends BaseActivity<ActivitySniffingVideoBin
         mSwipe.setOnRefreshListener(() -> {
             webView.loadUrl(currentUrl);
             mSwipe.setRefreshing(false);
+            showAlert = false;
         });
     }
 
@@ -190,7 +201,7 @@ public class SniffingVideoActivity extends BaseActivity<ActivitySniffingVideoBin
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
             currentUrl = url;
-            String js = "javascript:(function(){" +
+            /*String js = "javascript:(function(){" +
                     "var activeA = document.querySelector('a.active');" +
                     "if(activeA) {" +
                     "  AndroidJs.onReceiveActiveText(activeA.innerText);" +
@@ -199,7 +210,7 @@ public class SniffingVideoActivity extends BaseActivity<ActivitySniffingVideoBin
                     "}" +
                     "})()";
 
-            webView.evaluateJavascript(js, null);
+            webView.evaluateJavascript(js, null);*/
         }
     }
 
@@ -209,6 +220,8 @@ public class SniffingVideoActivity extends BaseActivity<ActivitySniffingVideoBin
             // 这里拿到 a.active 的文本内容了
             if (Utils.isNullOrEmpty(text))
                 return;
+            if (showAlert) return;
+            showAlert = true;
             // 你可以用handler发送消息，更新UI等
             runOnUiThread(() -> {
                 if (!isFinishing() && !isDestroyed() && playUrls.size() > 0) {

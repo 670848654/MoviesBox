@@ -122,4 +122,11 @@ public interface TDownloadDao {
      */
     @Query("update TDownload set directoryId = null where directoryId =:directoryId")
     void updateDirectoryId2Null(String directoryId);
+
+    /**
+     * 查询所有下载
+     * @return
+     */
+    @Query("select * from TDownload order by directoryId asc")
+    List<TDownload> queryAllData();
 }

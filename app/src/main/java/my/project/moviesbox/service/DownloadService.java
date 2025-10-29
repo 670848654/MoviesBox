@@ -14,7 +14,6 @@ import com.arialyy.annotations.Download;
 import com.arialyy.aria.core.Aria;
 import com.arialyy.aria.core.download.DownloadEntity;
 import com.arialyy.aria.core.task.DownloadTask;
-import com.arialyy.aria.util.ALog;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -133,7 +132,8 @@ public class DownloadService extends Service {
         String vodEpisodes = downloadTask.getTaskName();
         String savePath = downloadTask.getFilePath();
         String vodTitle = (String) VideoUtils.getVodInfo(downloadTask, 0);
-        mNotify.uploadInfo(taskId.intValue(), vodTitle, downloadTask.getTaskName(), String.format(Utils.getString(R.string.downloadErrorMsg), (e == null ? Utils.getString(R.string.downloadDefaultErrorMsg) :  ALog.getExceptionString(e))));
+        // ALog.getExceptionString(e)
+        mNotify.uploadInfo(taskId.intValue(), vodTitle, downloadTask.getTaskName(), String.format(Utils.getString(R.string.downloadErrorMsg), (e == null ? Utils.getString(R.string.downloadDefaultErrorMsg) :  e.getMessage())));
         TDownloadManager.updateDownloadError(downloadTask.getFilePath(), downloadTask.getEntity().getId(), downloadTask.getFileSize());
         EventBus.getDefault().post(new DownloadEvent(taskId, vodTitle, vodEpisodes, savePath, 0, 2));
         shouldUnRegister();

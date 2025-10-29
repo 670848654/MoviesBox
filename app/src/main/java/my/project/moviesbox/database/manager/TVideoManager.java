@@ -158,4 +158,13 @@ public class TVideoManager extends BaseManager {
         }
         return null;
     }
+
+    /**
+     * 根据ID查询影视名称
+     * @param videoId
+     * @return
+     */
+    public static String queryTitleById(String videoId) {
+        return tVideoDao.queryTitleById(videoId);
+    }
 }

@@ -104,10 +104,15 @@ public interface TFavoriteDao {
             "       t2.videoTitle as videoTitle, " +
             "       t3.downloadId as downloadId, " +
             "       count(t3.downloadId) as hasDownload, " +
+            "       CASE " +
+            "           WHEN t4.name IS NULL OR t4.name = '' THEN '默认清单'" +
+            "           ELSE t4.name" +
+            "       END AS directoryName," +
             "       t1.* " +
             "  FROM TFavorite t1 " +
-            "       INNER JOIN TVideo t2 ON t1.linkId = t2.videoId AND t2.videoSource = :videoSource " +
+            "       INNER JOIN TVideo t2 ON t1.linkId = t2.videoId AND t2.videoSource = :videoSource" +
             "       LEFT JOIN TDownload t3 ON t3.linkId = t2.videoId" +
+            "       LEFT JOIN TDirectory t4 ON t1.directoryId = t4.id and t4.source = :videoSource" +
             " WHERE (:directoryId = 'all' OR " +
             "        (:directoryId = '' AND t1.directoryId IS NULL) OR " +
             "        (:directoryId != '' AND :directoryId != 'all' AND t1.directoryId = :directoryId)) " +

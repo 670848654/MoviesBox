@@ -158,4 +158,8 @@ public class TDirectoryManager extends BaseManager {
             tDownloadDao.updateDirectoryId2Null(id);
         }
     }
+
+    public static String queryNameById(String id) {
+        return tDirectoryDao.queryNameById(id);
+    }
 }

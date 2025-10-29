@@ -145,7 +145,7 @@
                     android:autoSizeMinTextSize="12sp"
                     android:autoSizeMaxTextSize="14sp"
                     android:textSize="14sp"
-                    android:textColor="#bdbdbd"/>
+                    android:textColor="@color/defaultTextColor"/>
 
                 <com.google.android.material.progressindicator.LinearProgressIndicator
                     android:id="@+id/bottom_progress"

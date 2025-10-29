@@ -306,4 +306,6 @@
     <color name="night_color_home_tem">#383838</color>
 
     <color name="colorPrimary">#303030</color>
+
+    <color name="defaultTextColor">#B0B0B0</color>
 </resources>

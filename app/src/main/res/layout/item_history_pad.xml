@@ -23,7 +23,7 @@
         android:insetBottom="0dp"
         android:foreground="@null"
         app:rippleColor="@android:color/transparent"
-        app:iconTint="#bdbdbd"
+        app:iconTint="@color/defaultTextColor"
         app:iconGravity="textEnd"/>
 
     <LinearLayout
@@ -162,7 +162,8 @@
                 android:textSize="14sp"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:textColor="#bdbdbd"
+                android:textColor="@color/defaultTextColor"
+                android:drawableTint="@color/defaultTextColor"
                 app:drawableLeftCompat="@drawable/round_access_time_filled_24" />
         </LinearLayout>
 

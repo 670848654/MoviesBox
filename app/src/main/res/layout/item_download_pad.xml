@@ -7,6 +7,26 @@
     android:padding="5dp"
     android:foreground="?android:attr/selectableItemBackground">
 
+    <Button
+        android:id="@+id/option"
+        style="@style/Button.Icon"
+        app:icon="@drawable/round_more_vert_24"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:padding="0dp"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:insetLeft="0dp"
+        android:insetRight="-8dp"
+        android:insetTop="20dp"
+        android:insetBottom="0dp"
+        android:foreground="@null"
+        app:rippleColor="@android:color/transparent"
+        app:iconTint="@color/defaultTextColor"
+        app:iconGravity="textEnd"/>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -31,20 +51,25 @@
                         android:id="@+id/img"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
+                        android:scaleType="centerCrop"
                         app:layout_constraintDimensionRatio="W,1:1.6"
                         app:layout_constraintLeft_toLeftOf="parent"
                         app:layout_constraintRight_toRightOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        android:scaleType="centerCrop"
                         android:transitionName="sharedImg" />
 
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                    <!-- 半透明遮罩层 -->
+                    <View
+                        android:id="@+id/img_mask"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:background="#80000000"
+                        app:layout_constraintTop_toTopOf="@id/img"
+                        app:layout_constraintBottom_toBottomOf="@id/img"
+                        app:layout_constraintStart_toStartOf="@id/img"
+                        app:layout_constraintEnd_toEndOf="@id/img" />
 
-                <View
-                    android:id="@+id/secondView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="#80000000" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <TextView
                     android:id="@+id/source"
@@ -134,8 +159,7 @@
                     android:autoSizeMinTextSize="10sp"
                     android:autoSizeMaxTextSize="14sp"
                     android:textSize="14sp"
-                    android:layout_alignParentEnd="true"
-                    android:textColor="#bdbdbd"
+                    android:textColor="@color/defaultTextColor"
                     app:drawableLeftCompat="@drawable/round_percent_24" />
 
                 <!--<ProgressBar
@@ -147,8 +171,6 @@
                     android:max="100"
                     android:visibility="visible"
                     android:progressDrawable="@drawable/progress_bg" />-->
-
-
 
             </RelativeLayout>
 

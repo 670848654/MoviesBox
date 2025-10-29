@@ -1,6 +1,7 @@
 package my.project.moviesbox.view.fragment;
 
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_DOWNLOAD;
+import static my.project.moviesbox.event.RefreshEnum.REFRESH_TAB_COUNT;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -12,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -21,11 +23,16 @@ import com.arialyy.annotations.Download;
 import com.arialyy.aria.core.Aria;
 import com.arialyy.aria.core.download.DownloadEntity;
 import com.arialyy.aria.core.task.DownloadTask;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -37,6 +44,7 @@ import my.project.moviesbox.config.M3U8DownloadConfig;
 import my.project.moviesbox.contract.DownloadContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
 import my.project.moviesbox.database.entity.TDirectory;
+import my.project.moviesbox.database.entity.TDownloadData;
 import my.project.moviesbox.database.entity.TDownloadDataWithFields;
 import my.project.moviesbox.database.entity.TDownloadWithFields;
 import my.project.moviesbox.database.enums.DirectoryTypeEnum;
@@ -44,12 +52,15 @@ import my.project.moviesbox.database.manager.TDirectoryManager;
 import my.project.moviesbox.database.manager.TDownloadDataManager;
 import my.project.moviesbox.database.manager.TDownloadManager;
 import my.project.moviesbox.databinding.BaseHeaderViewBinding;
+import my.project.moviesbox.databinding.DialogDownloadInfoBinding;
 import my.project.moviesbox.databinding.FragmentMyListBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.event.DownloadEvent;
 import my.project.moviesbox.event.RefreshEnum;
+import my.project.moviesbox.event.RefreshFavoriteEvent;
 import my.project.moviesbox.model.DownloadModel;
 import my.project.moviesbox.parser.LogUtil;
+import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.presenter.DownloadPresenter;
 import my.project.moviesbox.service.DownloadService;
 import my.project.moviesbox.utils.Utils;
@@ -79,7 +90,11 @@ public class DownloadFragment extends BaseMvpFragment<DownloadModel, DownloadCon
     protected boolean isErr = true;
     private DownloadAdapter adapter;
     private List<TDownloadWithFields> downloadList = new ArrayList<>();
-
+    private TDownloadWithFields tDownloadWithFields;
+    private BottomSheetDialog downloadInfoDialog;
+    private TextView titleView, directoryView, timeView, sourceView, pathView, sizeView;
+    private int position;
+    private MaterialButton deleteBtn;
 
     @Override
     protected FragmentMyListBinding inflateBinding(LayoutInflater inflater, ViewGroup container) {
@@ -105,6 +120,7 @@ public class DownloadFragment extends BaseMvpFragment<DownloadModel, DownloadCon
         setDirectoryPopupWindowAdapterClickListener(this);
         initAdapter();
         initFab();
+        initDownloadDialog();
         Aria.download(this).register();
         checkNotCompleteDownloadTask();
     }
@@ -200,6 +216,16 @@ public class DownloadFragment extends BaseMvpFragment<DownloadModel, DownloadCon
         adapter.setHeaderView(baseHeaderViewBinding.getRoot());
         adapter.setEmptyView(rvView);
         adapter.setHeaderWithEmptyEnable(true);
+        adapter.addChildClickViewIds(R.id.option);
+        adapter.setOnItemChildClickListener((adapter, view, position) -> {
+            Utils.setVibration(view);
+            switch (view.getId()) {
+                case R.id.option -> {
+                    this.position = position;
+                    openDownloadInfoDialog(downloadList.get(position));
+                }
+            }
+        });
         adapter.setOnItemClickListener((adapter, view, position) -> {
             if (!Utils.isFastClick()) return;
             Utils.setVibration(view);
@@ -258,6 +284,89 @@ public class DownloadFragment extends BaseMvpFragment<DownloadModel, DownloadCon
             Utils.setVibration(view);
             startActivity(new Intent(getActivity(), LocalListPlayerActivity.class).putExtra("directoryId", directoryId));
         });
+    }
+
+    private void initDownloadDialog() {
+        DialogDownloadInfoBinding dialogDownloadInfoBinding = DialogDownloadInfoBinding.inflate(LayoutInflater.from(getActivity()));
+        titleView = dialogDownloadInfoBinding.title;
+        directoryView = dialogDownloadInfoBinding.directory;
+        timeView = dialogDownloadInfoBinding.time;
+        pathView = dialogDownloadInfoBinding.path;
+        sourceView = dialogDownloadInfoBinding.source;
+        sizeView = dialogDownloadInfoBinding.size;
+        deleteBtn = dialogDownloadInfoBinding.delete;
+        deleteBtn.setOnClickListener(view -> {
+            if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
+            downloadInfoDialog.dismiss();
+            Utils.showAlert(
+                    getActivity(),
+                    R.drawable.round_warning_24,
+                    getString(R.string.deleteAlertTitle),
+                    getString(R.string.deleteAlertContent),
+                    false,
+                    Utils.getString(R.string.defaultPositiveBtnText),
+                    Utils.getString(R.string.defaultNegativeBtnText),
+                    "",
+                    (dialog, which) -> {
+                        String vodId = tDownloadWithFields.getTDownload().getLinkId();
+                        String downloadId = tDownloadWithFields.getTDownload().getDownloadId();
+                        File file = new File(pathView.getText().toString().replace("[存储位置] ", ""));
+                        // 删除Aria数据
+                        // 获取所有下载任务
+                        List<DownloadEntity> list = Aria.download(this).getTaskList();
+                        // 判断任务列表是否存在，当应用卸载重装时为NULL会报错
+                        if (list != null && list.size() > 0) {
+                            for (DownloadEntity entity : list) {
+                                // 当前下载任务下的所有子任务
+                                List<TDownloadData> tDownloadDataList = TDownloadDataManager.queryNotCompleteDataByDownloadId(downloadId);
+                                for (TDownloadData downloadData : tDownloadDataList) {
+                                    // 未下载完成
+                                    if (downloadData.getAriaTaskId() == entity.getId()) {
+                                        // 从Aria数据库中删除任务
+                                        Aria.download(this).load(entity.getId()).ignoreCheckPermissions().cancel(false);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        // 删除文件
+                        Utils.deleteFolderWithDialog(file);
+                        // 删除数据库
+                        TDownloadDataManager.deleteAllDownloadData(downloadId);
+                        TDownloadManager.deleteDownload(downloadId);
+                        EventBus.getDefault().post(new RefreshFavoriteEvent(vodId, null, 0, null));
+                        EventBus.getDefault().post(REFRESH_TAB_COUNT);
+                        adapter.removeAt(position);
+                        application.showToastMsg("任务删除完成", DialogXTipEnum.SUCCESS);
+                    },
+                    (dialog, which) -> {
+                        dialog.dismiss();
+                        downloadInfoDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+                        downloadInfoDialog.show();
+                    },
+                    null);
+        });
+        downloadInfoDialog = new BottomSheetDialog(getActivity(), R.style.BottomSheetDialogTheme);
+        downloadInfoDialog.setContentView(dialogDownloadInfoBinding.getRoot());
+    }
+
+    private void openDownloadInfoDialog(TDownloadWithFields tDownloadWithFields) {
+        // 2025 0701 17:32
+        this.tDownloadWithFields = tDownloadWithFields;
+        titleView.setText(tDownloadWithFields.getVideoTitle());
+        String directoryName = TDirectoryManager.queryNameById(tDownloadWithFields.getTDownload().getDirectoryId());
+        directoryView.setText("[清单目录] " + (Utils.isNullOrEmpty(directoryName) ? Utils.getString(R.string.defaultList) : directoryName));
+        timeView.setText("[下载时间] " + tDownloadWithFields.getTDownload().getCreateTime());
+        sourceView.setText("[视频来源] " + SourceEnum.getTitleBySource(tDownloadWithFields.getVideoSource()));
+        TDownloadData tDownloadData = TDownloadManager.querySingleDataByDownloadId(tDownloadWithFields.getTDownload().getDownloadId());
+        String savePath = tDownloadData.getSavePath();
+        savePath = savePath.replaceAll("/[^/]*$", "");
+        pathView.setText("[存储位置] " + savePath);
+        String downloadCount = String.format(Utils.getString(R.string.downloadVodListContent), tDownloadWithFields.getDownloadDataSize());
+        sizeView.setText("[占用存储] "+  downloadCount + "，存储占用约" + tDownloadWithFields.getFilesSize());
+        downloadInfoDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+        downloadInfoDialog.show();
     }
 
     @Override
