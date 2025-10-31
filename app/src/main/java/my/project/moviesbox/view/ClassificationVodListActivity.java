@@ -452,11 +452,9 @@ public class ClassificationVodListActivity extends BaseMvpActivity<Classificatio
                 if (pageCount == 0 || pageCount == 1)
                     return false;
                 showSelectPage(page, pageCount, selectedPage -> {
-                    adapter.getData().clear();
-                    adapter.notifyDataSetChanged();
                     page = (parserInterface.startPageNum() == 0 ? selectedPage+1 : selectedPage);
                     paramsUrl[paramsUrl.length-1] = String.valueOf(page);
-                    mPresenter.loadPageData(paramsUrl);
+                    loadData();
                     application.showToastMsg(String.format(LOAD_PAGE_AND_ALL_PAGE, (parserInterface.startPageNum() == 0 ? page+1 : page), pageCount), DialogXTipEnum.DEFAULT);
                 });
                 return true;
