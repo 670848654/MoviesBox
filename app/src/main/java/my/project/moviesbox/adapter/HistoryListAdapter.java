@@ -35,8 +35,8 @@ public class HistoryListAdapter extends BaseQuickAdapter<THistoryWithFields, Bas
         String imgUrl = item.getTHistory().getVideoImgUrl();
         ImageView imageView = helper.getView(R.id.img);
         imageView.setTag(R.id.imageid, imgUrl);
-        Utils.setDefaultImage(imgUrl, item.getTHistory().getVideoDescUrl(), imageView, false, null, helper.getView(R.id.title), true, item.isRefreshCover(), null);
         helper.setText(R.id.title, item.getVideoTitle());
+        Utils.setDefaultImage(imgUrl, item.getTHistory().getVideoDescUrl(), imageView, false, null, helper.getView(R.id.title), true, item.isRefreshCover(), null);
         helper.setText(R.id.play_date, item.getTHistory().getUpdateTime());
         long watchProgress = item.getWatchProgress();
         long videoDuration = item.getVideoDuration();

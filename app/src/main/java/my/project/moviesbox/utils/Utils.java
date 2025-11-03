@@ -501,7 +501,8 @@ public class Utils {
                                         }
                                     });
                                 }
-                            }
+                            } else if (!isNullOrEmpty(titleView) && !isNullOrEmpty(directoryView))
+                                updateDirectoryViewColor(directoryView, titleView.getCurrentTextColor());
                         }
                     }
 
