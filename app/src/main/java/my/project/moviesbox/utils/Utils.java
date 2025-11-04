@@ -32,8 +32,6 @@ import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -799,48 +797,48 @@ public class Utils {
         return flag;
     }
 
-    public static void fadeIn( View view) {
-        if (view.getVisibility() == View.VISIBLE) {
-            return;
+    public static void fadeIn(View view) {
+        if (view.getVisibility() == View.VISIBLE && view.getAlpha() == 1f) {
+            return; // 已经是可见且完全不透明，直接返回
         }
-        Animation animation = new AlphaAnimation(0F, 1F);
-        animation.setDuration(800);
-        animation.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-            }
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                view.setEnabled(true);
-            }
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-            }
-        });
-        view.startAnimation(animation);
+
+        // 取消旧动画，防止叠加
+        view.animate().cancel();
+
+        // 初始状态：透明、不可点击
+        view.setAlpha(0f);
         view.setVisibility(View.VISIBLE);
+        view.setEnabled(false);
+
+        // 动画进入
+        view.animate()
+                .alpha(1f)
+                .setDuration(300)
+                .withEndAction(() -> view.setEnabled(true))
+                .start();
     }
 
-    public static void fadeOut(final View view) {
+
+    public static void fadeOut(View view) {
         if (view.getVisibility() != View.VISIBLE) {
             return;
         }
+
+        // 取消旧动画
+        view.animate().cancel();
+
         view.setEnabled(false);
-        Animation animation = new AlphaAnimation(1F, 0F);
-        animation.setDuration(800);
-        animation.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-            }
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                view.setVisibility(View.GONE);
-            }
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-            }
-        });
-        view.startAnimation(animation);
+
+        // 动画退出
+        view.animate()
+                .alpha(0f)
+                .setDuration(300)
+                .withEndAction(() -> {
+                    // 动画结束后彻底隐藏
+                    view.setVisibility(View.GONE);
+                    view.setAlpha(1f); // 重置透明度，避免下次显示时透明
+                })
+                .start();
     }
 
     private static String stringForHoursAndMinutes(long timeMs) {

@@ -752,8 +752,6 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         dramaList.clear();
         dramaListAdapter.setNewInstance(dramaList);
         expandListAdapter.setNewInstance(dramaList);
-        /*hideView(chipGroupView);
-        chipGroupView.removeAllViews();*/
         setTextviewEmpty(expandableDescView);
         detailFab.setVisibility(View.GONE);
         detailsDataBean = new DetailsDataBean();
@@ -920,14 +918,16 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         }
     }
 
-    private void hideView(View view) {
-        Utils.fadeOut(view);
-        view.setVisibility(View.GONE);
+    private void hideView(View... view) {
+        for (View v : view) {
+            Utils.fadeOut(v);
+        }
     }
 
-    private void showView(View view) {
-        Utils.fadeIn(view);
-        view.setVisibility(VISIBLE);
+    private void showView(View... view) {
+        for (View v : view) {
+            Utils.fadeIn(v);
+        }
     }
 
     private void initTitleAdapter() {
@@ -1156,12 +1156,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         if (isFinishing()) return;
         runOnUiThread(() -> {
             mSwipe.setRefreshing(false);
-            hideView(descView);
-            hideView(playLinearLayout);
-            hideView(openDramaView);
-            hideView(multiPlayLayout);
-            hideView(multiLinearLayout);
-            hideView(recommendLinearLayout);
+            hideView(descView, playLinearLayout, openDramaView, multiPlayLayout, multiLinearLayout, recommendLinearLayout);
             errorMsgView.setText(msg);
             showView(errorBgView);
         });
@@ -1172,13 +1167,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         if (isFinishing()) return;
         mSwipe.setRefreshing(true);
         detailFab.setVisibility(View.GONE);
-        hideView(descView);
-        hideView(playLinearLayout);
-        hideView(openDramaView);
-        hideView(multiPlayLayout);
-        hideView(multiLinearLayout);
-        hideView(recommendLinearLayout);
-        hideView(errorBgView);
+        hideView(descView, playLinearLayout, openDramaView, multiPlayLayout, multiLinearLayout, recommendLinearLayout, errorBgView);
     }
 
     @Override
@@ -1205,8 +1194,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
                 }
                 initTitleAdapter();
                 setAdapterData(0);
-                showView(multiPlayLayout);
-                showView(openDramaView);
+                showView(multiPlayLayout, openDramaView);
             } else {
                 String errorMsg = detailsDataBean.getNoDramaListFoundMsg();
                 errorMsgView.setText(Utils.isNullOrEmpty(errorMsg) ? getString(R.string.noEpisode) : errorMsg);
