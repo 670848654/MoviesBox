@@ -11,6 +11,7 @@ import java.util.Objects;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.contract.WeekContract;
 import my.project.moviesbox.enums.FuckCFEnum;
 import my.project.moviesbox.event.HtmlSourceEvent;
@@ -62,13 +63,23 @@ public class WeekModel extends BaseModel implements WeekContract.Model {
      * @param response
      */
     private void parserHtml(String html, Response response) {
-        List<WeekDataBean> weekDataBeans = parserInterface.parserWeekDataList(html);
-        if (Utils.isNullOrEmpty(weekDataBeans))
+        Result<List<WeekDataBean>> result = parserInterface.parserWeekDataList(html);
+        String responseMsg = response != null ? parserErrorMsg(response, html) : html;
+        String errorMsg = result.getMsg() + responseMsg;
+        if (result.isSuccess()) {
+            List<WeekDataBean> weekDataBeans = result.getData();
+            if (weekDataBeans.size() > 0)
+                callback.weekSuccess(weekDataBeans);
+            else
+                callback.error(Utils.getString(R.string.loadErrorMsg));
+        } else
+            callback.error(errorMsg);
+        /*if (Utils.isNullOrEmpty(weekDataBeans))
             callback.error(response != null ? parserErrorMsg(response, html) : html);
         else if (weekDataBeans.size() > 0)
             callback.weekSuccess(weekDataBeans);
         else
-            callback.error(Utils.getString(R.string.loadErrorMsg));
+            callback.error(Utils.getString(R.string.loadErrorMsg));*/
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

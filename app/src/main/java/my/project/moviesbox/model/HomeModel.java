@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.contract.HomeContract;
 import my.project.moviesbox.enums.FuckCFEnum;
 import my.project.moviesbox.event.HtmlSourceEvent;
@@ -15,7 +16,6 @@ import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.bean.MainDataBean;
 import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
-import my.project.moviesbox.utils.Utils;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -70,11 +70,14 @@ public class HomeModel extends BaseModel implements HomeContract.Model {
      * @param response
      */
     private void parserHtml(String html, Response response) {
-        List<MainDataBean> mainDataBeans = parserInterface.parserMainData(html);
-        if (!Utils.isNullOrEmpty(mainDataBeans))
+        Result<List<MainDataBean>> result = parserInterface.parserMainData(html);
+        List<MainDataBean> mainDataBeans = result.getData();
+        String responseMsg = response != null ? parserErrorMsg(response, html) : html;
+        String errorMsg = result.getMsg() + responseMsg;
+        if (result.isSuccess())
             callback.success(mainDataBeans);
         else
-            callback.error(response != null ? parserErrorMsg(response, html) : truncateString(html));
+            callback.error(errorMsg);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

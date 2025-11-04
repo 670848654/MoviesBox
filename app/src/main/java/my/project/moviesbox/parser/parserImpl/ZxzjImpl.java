@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import my.project.moviesbox.bean.Result;
+import my.project.moviesbox.bean.ResultUtils;
 import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
@@ -183,19 +185,22 @@ public class ZxzjImpl implements ParserInterface {
      * APP首页内容解析接口
      * <p>{@link MultiItemEnum}: 列表ITEM样式</p>
      * <p>{@link ItemStyleEnum}: 影视数据列表视图样式</p>
-     * @see MainDataBean
-     * @see MainDataBean.Item
+     *
      * @param source 网页源代码
      * @return {@link List<MainDataBean>}
+     * @see MainDataBean
+     * @see MainDataBean.Item
      */
     @Override
-    public List<MainDataBean> parserMainData(String source) {
+    public Result<List<MainDataBean>> parserMainData(String source) {
         try {
             Document document = Jsoup.parse(source);
             List<MainDataBean> mainDataBeans = new ArrayList<>();
             MainDataBean mainDataBean;
             // 今日热门
             Elements vodList = document.select("div.stui-pannel__bd ul.stui-vodlist");
+            if (vodList.size() == 0)
+                return ResultUtils.parserFail();
             for (int i=0,size=vodList.size(); i<size; i++) {
                 Elements aList = vodList.get(i).select("a.lazyload");
                 mainDataBean = new MainDataBean();
@@ -250,12 +255,12 @@ public class ZxzjImpl implements ParserInterface {
                 }
             }
             logInfo("首页内容", mainDataBeans.toString());
-            return mainDataBeans;
+            return ResultUtils.ok(mainDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserMainData error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -266,13 +271,13 @@ public class ZxzjImpl implements ParserInterface {
      * @return {@link DetailsDataBean}
      */
     @Override
-    public DetailsDataBean parserDetails(String url, String source) {
+    public Result<DetailsDataBean> parserDetails(String url, String source) {
         try {
             DetailsDataBean detailsDataBean = new DetailsDataBean();
             Document document = Jsoup.parse(source);
             Elements content = document.select(".stui-pannel__bd .stui-content");
             if (content.size() == 0)
-                return null;
+                return ResultUtils.parserFail();
             String title = content.select(".stui-content__detail h1").text();
             String img = content.select(".stui-content__thumb a img").attr("data-original");
             detailsDataBean.setTitle(title);
@@ -333,12 +338,12 @@ public class ZxzjImpl implements ParserInterface {
                 }
             }
             logInfo("详情信息", detailsDataBean.toString());
-            return detailsDataBean;
+            return ResultUtils.ok(detailsDataBean);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserDetails error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -350,11 +355,13 @@ public class ZxzjImpl implements ParserInterface {
      * @return {@link DetailsDataBean.DramasItem}
      */
     @Override
-    public List<DetailsDataBean.DramasItem> parserNowSourcesDramas(String source, int listSource, String dramaStr) {
+    public Result<List<DetailsDataBean.DramasItem>> parserNowSourcesDramas(String source, int listSource, String dramaStr) {
         try {
             Document document = Jsoup.parse(source);
             Elements titleElements = document.select("ul.play-tab li a");
             Elements ulElements = document.select(".play-content .stui-play__list");
+            if (titleElements.size() == 0 || ulElements.size() == 0)
+                return ResultUtils.parserFail();
             // 获取所有播放列表
             List<DetailsDataBean.DramasItem> dramasItemList = new ArrayList<>();
             if (titleElements.size() > 0) {
@@ -384,12 +391,12 @@ public class ZxzjImpl implements ParserInterface {
 
             }
             logInfo("播放列表信息", dramasItemList.toString());
-            return dramasItemList;
+            return ResultUtils.ok(dramasItemList);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserNowSourcesDramas error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -409,7 +416,7 @@ public class ZxzjImpl implements ParserInterface {
      * @return {@link List< ClassificationDataBean >}
      */
     @Override
-    public List<ClassificationDataBean> parserClassificationList(String source) {
+    public Result<List<ClassificationDataBean>> parserClassificationList(String source) {
         return null;
     }
 
@@ -420,28 +427,28 @@ public class ZxzjImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserClassificationVodList(String source) {
+    public Result<List<VodDataBean>> parserClassificationVodList(String source) {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".stui-pannel .stui-pannel__bd ul li a.lazyload");
-            if (elements.size() > 0) {
-                for (Element item : elements) {
-                    VodDataBean bean = new VodDataBean();
-                    bean.setTitle(item.attr("title"));
-                    bean.setUrl(item.attr("href"));
-                    bean.setImg(item.attr("data-original"));
-                    bean.setEpisodesTag(item.select(".text-right").text());
-                    items.add(bean);
-                }
-                logInfo("分类列表数据", items.toString());
+            if (elements.size() == 0)
+                return ResultUtils.parserFail();
+            for (Element item : elements) {
+                VodDataBean bean = new VodDataBean();
+                bean.setTitle(item.attr("title"));
+                bean.setUrl(item.attr("href"));
+                bean.setImg(item.attr("data-original"));
+                bean.setEpisodesTag(item.select(".text-right").text());
+                items.add(bean);
             }
-            return items;
+            logInfo("分类列表数据", items.toString());
+            return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserClassificationVodList error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -451,28 +458,28 @@ public class ZxzjImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserSearchVodList(String source) {
+    public Result<List<VodDataBean>> parserSearchVodList(String source) {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select("ul.stui-vodlist.clearfix li a.lazyload");
-            if (elements.size() > 0) {
-                for (Element item : elements) {
-                    VodDataBean bean = new VodDataBean();
-                    bean.setTitle(item.attr("title"));
-                    bean.setUrl(item.attr("href"));
-                    bean.setImg(item.attr("data-original"));
-                    bean.setEpisodesTag(item.select(".text-right").text());
-                    items.add(bean);
-                }
-                logInfo("搜索列表数据", items.toString());
+            if (elements.size() == 0)
+                return ResultUtils.parserFail();
+            for (Element item : elements) {
+                VodDataBean bean = new VodDataBean();
+                bean.setTitle(item.attr("title"));
+                bean.setUrl(item.attr("href"));
+                bean.setImg(item.attr("data-original"));
+                bean.setEpisodesTag(item.select(".text-right").text());
+                items.add(bean);
             }
-            return items;
+            logInfo("搜索列表数据", items.toString());
+            return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserClassificationVodList error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -482,7 +489,7 @@ public class ZxzjImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserVodList(String source) {
+    public Result<List<VodDataBean>> parserVodList(String source) {
         return null;
     }
 
@@ -557,7 +564,7 @@ public class ZxzjImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
+    public Result<List<DialogItemBean>> getPlayUrl(String source, boolean isDownload) {
         try {
             List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);
@@ -571,7 +578,7 @@ public class ZxzjImpl implements ParserInterface {
                 }
             }
             if (playerScript == null)
-                return null;
+                return ResultUtils.parserFail();
             String script = playerScript.html();
             logInfo("javaScript", script);
             String jsonText = script.substring(script.indexOf("{"), script.lastIndexOf("}") + 1);
@@ -602,12 +609,12 @@ public class ZxzjImpl implements ParserInterface {
             String playUrl = getDecodeData(data);
             logInfo("playUrl", playUrl);
             result.add(new DialogItemBean(playUrl, playUrl.contains("m3u8") ? M3U8 : MP4));
-            return result;
+            return ResultUtils.ok(result);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("getPlayUrl error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -628,7 +635,7 @@ public class ZxzjImpl implements ParserInterface {
      * @return {@link List< WeekDataBean >}
      */
     @Override
-    public List<WeekDataBean> parserWeekDataList(String source) {
+    public Result<List<WeekDataBean>> parserWeekDataList(String source) {
         return null;
     }
 
@@ -639,7 +646,7 @@ public class ZxzjImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserTopticList(String source) {
+    public Result<List<VodDataBean>> parserTopticList(String source) {
         return null;
     }
 
@@ -650,7 +657,7 @@ public class ZxzjImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserTopticVodList(String source) {
+    public Result<List<VodDataBean>> parserTopticVodList(String source) {
         return null;
     }
 
@@ -687,7 +694,7 @@ public class ZxzjImpl implements ParserInterface {
      * @return {@link List< TextDataBean >}
      */
     @Override
-    public List<TextDataBean> parserTextList(String source) {
+    public Result<List<TextDataBean>> parserTextList(String source) {
         return null;
     }
 

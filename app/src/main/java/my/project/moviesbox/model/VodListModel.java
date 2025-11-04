@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.contract.VodListContract;
 import my.project.moviesbox.enums.FuckCFEnum;
 import my.project.moviesbox.event.HtmlSourceEvent;
@@ -69,15 +70,24 @@ public class VodListModel extends BaseModel implements VodListContract.Model {
      * @param response
      */
     private void parserHtml(String html, Response response) {
-        List<VodDataBean> vodDataBeanList = parserInterface.parserVodList(html);
+        Result<List<VodDataBean>> result = parserInterface.parserVodList(html);
         int pageCount = firstTimeData ? parserInterface.parserPageCount(html) : parserInterface.startPageNum();
-        String errorMsg = response != null ? parserErrorMsg(response, html) : html;
-        if (vodDataBeanList == null)
+        String responseMsg = response != null ? parserErrorMsg(response, html) : html;
+        String errorMsg = result.getMsg() + responseMsg;
+        if (result.isSuccess()) {
+            List<VodDataBean> vodDataBeans = result.getData();
+            if (vodDataBeans.size() > 0)
+                callback.success(firstTimeData, vodDataBeans, pageCount);
+            else
+                callback.empty(firstTimeData, firstTimeData ? Utils.getString(R.string.emptyData) : errorMsg);
+        } else
+            callback.error(firstTimeData, errorMsg);
+        /*if (vodDataBeanList == null)
             callback.error(firstTimeData, errorMsg);
         else if (vodDataBeanList.size() > 0)
             callback.success(firstTimeData, vodDataBeanList, pageCount);
         else
-            callback.empty(firstTimeData, firstTimeData ? Utils.getString(R.string.emptyData) : errorMsg);
+            callback.empty(firstTimeData, firstTimeData ? Utils.getString(R.string.emptyData) : errorMsg);*/
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

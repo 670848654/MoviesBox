@@ -34,6 +34,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import my.project.moviesbox.bean.Result;
+import my.project.moviesbox.bean.ResultUtils;
 import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
@@ -215,7 +217,7 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link List<MainDataBean>}
      */
     @Override
-    public List<MainDataBean> parserMainData(String source) {
+    public Result<List<MainDataBean>> parserMainData(String source) {
         try {
             Document document = Jsoup.parse(source);
             List<MainDataBean> mainDataBeans = new ArrayList<>();
@@ -237,7 +239,7 @@ public class FiveMovieImpl implements ParserInterface {
             /*************************** 解析banner内容开始 ***************************/
             Elements bannerList = document.select(".main .content .container-slide .swiper .swiper-wrapper .swiper-slide");
             if (bannerList.size() == 0)
-                return null;
+                return ResultUtils.parserFail();
             List<MainDataBean.Item> bannerItems = new ArrayList<>();
             MainDataBean bannerBean = new MainDataBean();
             bannerBean.setTitle("影视推荐");
@@ -269,6 +271,8 @@ public class FiveMovieImpl implements ParserInterface {
             /*************************** 解析banner内容结束 ***************************/
             /*************************** 解析list内容开始 ***************************/
             Elements moduleList = document.select(".homepage .main .content .module");
+            if (moduleList.size() == 0)
+                return ResultUtils.parserFail();
             for (Element module : moduleList) {
                 String title = module.select("h2").text();
                 if (title.contains("追剧周表") || title.contains("影视资讯")) {
@@ -332,12 +336,12 @@ public class FiveMovieImpl implements ParserInterface {
             }
             /*************************** 解析list内容结束 ***************************/
             logInfo("首页内容", mainDataBeans.toString());
-            return mainDataBeans;
+            return ResultUtils.ok(mainDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserMainData error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -348,13 +352,13 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link DetailsDataBean}
      */
     @Override
-    public DetailsDataBean parserDetails(String url, String source) {
+    public Result<DetailsDataBean> parserDetails(String url, String source) {
         try {
             DetailsDataBean detailsDataBean = new DetailsDataBean();
             Document document = Jsoup.parse(source);
             Elements content = document.select(".main .content .module.module-info .module-main");
             if (content.size() == 0)
-                return null;
+                return ResultUtils.parserFail();
             String title = content.select(".module-info-main .module-info-heading h1").text();
             String img = content.select(".module-info-poster .module-item-cover .module-item-pic img").attr("data-original");
             detailsDataBean.setTitle(title);
@@ -427,12 +431,12 @@ public class FiveMovieImpl implements ParserInterface {
                 }
             }
             logInfo("详情信息", detailsDataBean.toString());
-            return detailsDataBean;
+            return ResultUtils.ok(detailsDataBean);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserDetails error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -444,7 +448,7 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link DetailsDataBean.DramasItem}
      */
     @Override
-    public List<DetailsDataBean.DramasItem> parserNowSourcesDramas(String source, int listSource, String dramaStr) {
+    public Result<List<DetailsDataBean.DramasItem>> parserNowSourcesDramas(String source, int listSource, String dramaStr) {
         try {
             Document document = Jsoup.parse(source);
             List<DetailsDataBean.DramasItem> dramasItemList = new ArrayList<>();
@@ -504,12 +508,12 @@ public class FiveMovieImpl implements ParserInterface {
                 }
             }
             logInfo("播放列表信息", dramasItemList.toString());
-            return dramasItemList;
+            return ResultUtils.ok(dramasItemList);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserNowSourcesDramas error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -529,7 +533,7 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link List< ClassificationDataBean >}
      */
     @Override
-    public List<ClassificationDataBean> parserClassificationList(String source) {
+    public Result<List<ClassificationDataBean>> parserClassificationList(String source) {
         try {
             Document document = Jsoup.parse(source);
             List<ClassificationDataBean> classificationDataBeans = new ArrayList<>();
@@ -591,11 +595,11 @@ public class FiveMovieImpl implements ParserInterface {
             }
 
             logInfo("分类列表信息", classificationDataBeans.toString());
-            return classificationDataBeans;
+            return ResultUtils.ok(classificationDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parseClassificationList error", e.getMessage());
-            return null;
+            return ResultUtils.fail(e.getMessage());
         }
     }
 
@@ -606,29 +610,29 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean>  parserClassificationVodList(String source) {
+    public Result<List<VodDataBean>>  parserClassificationVodList(String source) {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".module-items.module-poster-items-base a");
-            if (elements.size() > 0) {
-                for (Element item : elements) {
-                    VodDataBean bean = new VodDataBean();
-                    bean.setTitle(item.select(".module-poster-item-title").text());
-                    bean.setUrl(item.attr("href"));
-                    bean.setImg(item.select("img").attr("data-original"));
-                    bean.setEpisodesTag(item.select(".module-item-note").text());
-                    bean.setTopLeftTag(item.select(".module-item-douban").text());
-                    items.add(bean);
-                }
-                logInfo("分类列表数据", items.toString());
+            if (elements.size() == 0)
+                return ResultUtils.parserFail();
+            for (Element item : elements) {
+                VodDataBean bean = new VodDataBean();
+                bean.setTitle(item.select(".module-poster-item-title").text());
+                bean.setUrl(item.attr("href"));
+                bean.setImg(item.select("img").attr("data-original"));
+                bean.setEpisodesTag(item.select(".module-item-note").text());
+                bean.setTopLeftTag(item.select(".module-item-douban").text());
+                items.add(bean);
             }
-            return items;
+            logInfo("分类列表数据", items.toString());
+            return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserClassificationVodList error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -638,35 +642,35 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean>  parserSearchVodList(String source) {
+    public Result<List<VodDataBean>>  parserSearchVodList(String source) {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".module-items.module-card-items .module-card-item.module-item a.module-card-item-poster");
-            if (elements.size() > 0) {
-                for (Element a : elements) {
-                    VodDataBean bean = new VodDataBean();
-                    bean.setTitle(a.parent().getElementsByTag("strong").text());
-                    bean.setUrl(a.attr("href"));
-                    bean.setImg(a.select("img").attr("data-original"));
-                    String tags = a.parent().select(".module-info-item-content").text();
-                    if (!Utils.isNullOrEmpty(tags)) {
-                        String[] tagArr = tags.split("/");
-                        if (tagArr.length > 2) {
-                            bean.setTopLeftTag(tagArr[0].replaceAll(" ", ""));
-                            bean.setEpisodesTag(tagArr[1].replaceAll(" ", ""));
-                        }
+            if (elements.size() == 0)
+                return ResultUtils.parserFail();
+            for (Element a : elements) {
+                VodDataBean bean = new VodDataBean();
+                bean.setTitle(a.parent().getElementsByTag("strong").text());
+                bean.setUrl(a.attr("href"));
+                bean.setImg(a.select("img").attr("data-original"));
+                String tags = a.parent().select(".module-info-item-content").text();
+                if (!Utils.isNullOrEmpty(tags)) {
+                    String[] tagArr = tags.split("/");
+                    if (tagArr.length > 2) {
+                        bean.setTopLeftTag(tagArr[0].replaceAll(" ", ""));
+                        bean.setEpisodesTag(tagArr[1].replaceAll(" ", ""));
                     }
-                    items.add(bean);
                 }
-                logInfo("搜索列表数据", items.toString());
+                items.add(bean);
             }
-            return items;
+            logInfo("搜索列表数据", items.toString());
+            return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserSearchVodList error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -676,30 +680,29 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean>  parserVodList(String source) {
+    public Result<List<VodDataBean>>  parserVodList(String source) {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
-
             Elements elements = document.select(".module-items a");
-            if (elements.size() > 0) {
-                for (Element item : elements) {
-                    VodDataBean bean = new VodDataBean();
-                    bean.setTitle(item.select(".module-poster-item-title").text());
-                    bean.setUrl(item.attr("href"));
-                    bean.setImg(item.select("img").attr("data-original"));
-                    bean.setEpisodesTag(item.select(".module-item-note").text());
-                    bean.setTopLeftTag(item.select(".module-item-douban").text());
-                    items.add(bean);
-                }
-                logInfo("视频列表数据", items.toString());
+            if (elements.size() == 0)
+                return ResultUtils.parserFail();
+            for (Element item : elements) {
+                VodDataBean bean = new VodDataBean();
+                bean.setTitle(item.select(".module-poster-item-title").text());
+                bean.setUrl(item.attr("href"));
+                bean.setImg(item.select("img").attr("data-original"));
+                bean.setEpisodesTag(item.select(".module-item-note").text());
+                bean.setTopLeftTag(item.select(".module-item-douban").text());
+                items.add(bean);
             }
-            return items;
+            logInfo("视频列表数据", items.toString());
+            return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserVodList error", e.getMessage());
         }
-        List<VodDataBean>  vodDataBean = parserClassificationVodList(source);
+        Result<List<VodDataBean>> vodDataBean = parserClassificationVodList(source);
         return Utils.isNullOrEmpty(vodDataBean) ? parserSearchVodList(source) : vodDataBean;
     }
 
@@ -800,7 +803,7 @@ public class FiveMovieImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
+    public Result<List<DialogItemBean>> getPlayUrl(String source, boolean isDownload) {
         try {
             List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);
@@ -820,12 +823,12 @@ public class FiveMovieImpl implements ParserInterface {
                     }
                 }
             }
-            return result;
+            return result.size() > 0 ? ResultUtils.ok(result) : ResultUtils.parserFail();
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("getPlayUrls error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return new ArrayList<>();
     }
 
     /**
@@ -846,7 +849,7 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link List< WeekDataBean >}
      */
     @Override
-    public List<WeekDataBean> parserWeekDataList(String source) {
+    public Result<List<WeekDataBean>> parserWeekDataList(String source) {
         try {
             List<WeekDataBean> weekDataBeans = new ArrayList<>();
             Document document = Jsoup.parse(source);
@@ -867,12 +870,12 @@ public class FiveMovieImpl implements ParserInterface {
                 weekDataBeans.add(new WeekDataBean(week, weekItems));
             }
             logInfo("时间表数据", weekDataBeans.toString());
-            return weekDataBeans;
+            return weekDataBeans.size() > 0 ? ResultUtils.ok(weekDataBeans) : ResultUtils.parserFail();
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserWeekDataList error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -882,7 +885,7 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserTopticList(String source) {
+    public Result<List<VodDataBean>> parserTopticList(String source) {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
@@ -898,11 +901,11 @@ public class FiveMovieImpl implements ParserInterface {
                 }
             }
             logInfo("专题列表", items.toString());
-            return items;
+            return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserSearchVodList error", e.getMessage());
-            return null;
+            return ResultUtils.fail(e.getMessage());
         }
     }
 
@@ -913,7 +916,7 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserTopticVodList(String source) {
+    public Result<List<VodDataBean>> parserTopticVodList(String source) {
         return parserClassificationVodList(source);
     }
 
@@ -951,36 +954,36 @@ public class FiveMovieImpl implements ParserInterface {
      * @return {@link List< TextDataBean >}
      */
     @Override
-    public List<TextDataBean> parserTextList(String source) {
+    public Result<List<TextDataBean>> parserTextList(String source) {
         try {
             List<TextDataBean> textDataBeans = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".module-paper-item.module-item");
-            if (elements.size() > 0) {
-                for (Element element : elements) {
-                    String topTitle = element.getElementsByTag("h3").text();
-                    Elements aList = element.select(".module-paper-item-main a");
-                    int index = 0;
-                    List<TextDataBean.Item> itemList = new ArrayList<>();
-                    for (Element a : aList) {
-                        index += 1;
-                        TextDataBean.Item rankItem = new TextDataBean.Item();
-                        rankItem.setIndex(String.valueOf(index));
-                        rankItem.setTitle(a.select("span.module-paper-item-infotitle").text());
-                        rankItem.setUrl(a.attr("href"));
-                        rankItem.setEpisodes(a.select(".module-paper-item-info p").text());
-                        itemList.add(rankItem);
-                    }
-                    textDataBeans.add(new TextDataBean(topTitle, itemList));
+            if (elements.size() == 0)
+                return ResultUtils.parserFail();
+            for (Element element : elements) {
+                String topTitle = element.getElementsByTag("h3").text();
+                Elements aList = element.select(".module-paper-item-main a");
+                int index = 0;
+                List<TextDataBean.Item> itemList = new ArrayList<>();
+                for (Element a : aList) {
+                    index += 1;
+                    TextDataBean.Item rankItem = new TextDataBean.Item();
+                    rankItem.setIndex(String.valueOf(index));
+                    rankItem.setTitle(a.select("span.module-paper-item-infotitle").text());
+                    rankItem.setUrl(a.attr("href"));
+                    rankItem.setEpisodes(a.select(".module-paper-item-info p").text());
+                    itemList.add(rankItem);
                 }
-                logInfo("排行榜数据", textDataBeans.toString());
+                textDataBeans.add(new TextDataBean(topTitle, itemList));
             }
-            return textDataBeans;
+            logInfo("排行榜数据", textDataBeans.toString());
+            return ResultUtils.ok(textDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserTextList error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**

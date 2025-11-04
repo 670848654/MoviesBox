@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.contract.SearchContract;
 import my.project.moviesbox.enums.FuckCFEnum;
 import my.project.moviesbox.event.HtmlSourceEvent;
@@ -65,15 +66,18 @@ public class SearchModel extends BaseModel implements SearchContract.Model {
     }
 
     private void parserHtml(String html, Response response) {
-        List<VodDataBean> vodDataBean = parserInterface.parserSearchVodList(html);
+        Result<List<VodDataBean>> result = parserInterface.parserSearchVodList(html);
         int pageCount = firstTimeData ? parserInterface.parserPageCount(html) : parserInterface.startPageNum();
-        String errorMsg = response != null ? parserErrorMsg(response, html) : html;
-        if (vodDataBean == null) {
+        String responseMsg = response != null ? parserErrorMsg(response, html) : html;
+        String errorMsg = result.getMsg() + responseMsg;
+        if (result.isSuccess()) {
+            List<VodDataBean> vodDataBeans = result.getData();
+            if (vodDataBeans.size() > 0)
+                callback.success(firstTimeData, vodDataBeans, pageCount);
+            else
+                callback.empty(firstTimeData, firstTimeData ? Utils.getString(R.string.emptyData) : errorMsg);
+        } else
             callback.error(firstTimeData, errorMsg);
-        } else if (vodDataBean.size() > 0)
-            callback.success(firstTimeData, vodDataBean, pageCount);
-        else
-            callback.empty(firstTimeData, firstTimeData ? Utils.getString(R.string.emptyData) : errorMsg);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

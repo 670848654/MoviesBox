@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.contract.TopTicListContract;
 import my.project.moviesbox.enums.FuckCFEnum;
 import my.project.moviesbox.event.HtmlSourceEvent;
@@ -71,13 +72,23 @@ public class TopticListModel extends BaseModel implements TopTicListContract.Mod
      */
     private void parserHtml(String html, Response response) {
         int pageCount = firstTimeData ? parserInterface.parserPageCount(html) : parserInterface.startPageNum();
-        List<VodDataBean> vodDataBean = isVodList ? parserInterface.parserTopticVodList(html) : parserInterface.parserTopticList(html);
-        if (Utils.isNullOrEmpty(vodDataBean))
+        Result<List<VodDataBean>> result = isVodList ? parserInterface.parserTopticVodList(html) : parserInterface.parserTopticList(html);
+        String responseMsg = response != null ? parserErrorMsg(response, html) : html;
+        String errorMsg = result.getMsg() + responseMsg;
+        if (result.isSuccess()) {
+            List<VodDataBean> vodDataBeans = result.getData();
+            if (vodDataBeans.size() > 0)
+                callback.success(firstTimeData, vodDataBeans, pageCount);
+            else
+                callback.empty(Utils.getString(R.string.emptyData));
+        } else
+            callback.error(firstTimeData, errorMsg);
+        /*if (Utils.isNullOrEmpty(vodDataBean))
             callback.error(firstTimeData, response != null ? parserErrorMsg(response, html) : html);
         else if (vodDataBean.size() > 0)
             callback.success(firstTimeData, vodDataBean, pageCount);
         else
-            callback.empty(Utils.getString(R.string.emptyData));
+            callback.empty(Utils.getString(R.string.emptyData));*/
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

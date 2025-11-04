@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.contract.DownloadVideoContract;
 import my.project.moviesbox.enums.FuckCFEnum;
 import my.project.moviesbox.event.HtmlSourceEvent;
@@ -93,7 +94,8 @@ public class DownloadVideoModel extends BaseModel implements DownloadVideoContra
      */
     private void parserHtml(String html) {
         try {
-            List<DialogItemBean> urls = parserInterface.getPlayUrl(html, true);
+            Result<List<DialogItemBean>> result = parserInterface.getPlayUrl(html, true);
+            List<DialogItemBean> urls = result.getData();
             if (!Utils.isNullOrEmpty(urls))
                 callback.downloadVodUrlSuccess(urls, playNumber);
             else

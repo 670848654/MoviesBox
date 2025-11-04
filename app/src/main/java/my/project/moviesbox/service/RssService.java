@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.config.NotificationUtils;
 import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.LogUtil;
@@ -55,8 +56,9 @@ public class RssService extends Service {
                 @Override
                 public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                     String body = new String(response.body().bytes(), StandardCharsets.UTF_8);
-                    List<TodayUpdateBean> todayUpdateBeanList = parserInterface.parserRss(body);
-                    if (todayUpdateBeanList.size() > 0) {
+                    Result<List<TodayUpdateBean>> result = parserInterface.parserRss(body);
+                    List<TodayUpdateBean> todayUpdateBeanList = result.getData();
+                    if (result.isSuccess()) {
                         for (TodayUpdateBean todayUpdateBean : todayUpdateBeanList) {
                             mNotify.showRSSNotification(todayUpdateBean.getTitle(), todayUpdateBean.getInfo(), todayUpdateBean.getUrl());
                         }

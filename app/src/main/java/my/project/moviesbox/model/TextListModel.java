@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.contract.TextListContract;
 import my.project.moviesbox.enums.FuckCFEnum;
 import my.project.moviesbox.event.HtmlSourceEvent;
@@ -66,13 +67,23 @@ public class TextListModel extends BaseModel implements TextListContract.Model {
      * @param response
      */
     private void parserHtml(String html, Response response) {
-        List<TextDataBean> textDataBeans = parserInterface.parserTextList(html);
-        if (Utils.isNullOrEmpty(textDataBeans))
+        Result<List<TextDataBean>> result = parserInterface.parserTextList(html);
+        String responseMsg = response != null ? parserErrorMsg(response, html) : html;
+        String errorMsg = result.getMsg() + responseMsg;
+        if (result.isSuccess()) {
+            List<TextDataBean> textDataBeans = result.getData();
+            if (textDataBeans.size() > 0)
+                callback.success(textDataBeans);
+            else
+                callback.empty(Utils.getString(R.string.emptyData));
+        } else
+            callback.error(errorMsg);
+        /*if (Utils.isNullOrEmpty(textDataBeans))
             callback.error(response != null ? parserErrorMsg(response, html) : html);
         else if (textDataBeans.size() > 0)
             callback.success(textDataBeans);
         else
-            callback.empty(Utils.getString(R.string.emptyData));
+            callback.empty(Utils.getString(R.string.emptyData));*/
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

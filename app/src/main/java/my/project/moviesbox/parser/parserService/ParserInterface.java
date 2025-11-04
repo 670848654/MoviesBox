@@ -2,11 +2,12 @@ package my.project.moviesbox.parser.parserService;
 
 import androidx.annotation.LayoutRes;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import my.project.moviesbox.bean.Result;
+import my.project.moviesbox.bean.ResultUtils;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.parser.bean.DialogItemBean;
@@ -138,7 +139,7 @@ public interface ParserInterface {
      * @param source 网页源代码
      * @return {@link List<MainDataBean>}
      */
-    List<MainDataBean> parserMainData(String source);
+    Result<List<MainDataBean>> parserMainData(String source);
 
     /**
      * 详情内容解析接口
@@ -146,14 +147,14 @@ public interface ParserInterface {
      * @param source 网页源代码
      * @return {@link DetailsDataBean}
      */
-    DetailsDataBean parserDetails(String url, String source);
+    Result<DetailsDataBean> parserDetails(String url, String source);
 
     /**
      * 通过播放地址获取当前播放源的所有剧集(用于播放界面选集)
      * @param source 网页源代码
      * @return {@link DetailsDataBean.DramasItem}
      */
-    List<DetailsDataBean.DramasItem> parserNowSourcesDramas(String source, int listSource, String dramaStr);
+    Result<List<DetailsDataBean.DramasItem>> parserNowSourcesDramas(String source, int listSource, String dramaStr);
 
     /**
      * 设置分类组是否为多选联动
@@ -166,14 +167,14 @@ public interface ParserInterface {
      * @param source
      * @return {@link List<ClassificationDataBean>}
      */
-    List<ClassificationDataBean> parserClassificationList(String source);
+    Result<List<ClassificationDataBean>> parserClassificationList(String source);
 
     /**
      * 获取剧集列表集合接口 (分类)
      * @param source 网页源代码
      * @return {@link VodDataBean}
      */
-    List<VodDataBean> parserClassificationVodList(String source);
+    Result<List<VodDataBean>> parserClassificationVodList(String source);
 
     /**
      * 是否能搜索
@@ -196,14 +197,14 @@ public interface ParserInterface {
      * @param source 网页源代码
      * @return {@link VodDataBean}
      */
-    List<VodDataBean> parserSearchVodList(String source);
+    Result<List<VodDataBean>> parserSearchVodList(String source);
 
     /**
      *  详情TAG点击跳转视频列表 [其他影视列表]
      * @param source 网页源代码
      * @return {@link VodDataBean}
      */
-    List<VodDataBean> parserVodList(String source);
+    Result<List<VodDataBean>> parserVodList(String source);
 
     /**
      * 设置分类数据列表参数长度
@@ -275,7 +276,7 @@ public interface ParserInterface {
      * @param isDownload 是否为下载
      * @return
      */
-    List<DialogItemBean> getPlayUrl(String source, boolean isDownload);
+    Result<List<DialogItemBean>> getPlayUrl(String source, boolean isDownload);
 
     /**
      * 通过定义的需要POST请求的类名获取POST固定参数，自行实现
@@ -382,7 +383,7 @@ public interface ParserInterface {
      * @param source 网页源代码
      * @return {@link List<WeekDataBean>}
      */
-    List<WeekDataBean> parserWeekDataList(String source);
+    Result<List<WeekDataBean>> parserWeekDataList(String source);
 
     /**
      * 时间列表一行显示几个内容
@@ -402,14 +403,14 @@ public interface ParserInterface {
      * @param source 网页源代码
      * @return {@link VodDataBean}
      */
-    List<VodDataBean> parserTopticList(String source);
+    Result<List<VodDataBean>> parserTopticList(String source);
 
     /**
      * 动漫专题视频列表接口
      * @param source
      * @return {@link VodDataBean}
      */
-    List<VodDataBean> parserTopticVodList(String source);
+    Result<List<VodDataBean>> parserTopticVodList(String source);
 
     /**
      * 获动漫专题地址
@@ -434,7 +435,7 @@ public interface ParserInterface {
      * @param source 网页源代码
      * @return {@link List<TextDataBean>}
      */
-    List<TextDataBean> parserTextList(String source);
+    Result<List<TextDataBean>> parserTextList(String source);
     /****************************** 以下为[动漫网站]特殊解析数据接口 END ******************************/
 
     /**
@@ -450,8 +451,8 @@ public interface ParserInterface {
      * @param xml 网页源代码
      * @return {@link List<TodayUpdateBean>}
      */
-    default List<TodayUpdateBean> parserRss(String xml) {
-        return new ArrayList<>();
+    default Result<List<TodayUpdateBean>> parserRss(String xml) {
+        return ResultUtils.fail("无RSS订阅信息");
     }
 
     /**

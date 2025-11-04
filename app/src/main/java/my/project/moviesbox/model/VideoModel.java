@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.contract.VideoContract;
 import my.project.moviesbox.database.manager.THistoryManager;
 import my.project.moviesbox.database.manager.TVideoManager;
@@ -105,7 +106,8 @@ public class VideoModel extends BaseModel implements VideoContract.Model {
                 if (decodeData.isEmpty())
                     callback.errorPlayUrl();
                 else {
-                    List<DialogItemBean> urls = parserInterface.getPlayUrl(decodeData, false);
+                    Result<List<DialogItemBean>> result = parserInterface.getPlayUrl(decodeData, false);
+                    List<DialogItemBean> urls = result.getData();
                     if (onlyGetPlayUrl) {
                         if (!Utils.isNullOrEmpty(urls))
                             callback.successOnlyPlayUrl(urls);
@@ -113,7 +115,8 @@ public class VideoModel extends BaseModel implements VideoContract.Model {
                             callback.errorOnlyPlayUrl();
                     } else {
                         String fenjihtml = SilisiliImpl.getJsonData(false, decodeData);
-                        List<DetailsDataBean.DramasItem> dramasItems = parserInterface.parserNowSourcesDramas(fenjihtml, listSource, dramaStr);
+                        Result<List<DetailsDataBean.DramasItem>> dramasResult = parserInterface.parserNowSourcesDramas(fenjihtml, listSource, dramaStr);
+                        List<DetailsDataBean.DramasItem> dramasItems = dramasResult.getData();
                         if (!Utils.isNullOrEmpty(dramasItems)) {
                             for (DetailsDataBean.DramasItem item : dramasItems) {
                                 if (dramaStr.contains(item.getUrl())) {
@@ -132,9 +135,11 @@ public class VideoModel extends BaseModel implements VideoContract.Model {
                 }
                 break;
             default:
-                List<DialogItemBean> urls = parserInterface.getPlayUrl(html, false);
+                Result<List<DialogItemBean>> result = parserInterface.getPlayUrl(html, false);
+                List<DialogItemBean> urls = result.getData();
                 if (!onlyGetPlayUrl) {
-                    List<DetailsDataBean.DramasItem> dramasItems = parserInterface.parserNowSourcesDramas(html, listSource, dramaStr);
+                    Result<List<DetailsDataBean.DramasItem>> dramasResult = parserInterface.parserNowSourcesDramas(html, listSource, dramaStr);
+                    List<DetailsDataBean.DramasItem> dramasItems = dramasResult.getData();
                     if (!Utils.isNullOrEmpty(dramasItems)) {
                         for (DetailsDataBean.DramasItem item : dramasItems) {
                             if (dramaStr.contains(item.getUrl())) {

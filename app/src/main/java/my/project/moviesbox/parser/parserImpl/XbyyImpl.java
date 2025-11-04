@@ -31,6 +31,8 @@ import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import my.project.moviesbox.bean.Result;
+import my.project.moviesbox.bean.ResultUtils;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
@@ -184,7 +186,7 @@ public class XbyyImpl implements ParserInterface {
      * @see MainDataBean.Item
      */
     @Override
-    public List<MainDataBean> parserMainData(String source) {
+    public Result<List<MainDataBean>> parserMainData(String source) {
         try {
             Document document = Jsoup.parse(source);
             List<MainDataBean> mainDataBeans = new ArrayList<>();
@@ -201,6 +203,8 @@ public class XbyyImpl implements ParserInterface {
             mainDataBeans.add(tagBean);
             /*************************** 解析banner内容开始 ***************************/
             Elements bannerList = document.select(".carousel-inner .item.text-center a");
+            if (bannerList.size() == 0)
+                return ResultUtils.parserFail();
             List<MainDataBean.Item> bannerItems = new ArrayList<>();
             MainDataBean bannerBean = new MainDataBean();
             bannerBean.setDataType(BANNER_LIST.getType());
@@ -221,7 +225,7 @@ public class XbyyImpl implements ParserInterface {
             /*************************** 解析list内容开始 ***************************/
             Elements panels = document.select(".myui-panel.myui-panel-bg.hiddex-xs");
             if (panels.size() == 0)
-                return null;
+                return ResultUtils.parserFail();
             for (Element panel : panels) {
                 panel.remove();
             }
@@ -259,12 +263,12 @@ public class XbyyImpl implements ParserInterface {
             }
             /*************************** 解析list内容结束 ***************************/
             logInfo("首页内容", mainDataBeans.toString());
-            return mainDataBeans;
+            return ResultUtils.ok(mainDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserMainData error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -275,7 +279,7 @@ public class XbyyImpl implements ParserInterface {
      * @return {@link DetailsDataBean}
      */
     @Override
-    public DetailsDataBean parserDetails(String url, String source) {
+    public Result<DetailsDataBean> parserDetails(String url, String source) {
         try {
             DetailsDataBean detailsDataBean = new DetailsDataBean();
             Document document = Jsoup.parse(source);
@@ -342,12 +346,12 @@ public class XbyyImpl implements ParserInterface {
             }
             detailsDataBean.setRecommendList(recommendList);
             logInfo("详情信息", detailsDataBean.toString());
-            return detailsDataBean;
+            return ResultUtils.ok(detailsDataBean);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserDetails error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -359,41 +363,40 @@ public class XbyyImpl implements ParserInterface {
      * @return {@link DetailsDataBean.DramasItem}
      */
     @Override
-    public List<DetailsDataBean.DramasItem> parserNowSourcesDramas(String source, int listSource, String dramaStr) {
+    public Result<List<DetailsDataBean.DramasItem>> parserNowSourcesDramas(String source, int listSource, String dramaStr) {
         try {
             Document document = Jsoup.parse(source);
             List<DetailsDataBean.DramasItem> dramasItemList = new ArrayList<>();
-
             Elements dataElement = document.select(".tab-content .tab-pane");
-            if (dataElement.size() > 0) {
-                Elements playing = null;
-                for (int i=0, size=dataElement.size(); i<size; i++) {
-                    Elements playElements = dataElement.get(i).select("a"); //剧集列表
-                    for (Element dramaList : playElements) {
-                        String watchUrl = dramaList.attr("href");
-                        // 因为dramaStr第一个一定是最后播放的地址，根据这个地址判断上次播放是那个源！
-                        if (dramaStr.startsWith(watchUrl)) {
-                            playing = playElements;
-                            break;
-                        }
-                    }
-                }
-                if (playing != null) {
-                    int index = 0;
-                    for (Element element : playing) {
-                        String dramaTitle = element.text();
-                        String dramaUrl = element.attr("href");
-                        dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, false));
+            if (dataElement.size() == 0)
+                return ResultUtils.parserFail();
+            Elements playing = null;
+            for (int i=0, size=dataElement.size(); i<size; i++) {
+                Elements playElements = dataElement.get(i).select("a"); //剧集列表
+                for (Element dramaList : playElements) {
+                    String watchUrl = dramaList.attr("href");
+                    // 因为dramaStr第一个一定是最后播放的地址，根据这个地址判断上次播放是那个源！
+                    if (dramaStr.startsWith(watchUrl)) {
+                        playing = playElements;
+                        break;
                     }
                 }
             }
+            if (playing != null) {
+                int index = 0;
+                for (Element element : playing) {
+                    String dramaTitle = element.text();
+                    String dramaUrl = element.attr("href");
+                    dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, false));
+                }
+            }
             logInfo("播放列表[播放界面]内容", dramasItemList.toString());
-            return dramasItemList;
+            return ResultUtils.ok(dramasItemList);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserNowSourcesDramas error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -413,7 +416,7 @@ public class XbyyImpl implements ParserInterface {
      * @return {@link List< ClassificationDataBean >}
      */
     @Override
-    public List<ClassificationDataBean> parserClassificationList(String source) {
+    public Result<List<ClassificationDataBean>> parserClassificationList(String source) {
         try {
             Document document = Jsoup.parse(source);
             List<ClassificationDataBean> classificationDataBeans = new ArrayList<>();
@@ -504,12 +507,12 @@ public class XbyyImpl implements ParserInterface {
                 classificationDataBeans.add(classificationDataBean);
             }
             logInfo("分类列表信息", classificationDataBeans.toString());
-            return classificationDataBeans;
+            return ResultUtils.ok(classificationDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserClassificationList error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     private String getClassificationContent(String url, boolean isAll, String classification) {
@@ -529,7 +532,7 @@ public class XbyyImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserClassificationVodList(String source) {
+    public Result<List<VodDataBean>> parserClassificationVodList(String source) {
         return parserVodList(source);
     }
 
@@ -550,32 +553,32 @@ public class XbyyImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserSearchVodList(String source) {
+    public Result<List<VodDataBean>> parserSearchVodList(String source) {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Element searchUl = document.getElementById("searchList");
             if (Utils.isNullOrEmpty(searchUl))
-                return null;
+                return ResultUtils.parserFail();
             Elements lis = searchUl.select("li");
-            if (lis.size() > 0) {
-                for (Element li : lis) {
-                    VodDataBean bean = new VodDataBean();
-                    bean.setTitle(li.select("h4").text());
-                    bean.setUrl(li.select(".thumb a").attr("href"));
-                    bean.setImg(getImgPath(li.select(".thumb a").attr("data-original")));
-                    bean.setTopLeftTag(li.select(".pic-tag-top").text());
-                    bean.setEpisodesTag(li.select(".text-right").text());
-                    items.add(bean);
-                }
-                logInfo("搜索列表数据", items.toString());
+            if (lis.size() == 0)
+                return ResultUtils.parserFail();
+            for (Element li : lis) {
+                VodDataBean bean = new VodDataBean();
+                bean.setTitle(li.select("h4").text());
+                bean.setUrl(li.select(".thumb a").attr("href"));
+                bean.setImg(getImgPath(li.select(".thumb a").attr("data-original")));
+                bean.setTopLeftTag(li.select(".pic-tag-top").text());
+                bean.setEpisodesTag(li.select(".text-right").text());
+                items.add(bean);
             }
-            return items;
+            logInfo("搜索列表数据", items.toString());
+            return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserSearchVodList error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -585,30 +588,29 @@ public class XbyyImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserVodList(String source) {
+    public Result<List<VodDataBean>> parserVodList(String source) {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
-
             Elements elements = document.select(".myui-vodlist__box");
-            if (elements.size() > 0) {
-                for (Element item : elements) {
-                    VodDataBean bean = new VodDataBean();
-                    bean.setTitle(item.select("h4").text());
-                    bean.setUrl(item.select("a.myui-vodlist__thumb").attr("href"));
-                    bean.setImg(getImgPath(item.select("a.myui-vodlist__thumb").attr("data-original")));
-                    bean.setTopLeftTag(item.select(".pic-tag-top").text());
-                    bean.setEpisodesTag(item.select(".text-right").text());
-                    items.add(bean);
-                }
-                logInfo("视频列表数据", items.toString());
+            if (elements.size() == 0)
+                return ResultUtils.parserFail();
+            for (Element item : elements) {
+                VodDataBean bean = new VodDataBean();
+                bean.setTitle(item.select("h4").text());
+                bean.setUrl(item.select("a.myui-vodlist__thumb").attr("href"));
+                bean.setImg(getImgPath(item.select("a.myui-vodlist__thumb").attr("data-original")));
+                bean.setTopLeftTag(item.select(".pic-tag-top").text());
+                bean.setEpisodesTag(item.select(".text-right").text());
+                items.add(bean);
             }
-            return items;
+            logInfo("视频列表数据", items.toString());
+            return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserVodList error", e.getMessage());
         }
-        List<VodDataBean>  vodDataBean = parserClassificationVodList(source);
+        Result<List<VodDataBean>>  vodDataBean = parserClassificationVodList(source);
         return Utils.isNullOrEmpty(vodDataBean) ? parserSearchVodList(source) : vodDataBean;
     }
 
@@ -718,7 +720,7 @@ public class XbyyImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
+    public Result<List<DialogItemBean>> getPlayUrl(String source, boolean isDownload) {
         try {
             List<DialogItemBean> result = new ArrayList<>();
             Document document = Jsoup.parse(source);
@@ -749,12 +751,12 @@ public class XbyyImpl implements ParserInterface {
                         result.add(new DialogItemBean(url, MP4));
                 }
             }
-            return result;
+            return ResultUtils.ok(result);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("getPlayUrl error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     private String saveLocalM3U8Path(String url) {
@@ -822,7 +824,7 @@ public class XbyyImpl implements ParserInterface {
      * @return {@link List< WeekDataBean >}
      */
     @Override
-    public List<WeekDataBean> parserWeekDataList(String source) {
+    public Result<List<WeekDataBean>> parserWeekDataList(String source) {
         return null;
     }
 
@@ -845,7 +847,7 @@ public class XbyyImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserTopticList(String source) {
+    public Result<List<VodDataBean>> parserTopticList(String source) {
         return null;
     }
 
@@ -856,7 +858,7 @@ public class XbyyImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserTopticVodList(String source) {
+    public Result<List<VodDataBean>> parserTopticVodList(String source) {
         return null;
     }
 
@@ -893,7 +895,7 @@ public class XbyyImpl implements ParserInterface {
      * @return {@link List< TextDataBean >}
      */
     @Override
-    public List<TextDataBean> parserTextList(String source) {
+    public Result<List<TextDataBean>> parserTextList(String source) {
         return null;
     }
 

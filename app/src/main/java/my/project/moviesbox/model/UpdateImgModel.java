@@ -7,13 +7,13 @@ import java.io.IOException;
 import java.util.Objects;
 
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.contract.UpdateImgContract;
 import my.project.moviesbox.enums.FuckCFEnum;
 import my.project.moviesbox.event.HtmlSourceEvent;
 import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.utils.SharedPreferencesUtils;
-import my.project.moviesbox.utils.Utils;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
@@ -60,11 +60,16 @@ public class UpdateImgModel extends BaseModel implements UpdateImgContract.Model
     }
 
     public void parserData(String source) {
-        DetailsDataBean detailsDataBean = parserInterface.parserDetails(url, source);
-        if (Utils.isNullOrEmpty(detailsDataBean))
+        Result<DetailsDataBean> result = parserInterface.parserDetails(url, source);
+        DetailsDataBean detailsDataBean = result.getData();
+        if (result.isSuccess())
+            callback.successImg(url, detailsDataBean.getImg());
+        else
+            callback.errorImg(url);
+        /*if (Utils.isNullOrEmpty(detailsDataBean))
             callback.errorImg(url);
         else
-            callback.successImg(url, detailsDataBean.getImg());
+            callback.successImg(url, detailsDataBean.getImg());*/
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

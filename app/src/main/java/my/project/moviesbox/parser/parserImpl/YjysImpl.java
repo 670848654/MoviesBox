@@ -46,6 +46,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import my.project.moviesbox.bean.Result;
+import my.project.moviesbox.bean.ResultUtils;
 import my.project.moviesbox.net.OkHttpUtils;
 import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
@@ -190,7 +192,7 @@ public class YjysImpl implements ParserInterface {
      * @see MainDataBean.Item
      */
     @Override
-    public List<MainDataBean> parserMainData(String source) {
+    public Result<List<MainDataBean>> parserMainData(String source) {
         try {
             Document document = Jsoup.parse(source);
             List<MainDataBean> mainDataBeans = new ArrayList<>();
@@ -204,7 +206,7 @@ public class YjysImpl implements ParserInterface {
             /*************************** 解析banner内容开始 ***************************/
             Elements bannerList = document.getElementById("carousel-captions").select("a.carousel-item");
             if (bannerList.size() == 0)
-                return null;
+                return ResultUtils.parserFail();
             List<MainDataBean.Item> bannerItems = new ArrayList<>();
             MainDataBean bannerBean = new MainDataBean();
             bannerBean.setHasMore(false);
@@ -227,6 +229,8 @@ public class YjysImpl implements ParserInterface {
             /*************************** 解析list内容开始 ***************************/
             Elements headers = document.select(".page-header");
             Elements vodItems = document.select(".container.px-1.px-md-2.my-2 .row-cards");
+            if (headers.size() == 0 || vodItems.size() == 0)
+                return ResultUtils.parserFail();
             for (int i=0,size=headers.size(); i<size; i++) {
                 Element header = headers.get(i);
                 String headerTitle = header.select(".page-title").text();
@@ -260,12 +264,12 @@ public class YjysImpl implements ParserInterface {
             }
             /*************************** 解析list内容结束 ***************************/
             logInfo("首页内容", mainDataBeans.toString());
-            return mainDataBeans;
+            return ResultUtils.ok(mainDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserMainData error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -276,13 +280,13 @@ public class YjysImpl implements ParserInterface {
      * @return {@link DetailsDataBean}
      */
     @Override
-    public DetailsDataBean parserDetails(String url, String source) {
+    public Result<DetailsDataBean> parserDetails(String url, String source) {
         try {
             DetailsDataBean detailsDataBean = new DetailsDataBean();
             Document document = Jsoup.parse(source);
             String title = document.select(".d-sm-block.d-md-none").text();
             if (title.isEmpty())
-                return null;
+                return ResultUtils.parserFail();
             detailsDataBean.setTitle(title);
             // 影视图片
             String img = document.select(".col-md-auto.col-5.cover-lg-max-25 img").attr("src");
@@ -339,12 +343,12 @@ public class YjysImpl implements ParserInterface {
                 detailsDataBean.setRecommendList(recommendList);
             }
             logInfo("详情信息", detailsDataBean.toString());
-            return detailsDataBean;
+            return ResultUtils.ok(detailsDataBean);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserDetails error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -356,26 +360,26 @@ public class YjysImpl implements ParserInterface {
      * @return {@link DetailsDataBean.DramasItem}
      */
     @Override
-    public List<DetailsDataBean.DramasItem> parserNowSourcesDramas(String source, int listSource, String dramaStr) {
+    public Result<List<DetailsDataBean.DramasItem>> parserNowSourcesDramas(String source, int listSource, String dramaStr) {
         try {
             Document document = Jsoup.parse(source);
             List<DetailsDataBean.DramasItem> dramasItemList = new ArrayList<>();
             Elements dataElement = document.select(".btn-group a");
-            if (dataElement.size() > 0) {
-                int index = 0;
-                for (Element element : dataElement) {
-                    String dramaUrl = element.select("a").attr("href");
-                    String dramaTitle = element.select("a").text();
-                    dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, dramaStr.contains(dramaUrl)));
-                }
+            if (dataElement.size() == 0)
+                return ResultUtils.parserFail();
+            int index = 0;
+            for (Element element : dataElement) {
+                String dramaUrl = element.select("a").attr("href");
+                String dramaTitle = element.select("a").text();
+                dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, dramaStr.contains(dramaUrl)));
             }
             logInfo("播放列表[播放界面]内容", dramasItemList.toString());
-            return dramasItemList;
+            return ResultUtils.ok(dramasItemList);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserNowSourcesDramas error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -395,10 +399,12 @@ public class YjysImpl implements ParserInterface {
      * @return {@link List< ClassificationDataBean >}
      */
     @Override
-    public List<ClassificationDataBean> parserClassificationList(String source) {
+    public Result<List<ClassificationDataBean>> parserClassificationList(String source) {
         try {
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".all-filter-wrapper dl");
+            if (elements.size() == 0)
+                return ResultUtils.parserFail();
             int index = 1;
             List<ClassificationDataBean> classificationDataBeans = new ArrayList<>();
             for (Element element : elements) {
@@ -442,12 +448,12 @@ public class YjysImpl implements ParserInterface {
                 classificationDataBeans.add(classificationDataBean);
             }
             logInfo("分类列表信息", classificationDataBeans.toString());
-            return classificationDataBeans;
+            return ResultUtils.ok(classificationDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserClassificationList error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     private String removeString(String str, char remove) {
@@ -467,7 +473,7 @@ public class YjysImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserClassificationVodList(String source) {
+    public Result<List<VodDataBean>> parserClassificationVodList(String source) {
         return parserVodList(source);
     }
 
@@ -483,7 +489,7 @@ public class YjysImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserSearchVodList(String source) {
+    public Result<List<VodDataBean>> parserSearchVodList(String source) {
         try {
             List<VodDataBean> vodDataBeans  = new ArrayList<>();
             Document document = Jsoup.parse(source);
@@ -491,7 +497,7 @@ public class YjysImpl implements ParserInterface {
             if (Utils.isNullOrEmpty(verifyCode)) {
                 Elements videoList = document.select(".col-12 .row");
                 if (videoList.size() == 0)
-                    return vodDataBeans;
+                    return ResultUtils.parserFail();
                 for (Element video : videoList) {
                     VodDataBean item = new VodDataBean();
                     String videoName = video.select(".search-movie-title").text(); // 标题
@@ -505,14 +511,14 @@ public class YjysImpl implements ParserInterface {
                     vodDataBeans.add(item);
                 }
                 logInfo("搜索视频列表数据", vodDataBeans.toString());
-                return vodDataBeans;
+                return ResultUtils.ok(vodDataBeans);
             } else
                 return null;
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserSearchVodList error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -522,13 +528,13 @@ public class YjysImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserVodList(String source) {
+    public Result<List<VodDataBean>> parserVodList(String source) {
         try {
             List<VodDataBean> vodDataBeans  = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements videoList = document.select(".card.card-sm.card-link");
             if (videoList.size() == 0)
-                return vodDataBeans;
+                return ResultUtils.parserFail();
             for (Element video : videoList) {
                 VodDataBean item = new VodDataBean();
                 String videoName = video.select(".card-title").text(); // 标题
@@ -542,12 +548,12 @@ public class YjysImpl implements ParserInterface {
                 vodDataBeans.add(item);
             }
             logInfo("视频列表数据", vodDataBeans.toString());
-            return vodDataBeans;
+            return ResultUtils.ok(vodDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserVodList error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -701,7 +707,7 @@ public class YjysImpl implements ParserInterface {
      * @return
      */
     @Override
-    public List<DialogItemBean> getPlayUrl(String source, boolean isDownload) {
+    public Result<List<DialogItemBean>> getPlayUrl(String source, boolean isDownload) {
         try {
             // 提取PID
             String pid = "";
@@ -721,12 +727,12 @@ public class YjysImpl implements ParserInterface {
             }
             LogUtil.logInfo("影视pid", pid);
             if (Utils.isNullOrEmpty(pid))
-                return null;
-            return new ArrayList<>(getVodPlayUrl(pid));
+                return ResultUtils.parserFail();
+            return getVodPlayUrl(pid);
         } catch (Exception e) {
             e.printStackTrace();
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -734,7 +740,7 @@ public class YjysImpl implements ParserInterface {
      * @param pid
      * @return
      */
-    private List<DialogItemBean> getVodPlayUrl(String pid) {
+    private Result<List<DialogItemBean>> getVodPlayUrl(String pid) {
         List<DialogItemBean> playUrls = new ArrayList<>();
         try {
             long timestamp = new Date().getTime();
@@ -788,8 +794,9 @@ public class YjysImpl implements ParserInterface {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            return ResultUtils.fail(e.getMessage());
         }
-        return playUrls;
+        return ResultUtils.ok(playUrls);
     }
 
     private void setDialogItemBean(String[] m3u8Arr, List<DialogItemBean> playUrls) throws Exception {
@@ -1048,7 +1055,7 @@ public class YjysImpl implements ParserInterface {
      * @return {@link List< WeekDataBean >}
      */
     @Override
-    public List<WeekDataBean> parserWeekDataList(String source) {
+    public Result<List<WeekDataBean>> parserWeekDataList(String source) {
         try {
             List<WeekDataBean> weekDataBeans = new ArrayList<>();
             Document document = Jsoup.parse(source);
@@ -1071,12 +1078,12 @@ public class YjysImpl implements ParserInterface {
                 weekDataBeans.add(new WeekDataBean(week, weekItems));
                 logInfo("时间表数据", weekDataBeans.toString());
             }
-            return weekDataBeans;
+            return ResultUtils.ok(weekDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("parserWeekDataList error", e.getMessage());
+            return ResultUtils.fail(e.getMessage());
         }
-        return null;
     }
 
     /**
@@ -1086,7 +1093,7 @@ public class YjysImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserTopticList(String source) {
+    public Result<List<VodDataBean>> parserTopticList(String source) {
         return null;
     }
 
@@ -1097,7 +1104,7 @@ public class YjysImpl implements ParserInterface {
      * @return {@link VodDataBean}
      */
     @Override
-    public List<VodDataBean> parserTopticVodList(String source) {
+    public Result<List<VodDataBean>> parserTopticVodList(String source) {
         return null;
     }
 
@@ -1134,7 +1141,7 @@ public class YjysImpl implements ParserInterface {
      * @return {@link List< TextDataBean >}
      */
     @Override
-    public List<TextDataBean> parserTextList(String source) {
+    public Result<List<TextDataBean>> parserTextList(String source) {
         return null;
     }
 

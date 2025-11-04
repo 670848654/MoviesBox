@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.contract.ClassificationVodListContract;
 import my.project.moviesbox.enums.FuckCFEnum;
 import my.project.moviesbox.event.HtmlSourceEvent;
@@ -70,23 +71,30 @@ public class ClassificationVodListModel extends BaseModel implements Classificat
      * @param response
      */
     private void parserHtml(String html, Response response) {
-            List<VodDataBean> vodDataBean = parserInterface.parserClassificationVodList(html);
+        Result<List<VodDataBean>> result = parserInterface.parserClassificationVodList(html);
         int pageCount = firstTimeData ? parserInterface.parserPageCount(html) : parserInterface.startPageNum();
-        String errorMsg = response != null ? parserErrorMsg(response, html) : html;
-        if (vodDataBean == null)
-            callback.errorVodList(firstTimeData, errorMsg);
-        else if (vodDataBean.size() > 0)
-            callback.successVodList(firstTimeData, vodDataBean, pageCount);
-        else
-            callback.emptyVodList(firstTimeData, firstTimeData ? Utils.getString(R.string.emptyData) : errorMsg);
-        if (firstTimeData) {
-            List<ClassificationDataBean> classificationDataBeans = parserInterface.parserClassificationList(html);
-            if (Utils.isNullOrEmpty(classificationDataBeans))
-                callback.error(response != null ? parserErrorMsg(response, html) : html);
-            else if (classificationDataBeans.size() > 0)
-                callback.successClassList(classificationDataBeans);
+        String responseMsg = response != null ? parserErrorMsg(response, html) : html;
+        String errorMsg = result.getMsg() + responseMsg;
+        if (result.isSuccess()) {
+            List<VodDataBean> vodDataBeans = result.getData();
+            if (vodDataBeans.size() > 0)
+                callback.successVodList(firstTimeData, vodDataBeans, pageCount);
             else
-                callback.emptyClassList();
+                callback.emptyVodList(firstTimeData, firstTimeData ? Utils.getString(R.string.emptyData) : errorMsg);
+        } else {
+            callback.errorVodList(firstTimeData, errorMsg);
+        }
+        if (firstTimeData) {
+            Result<List<ClassificationDataBean>> listResult = parserInterface.parserClassificationList(html);
+            if (listResult.isSuccess()) {
+                List<ClassificationDataBean> classificationDataBeans = listResult.getData();
+                if (classificationDataBeans.size() > 0)
+                    callback.successClassList(classificationDataBeans);
+                else
+                    callback.emptyClassList();
+            } else
+//                callback.error(response != null ? parserErrorMsg(response, html) : html);
+                callback.error(listResult.getMsg());
         }
     }
 

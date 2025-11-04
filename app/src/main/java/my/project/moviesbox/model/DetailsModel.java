@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 import my.project.moviesbox.application.App;
+import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.contract.DetailsContract;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.THistoryManager;
@@ -69,9 +70,12 @@ public class DetailsModel extends BaseModel implements DetailsContract.Model {
      * @param response
      */
     private void parserHtml(String html, Response response) {
-        DetailsDataBean detailsDataBean = parserInterface.parserDetails(finalUrl, html);
-        if (Utils.isNullOrEmpty(detailsDataBean)) {
-            callback.error(response != null ? parserErrorMsg(response, html) : html);
+        Result<DetailsDataBean> result = parserInterface.parserDetails(finalUrl, html);
+        DetailsDataBean detailsDataBean = result.getData();
+        String responseMsg = response != null ? parserErrorMsg(response, html) : html;
+        String errorMsg = result.getMsg() + responseMsg;
+        if (!result.isSuccess()) {
+            callback.error(errorMsg);
             return;
         }
         String title = detailsDataBean.getTitle();

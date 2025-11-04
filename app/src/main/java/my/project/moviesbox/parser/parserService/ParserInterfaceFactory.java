@@ -3,7 +3,6 @@ package my.project.moviesbox.parser.parserService;
 import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum.fromIndex;
 
 import my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum;
-import my.project.moviesbox.parser.parserImpl.AnFunsImpl;
 import my.project.moviesbox.parser.parserImpl.FiveMovieImpl;
 import my.project.moviesbox.parser.parserImpl.GiriGiriLoveImpl;
 import my.project.moviesbox.parser.parserImpl.IYingHuaImpl;
@@ -43,9 +42,9 @@ public class ParserInterfaceFactory {
                         case I_YINGHUA:
                             parserInterface = new IYingHuaImpl();
                             break;
-                        case ANFUNS:
-                            parserInterface = new AnFunsImpl();
-                            break;
+//                        case ANFUNS:
+//                            parserInterface = new AnFunsImpl();
+//                            break;
                         case LIBVIO:
                             parserInterface = new LibvioImpl();
                             break;
