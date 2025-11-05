@@ -11,6 +11,7 @@ import java.util.List;
 
 import my.project.moviesbox.R;
 import my.project.moviesbox.database.entity.TDownloadWithFields;
+import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.utils.Utils;
 
 /**
@@ -38,6 +39,7 @@ public class DownloadAdapter extends BaseQuickAdapter<TDownloadWithFields, BaseV
         imageView.setTag(R.id.imageid, imgUrl);
         helper.setText(R.id.title, item.getVideoTitle());
         String imgContent = String.format(Utils.getString(R.string.downloadVodListContent), item.getDownloadDataSize());
+        helper.setText(R.id.videoSource, SourceEnum.getTitleBySource(item.getVideoSource()));
         if (item.getNoCompleteSize() > 0)
             imgContent += "<br><font color=\"RED\">" + String.format(Utils.getString(R.string.downloadVodNotCompleteListContent), item.getNoCompleteSize()) + "</font>";
         helper.setText(R.id.number, Html.fromHtml(imgContent));

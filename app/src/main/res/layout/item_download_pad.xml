@@ -138,29 +138,27 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <!--<TextView
-                    android:id="@+id/file_size"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:autoSizeTextType="uniform"
-                    android:autoSizeMinTextSize="10sp"
-                    android:autoSizeMaxTextSize="14sp"
-                    android:textSize="14sp"
-                    android:layout_alignParentStart="true"
-                    android:textColor="#bdbdbd"/>-->
-
                 <TextView
-                    android:id="@+id/all_size"
-                    android:drawablePadding="5dp"
-                    android:gravity="center_vertical|end"
+                    android:id="@+id/videoSource"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:autoSizeTextType="uniform"
                     android:autoSizeMinTextSize="10sp"
                     android:autoSizeMaxTextSize="14sp"
                     android:textSize="14sp"
-                    android:textColor="@color/defaultTextColor"
-                    app:drawableLeftCompat="@drawable/round_percent_24" />
+                    android:layout_alignParentStart="true"
+                    android:textColor="@color/defaultTextColor"/>
+
+                <TextView
+                    android:id="@+id/all_size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:autoSizeTextType="uniform"
+                    android:autoSizeMinTextSize="10sp"
+                    android:autoSizeMaxTextSize="14sp"
+                    android:layout_alignParentEnd="true"
+                    android:textSize="14sp"
+                    android:textColor="@color/defaultTextColor" />
 
                 <!--<ProgressBar
                     android:id="@+id/bottom_progress"

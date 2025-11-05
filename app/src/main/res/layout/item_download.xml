@@ -123,19 +123,17 @@
                 android:maxLines="2"
                 android:ellipsize="end" />
 
-            <!--<TextView
-                android:id="@+id/all_size"
+            <TextView
+                android:id="@+id/videoSource"
                 android:layout_below="@+id/title"
-                android:drawablePadding="5dp"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
-                android:textColor="#bdbdbd"
-                app:drawableLeftCompat="@drawable/round_percent_24" />-->
+                android:textColor="@color/defaultTextColor"/>
 
             <TextView
                 android:id="@+id/all_size"
-                android:layout_below="@+id/title"
+                android:layout_below="@+id/videoSource"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
