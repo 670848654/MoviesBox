@@ -59,7 +59,7 @@ public enum SourceEnum {
             ANIME.bg,
             "资源较好",
             "silisili",
-            "https://www.silisili.link",
+            "https://www.sssfun.cc",
             "",
             "/vodsearch/?wd=%s&page=%s",
             true,

@@ -1,6 +1,7 @@
 package my.project.moviesbox.adapter;
 
 import android.content.Context;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
@@ -46,10 +47,21 @@ public class TextListAdapter extends BaseQuickAdapter<TextDataBean.Item, BaseVie
                 indexView.setBackground(context.getDrawable(R.drawable.rank_other));
                 break;
         }
-        helper.setText(R.id.title, item.getTitle());
-        if (Utils.isNullOrEmpty(item.getEpisodes()))
-            helper.setVisible(R.id.episodes, false);
+        TextView titleView = helper.getView(R.id.title);
+        titleView.setText(item.getTitle());
+        RelativeLayout.LayoutParams params =
+                (RelativeLayout.LayoutParams) titleView.getLayoutParams();
+        if (Utils.isNullOrEmpty(item.getEpisodes())) {
+            helper.setGone(R.id.episodes, true);
+            helper.setGone(R.id.episodes, true);
+            // 设置垂直居中
+            params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+            titleView.setLayoutParams(params);
+        }
         else {
+            // 移除垂直居中
+            params.removeRule(RelativeLayout.CENTER_VERTICAL);
+            titleView.setLayoutParams(params);
             helper.setText(R.id.episodes, item.getEpisodes());
             helper.setVisible(R.id.episodes, true);
         }

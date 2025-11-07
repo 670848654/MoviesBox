@@ -216,6 +216,8 @@ public class SilisiliImpl implements ParserInterface {
             tags.add(new MainDataBean.Tag(HomeTagEnum.XFGM.name, HomeTagEnum.XFGM.content, ClassificationVodListActivity.class));
             tags.add(new MainDataBean.Tag(HomeTagEnum.WJDM.name, HomeTagEnum.WJDM.content, ClassificationVodListActivity.class));
             tags.add(new MainDataBean.Tag(HomeTagEnum.DMJC.name, HomeTagEnum.DMJC.content, ClassificationVodListActivity.class));
+            tags.add(new MainDataBean.Tag(HomeTagEnum.FOURKZQ.name, HomeTagEnum.FOURKZQ.content, ClassificationVodListActivity.class));
+            tags.add(new MainDataBean.Tag(HomeTagEnum.DJDZK.name, HomeTagEnum.DJDZK.content, ClassificationVodListActivity.class));
             tags.add(new MainDataBean.Tag(HomeTagEnum.RMZT.name, HomeTagEnum.RMZT.content, TopticListActivity.class));
             tags.add(new MainDataBean.Tag(HomeTagEnum.PHB.name, HomeTagEnum.PHB.content, TextListActivity.class));
             mainDataBean.setTags(tags);
@@ -504,7 +506,7 @@ public class SilisiliImpl implements ParserInterface {
     @Override
     public Result<List<ClassificationDataBean>> parserClassificationList(String source) {
         // 分类网站有问题，暂时不解析 TODO
-        return null;
+        return ResultUtils.fail("该站点不支持分类");
     }
 
     /**
@@ -985,6 +987,8 @@ public class SilisiliImpl implements ParserInterface {
         XFGM("新番国漫", "%s/vodtype/xinfanguoman-%s/"),
         WJDM("完结动漫", "%s/vodtype/dongmanfanju-%s/"),
         DMJC("动漫剧场", "%s/vodtype/juchang-%s/"),
+        FOURKZQ("4K专区", "%s/vodtype/4Kzhuanqu/"),
+        DJDZK("大家都在看", "%s/label/ol/"),
         RMZT("热门专题", "%s/topic/"),
         PHB("排行榜", "%s/map.html");
 
