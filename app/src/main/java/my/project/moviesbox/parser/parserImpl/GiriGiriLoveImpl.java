@@ -278,9 +278,10 @@ public class GiriGiriLoveImpl implements ParserInterface {
             if (boxs.size() == 0)
                 return ResultUtils.parserFail();
             for (Element box : boxs) {
-                String boxTitle = box.select("h4.title-h").text();
-                if (Utils.isNullOrEmpty(boxTitle) || boxTitle.contains("本周推荐") || boxTitle.contains("每周推荐") || boxTitle.contains("周期表"))
+                // 过滤番剧周期表
+                if ("week-module-box".equals(box.id()))
                     continue;
+                String boxTitle = box.select("h4.title-h").text();
                 mainDataBean = new MainDataBean();
                 mainDataBean.setTitle(boxTitle);
                 mainDataBean.setHasMore(!boxTitle.contains("最近大家在看"));
@@ -305,7 +306,9 @@ public class GiriGiriLoveImpl implements ParserInterface {
                     items.add(homeItemBean);
                 }
                 mainDataBean.setItems(items);
-                mainDataBeans.add(mainDataBean);
+                // 过滤非番剧的列表
+                if (items.size() >0 && items.stream().anyMatch(item -> item.getUrl().contains("GV")))
+                    mainDataBeans.add(mainDataBean);
             }
             logInfo("首页内容", mainDataBeans.toString());
             return ResultUtils.ok(mainDataBeans);
@@ -487,8 +490,6 @@ public class GiriGiriLoveImpl implements ParserInterface {
             Document document = Jsoup.parse(source);
             List<ClassificationDataBean> classificationDataBeans = new ArrayList<>();
             Elements navs = document.select(".ec-casc-list > .top20 > .nav-swiper");
-            if (navs.size() == 0)
-                return ResultUtils.parserFail();
             Element firstNav = navs.get(0);
             // 查看当前已选
             String selectedNav = firstNav.select("li.swiper-slide > a").text();
@@ -567,8 +568,6 @@ public class GiriGiriLoveImpl implements ParserInterface {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select("div.public-pic-b");
-            if (elements.size() == 0)
-                return ResultUtils.parserFail();
             for (int i = 0, size = elements.size(); i < size; i++) {
                 VodDataBean item = new VodDataBean();
                 item.setTitle(elements.get(i).select("a.time-title").text());
