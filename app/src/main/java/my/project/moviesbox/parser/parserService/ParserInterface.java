@@ -403,14 +403,18 @@ public interface ParserInterface {
      * @param source 网页源代码
      * @return {@link VodDataBean}
      */
-    Result<List<VodDataBean>> parserTopticList(String source);
+    default Result<List<VodDataBean>> parserTopticList(String source) {
+        return null;
+    }
 
     /**
      * 动漫专题视频列表接口
      * @param source
      * @return {@link VodDataBean}
      */
-    Result<List<VodDataBean>> parserTopticVodList(String source);
+    default Result<List<VodDataBean>> parserTopticVodList(String source) {
+        return null;
+    }
 
     /**
      * 获动漫专题地址
@@ -419,7 +423,9 @@ public interface ParserInterface {
      * @param page 分页参数
      * @return
      */
-    String getTopticUrl(String url, int page);
+    default String getTopticUrl(String url, int page) {
+        return null;
+    }
 
     /**
      * 获取文本列表地址
@@ -427,7 +433,9 @@ public interface ParserInterface {
      * @param url 访问地址
      * @return
      */
-    String getTextUrl(String url);
+    default String getTextUrl(String url) {
+        return null;
+    }
 
     /**
      * 文本列表接口
@@ -435,7 +443,9 @@ public interface ParserInterface {
      * @param source 网页源代码
      * @return {@link List<TextDataBean>}
      */
-    Result<List<TextDataBean>> parserTextList(String source);
+    default Result<List<TextDataBean>> parserTextList(String source) {
+        return null;
+    }
     /****************************** 以下为[动漫网站]特殊解析数据接口 END ******************************/
 
     /**

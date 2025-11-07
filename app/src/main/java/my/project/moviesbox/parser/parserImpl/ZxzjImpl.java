@@ -417,7 +417,7 @@ public class ZxzjImpl implements ParserInterface {
      */
     @Override
     public Result<List<ClassificationDataBean>> parserClassificationList(String source) {
-        return null;
+        return ResultUtils.fail("该站点不支持分类");
     }
 
     /**
