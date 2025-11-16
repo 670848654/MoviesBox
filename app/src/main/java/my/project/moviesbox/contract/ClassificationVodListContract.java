@@ -20,8 +20,8 @@ public interface ClassificationVodListContract {
     }
 
     interface View extends BaseView {
-        void successClassList(List<ClassificationDataBean> classificationDataBeans);
-        void errorClassList(String msg);
+        void successClassList(boolean firstTimeData, List<ClassificationDataBean> classificationDataBeans);
+        void errorClassList(boolean firstTimeData, String msg);
         void emptyClassList();
         void successVodList(boolean firstTimeData, List<VodDataBean> vodDataBeans, int pageCount);
         void errorVodList(boolean firstTimeData, String msg);
@@ -29,8 +29,8 @@ public interface ClassificationVodListContract {
     }
 
     interface LoadDataCallback extends BaseLoadDataCallback {
-        void successClassList(List<ClassificationDataBean> classificationDataBeans);
-        void errorClassList(String msg);
+        void successClassList(boolean firstTimeData, List<ClassificationDataBean> classificationDataBeans);
+        void errorClassList(boolean firstTimeData, String msg);
         void emptyClassList();
         void successVodList(boolean firstTimeData, List<VodDataBean> vodDataBeans, int pageCount);
         void errorVodList(boolean firstTimeData, String msg);

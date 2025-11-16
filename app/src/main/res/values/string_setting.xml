@@ -100,6 +100,12 @@
     <string name="setRemoveDownloadsNeutralSuccess">已删除Aria全部下载任务</string>
     <string name="setRemoveDownloadsSuccess">已删除所有下载记录</string>
 
+    <string name="setVibration">是否开启点击时震动反馈</string>
+    <string-array name="setVibrationItems">
+        <item>开启</item>
+        <item>关闭</item>
+    </string-array>
+
     <string name="checkUpdateTitle">检测更新</string>
     <string name="checkForUpdates">正在检查是否有更新</string>
     <string name="alreadyTheLatestVersion">已是最新版本</string>

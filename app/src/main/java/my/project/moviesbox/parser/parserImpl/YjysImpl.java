@@ -365,15 +365,15 @@ public class YjysImpl implements ParserInterface {
             Document document = Jsoup.parse(source);
             List<DetailsDataBean.DramasItem> dramasItemList = new ArrayList<>();
             Elements dataElement = document.select(".btn-group a");
-            if (dataElement.size() == 0)
-                return ResultUtils.parserFail();
-            int index = 0;
-            for (Element element : dataElement) {
-                String dramaUrl = element.select("a").attr("href");
-                String dramaTitle = element.select("a").text();
-                dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, dramaStr.contains(dramaUrl)));
+            if (dataElement.size() > 0) {
+                int index = 0;
+                for (Element element : dataElement) {
+                    String dramaUrl = element.select("a").attr("href");
+                    String dramaTitle = element.select("a").text();
+                    dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, dramaStr.contains(dramaUrl)));
+                }
+                logInfo("播放列表[播放界面]内容", dramasItemList.toString());
             }
-            logInfo("播放列表[播放界面]内容", dramasItemList.toString());
             return ResultUtils.ok(dramasItemList);
         } catch (Exception e) {
             e.printStackTrace();
@@ -403,51 +403,51 @@ public class YjysImpl implements ParserInterface {
         try {
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".all-filter-wrapper dl");
-            if (elements.size() == 0)
-                return ResultUtils.parserFail();
-            int index = 1;
             List<ClassificationDataBean> classificationDataBeans = new ArrayList<>();
-            for (Element element : elements) {
-                String dt = element.select("dt").text();
-                if (dt.contains("资源分类"))
-                    continue;
-                ClassificationDataBean classificationDataBean = new ClassificationDataBean();
-                classificationDataBean.setClassificationTitle(dt);
-                classificationDataBean.setIndex(index++);
-                Elements aList = element.select("a");
-                List<ClassificationDataBean.Item> itemList = new ArrayList<>();
-                if (dt.contains("影视类型"))
-                    for (int i=0,size=aList.size(); i<size; i++) {
-                        Element a = aList.get(i);
-                        String title = a.text();
-                        String href = a.attr("href");
-                        String start ="/s/";
-                        String end ="?";
-                        String result = href.substring(href.indexOf(start) + start.length(), href.indexOf(end));
-                        itemList.add(new ClassificationDataBean.Item(title, removeString(result, ';'), i == 0));
-                    }
-                else
-                    for (int i=0,size=aList.size(); i<size; i++) {
-                        Element a = aList.get(i);
-                        String title = a.text();
-                        String url = title;
-                        switch (title) {
-                            case "不限":
-                                url = "";
-                                break;
-                            case "更新时间":
-                                url = "0";
-                                break;
-                            case "豆瓣评分":
-                                url = "1";
-                                break;
+            if (elements.size() > 0) {
+                int index = 1;
+                for (Element element : elements) {
+                    String dt = element.select("dt").text();
+                    if (dt.contains("资源分类"))
+                        continue;
+                    ClassificationDataBean classificationDataBean = new ClassificationDataBean();
+                    classificationDataBean.setClassificationTitle(dt);
+                    classificationDataBean.setIndex(index++);
+                    Elements aList = element.select("a");
+                    List<ClassificationDataBean.Item> itemList = new ArrayList<>();
+                    if (dt.contains("影视类型"))
+                        for (int i = 0, size = aList.size(); i < size; i++) {
+                            Element a = aList.get(i);
+                            String title = a.text();
+                            String href = a.attr("href");
+                            String start = "/s/";
+                            String end = "?";
+                            String result = href.substring(href.indexOf(start) + start.length(), href.indexOf(end));
+                            itemList.add(new ClassificationDataBean.Item(title, removeString(result, ';'), i == 0));
                         }
-                        itemList.add(new ClassificationDataBean.Item(title, url, i == 0));
-                    }
-                classificationDataBean.setItemList(itemList);
-                classificationDataBeans.add(classificationDataBean);
+                    else
+                        for (int i = 0, size = aList.size(); i < size; i++) {
+                            Element a = aList.get(i);
+                            String title = a.text();
+                            String url = title;
+                            switch (title) {
+                                case "不限":
+                                    url = "";
+                                    break;
+                                case "更新时间":
+                                    url = "0";
+                                    break;
+                                case "豆瓣评分":
+                                    url = "1";
+                                    break;
+                            }
+                            itemList.add(new ClassificationDataBean.Item(title, url, i == 0));
+                        }
+                    classificationDataBean.setItemList(itemList);
+                    classificationDataBeans.add(classificationDataBean);
+                }
+                logInfo("分类列表信息", classificationDataBeans.toString());
             }
-            logInfo("分类列表信息", classificationDataBeans.toString());
             return ResultUtils.ok(classificationDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
@@ -496,21 +496,21 @@ public class YjysImpl implements ParserInterface {
             Element verifyCode = document.getElementById("verifyCode");
             if (Utils.isNullOrEmpty(verifyCode)) {
                 Elements videoList = document.select(".col-12 .row");
-                if (videoList.size() == 0)
-                    return ResultUtils.parserFail();
-                for (Element video : videoList) {
-                    VodDataBean item = new VodDataBean();
-                    String videoName = video.select(".search-movie-title").text(); // 标题
+                if (videoList.size() > 0) {
+                    for (Element video : videoList) {
+                        VodDataBean item = new VodDataBean();
+                        String videoName = video.select(".search-movie-title").text(); // 标题
 //                String dateTime = video.select("p.text-muted").text(); // r日期
 //                Elements ribbonTop = video.select(".ribbon-top"); // 评分
-                    item.setTitle(videoName);
-                    item.setUrl(video.select(".search-movie-title").attr("href"));
-                    item.setImg(video.select("img").attr("src"));
+                        item.setTitle(videoName);
+                        item.setUrl(video.select(".search-movie-title").attr("href"));
+                        item.setImg(video.select("img").attr("src"));
 //                item.setEpisodesTag(dateTime);
 //                item.setTopLeftTag(Utils.isNullOrEmpty(ribbonTop) ? "" : ribbonTop.text());
-                    vodDataBeans.add(item);
+                        vodDataBeans.add(item);
+                    }
+                    logInfo("搜索视频列表数据", vodDataBeans.toString());
                 }
-                logInfo("搜索视频列表数据", vodDataBeans.toString());
                 return ResultUtils.ok(vodDataBeans);
             } else
                 return null;
@@ -533,21 +533,21 @@ public class YjysImpl implements ParserInterface {
             List<VodDataBean> vodDataBeans  = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements videoList = document.select(".card.card-sm.card-link");
-            if (videoList.size() == 0)
-                return ResultUtils.parserFail();
-            for (Element video : videoList) {
-                VodDataBean item = new VodDataBean();
-                String videoName = video.select(".card-title").text(); // 标题
-                String dateTime = video.select("p.text-muted").text(); // r日期
-                Elements ribbonTop = video.select(".ribbon-top"); // 评分
-                item.setTitle(videoName);
-                item.setUrl(video.select("a").attr("href"));
-                item.setImg(video.select("img").attr("src"));
-                item.setEpisodesTag(dateTime);
-                item.setTopLeftTag(Utils.isNullOrEmpty(ribbonTop) ? "" : ribbonTop.text());
-                vodDataBeans.add(item);
+            if (videoList.size() > 0) {
+                for (Element video : videoList) {
+                    VodDataBean item = new VodDataBean();
+                    String videoName = video.select(".card-title").text(); // 标题
+                    String dateTime = video.select("p.text-muted").text(); // r日期
+                    Elements ribbonTop = video.select(".ribbon-top"); // 评分
+                    item.setTitle(videoName);
+                    item.setUrl(video.select("a").attr("href"));
+                    item.setImg(video.select("img").attr("src"));
+                    item.setEpisodesTag(dateTime);
+                    item.setTopLeftTag(Utils.isNullOrEmpty(ribbonTop) ? "" : ribbonTop.text());
+                    vodDataBeans.add(item);
+                }
+                logInfo("视频列表数据", vodDataBeans.toString());
             }
-            logInfo("视频列表数据", vodDataBeans.toString());
             return ResultUtils.ok(vodDataBeans);
         } catch (Exception e) {
             e.printStackTrace();

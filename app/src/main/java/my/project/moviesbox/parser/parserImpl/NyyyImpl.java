@@ -385,31 +385,31 @@ public class NyyyImpl implements ParserInterface {
             Document document = Jsoup.parse(source);
             // 获取所有播放列表
             Elements playListElements = document.select("ul.anthology-list-play");
-            if (playListElements.size() == 0)
-                return ResultUtils.parserFail();
             List<DetailsDataBean.DramasItem> dramasItemList = new ArrayList<>();
-            // 解析播放列表
-            Elements playing = null;
-            for (int i=0,size=playListElements.size(); i<size; i++) {
-                Elements playAList = playListElements.get(i).select("a");
-                for (Element drama : playAList) {
-                    String watchUrl = drama.select("a").attr("href");
-                    // 因为dramaStr第一个一定是最后播放的地址，根据这个地址判断上次播放是那个源！
-                    if (dramaStr.startsWith(watchUrl)) {
-                        playing = playAList;
-                        break;
+            if (playListElements.size() > 0) {
+                // 解析播放列表
+                Elements playing = null;
+                for (int i=0,size=playListElements.size(); i<size; i++) {
+                    Elements playAList = playListElements.get(i).select("a");
+                    for (Element drama : playAList) {
+                        String watchUrl = drama.select("a").attr("href");
+                        // 因为dramaStr第一个一定是最后播放的地址，根据这个地址判断上次播放是那个源！
+                        if (dramaStr.startsWith(watchUrl)) {
+                            playing = playAList;
+                            break;
+                        }
                     }
                 }
-            }
-            if (playing != null) {
-                int index = 0;
-                for (Element element : playing) {
-                    String dramaTitle = element.text();
-                    String dramaUrl = element.select("a").attr("href");
-                    dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, false));
+                if (playing != null) {
+                    int index = 0;
+                    for (Element element : playing) {
+                        String dramaTitle = element.text();
+                        String dramaUrl = element.select("a").attr("href");
+                        dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, false));
+                    }
                 }
+                logInfo("播放列表信息", dramasItemList.toString());
             }
-            logInfo("播放列表信息", dramasItemList.toString());
             return ResultUtils.ok(dramasItemList);
         } catch (Exception e) {
             e.printStackTrace();
@@ -574,21 +574,21 @@ public class NyyyImpl implements ParserInterface {
             boolean hasVerify = document.text().contains("请输入验证码");
             if (!hasVerify) {
                 Elements videoList = document.select(".search-box");
-                if (videoList.size() == 0)
-                    return ResultUtils.parserFail();
-                for (Element video : videoList) {
-                    VodDataBean item = new VodDataBean();
-                    String videoName = video.select(".thumb-txt").text(); // 标题
-//                String dateTime = video.select("p.text-muted").text(); // r日期
-//                Elements ribbonTop = video.select(".ribbon-top"); // 评分
-                    item.setTitle(videoName);
-                    item.setUrl(video.select("a.public-list-exp").attr("href"));
-                    item.setImg(getImgPath(video.select("a.public-list-exp img").attr("data-src")));
-                    item.setEpisodesTag(video.select("a.public-list-exp .public-list-prb").text());
-                    item.setTopLeftTag(video.select(".thumb-director").text());
-                    vodDataBeans.add(item);
+                if (videoList.size() > 0) {
+                    for (Element video : videoList) {
+                        VodDataBean item = new VodDataBean();
+                        String videoName = video.select(".thumb-txt").text(); // 标题
+//                        String dateTime = video.select("p.text-muted").text(); // r日期
+//                        Elements ribbonTop = video.select(".ribbon-top"); // 评分
+                        item.setTitle(videoName);
+                        item.setUrl(video.select("a.public-list-exp").attr("href"));
+                        item.setImg(getImgPath(video.select("a.public-list-exp img").attr("data-src")));
+                        item.setEpisodesTag(video.select("a.public-list-exp .public-list-prb").text());
+                        item.setTopLeftTag(video.select(".thumb-director").text());
+                        vodDataBeans.add(item);
+                    }
+                    logInfo("搜索视频列表数据", vodDataBeans.toString());
                 }
-                logInfo("搜索视频列表数据", vodDataBeans.toString());
                 return ResultUtils.ok(vodDataBeans);
             } else
                 return null;
@@ -611,19 +611,19 @@ public class NyyyImpl implements ParserInterface {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements vods = document.select("a.public-list-exp");
-            if (vods.size() == 0)
-                return ResultUtils.parserFail();
-            for (Element vod : vods) {
-                VodDataBean bean = new VodDataBean();
-                String title = vod.attr("title"); // 标题
-                String updateInfo = vod.select("span.public-prt").text();
-                bean.setTitle(title);
-                bean.setUrl(vod.attr("href"));
-                bean.setImg(getImgPath(vod.select("img").attr("data-src")));
-                bean.setEpisodesTag(updateInfo);
-                items.add(bean);
+            if (vods.size() > 0) {
+                for (Element vod : vods) {
+                    VodDataBean bean = new VodDataBean();
+                    String title = vod.attr("title"); // 标题
+                    String updateInfo = vod.select("span.public-prt").text();
+                    bean.setTitle(title);
+                    bean.setUrl(vod.attr("href"));
+                    bean.setImg(getImgPath(vod.select("img").attr("data-src")));
+                    bean.setEpisodesTag(updateInfo);
+                    items.add(bean);
+                }
+                logInfo("视频列表数据", items.toString());
             }
-            logInfo("视频列表数据", items.toString());
             return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();

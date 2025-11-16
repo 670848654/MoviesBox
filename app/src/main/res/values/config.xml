@@ -5,6 +5,8 @@
     <bool name="appInfo">false</bool>
     <!-- 是否开启自用第三方VIP解析小工具 用处不大 -->
     <bool name="turnOnHiddenFeatures">false</bool>
+    <!-- 是否开启点击震动反馈 -->
+    <bool name="vibration">true</bool>
     <!-- 是否开启忽略ts -->
     <bool name="ignoreTs">false</bool>
     <!-- 是否开启移除广告切片 -->

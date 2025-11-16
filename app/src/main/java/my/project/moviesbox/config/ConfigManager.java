@@ -44,6 +44,10 @@ public class ConfigManager {
         return resources.getBoolean(R.bool.turnOnHiddenFeatures);
     }
 
+    public boolean isVibration() {
+        return resources.getBoolean(R.bool.vibration);
+    }
+
     public boolean isIgnoreTs() {
         return resources.getBoolean(R.bool.ignoreTs);
     }

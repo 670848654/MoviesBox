@@ -371,12 +371,12 @@ public class TbysImpl implements ParserInterface {
             Document document = Jsoup.parse(source);
             List<DetailsDataBean.DramasItem> dramasItemList = new ArrayList<>();
             Elements playTitleList = document.select(".play-list-box .tabs ul li");
-            if (playTitleList.size() == 0)
-                return ResultUtils.parserFail();
-            String dataTab = playTitleList.get(listSource).attr("data-tab");
-            Elements playList = document.getElementsByAttributeValue("data-tab", dataTab).select("a");
-            parserDramas(dramasItemList, playList);
-            logInfo("播放列表信息", dramasItemList.toString());
+            if (playTitleList.size() > 0) {
+                String dataTab = playTitleList.get(listSource).attr("data-tab");
+                Elements playList = document.getElementsByAttributeValue("data-tab", dataTab).select("a");
+                parserDramas(dramasItemList, playList);
+                logInfo("播放列表信息", dramasItemList.toString());
+            }
             return ResultUtils.ok(dramasItemList);
         } catch (Exception e) {
             e.printStackTrace();
@@ -407,44 +407,44 @@ public class TbysImpl implements ParserInterface {
             Document document = Jsoup.parse(source);
             List<ClassificationDataBean> classificationDataBeans = new ArrayList<>();
             Elements columns = document.select(".section .container .library-box .column");
-            if (columns.size() == 0)
-                return ResultUtils.parserFail();
-            int index = 0; // 0为VODID 跳过
-            for (Element column : columns) {
-                if (!column.hasClass("is-hidden")) {
-                    index += 1;
-                    ClassificationDataBean classificationDataBean = new ClassificationDataBean();
-                    String classificationTitle = column.select("span").text();
-                    classificationDataBean.setClassificationTitle(classificationTitle);
-                    classificationDataBean.setMultipleChoices(false);
-                    classificationDataBean.setIndex(index);
-                    Elements aList = column.select("a");
-                    List<ClassificationDataBean.Item> items = new ArrayList<>();
-                    for (Element a : aList) {
-                        String title = a.text();
-                        boolean isAll = title.equals("全部");
-                        items.add(new ClassificationDataBean.Item(title, isAll ? "" : title, isAll));
+            if (columns.size() > 0) {
+                int index = 0; // 0为VODID 跳过
+                for (Element column : columns) {
+                    if (!column.hasClass("is-hidden")) {
+                        index += 1;
+                        ClassificationDataBean classificationDataBean = new ClassificationDataBean();
+                        String classificationTitle = column.select("span").text();
+                        classificationDataBean.setClassificationTitle(classificationTitle);
+                        classificationDataBean.setMultipleChoices(false);
+                        classificationDataBean.setIndex(index);
+                        Elements aList = column.select("a");
+                        List<ClassificationDataBean.Item> items = new ArrayList<>();
+                        for (Element a : aList) {
+                            String title = a.text();
+                            boolean isAll = title.equals("全部");
+                            items.add(new ClassificationDataBean.Item(title, isAll ? "" : title, isAll));
+                        }
+                        if (classificationTitle.contains("年份")) {
+                            // 判断是否有今年 没有则手动添加进去 方便查询
+                            String nowYear = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+                            if (!items.get(1).getTitle().equals(nowYear))
+                                items.add(1, new ClassificationDataBean.Item(nowYear, nowYear, false));
+                        }
+                        classificationDataBean.setItemList(items);
+                        classificationDataBeans.add(classificationDataBean);
                     }
-                    if (classificationTitle.contains("年份")) {
-                        // 判断是否有今年 没有则手动添加进去 方便查询
-                        String nowYear = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
-                        if (!items.get(1).getTitle().equals(nowYear))
-                            items.add(1, new ClassificationDataBean.Item(nowYear, nowYear, false));
-                    }
-                    classificationDataBean.setItemList(items);
-                    classificationDataBeans.add(classificationDataBean);
                 }
+                List<ClassificationDataBean.Item> items = new ArrayList<>();
+                items.add(new ClassificationDataBean.Item("全部", "", true));
+                items.add(new ClassificationDataBean.Item("按更新", "time", false));
+                items.add(new ClassificationDataBean.Item("按人气", "hits", false));
+                items.add(new ClassificationDataBean.Item("按推荐", "score", false));
+                index += 1;
+                ClassificationDataBean classificationDataBean = new ClassificationDataBean("排序", false, index, items);
+                classificationDataBean.setItemList(items);
+                classificationDataBeans.add(classificationDataBean);
+                logInfo("分类列表信息", classificationDataBeans.toString());
             }
-            List<ClassificationDataBean.Item> items = new ArrayList<>();
-            items.add(new ClassificationDataBean.Item("全部", "", true));
-            items.add(new ClassificationDataBean.Item("按更新", "time", false));
-            items.add(new ClassificationDataBean.Item("按人气", "hits", false));
-            items.add(new ClassificationDataBean.Item("按推荐", "score", false));
-            index += 1;
-            ClassificationDataBean classificationDataBean = new ClassificationDataBean("排序", false, index, items);
-            classificationDataBean.setItemList(items);
-            classificationDataBeans.add(classificationDataBean);
-            logInfo("分类列表信息", classificationDataBeans.toString());
             return ResultUtils.ok(classificationDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
@@ -465,25 +465,25 @@ public class TbysImpl implements ParserInterface {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".vod-list .column a");
-            if (elements.size() == 0)
-                return ResultUtils.parserFail();
-            for (Element item : elements) {
-                VodDataBean bean = new VodDataBean();
-                bean.setTitle(item.attr("title"));
-                bean.setUrl(item.attr("href"));
-                bean.setImg(getImageUrl(item.select("img").attr("data-src")));
-                Elements tags = item.select(".vod-tagsinfo span");
-                if (!Utils.isNullOrEmpty(tags) && tags.size() > 0) {
-                    for (Element tag : tags) {
-                        if (tag.hasClass("is-hidden-mobile"))
-                            bean.setEpisodesTag(tag.text());
-                        else
-                            bean.setTopLeftTag(tag.text());
+            if (elements.size() > 0) {
+                for (Element item : elements) {
+                    VodDataBean bean = new VodDataBean();
+                    bean.setTitle(item.attr("title"));
+                    bean.setUrl(item.attr("href"));
+                    bean.setImg(getImageUrl(item.select("img").attr("data-src")));
+                    Elements tags = item.select(".vod-tagsinfo span");
+                    if (!Utils.isNullOrEmpty(tags) && tags.size() > 0) {
+                        for (Element tag : tags) {
+                            if (tag.hasClass("is-hidden-mobile"))
+                                bean.setEpisodesTag(tag.text());
+                            else
+                                bean.setTopLeftTag(tag.text());
+                        }
                     }
+                    items.add(bean);
                 }
-                items.add(bean);
+                logInfo("分类列表数据", items.toString());
             }
-            logInfo("分类列表数据", items.toString());
             return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
@@ -504,22 +504,22 @@ public class TbysImpl implements ParserInterface {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".search-vod-list .column .vod-detail-box");
-            if (elements.size() == 0)
-                return ResultUtils.parserFail();
-            for (Element item : elements) {
-                VodDataBean bean = new VodDataBean();
-                Elements aList = item.select(".is-multiline").select("a");
-                for (Element a : aList) {
-                    if (a.hasClass("title")) {
-                        bean.setTitle(a.text());
-                        bean.setUrl(a.attr("href"));
-                        break;
+            if (elements.size() > 0) {
+                for (Element item : elements) {
+                    VodDataBean bean = new VodDataBean();
+                    Elements aList = item.select(".is-multiline").select("a");
+                    for (Element a : aList) {
+                        if (a.hasClass("title")) {
+                            bean.setTitle(a.text());
+                            bean.setUrl(a.attr("href"));
+                            break;
+                        }
                     }
+                    bean.setImg(getImageUrl(item.select("img").attr("src")));
+                    items.add(bean);
                 }
-                bean.setImg(getImageUrl(item.select("img").attr("src")));
-                items.add(bean);
+                logInfo("搜索列表数据", items.toString());
             }
-            logInfo("搜索列表数据", items.toString());
             return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();

@@ -1047,7 +1047,7 @@ public class Utils {
     }
 
     public static void setVibration(View view) {
-        if (!isNullOrEmpty(view))
+        if (!isNullOrEmpty(view) && SharedPreferencesUtils.getVibration())
             view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
     }
 

@@ -368,29 +368,29 @@ public class XbyyImpl implements ParserInterface {
             Document document = Jsoup.parse(source);
             List<DetailsDataBean.DramasItem> dramasItemList = new ArrayList<>();
             Elements dataElement = document.select(".tab-content .tab-pane");
-            if (dataElement.size() == 0)
-                return ResultUtils.parserFail();
-            Elements playing = null;
-            for (int i=0, size=dataElement.size(); i<size; i++) {
-                Elements playElements = dataElement.get(i).select("a"); //剧集列表
-                for (Element dramaList : playElements) {
-                    String watchUrl = dramaList.attr("href");
-                    // 因为dramaStr第一个一定是最后播放的地址，根据这个地址判断上次播放是那个源！
-                    if (dramaStr.startsWith(watchUrl)) {
-                        playing = playElements;
-                        break;
+            if (dataElement.size() > 0) {
+                Elements playing = null;
+                for (int i=0, size=dataElement.size(); i<size; i++) {
+                    Elements playElements = dataElement.get(i).select("a"); //剧集列表
+                    for (Element dramaList : playElements) {
+                        String watchUrl = dramaList.attr("href");
+                        // 因为dramaStr第一个一定是最后播放的地址，根据这个地址判断上次播放是那个源！
+                        if (dramaStr.startsWith(watchUrl)) {
+                            playing = playElements;
+                            break;
+                        }
                     }
                 }
-            }
-            if (playing != null) {
-                int index = 0;
-                for (Element element : playing) {
-                    String dramaTitle = element.text();
-                    String dramaUrl = element.attr("href");
-                    dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, false));
+                if (playing != null) {
+                    int index = 0;
+                    for (Element element : playing) {
+                        String dramaTitle = element.text();
+                        String dramaUrl = element.attr("href");
+                        dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, false));
+                    }
                 }
+                logInfo("播放列表[播放界面]内容", dramasItemList.toString());
             }
-            logInfo("播放列表[播放界面]内容", dramasItemList.toString());
             return ResultUtils.ok(dramasItemList);
         } catch (Exception e) {
             e.printStackTrace();
@@ -559,20 +559,20 @@ public class XbyyImpl implements ParserInterface {
             Document document = Jsoup.parse(source);
             Element searchUl = document.getElementById("searchList");
             if (Utils.isNullOrEmpty(searchUl))
-                return ResultUtils.parserFail();
+                return ResultUtils.ok(items);
             Elements lis = searchUl.select("li");
-            if (lis.size() == 0)
-                return ResultUtils.parserFail();
-            for (Element li : lis) {
-                VodDataBean bean = new VodDataBean();
-                bean.setTitle(li.select("h4").text());
-                bean.setUrl(li.select(".thumb a").attr("href"));
-                bean.setImg(getImgPath(li.select(".thumb a").attr("data-original")));
-                bean.setTopLeftTag(li.select(".pic-tag-top").text());
-                bean.setEpisodesTag(li.select(".text-right").text());
-                items.add(bean);
+            if (lis.size() > 0) {
+                for (Element li : lis) {
+                    VodDataBean bean = new VodDataBean();
+                    bean.setTitle(li.select("h4").text());
+                    bean.setUrl(li.select(".thumb a").attr("href"));
+                    bean.setImg(getImgPath(li.select(".thumb a").attr("data-original")));
+                    bean.setTopLeftTag(li.select(".pic-tag-top").text());
+                    bean.setEpisodesTag(li.select(".text-right").text());
+                    items.add(bean);
+                }
+                logInfo("搜索列表数据", items.toString());
             }
-            logInfo("搜索列表数据", items.toString());
             return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
@@ -593,18 +593,18 @@ public class XbyyImpl implements ParserInterface {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".myui-vodlist__box");
-            if (elements.size() == 0)
-                return ResultUtils.parserFail();
-            for (Element item : elements) {
-                VodDataBean bean = new VodDataBean();
-                bean.setTitle(item.select("h4").text());
-                bean.setUrl(item.select("a.myui-vodlist__thumb").attr("href"));
-                bean.setImg(getImgPath(item.select("a.myui-vodlist__thumb").attr("data-original")));
-                bean.setTopLeftTag(item.select(".pic-tag-top").text());
-                bean.setEpisodesTag(item.select(".text-right").text());
-                items.add(bean);
+            if (elements.size() > 0) {
+                for (Element item : elements) {
+                    VodDataBean bean = new VodDataBean();
+                    bean.setTitle(item.select("h4").text());
+                    bean.setUrl(item.select("a.myui-vodlist__thumb").attr("href"));
+                    bean.setImg(getImgPath(item.select("a.myui-vodlist__thumb").attr("data-original")));
+                    bean.setTopLeftTag(item.select(".pic-tag-top").text());
+                    bean.setEpisodesTag(item.select(".text-right").text());
+                    items.add(bean);
+                }
+                logInfo("视频列表数据", items.toString());
             }
-            logInfo("视频列表数据", items.toString());
             return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();

@@ -361,15 +361,16 @@ public class IYingHuaImpl implements ParserInterface {
             Document document = Jsoup.parse(source);
             List<DetailsDataBean.DramasItem> dramasItemList = new ArrayList<>();
             Elements dataElement = document.select("div.movurls > ul > li");
-            if (dataElement.size() == 0)
-                return ResultUtils.parserFail();
-            int index = 0;
-            for (Element element : dataElement) {
-                String dramaUrl = element.select("a").attr("href");
-                String dramaTitle = element.select("a").text();
-                dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, dramaStr.contains(dramaUrl)));
+            if (dataElement.size() > 0) {
+                int index = 0;
+                for (Element element : dataElement) {
+                    String dramaUrl = element.select("a").attr("href");
+                    String dramaTitle = element.select("a").text();
+                    dramasItemList.add(new DetailsDataBean.DramasItem(index++, dramaTitle, dramaUrl, dramaStr.contains(dramaUrl)));
+                }
+                logInfo("播放列表[播放界面]内容", dramasItemList.toString());
             }
-            logInfo("播放列表[播放界面]内容", dramasItemList.toString());
+
             return ResultUtils.ok(dramasItemList);
         } catch (Exception e) {
             e.printStackTrace();
@@ -416,42 +417,42 @@ public class IYingHuaImpl implements ParserInterface {
                 }
             }*/
             // NEW
-            Elements labels = document.select("div.ters p label");
-            if (labels.size() == 0)
-                return ResultUtils.parserFail();
             List<ClassificationDataBean> classificationDataBeans = new ArrayList<>();
-            // 遍历label标签
-            for (Element label : labels) {
-                // 获取label标签后面的所有兄弟节点中的a标签
-                Elements siblings = label.parent().children();
-                ClassificationDataBean classificationDataBean = new ClassificationDataBean();
-                classificationDataBean.setClassificationTitle(label.text());
-                classificationDataBean.setIndex(0); // ！！注意！！因为不支持多条件查询，下标始终为0
-                List<ClassificationDataBean.Item> itemList = new ArrayList<>();
-                // 标记是否开始处理当前label对应的a标签
-                boolean startProcessing = false;
+            Elements labels = document.select("div.ters p label");
+            if (labels.size() > 0) {
+                // 遍历label标签
+                for (Element label : labels) {
+                    // 获取label标签后面的所有兄弟节点中的a标签
+                    Elements siblings = label.parent().children();
+                    ClassificationDataBean classificationDataBean = new ClassificationDataBean();
+                    classificationDataBean.setClassificationTitle(label.text());
+                    classificationDataBean.setIndex(0); // ！！注意！！因为不支持多条件查询，下标始终为0
+                    List<ClassificationDataBean.Item> itemList = new ArrayList<>();
+                    // 标记是否开始处理当前label对应的a标签
+                    boolean startProcessing = false;
 
-                // 遍历兄弟节点，找到与当前label对应的a标签
-                for (Element sibling : siblings) {
-                    if (sibling.tagName().equals("label")) {
-                        // 如果遇到下一个label，停止处理
-                        if (startProcessing) {
-                            break;
+                    // 遍历兄弟节点，找到与当前label对应的a标签
+                    for (Element sibling : siblings) {
+                        if (sibling.tagName().equals("label")) {
+                            // 如果遇到下一个label，停止处理
+                            if (startProcessing) {
+                                break;
+                            }
+                            // 如果遇到当前label，开始处理
+                            if (sibling.equals(label)) {
+                                startProcessing = true;
+                            }
+                        } else if (startProcessing && sibling.tagName().equals("a")) {
+                            String href = sibling.attr("href");
+                            String text = sibling.text();
+                            itemList.add(new ClassificationDataBean.Item(text, href, false));
                         }
-                        // 如果遇到当前label，开始处理
-                        if (sibling.equals(label)) {
-                            startProcessing = true;
-                        }
-                    } else if (startProcessing && sibling.tagName().equals("a")) {
-                        String href = sibling.attr("href");
-                        String text = sibling.text();
-                        itemList.add(new ClassificationDataBean.Item(text, href, false));
                     }
+                    classificationDataBean.setItemList(itemList);
+                    classificationDataBeans.add(classificationDataBean);
                 }
-                classificationDataBean.setItemList(itemList);
-                classificationDataBeans.add(classificationDataBean);
+                logInfo("分类列表信息", classificationDataBeans.toString());
             }
-            logInfo("分类列表信息", classificationDataBeans.toString());
             return ResultUtils.ok(classificationDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
@@ -472,17 +473,17 @@ public class IYingHuaImpl implements ParserInterface {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select("div.lpic > ul > li");
-            if (elements.size() == 0)
-                return ResultUtils.parserFail();
-            for (Element item : elements) {
-                VodDataBean bean = new VodDataBean();
-                bean.setTitle(item.select("h2").text());
-                bean.setUrl(item.select("h2 > a").attr("href"));
-                bean.setImg(item.select("img").attr("src"));
-                bean.setEpisodesTag(item.select("span font").text());
-                items.add(bean);
+            if (elements.size() > 0) {
+                for (Element item : elements) {
+                    VodDataBean bean = new VodDataBean();
+                    bean.setTitle(item.select("h2").text());
+                    bean.setUrl(item.select("h2 > a").attr("href"));
+                    bean.setImg(item.select("img").attr("src"));
+                    bean.setEpisodesTag(item.select("span font").text());
+                    items.add(bean);
+                }
+                logInfo("分类列表数据", items.toString());
             }
-            logInfo("分类列表数据", items.toString());
             return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
@@ -518,16 +519,16 @@ public class IYingHuaImpl implements ParserInterface {
             List<VodDataBean> items = new ArrayList<>();
             document = Jsoup.parse(source);
             elements = document.select("div.imgs > ul > li");
-            if (elements.size() == 0)
-                return ResultUtils.parserFail();
-            for (Element item : elements) {
-                VodDataBean bean = new VodDataBean();
-                bean.setTitle(item.select("p > a").text());
-                bean.setUrl(item.select("p > a").attr("href"));
-                bean.setImg(item.select("img").attr("src"));
-                items.add(bean);
+            if (elements.size() > 0) {
+                for (Element item : elements) {
+                    VodDataBean bean = new VodDataBean();
+                    bean.setTitle(item.select("p > a").text());
+                    bean.setUrl(item.select("p > a").attr("href"));
+                    bean.setImg(item.select("img").attr("src"));
+                    items.add(bean);
+                }
+                logInfo("番剧列表数据", items.toString());
             }
-            logInfo("番剧列表数据", items.toString());
             return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
@@ -625,11 +626,11 @@ public class IYingHuaImpl implements ParserInterface {
             List<DialogItemBean> urls = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select("div.playbo > a");
-            if (elements.size() == 0)
-                return ResultUtils.parserFail();
-            for (int i=0,size=elements.size(); i<size; i++) {
-                String url = getVideoUrl(elements.get(i).attr("onClick"));
-                urls.add(new DialogItemBean(url, url.contains("m3u8") ? M3U8 : MP4));
+            if (elements.size() > 0) {
+                for (int i=0,size=elements.size(); i<size; i++) {
+                    String url = getVideoUrl(elements.get(i).attr("onClick"));
+                    urls.add(new DialogItemBean(url, url.contains("m3u8") ? M3U8 : MP4));
+                }
             }
             return ResultUtils.ok(urls);
         } catch (Exception e) {
@@ -675,35 +676,35 @@ public class IYingHuaImpl implements ParserInterface {
             List<WeekDataBean> weekDataBeans = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements weekElements = document.select("div.tlist > ul");
-            if (weekElements.size() == 0)
-                return ResultUtils.parserFail();
-            for (int i = 0, size = WeekEnum.values().length; i<size; i++) {
-                Elements weekLi = weekElements.get(i).select("li");
-                int week = WeekEnum.values()[i].getIndex();
-                List<WeekDataBean.WeekItem> weekItems = new ArrayList<>();
-                for (Element li : weekLi) {
-                    if (li.select("a").size() > 1) {
-                        weekItems.add(new WeekDataBean.WeekItem(
-                                li.select("a").get(1).text(),
-                                "",
-                                li.select("a").get(1).attr("href"),
-                                li.select("a").get(0).text(),
-                                li.select("a").get(0).attr("href")
-                        ));
-                    } else {
-                        weekItems.add(new WeekDataBean.WeekItem(
-                                li.select("a").get(1).text(),
-                                "",
-                                li.select("a").get(1).attr("href"),
-                                "",
-                                ""
-                        ));
-                    }
+            if (weekElements.size() > 0) {
+                for (int i = 0, size = WeekEnum.values().length; i<size; i++) {
+                    Elements weekLi = weekElements.get(i).select("li");
+                    int week = WeekEnum.values()[i].getIndex();
+                    List<WeekDataBean.WeekItem> weekItems = new ArrayList<>();
+                    for (Element li : weekLi) {
+                        if (li.select("a").size() > 1) {
+                            weekItems.add(new WeekDataBean.WeekItem(
+                                    li.select("a").get(1).text(),
+                                    "",
+                                    li.select("a").get(1).attr("href"),
+                                    li.select("a").get(0).text(),
+                                    li.select("a").get(0).attr("href")
+                            ));
+                        } else {
+                            weekItems.add(new WeekDataBean.WeekItem(
+                                    li.select("a").get(1).text(),
+                                    "",
+                                    li.select("a").get(1).attr("href"),
+                                    "",
+                                    ""
+                            ));
+                        }
 
+                    }
+                    weekDataBeans.add(new WeekDataBean(week, weekItems));
                 }
-                weekDataBeans.add(new WeekDataBean(week, weekItems));
+                logInfo("时间表数据", weekDataBeans.toString());
             }
-            logInfo("时间表数据", weekDataBeans.toString());
             return ResultUtils.ok(weekDataBeans);
         } catch (Exception e) {
             e.printStackTrace();
@@ -721,20 +722,20 @@ public class IYingHuaImpl implements ParserInterface {
     @Override
     public Result<List<VodDataBean>> parserTopticList(String source) {
         try {
+            List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select("div.dnews > ul > li");
-            if (elements.size() == 0)
-                return ResultUtils.parserFail();
-            List<VodDataBean> items = new ArrayList<>();
-            for (Element element : elements) {
-                VodDataBean bean = new VodDataBean();
-                bean.setVodItemStyleType(VodItemStyleEnum.STYLE_16_9.getType());
-                bean.setTitle(element.select("p").text());
-                bean.setUrl(element.select("p > a").attr("href"));
-                bean.setImg(element.select("img").attr("src"));
-                items.add(bean);
+            if (elements.size() > 0) {
+                for (Element element : elements) {
+                    VodDataBean bean = new VodDataBean();
+                    bean.setVodItemStyleType(VodItemStyleEnum.STYLE_16_9.getType());
+                    bean.setTitle(element.select("p").text());
+                    bean.setUrl(element.select("p > a").attr("href"));
+                    bean.setImg(element.select("img").attr("src"));
+                    items.add(bean);
+                }
+                logInfo("动漫专题数据", items.toString());
             }
-            logInfo("动漫专题数据", items.toString());
             return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
@@ -797,31 +798,31 @@ public class IYingHuaImpl implements ParserInterface {
             List<TextDataBean> textDataBeans = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select("div.topli > ul > li");
-            if (elements.size() == 0)
-                return ResultUtils.parserFail();
-            List<TextDataBean.Item> items = new ArrayList<>();
-            int index = 0;
-            for (Element li : elements) {
-                index += 1;
-                Elements aList = li.select("a");
-                TextDataBean.Item item = new TextDataBean.Item();
+            if (elements.size() > 0) {
+                List<TextDataBean.Item> items = new ArrayList<>();
+                int index = 0;
+                for (Element li : elements) {
+                    index += 1;
+                    Elements aList = li.select("a");
+                    TextDataBean.Item item = new TextDataBean.Item();
 //                    item.setIndex(li.select("i").text());
-                item.setIndex(String.valueOf(index));
-                Elements span = li.select("span > a");
-                if (span.size() > 0) {
-                    item.setTitle(aList.get(1).text());
-                    item.setUrl(aList.get(1).attr("href"));
-                    item.setEpisodes(aList.get(2).text());
-                } else {
-                    item.setTitle(aList.get(0).text());
-                    item.setUrl(aList.get(0).attr("href"));
-                    item.setEpisodes(aList.get(1).text());
+                    item.setIndex(String.valueOf(index));
+                    Elements span = li.select("span > a");
+                    if (span.size() > 0) {
+                        item.setTitle(aList.get(1).text());
+                        item.setUrl(aList.get(1).attr("href"));
+                        item.setEpisodes(aList.get(2).text());
+                    } else {
+                        item.setTitle(aList.get(0).text());
+                        item.setUrl(aList.get(0).attr("href"));
+                        item.setEpisodes(aList.get(1).text());
+                    }
+                    item.setContent(li.select("em").text());
+                    items.add(item);
                 }
-                item.setContent(li.select("em").text());
-                items.add(item);
+                textDataBeans.add(new TextDataBean("", items));
+                logInfo("排行榜数据", textDataBeans.toString());
             }
-            textDataBeans.add(new TextDataBean("", items));
-            logInfo("排行榜数据", textDataBeans.toString());
             return ResultUtils.ok(textDataBeans);
         } catch (Exception e) {
             e.printStackTrace();

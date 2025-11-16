@@ -26,6 +26,7 @@ import my.project.moviesbox.database.manager.THistoryManager;
 import my.project.moviesbox.databinding.FragmentMyBinding;
 import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.utils.DarkModeUtils;
+import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.base.BaseFragment;
 
 /**
@@ -84,6 +85,9 @@ public class MyFragment extends BaseFragment<FragmentMyBinding> {
         int iconSelectedColor = ContextCompat.getColor(getActivity(), R.color.pink200);
         tabLayout.getTabAt(0).getIcon().setColorFilter(iconSelectedColor, PorterDuff.Mode.SRC_IN);
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            private long lastClickTime = 0;
+            private int lastTabIndex = -1;
+
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 viewPager2.setCurrentItem(tab.getPosition());
@@ -98,7 +102,17 @@ public class MyFragment extends BaseFragment<FragmentMyBinding> {
 
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
+                // Tab 被重新点击（即已选中的再次点击）
+                long currentTime = System.currentTimeMillis();
+                int index = tab.getPosition();
 
+                if (index == lastTabIndex && (currentTime - lastClickTime) < 300) {
+                    // 双击检测
+                    Utils.setVibration(tabLayout);
+                    scrollCurrentFragmentToTop(index);
+                }
+                lastClickTime = currentTime;
+                lastTabIndex = index;
             }
         });
         //实现滑动的时候 联动 bottomNavigationView的selectedItem
@@ -114,6 +128,18 @@ public class MyFragment extends BaseFragment<FragmentMyBinding> {
         setTabBadge(0);
         setTabBadge(1);
         setTabBadge(2);
+    }
+
+    private void scrollCurrentFragmentToTop(int position) {
+        Fragment fragment = getActivity().getSupportFragmentManager()
+                .findFragmentByTag("f" + position); // ViewPager2 默认 tag 规则
+        if (fragment instanceof FavoriteFragment) {
+            ((FavoriteFragment) fragment).scrollToTop();
+        } else if (fragment instanceof HistoryFragment) {
+            ((HistoryFragment) fragment).scrollToTop();
+        } else if (fragment instanceof DownloadFragment) {
+            ((DownloadFragment) fragment).scrollToTop();
+        }
     }
 
     /**

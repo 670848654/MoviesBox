@@ -172,6 +172,8 @@ public class SettingFragment extends BaseMvpFragment<DomainListModel, DomainList
                 bean.setSubTitle(SharedPreferencesUtils.getUserSetOpenDanmu() ? bean.getOption()[0].toString() : bean.getOption()[1].toString());
             } else if (title.equals(getString(R.string.setThemeTitle))) {
                 bean.setSubTitle(themeItems[DarkModeUtils.chooseIndex(getActivity())]);
+            } else if (title.equals(getString(R.string.setVibration))) {
+                bean.setSubTitle(SharedPreferencesUtils.getVibration() ? bean.getOption()[0].toString() : bean.getOption()[1].toString());
             } else if (title.equals(getString(R.string.currentVersionTitle))) {
                 bean.setSubTitle(Utils.getASVersionName());
             }
@@ -183,6 +185,8 @@ public class SettingFragment extends BaseMvpFragment<DomainListModel, DomainList
         adapter = new SettingAboutAdapter(getActivity(), list);
         homeActivity.setAdapterAnimation(adapter);
         adapter.setOnItemClickListener((adapter, view, position) -> {
+            if (!Utils.isFastClick()) return;
+            Utils.setVibration(view);
             adapterItemPosition = position;
             String title = list.get(position).getTitle();
             if (title.equals(getString(R.string.setDomainTitle)))
@@ -209,6 +213,8 @@ public class SettingFragment extends BaseMvpFragment<DomainListModel, DomainList
                 removeDownloads();
             else if (title.equals(getString(R.string.aboutTitle)))
                 startActivity(new Intent(getActivity(), AboutActivity.class));
+            else if (title.equals(getString(R.string.setVibration)))
+                setVibration(position);
             else if (title.equals(getString(R.string.currentVersionTitle)))
                 checkUpdate(position);
         });
@@ -843,6 +849,23 @@ public class SettingFragment extends BaseMvpFragment<DomainListModel, DomainList
                 (dialogInterface, i) -> {
                     Aria.download(this).removeAllTask(false);
                     application.showToastMsg(getString(R.string.setRemoveDownloadsNeutralSuccess), DialogXTipEnum.SUCCESS);
+                    dialogInterface.dismiss();
+                });
+    }
+
+    public void setVibration(int position) {
+        String[] items = (String[]) list.get(position).getOption();
+        Utils.showSingleChoiceAlert(getActivity(),
+                SettingEnum.SET_VIBRATION.getIcon(),
+                SettingEnum.SET_VIBRATION.getTitle(),
+                items,
+                true,
+                SharedPreferencesUtils.getVibration() ? 0 : 1,
+                (dialogInterface, i) -> {
+                    boolean enable = i==0;
+                    SharedPreferencesUtils.setVibration(enable);
+                    if (enable) Utils.setVibration(adapter.getViewByPosition(position, R.id.title));
+                    setDataSubTitle(position, items[i]);
                     dialogInterface.dismiss();
                 });
     }

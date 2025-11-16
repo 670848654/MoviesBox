@@ -146,6 +146,22 @@ public class SharedPreferencesUtils {
     public static void setTurnOnHiddenFeatures(boolean enable) {
         setParam("turnOnHiddenFeatures", enable);
     }
+
+    /**
+     * 震动开关
+     * @return
+     */
+    public static boolean getVibration() {
+        return (boolean) getParam("vibration", ConfigManager.getInstance().isVibration());
+    }
+
+    /**
+     * 震动开关
+     * @return
+     */
+    public static void setVibration(boolean enable) {
+        setParam("vibration", enable);
+    }
     /********************************************************** 系统相关结束 **********************************************************/
 
     /******************************************************** M3U8配置相关开始 ********************************************************/

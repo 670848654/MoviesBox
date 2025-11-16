@@ -233,7 +233,7 @@ public class GiriGiriLoveImpl implements ParserInterface {
             tags.add(new MainDataBean.Tag(HomeTagEnum.BD.name, HomeTagEnum.BD.content, ClassificationVodListActivity.class));
             tags.add(new MainDataBean.Tag(HomeTagEnum.QT.name, HomeTagEnum.QT.content, ClassificationVodListActivity.class));
             tags.add(new MainDataBean.Tag(HomeTagEnum.ZT.name, HomeTagEnum.ZT.content, TopticListActivity.class));
-            tags.add(new MainDataBean.Tag(HomeTagEnum.ZJGX.name, HomeTagEnum.ZJGX.content, VodListActivity.class));
+//            tags.add(new MainDataBean.Tag(HomeTagEnum.ZJGX.name, HomeTagEnum.ZJGX.content, VodListActivity.class));
             mainDataBean.setTags(tags);
             mainDataBeans.add(mainDataBean);
             // banner内容解析
@@ -284,10 +284,13 @@ public class GiriGiriLoveImpl implements ParserInterface {
                 String boxTitle = box.select("h4.title-h").text();
                 mainDataBean = new MainDataBean();
                 mainDataBean.setTitle(boxTitle);
-                mainDataBean.setHasMore(!boxTitle.contains("最近大家在看"));
+//                mainDataBean.setHasMore(!boxTitle.contains("最近大家在看"));
                 // 匹配 /show/ 后面的第一个数字（不管后面多少个 -）
                 String moreNumber = box.select("div.title-right > a").attr("href").replaceAll(".*/show/(\\d+)-.*", "$1");
-                mainDataBean.setMore(moreNumber);
+                if (!Utils.isNullOrEmpty(moreNumber)) {
+                    mainDataBean.setMore(moreNumber);
+                    mainDataBean.setHasMore(true);
+                }
                 mainDataBean.setDataType(ITEM_LIST.getType());
                 List<MainDataBean.Item> items = new ArrayList<>();
                 Elements boxList = box.select(".public-list-box");
@@ -365,6 +368,8 @@ public class GiriGiriLoveImpl implements ParserInterface {
             }*/
             String playScore = document.select("div.play-score").select(".text-site").text() + " " + document.select("div.play-score").select(".fraction").text();
             detailsDataBean.setScore(playScore);
+            String updateTime = document.select("span.slide-info-remarks.cor5").text();
+            detailsDataBean.setUpdateTime(updateTime);
             Element introductionElement = document.getElementById("height_limit");
             detailsDataBean.setIntroduction(Utils.isNullOrEmpty(introductionElement) ? "" : introductionElement.text());
             // 获取所有播放列表

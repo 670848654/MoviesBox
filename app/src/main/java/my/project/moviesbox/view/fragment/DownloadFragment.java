@@ -1,5 +1,6 @@
 package my.project.moviesbox.view.fragment;
 
+import static android.view.View.GONE;
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_DOWNLOAD;
 import static my.project.moviesbox.event.RefreshEnum.REFRESH_TAB_COUNT;
 
@@ -109,6 +110,12 @@ public class DownloadFragment extends BaseMvpFragment<DownloadModel, DownloadCon
             }
         }
         return binding;
+    }
+
+    public void scrollToTop() {
+        if (recyclerView != null) {
+            recyclerView.smoothScrollToPosition(0);
+        }
     }
 
     RecyclerView recyclerView;
@@ -335,6 +342,11 @@ public class DownloadFragment extends BaseMvpFragment<DownloadModel, DownloadCon
                         // 删除数据库
                         TDownloadDataManager.deleteAllDownloadData(downloadId);
                         TDownloadManager.deleteDownload(downloadId);
+                        downloadCount = TDownloadManager.queryDownloadCountByDirectoryId(directoryId);
+                        if (downloadCount == 0) {
+                            setRecyclerViewEmpty();
+                            rvEmpty(getString(R.string.emptyMyList));
+                        }
                         EventBus.getDefault().post(new RefreshFavoriteEvent(vodId, null, 0, null));
                         EventBus.getDefault().post(REFRESH_TAB_COUNT);
                         adapter.removeAt(position);
@@ -405,7 +417,7 @@ public class DownloadFragment extends BaseMvpFragment<DownloadModel, DownloadCon
 
     private void setRecyclerViewEmpty() {
         recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 1));
-        playFileListFAB.setVisibility(View.GONE);
+        playFileListFAB.setVisibility(GONE);
     }
 
     private void setRecyclerViewView() {
@@ -450,7 +462,7 @@ public class DownloadFragment extends BaseMvpFragment<DownloadModel, DownloadCon
         if (getActivity().isFinishing()) return;
         setLoadState(true);
         getActivity().runOnUiThread(() -> {
-            playFileListFAB.setVisibility(TDownloadManager.countAllCompletedDownloadDataByDirectoryId(directoryId) > 0 ? View.VISIBLE : View.GONE);
+            playFileListFAB.setVisibility(TDownloadManager.countAllCompletedDownloadDataByDirectoryId(directoryId) > 0 ? View.VISIBLE : GONE);
             if (isMain) {
                 downloadList = list;
                 setRecyclerViewView();

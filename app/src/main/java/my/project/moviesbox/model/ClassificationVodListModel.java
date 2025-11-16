@@ -47,7 +47,7 @@ public class ClassificationVodListModel extends BaseModel implements Classificat
                     @Override
                     public void onFailure(Call call, IOException e) {
                         callback.errorVodList(firstTimeData, e.getMessage());
-                        callback.errorClassList(e.getMessage());
+                        callback.errorClassList(firstTimeData, e.getMessage());
                     }
 
                     @Override
@@ -58,7 +58,7 @@ public class ClassificationVodListModel extends BaseModel implements Classificat
                         } catch (Exception e) {
                             e.printStackTrace();
                             callback.errorVodList(firstTimeData, e.getMessage());
-                            callback.errorClassList(e.getMessage());
+                            callback.errorClassList(firstTimeData, e.getMessage());
                         }
                     }
                 });
@@ -77,25 +77,26 @@ public class ClassificationVodListModel extends BaseModel implements Classificat
         String errorMsg = result.getMsg() + responseMsg;
         if (result.isSuccess()) {
             List<VodDataBean> vodDataBeans = result.getData();
+
             if (vodDataBeans.size() > 0)
                 callback.successVodList(firstTimeData, vodDataBeans, pageCount);
             else
                 callback.emptyVodList(firstTimeData, firstTimeData ? Utils.getString(R.string.emptyData) : errorMsg);
-        } else {
+
+            if (firstTimeData) {
+                Result<List<ClassificationDataBean>> listResult = parserInterface.parserClassificationList(html);
+                if (listResult.isSuccess()) {
+                    List<ClassificationDataBean> classificationDataBeans = listResult.getData();
+                    if (classificationDataBeans.size() > 0)
+                        callback.successClassList(firstTimeData, classificationDataBeans);
+                    else
+                        callback.emptyClassList();
+                } else
+                    callback.errorClassList(firstTimeData, listResult.getMsg());
+            }
+
+        } else
             callback.errorVodList(firstTimeData, errorMsg);
-        }
-        if (firstTimeData) {
-            Result<List<ClassificationDataBean>> listResult = parserInterface.parserClassificationList(html);
-            if (listResult.isSuccess()) {
-                List<ClassificationDataBean> classificationDataBeans = listResult.getData();
-                if (classificationDataBeans.size() > 0)
-                    callback.successClassList(classificationDataBeans);
-                else
-                    callback.emptyClassList();
-            } else
-//                callback.error(response != null ? parserErrorMsg(response, html) : html);
-                callback.error(listResult.getMsg());
-        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

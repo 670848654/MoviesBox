@@ -97,6 +97,12 @@ public class HistoryFragment extends BaseMvpFragment<HistoryModel, HistoryContra
         return binding;
     }
 
+    public void scrollToTop() {
+        if (mRecyclerView != null) {
+            mRecyclerView.smoothScrollToPosition(0);
+        }
+    }
+
     private RecyclerView mRecyclerView;
     private FloatingActionButton removeAllFAB;
     @Override

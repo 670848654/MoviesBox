@@ -372,8 +372,6 @@ public class LibvioImpl implements ParserInterface {
             Document document = Jsoup.parse(source);
             Elements titleElements = document.select("ul.play-tab li a");
             Elements ulElements = document.select(".play-content .stui-play__list");
-            if (titleElements.size() == 0 || ulElements.size() == 0)
-                return ResultUtils.parserFail();
             // 获取所有播放列表
             List<DetailsDataBean.DramasItem> dramasItemList = new ArrayList<>();
             // 解析播放列表
@@ -441,18 +439,18 @@ public class LibvioImpl implements ParserInterface {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select(".stui-pannel .stui-pannel__bd ul li a.lazyload");
-            if (elements.size() == 0)
-                return ResultUtils.parserFail();
-            for (Element item : elements) {
-                VodDataBean bean = new VodDataBean();
-                bean.setTitle(item.attr("title"));
-                bean.setUrl(item.attr("href"));
-                bean.setImg(item.attr("data-original"));
-                bean.setEpisodesTag(item.select(".text-right").text());
-                bean.setTopLeftTag(item.select(".pic-tag-top").text());
-                items.add(bean);
+            if (elements.size() > 0) {
+                for (Element item : elements) {
+                    VodDataBean bean = new VodDataBean();
+                    bean.setTitle(item.attr("title"));
+                    bean.setUrl(item.attr("href"));
+                    bean.setImg(item.attr("data-original"));
+                    bean.setEpisodesTag(item.select(".text-right").text());
+                    bean.setTopLeftTag(item.select(".pic-tag-top").text());
+                    items.add(bean);
+                }
+                logInfo("分类列表数据", items.toString());
             }
-            logInfo("分类列表数据", items.toString());
             return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();
@@ -473,18 +471,18 @@ public class LibvioImpl implements ParserInterface {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
             Elements elements = document.select("ul.stui-vodlist.clearfix li a.lazyload");
-            if (elements.size() == 0)
-                return ResultUtils.parserFail();
-            for (Element item : elements) {
-                VodDataBean bean = new VodDataBean();
-                bean.setTitle(item.attr("title"));
-                bean.setUrl(item.attr("href"));
-                bean.setImg(item.attr("data-original"));
-                bean.setEpisodesTag(item.select(".text-right").text());
-                bean.setTopLeftTag(item.select(".pic-tag-top").text());
-                items.add(bean);
+            if (elements.size() > 0) {
+                for (Element item : elements) {
+                    VodDataBean bean = new VodDataBean();
+                    bean.setTitle(item.attr("title"));
+                    bean.setUrl(item.attr("href"));
+                    bean.setImg(item.attr("data-original"));
+                    bean.setEpisodesTag(item.select(".text-right").text());
+                    bean.setTopLeftTag(item.select(".pic-tag-top").text());
+                    items.add(bean);
+                }
+                logInfo("搜索列表数据", items.toString());
             }
-            logInfo("搜索列表数据", items.toString());
             return ResultUtils.ok(items);
         } catch (Exception e) {
             e.printStackTrace();

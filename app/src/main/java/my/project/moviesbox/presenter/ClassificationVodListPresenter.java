@@ -33,13 +33,13 @@ public class ClassificationVodListPresenter extends Presenter<ClassificationVodL
     }
 
     @Override
-    public void successClassList(List<ClassificationDataBean> classificationDataBeans) {
-        view.successClassList(classificationDataBeans);
+    public void successClassList(boolean firstTimeData, List<ClassificationDataBean> classificationDataBeans) {
+        view.successClassList(firstTimeData, classificationDataBeans);
     }
 
     @Override
-    public void errorClassList(String msg) {
-        view.errorClassList(msg);
+    public void errorClassList(boolean firstTimeData, String msg) {
+        view.errorClassList(firstTimeData, msg);
     }
 
     @Override

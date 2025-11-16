@@ -87,6 +87,11 @@ public class FavoriteFragment extends BaseMvpFragment<FavoriteModel, FavoriteCon
         return binding;
     }
 
+    public void scrollToTop() {
+        if (mRecyclerView != null) {
+            mRecyclerView.smoothScrollToPosition(0);
+        }
+    }
 
     @Override
     public void initViews() {

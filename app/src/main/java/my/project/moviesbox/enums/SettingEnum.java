@@ -38,6 +38,7 @@ public enum SettingEnum {
     M3U8_QUEUE_NUM(R.drawable.round_dynamic_feed_24, Utils.getString(R.string.setM3u8Title), "", null),
     BACKUPS(R.drawable.round_settings_backup_restore_24, Utils.getString(R.string.setBackupsTitle), Utils.getString(R.string.setBackupsSubContent), null),
     REMOVE_ALL_DOWNLOADS(R.drawable.round_remove_circle_24, Utils.getString(R.string.setRemoveDownloadsTitle), Utils.getString(R.string.setRemoveDownloadsSubContent), null),
+    SET_VIBRATION(R.drawable.round_vibration_24, Utils.getString(R.string.setVibration), "", Utils.getArray(R.array.setVibrationItems)),
     CHECK_VERSION(R.drawable.round_sync_24, Utils.getString(R.string.currentVersionTitle), "", null),
     ABOUT(R.drawable.round_android_24, Utils.getString(R.string.aboutTitle), "", null);
     @DrawableRes

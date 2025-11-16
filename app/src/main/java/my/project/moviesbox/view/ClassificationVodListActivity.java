@@ -315,8 +315,8 @@ public class ClassificationVodListActivity extends BaseMvpActivity<Classificatio
     }
 
     @Override
-    public void successClassList(List<ClassificationDataBean> classificationDataBeans) {
-        if (isFinishing()) return;
+    public void successClassList(boolean firstTimeData, List<ClassificationDataBean> classificationDataBeans) {
+        if (isFinishing() || !firstTimeData) return;
         runOnUiThread(() -> {
             if (multiItemEntities.size() == 0) {
                 // 只有分类数据为空才赋值
@@ -331,8 +331,19 @@ public class ClassificationVodListActivity extends BaseMvpActivity<Classificatio
     }
 
     @Override
-    public void errorClassList(String msg) {
-
+    public void errorClassList(boolean firstTimeData, String msg) {
+        if (isFinishing() || Utils.isNullOrEmpty(msg) || !firstTimeData) return;
+        runOnUiThread(() -> Utils.showAlert(this,
+                R.drawable.round_warning_24,
+                "解析分类信息失败",
+                msg,
+                false,
+                getString(R.string.defaultPositiveBtnText),
+                "",
+                "",
+                (dialog, which) -> dialog.dismiss(),
+                null,
+                null));
     }
 
     @Override
