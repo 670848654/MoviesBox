@@ -151,7 +151,7 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                 layoutManager = new CarouselLayoutManager(new HeroCarouselStrategy());
             bannerRecyclerView.setLayoutManager(layoutManager);
             snapHelper.attachToRecyclerView(bannerRecyclerView);
-            if (bannerItem.size() > 3)
+            if ((Utils.isPad() && bannerItem.size() > 3) || (!Utils.isPad() && bannerItem.size() > 1))
                 // 自动轮播绑定
                 new BannerAutoPlayHelper(bannerRecyclerView, snapHelper);
         } else if (helper.getItemViewType() == MultiItemEnum.ITEM_LIST.getType() ||

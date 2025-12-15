@@ -506,7 +506,7 @@ public class SilisiliImpl implements ParserInterface {
     @Override
     public Result<List<ClassificationDataBean>> parserClassificationList(String source) {
         // 分类网站有问题，暂时不解析 TODO
-        return ResultUtils.fail("该站点不支持分类");
+        return ResultUtils.ok(new ArrayList<>());
     }
 
     /**
