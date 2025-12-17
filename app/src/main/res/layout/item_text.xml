@@ -34,23 +34,22 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="2dp"
             android:textSize="18sp" />
 
-        <TextView
+        <!--<TextView
             android:id="@+id/episodes"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/title"
             android:textColor="@color/pink200"
-            android:textSize="12sp" />
+            android:textSize="12sp" />-->
 
         <TextView
             android:id="@+id/content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/title"
-            android:layout_alignParentEnd="true"
             android:textColor="@color/pink200"
             android:textSize="12sp" />
 

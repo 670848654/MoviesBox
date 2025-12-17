@@ -49,25 +49,23 @@ public class TextListAdapter extends BaseQuickAdapter<TextDataBean.Item, BaseVie
         }
         TextView titleView = helper.getView(R.id.title);
         titleView.setText(item.getTitle());
-        RelativeLayout.LayoutParams params =
-                (RelativeLayout.LayoutParams) titleView.getLayoutParams();
-        if (Utils.isNullOrEmpty(item.getEpisodes())) {
-            helper.setGone(R.id.episodes, true);
-            helper.setGone(R.id.episodes, true);
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) titleView.getLayoutParams();
+        String content = "";
+        if (!Utils.isNullOrEmpty(item.getEpisodes()) && !Utils.isNullOrEmpty(item.getContent()))
+            content = item.getEpisodes() + " | " + item.getContent();
+        else if (!Utils.isNullOrEmpty(item.getEpisodes()))
+            content = item.getEpisodes();
+        else if (!Utils.isNullOrEmpty(item.getContent()))
+            content = item.getContent();
+        if (Utils.isNullOrEmpty(content)) {
             // 设置垂直居中
             params.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
             titleView.setLayoutParams(params);
-        }
-        else {
+            helper.setGone(R.id.content, true);
+        } else {
             // 移除垂直居中
             params.removeRule(RelativeLayout.CENTER_VERTICAL);
             titleView.setLayoutParams(params);
-            helper.setText(R.id.episodes, item.getEpisodes());
-            helper.setVisible(R.id.episodes, true);
-        }
-        if (Utils.isNullOrEmpty(item.getContent()))
-            helper.setVisible(R.id.content, false);
-        else {
             helper.setText(R.id.content, item.getContent());
             helper.setVisible(R.id.content, true);
         }
