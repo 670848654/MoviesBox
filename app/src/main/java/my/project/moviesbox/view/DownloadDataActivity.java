@@ -56,6 +56,7 @@ import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.config.M3U8DownloadConfig;
 import my.project.moviesbox.contract.DownloadContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.database.entity.TDownloadDataWithFields;
 import my.project.moviesbox.database.entity.TDownloadWithFields;
 import my.project.moviesbox.database.manager.TDownloadDataManager;
@@ -637,7 +638,12 @@ public class DownloadDataActivity extends BaseMvpActivity<DownloadModel, Downloa
 
     private void setRecyclerViewView() {
         position = mRecyclerView.getLayoutManager() == null ? 0 : ((GridLayoutManager) mRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, parserInterface.setDownloadDataListItemSize(Utils.isPad(), isPortrait)));
+        int spanCount = parserInterface.setDownloadDataListItemSize(Utils.isPad(), isPortrait);
+        mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
+        if (mRecyclerView.getTag() == null) {
+            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            mRecyclerView.setTag("decoration_added");
+        }
         mRecyclerView.getLayoutManager().scrollToPosition(position);
     }
 

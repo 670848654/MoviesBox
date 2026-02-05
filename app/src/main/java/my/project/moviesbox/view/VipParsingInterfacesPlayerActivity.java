@@ -71,6 +71,7 @@ import my.project.moviesbox.contract.ParsingInterfacesContract;
 import my.project.moviesbox.custom.DanmakuJsonParser;
 import my.project.moviesbox.custom.DanmukuXmlParser;
 import my.project.moviesbox.custom.JZPlayer;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.custom.TextViewAnimator;
 import my.project.moviesbox.databinding.ActivityPlayerBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
@@ -180,17 +181,11 @@ public class VipParsingInterfacesPlayerActivity extends BaseMvpActivity<ParsingI
 
     @Override
     protected void loadData() {
-        /*if (url.contains("?url")) {
+        if (url.endsWith("html"))
             // 需要二次解析
-            Matcher matcher = VipParsingInterfacesActivity.URL_PATTERN.matcher(url);
-            if (matcher.find()) {
-                url = matcher.group();
-                mPresenter.parser(VipParsingInterfacesActivity.OLD_API, url);
-            } else
-                mPresenter.parser(VipParsingInterfacesActivity.OLD_API, url);
-        }
-        else*/
-        play(url);
+            mPresenter.parser(url, false);
+        else
+            play(url);
     }
 
     @Override
@@ -306,7 +301,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseMvpActivity<ParsingI
         headers.put("accept", "*/*");
         headers.put("accept-encoding", "gzip, deflate, br, zstd");
         headers.put("accept-language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6");
-        headers.put("origin", "https://jx.xmflv.com");
+        headers.put("origin", "https://jx.xmflv.cc");
         headers.put("priority", "u=1, i");
         headers.put("sec-ch-ua", "\"Not;A=Brand\";v=\"99\", \"Microsoft Edge\";v=\"139\", \"Chromium\";v=\"139\"");
         headers.put("sec-ch-ua-mobile", "?0");
@@ -406,6 +401,10 @@ public class VipParsingInterfacesPlayerActivity extends BaseMvpActivity<ParsingI
         layoutManager.setFlexWrap(FlexWrap.WRAP);         // 换行
         layoutManager.setJustifyContent(JustifyContent.FLEX_START); // 起始对齐
         recyclerView.setLayoutManager(layoutManager);
+        if (recyclerView.getTag() == null) {
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            recyclerView.setTag("decoration_added");
+        }
     }
 
     private void initMenuList() {
@@ -667,22 +666,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseMvpActivity<ParsingI
      */
     @Override
     public void errorView(String msg) {
-        if (isFinishing()) return;
-        runOnUiThread(() -> {cancelDialog();
-            player.onStateError();
-            hideNavBar();
-            Utils.showAlert(this,
-                    R.drawable.round_warning_24,
-                    getString(R.string.errorDialogTitle),
-                    getString(R.string.parseVodPlayUrlError),
-                    false,
-                    getString(R.string.defaultPositiveBtnText),
-                    "",
-                    "",
-                    (dialog, which) -> dialog.dismiss(),
-                    null,
-                    null);
-        });
+
     }
 
     /**
@@ -698,41 +682,17 @@ public class VipParsingInterfacesPlayerActivity extends BaseMvpActivity<ParsingI
     }
 
     @Override
-    public void success(Object object) {
+    public void error(String msg, boolean isEpisodes) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
-            hideNavBar();
-            cancelDialog();
-            try {
-                JSONObject jsonObject = (JSONObject) object;
-                if (jsonObject.getInteger("code") == 200) {
-                    String aes_key = jsonObject.getString("aes_key");
-                    String aes_iv = jsonObject.getString("aes_iv");
-                    String videoUrl = VipParsingInterfacesActivity.getData(aes_iv, aes_key, jsonObject.getString("url"));
-                    // 弹幕URL
-                    danmuUrl = jsonObject.getString("ggdmapi");
-                    // 独立弹幕库
-                    /*String dmid = jsonObject.getString("dmid");
-                    danmuUrl = danmuUrl.split("&")[0] + "&id=" + dmid;*/
-                    play(videoUrl);
-                } else
-                    Utils.showAlert(this,
-                            R.drawable.round_warning_24,
-                            getString(R.string.errorDialogTitle),
-                            jsonObject.getString("msg"),
-                            false,
-                            getString(R.string.defaultPositiveBtnText),
-                            "",
-                            "",
-                            (dialog, which) -> dialog.dismiss(),
-                            null,
-                            null);
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (!isEpisodes) {
+                cancelDialog();
+                player.onStateError();
+                hideNavBar();
                 Utils.showAlert(this,
                         R.drawable.round_warning_24,
                         getString(R.string.errorDialogTitle),
-                        e.getMessage(),
+                        getString(R.string.parseVodPlayUrlError),
                         false,
                         getString(R.string.defaultPositiveBtnText),
                         "",
@@ -740,6 +700,48 @@ public class VipParsingInterfacesPlayerActivity extends BaseMvpActivity<ParsingI
                         (dialog, which) -> dialog.dismiss(),
                         null,
                         null);
+            }
+        });
+    }
+
+    @Override
+    public void success(JSONObject object, boolean isEpisodes) {
+        if (isFinishing()) return;
+        runOnUiThread(() -> {
+            hideNavBar();
+            cancelDialog();
+            if (!isEpisodes) {
+                try {
+                    String message = object.getString("ip-message");
+                    if (!Utils.isNullOrEmpty(message))
+                        application.showToastMsg(message, DialogXTipEnum.WARNING);
+                    // 获取弹幕api
+                    danmuUrl = object.getString("dmkuapi");
+                    // 获取弹幕id
+                    dmid = object.getString("dmid");
+                    // 获取影视来源
+                    String form = object.getString("form");
+                    if (danmuUrl.equals(ParsingInterfacesModel.NORMAL_API_START))
+                        // 默认弹幕地址
+                        danmuUrl = String.format(ParsingInterfacesModel.DMKU_API, form);
+                    play(object.getString("url"));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Utils.showAlert(this,
+                            R.drawable.round_warning_24,
+                            getString(R.string.errorDialogTitle),
+                            e.getMessage(),
+                            false,
+                            getString(R.string.defaultPositiveBtnText),
+                            "",
+                            "",
+                            (dialog, which) -> {
+                                dialog.dismiss();
+                                player.onStateError();
+                            },
+                            null,
+                            null);
+                }
             }
         });
     }

@@ -7,6 +7,7 @@ import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -25,6 +26,7 @@ import com.google.android.material.chip.ChipGroup;
 import java.util.List;
 
 import my.project.moviesbox.R;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.parser.bean.MainDataBean;
 import my.project.moviesbox.parser.config.MultiItemEnum;
 import my.project.moviesbox.parser.parserService.ParserInterfaceFactory;
@@ -43,7 +45,6 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
     private boolean isPortrait;
     private OnItemClick onItemClick; // 首页相关控件点击事件接口
     private HomeItemAdapter homeItemAdapter; // 影视列表ITEM适配器
-
     private SnapHelper snapHelper = new CarouselSnapHelper();
     /**
      * @方法名称: HomeAdapter
@@ -140,15 +141,7 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                 onItemClick.onVideoClick(bannerItem.get(position));
             });
             bannerRecyclerView.setAdapter(homeBannerAdapter);
-            CarouselLayoutManager layoutManager;
-            if (Utils.isPad()) {
-                // 平板模式下数量小于3时不使用滚动策略
-                if (bannerItem.size() > 3)
-                    layoutManager = new CarouselLayoutManager(new HeroCarouselStrategy());
-                else
-                    layoutManager = new CarouselLayoutManager(new UncontainedCarouselStrategy());
-            } else
-                layoutManager = new CarouselLayoutManager(new HeroCarouselStrategy());
+            CarouselLayoutManager layoutManager = getCarouselLayoutManager(bannerItem);
             bannerRecyclerView.setLayoutManager(layoutManager);
             snapHelper.attachToRecyclerView(bannerRecyclerView);
             if ((Utils.isPad() && bannerItem.size() > 3) || (!Utils.isPad() && bannerItem.size() > 1))
@@ -172,7 +165,7 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                 helper.getView(R.id.moreBtn).setVisibility(View.GONE);
             if (helper.getItemViewType() == MultiItemEnum.ITEM_LIST.getType()) {
                 // 横向列表
-                recyclerView.setLayoutManager(new LinearLayoutManager(context, RecyclerView.HORIZONTAL, false));
+                initLinearLayoutRecycler(recyclerView);
                 switch (mainDataBean.getVodItemType()) {
                     case STYLE_1_1_DOT_4:
                         homeItemAdapter = new HomeItemAdapter(R.layout.item_home_data_type_0, items);
@@ -189,7 +182,7 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                 } else {
                     spanCount = ParserInterfaceFactory.getParserInterface().setVodListItemSize(Utils.isPad(), isPortrait, false);
                 }
-                recyclerView.setLayoutManager(new GridLayoutManager(context, spanCount));
+                initGridLayoutRecycler(recyclerView, spanCount);
                 switch (mainDataBean.getVodItemType()) {
                     case STYLE_1_1_DOT_4:
                         homeItemAdapter = new HomeItemAdapter(R.layout.item_home_data_type_grid_0, items);
@@ -213,6 +206,46 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
             recyclerView.setPadding(0,0,0, 10);
             recyclerView.setAdapter(homeItemAdapter);
         }
+    }
+
+    @NonNull
+    private static CarouselLayoutManager getCarouselLayoutManager(List<MainDataBean.Item> bannerItem) {
+        CarouselLayoutManager layoutManager;
+        if (Utils.isPad()) {
+            // 平板模式下数量小于3时不使用滚动策略
+            if (bannerItem.size() > 3)
+                layoutManager = new CarouselLayoutManager(new HeroCarouselStrategy());
+            else
+                layoutManager = new CarouselLayoutManager(new UncontainedCarouselStrategy());
+        } else {
+            if (bannerItem.size() == 1)
+                layoutManager = new CarouselLayoutManager(new UncontainedCarouselStrategy());
+            else
+                layoutManager = new CarouselLayoutManager(new HeroCarouselStrategy());
+        }
+        return layoutManager;
+    }
+
+    private void initLinearLayoutRecycler(RecyclerView recyclerView) {
+        recyclerView.setLayoutManager(new LinearLayoutManager(context, RecyclerView.HORIZONTAL, false));
+        // 先清空旧的
+        if (recyclerView.getItemDecorationCount() > 0) {
+            for (int i = recyclerView.getItemDecorationCount() - 1; i >= 0; i--) {
+                recyclerView.removeItemDecorationAt(i);
+            }
+        }
+        recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+    }
+
+    private void initGridLayoutRecycler(RecyclerView recyclerView, int spanCount) {
+        recyclerView.setLayoutManager(new GridLayoutManager(context, spanCount));
+        // 先清空旧的
+        if (recyclerView.getItemDecorationCount() > 0) {
+            for (int i = recyclerView.getItemDecorationCount() - 1; i >= 0; i--) {
+                recyclerView.removeItemDecorationAt(i);
+            }
+        }
+        recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
     }
 
     /**

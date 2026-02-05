@@ -30,6 +30,7 @@ import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.contract.HistoryContract;
 import my.project.moviesbox.contract.VideoContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.database.entity.THistoryWithFields;
 import my.project.moviesbox.database.manager.TFavoriteManager;
 import my.project.moviesbox.database.manager.THistoryManager;
@@ -377,7 +378,12 @@ public class HistoryFragment extends BaseMvpFragment<HistoryModel, HistoryContra
 
     private void setRecyclerViewView() {
         position = mRecyclerView.getLayoutManager() == null ? 0 : ((GridLayoutManager) mRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-        mRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), parserInterface.setHistoryListItemSize(Utils.isPad(), isPortrait)));
+        int spanCount = parserInterface.setHistoryListItemSize(Utils.isPad(), isPortrait);
+        mRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), spanCount));
+        if (mRecyclerView.getTag() == null) {
+            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(0, true));
+            mRecyclerView.setTag("decoration_added");
+        }
         mRecyclerView.getLayoutManager().scrollToPosition(position);
     }
 

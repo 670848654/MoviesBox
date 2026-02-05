@@ -8,6 +8,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
@@ -90,8 +91,14 @@ public class SniffingVideoActivity extends BaseActivity<ActivitySniffingVideoBin
     @Override
     protected void init() {
         setToolbar(toolbar, "加载网页中...", "");
-        webView.getSettings().setMediaPlaybackRequiresUserGesture(true);
-        webView.getSettings().setJavaScriptEnabled(true);
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true); // 启用 JavaScript
+        settings.setDomStorageEnabled(true); // 启用本地存储
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT); // 设置缓存模式
+        settings.setLoadsImagesAutomatically(true); // 自动加载图片
+        settings.setAllowFileAccess(true); // 允许文件访问
+        settings.setUseWideViewPort(true); // 支持大视窗
+        settings.setLoadWithOverviewMode(true); // 强制页面使用适应屏幕的模式
         webView.addJavascriptInterface(new JsInterface(), "AndroidJs");
         webView.setWebViewClient(new MyWebViewClient(this));
         webView.setWebChromeClient(new WebChromeClient() {
@@ -176,6 +183,7 @@ public class SniffingVideoActivity extends BaseActivity<ActivitySniffingVideoBin
                 if (!playUrls.contains(dialogItemBean)) {
                     playUrls.add(dialogItemBean);
                 }
+                showAlert("未知");
             }
             return null;
         }
@@ -221,35 +229,39 @@ public class SniffingVideoActivity extends BaseActivity<ActivitySniffingVideoBin
             if (Utils.isNullOrEmpty(text))
                 return;
             if (showAlert) return;
-            showAlert = true;
             // 你可以用handler发送消息，更新UI等
-            runOnUiThread(() -> {
-                if (!isFinishing() && !isDestroyed() && playUrls.size() > 0) {
-                    alertDialog = new MaterialAlertDialogBuilder(SniffingVideoActivity.this, R.style.DialogStyle)
-                            .setTitle("\uD83D\uDE06嗅探完成啦！["+text+"]")
-                            .setMessage("已找到当前视频播放地址，请选择操作\uD83D\uDC47")
-                            .setPositiveButton("播放", (dialog, which) -> {
-                                dialog.dismiss();
-                                EventBus.getDefault().post(
-                                        new VideoSniffEvent(vodId, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.PLAY, true, playUrls, text)
-                                );
-                                finish();
-                            })
-                            .setCancelable(false)
-                            .setNegativeButton("关闭", null)
-                            .setNeutralButton("下载", (dialog, which) -> {
-                                dialog.dismiss();
-                                EventBus.getDefault().post(
-                                        new VideoSniffEvent(vodId, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.DOWNLOAD, true, playUrls, text)
-                                );
-                                finish();
-                            })
-                            .show();
-                    Utils.dialogSetRenderEffect(SniffingVideoActivity.this);
-                    alertDialog.setOnDismissListener(dialog -> Utils.dialogClearRenderEffect(SniffingVideoActivity.this));
-                }
-            });
+            showAlert(text);
         }
+    }
+
+    private void showAlert(String text) {
+        showAlert = true;
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed() && playUrls.size() > 0) {
+                alertDialog = new MaterialAlertDialogBuilder(SniffingVideoActivity.this, R.style.DialogStyle)
+                        .setTitle("\uD83D\uDE06嗅探完成啦！["+text+"]")
+                        .setMessage("已找到当前视频播放地址，请选择操作\uD83D\uDC47")
+                        .setPositiveButton("播放", (dialog, which) -> {
+                            dialog.dismiss();
+                            EventBus.getDefault().post(
+                                    new VideoSniffEvent(vodId, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.PLAY, true, playUrls, text)
+                            );
+                            finish();
+                        })
+                        .setCancelable(false)
+                        .setNegativeButton("关闭", null)
+                        .setNeutralButton("下载", (dialog, which) -> {
+                            dialog.dismiss();
+                            EventBus.getDefault().post(
+                                    new VideoSniffEvent(vodId, VideoSniffEvent.ActivityEnum.DETAIL, VideoSniffEvent.SniffEnum.DOWNLOAD, true, playUrls, text)
+                            );
+                            finish();
+                        })
+                        .show();
+                Utils.dialogSetRenderEffect(SniffingVideoActivity.this);
+                alertDialog.setOnDismissListener(dialog -> Utils.dialogClearRenderEffect(SniffingVideoActivity.this));
+            }
+        });
     }
 
     @Override

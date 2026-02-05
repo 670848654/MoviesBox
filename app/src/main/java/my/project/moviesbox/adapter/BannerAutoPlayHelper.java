@@ -23,12 +23,8 @@ public class BannerAutoPlayHelper {
     private boolean isRunning = false;
     private boolean isTouched = false; // 标记用户是否触摸
     private boolean isAutoScroll = false; // 标记当前滚动是自动还是手动
-    private RecyclerView recyclerView;
-    private SnapHelper snapHelper;
 
     public BannerAutoPlayHelper(RecyclerView recyclerView, SnapHelper snapHelper) {
-        this.recyclerView = recyclerView;
-        this.snapHelper = snapHelper;
         handler = new Handler(Looper.getMainLooper());
 
         runnable = new Runnable() {
@@ -68,6 +64,8 @@ public class BannerAutoPlayHelper {
 
                 if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
                     isTouched = true;       // 用户手动滑动
+                    // 用户开始滑动时，停止定时任务，防止自动滚动
+                    handler.removeCallbacks(runnable);
                 } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     if (!isAutoScroll) {
                         // 只有手动滑动才同步 position
@@ -78,6 +76,9 @@ public class BannerAutoPlayHelper {
                     }
                     isTouched = false;
                     isAutoScroll = false;  // 自动滚动完成
+                    // 重置计时器为5秒，松开后重新开始滚动
+                    handler.removeCallbacks(runnable);
+                    handler.postDelayed(runnable, interval);
                 }
             }
         });

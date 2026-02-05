@@ -4,6 +4,8 @@ import org.greenrobot.eventbus.EventBus;
 
 import java.util.List;
 
+import my.project.moviesbox.R;
+import my.project.moviesbox.database.dao.TDirectoryDao;
 import my.project.moviesbox.database.dao.TFavoriteDao;
 import my.project.moviesbox.database.dao.THistoryDao;
 import my.project.moviesbox.database.dao.THistoryDataDao;
@@ -24,6 +26,7 @@ public class TFavoriteManager extends BaseManager {
     public static TFavoriteDao tFavoriteDao = getInstance().tFavoriteDao();
     public static THistoryDao tHistoryDao = getInstance().tHistoryDao();
     public static THistoryDataDao tHistoryDataDao = getInstance().tHistoryDataDao();
+    public static TDirectoryDao tDirectoryDao = getInstance().tDirectoryDao();
 
 
     /**
@@ -33,6 +36,19 @@ public class TFavoriteManager extends BaseManager {
      */
     public static boolean checkFavorite(String videoId) {
         return !Utils.isNullOrEmpty(tFavoriteDao.queryByVideoId(videoId));
+    }
+
+    /**
+     * 根据ID查询收藏
+     * @param videoId
+     * @return
+     */
+    public static String queryByVideoId(String videoId) {
+        TFavorite tFavorite = tFavoriteDao.queryByVideoId(videoId);
+        if (Utils.isNullOrEmpty(tFavorite))
+            return "";
+        String result = tDirectoryDao.queryNameById(tFavorite.getDirectoryId());
+        return Utils.isNullOrEmpty(result) ? Utils.getString(R.string.defaultList) : result;
     }
 
     /**

@@ -1,5 +1,7 @@
 package my.project.moviesbox.contract;
 
+import com.alibaba.fastjson.JSONObject;
+
 /**
  * @author Li
  * @version 1.0
@@ -8,14 +10,18 @@ package my.project.moviesbox.contract;
  */
 public interface ParsingInterfacesContract {
     interface Model {
-        void parser(String parserUrl, String url, LoadDataCallback callback);
+        void parser(String url, boolean isEpisodes, LoadDataCallback callback);
     }
 
     interface View extends BaseView {
-        void success(Object object);
+        void success(JSONObject object, boolean isEpisodes);
+
+        void error(String msg, boolean isEpisodes);
     }
 
     interface LoadDataCallback extends BaseLoadDataCallback {
-        void success(Object object);
+        void success(JSONObject object, boolean isEpisodes);
+
+        void error(String msg, boolean isEpisodes);
     }
 }

@@ -11,44 +11,33 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.ctetin.expandabletextviewlibrary.ExpandableTextView;
+import com.google.android.flexbox.FlexboxLayoutManager;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.shape.MaterialShapeDrawable;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.codec.binary.Base64;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-
 import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.VipVideoAdapter;
 import my.project.moviesbox.contract.ParsingInterfacesContract;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.databinding.ActivityParsingInterfacesBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.model.ParsingInterfacesModel;
-import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.VipVideoDataBean;
 import my.project.moviesbox.presenter.ParsingInterfacesPresenter;
 import my.project.moviesbox.utils.Utils;
@@ -64,10 +53,6 @@ import my.project.moviesbox.view.base.BaseMvpActivity;
  */
 public class VipParsingInterfacesActivity extends BaseMvpActivity<ParsingInterfacesModel, ParsingInterfacesContract.View, ParsingInterfacesPresenter, ActivityParsingInterfacesBinding> implements
         ParsingInterfacesContract.View {
-    public final static String TEST_URL = "https://www.iqiyi.com/v_2399g3yo9f0.html?ht=2&ischarge=true&lt=2&tvname=%E4%B8%8E%E6%99%8B%E9%95%BF%E5%AE%89%E7%AC%AC10%E9%9B%86&vid=08da6c7063675b3678f646261f227e1b&fid=8144089039617901&vtype=0&f_block=selector_bk-undefined&s2=wna_tvg_1st&s3=wna_tvg_select&s4=10&vfrm=pcw_home&vfrmblk=pca_recommend_focus&vfrmrst=small_image1&pb2=bkt%3D%26c1%3D%26childinfo%3D%26e%3D%26fatherid%3D%26position%3D4%26r_area%3D%26r_source%3D%26recext%3D%26sc1%3D%26sqpid%3D%26stype%3D%26tagemode%3D0&ab=8883_A%2C10385_B%2C8185_A%2C10274_B%2C8739_B%2C9419_A%2C9922_C%2C9379_B%2C10590_D%2C10276_B%2C11389_B%2C8004_B%2C5257_B%2C10566_C%2C9776_B%2C8873_E%2C10123_A%2C7423_C%2C9082_B%2C8401_A%2C6249_C%2C10793_B%2C7996_B%2C11391_A%2C9576_B%2C10358_B%2C10897_B%2C9365_B%2C5465_B%2C6843_B%2C11816_A%2C6578_B%2C6312_B%2C6091_B%2C8690_A%2C10992_B%2C8737_D%2C11400_C%2C8742_A%2C10193_B%2C10803_C%2C10596_B%2C9484_B%2C6752_C%2C11716_B%2C10311_B%2C11171_B%2C10698_B%2C10237_B%2C10188_A%2C8971_C%2C7332_B%2C9683_B%2C10383_B%2C11402_A%2C8665_D%2C12103_B%2C11237_B%2C10575_B%2C11642_B%2C6237_B%2C9569_B%2C11004_B%2C11238_A%2C8983_B%2C7024_C%2C5592_B%2C9117_A%2C6031_B%2C10509_B%2C7581_A%2C9506_B%2C11393_A%2C9517_C%2C10216_B%2C9394_B%2C11350_B%2C8542_B%2C6050_B%2C9167_C%2C10637_B%2C11556_C%2C11413_B%2C11819_B%2C10551_B%2C9469_B%2C10633_B%2C10598_B%2C8812_B%2C11245_B%2C6832_C%2C7074_C%2C7682_C%2C8867_B%2C5924_D%2C6151_C%2C5468_B%2C10447_B%2C11580_C%2C11299_C%2C6704_C%2C10530_B%2C11672_B%2C11987_D%2C8808_B%2C10765_B%2C12098_D%2C8497_B%2C8342_B%2C8871_C%2C11095_B%2C9790_B%2C11754_A%2C9355_B%2C10389_B%2C8760_B%2C12028_D%2C11441_A%2C10624_C%2C10627_B%2C9292_B%2C6629_B%2C5670_B%2C9158_A%2C10541_B%2C9805_B%2C9959_B%2C10999_A%2C11578_A%2C6082_B%2C5335_B%2C11625_C%2C11224_B%2C11471_A%2C11032_B%2C10271_C";
-    public final static String OLD_API = "https://cache.hls.one/xmflv.js";
-    public final static String NEW_API = "https://202.189.8.170/Api.js";
-    private boolean useNewApi = true;
     public final static Pattern URL_PATTERN = Pattern.compile("https://[^\\']*");
     private String url = "";
     private String danmuUrl = "";
@@ -135,10 +120,7 @@ public class VipParsingInterfacesActivity extends BaseMvpActivity<ParsingInterfa
 
     @Override
     protected void loadData() {
-    }
 
-    private void loadData(String api) {
-        mPresenter.parser(api, url);
     }
 
     @Override
@@ -160,7 +142,12 @@ public class VipParsingInterfacesActivity extends BaseMvpActivity<ParsingInterfa
     }
 
     private void setRecyclerViewView() {
-        recyclerView.setLayoutManager(new GridLayoutManager(this, Utils.isPad() ? 10 : 5));
+//        recyclerView.setLayoutManager(new GridLayoutManager(this, Utils.isPad() ? 10 : 4));
+        recyclerView.setLayoutManager(new FlexboxLayoutManager(this));
+        if (recyclerView.getTag() == null) {
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            recyclerView.setTag("decoration_added");
+        }
     }
 
     /**
@@ -174,22 +161,30 @@ public class VipParsingInterfacesActivity extends BaseMvpActivity<ParsingInterfa
     }
 
     @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getBundle();
+    }
+
+    @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        setIntent(intent);
         getBundle();
     }
 
     private void getBundle() {
         Intent intent = getIntent();
-        if (intent != null) {
-            String sharedText = getIntent().getStringExtra(Intent.EXTRA_TEXT);
-            if (sharedText != null) {
-                Matcher matcher = URL_PATTERN.matcher(sharedText);
-                if (matcher.find()) {
-                    textInputLayout.getEditText().setText(matcher.group());
-                    url = matcher.group();
-                }
-            }
+        if (intent == null) return;
+
+        String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
+        if (sharedText == null) return;
+
+        Matcher matcher = URL_PATTERN.matcher(sharedText);
+        if (matcher.find()) {
+            String newUrl = matcher.group();
+            textInputLayout.getEditText().setText(newUrl);
+            url = newUrl;
         }
     }
 
@@ -200,6 +195,8 @@ public class VipParsingInterfacesActivity extends BaseMvpActivity<ParsingInterfa
             playVideo(position);
         });
         recyclerView.setAdapter(adapter);
+        if (Utils.checkHasNavigationBar(this))
+            recyclerView.setPadding(0,0,0, Utils.getNavigationBarHeight(this));
     }
 
     private void playVideo(int position) {
@@ -243,8 +240,7 @@ public class VipParsingInterfacesActivity extends BaseMvpActivity<ParsingInterfa
                     textInputLayout.setError("请输入正确的URL");
                     return;
                 }
-                useNewApi = true;
-                loadData(NEW_API);
+                mPresenter.parser(url, true);
                 break;
             case R.id.videoUrl:
                 PopupMenu popupMenu = new PopupMenu(this, view);
@@ -300,14 +296,7 @@ public class VipParsingInterfacesActivity extends BaseMvpActivity<ParsingInterfa
      */
     @Override
     public void errorView(String msg) {
-        if (isFinishing()) return;
-        runOnUiThread(() -> {
-            infoView.setStrokeColor(getColor(R.color.red400));
-            parser.setEnabled(true);
-            infoView.setVisibility(View.VISIBLE);
-            errorMsgView.setText(msg);
-            errorMsgView.setVisibility(View.VISIBLE);
-        });
+
     }
 
     /**
@@ -323,154 +312,57 @@ public class VipParsingInterfacesActivity extends BaseMvpActivity<ParsingInterfa
     }
 
     @Override
-    public void success(Object object) {
+    public void success(JSONObject object, boolean isEpisodes) {
         if (isFinishing()) return;
         runOnUiThread(() -> {
             infoView.setStrokeColor(getColor(R.color.red400));
             parser.setEnabled(true);
-            JSONObject jsonObject = (JSONObject) object;
-            try {
+            if (isEpisodes) {
+                // 限制消息
+                String message = object.getString("ip-message");
+                // 剧集列表
                 vipVideoDataBean = new VipVideoDataBean();
+                vipVideoDataBean.setTitle(object.getString("vod_title"));
+                vipVideoDataBean.setImgUrl(object.getString("vod_pic"));
+                vipVideoDataBean.setIntroduction(object.getString("vod_desc"));
+                vipVideoDataBean.setDramaIntroduction(object.getString("vod_updateTo"));
+                JSONArray vodEpisodes = object.getJSONArray("vod_episodes");
                 dramasItemList = new ArrayList<>();
-                if (jsonObject.getInteger("code") == 200) {
-                    String info = useNewApi ? "当前解析为【新】Api,新接口移动端页面URL解析后貌似不显示剧集标题和集数！直接点击播放！" : "当前解析为【旧】Api";
-                    jsonView.setText(info+"\n接口返回信息如下:\n"+JSON.toJSONString(jsonObject, SerializerFeature.PrettyFormat));
-                    jsonView.setVisibility(View.VISIBLE);
-                    String name = jsonObject.getString("name");
-                    name = Utils.isNullOrEmpty(name) ? "未知" : name;
-                    String url = jsonObject.getString("url");
-                    String aes_key = jsonObject.getString("aes_key");
-                    String aes_iv = jsonObject.getString("aes_iv");
-                    danmuUrl = jsonObject.getString("ggdmapi");
-                    dmid = jsonObject.getString("dmid");
-                    String videoInfoHtml = getData(aes_iv, aes_key, jsonObject.getString("html"));
-                    LogUtil.logInfo("videoInfoHtml", videoInfoHtml);
-                    if (Utils.isNullOrEmpty(videoInfoHtml)) {
-                        handleEmptyVideoInfo(name, aes_iv, aes_key, url);
-                    } else {
-                        handleNonEmptyVideoInfo(name, videoInfoHtml, aes_iv, aes_key, url);
-                    }
-                    vipVideoDataBean.setDramasItemList(dramasItemList);
-                    adapter.setNewInstance(dramasItemList);
-                    videoInfoView.setVisibility(View.VISIBLE);
-                    infoView.setStrokeColor(getColor(R.color.green400));
-                    application.showToastMsg( "成功：" + jsonObject.getString("iptime"), DialogXTipEnum.SUCCESS);
-                } else if (useNewApi) {
-                    // 当新API返回不是200时 调用老接口
-                    useNewApi = false;
-                    loadData(NEW_API);
-                    return;
-                }  else {
-                    errorMsgView.setText("接口请求失败！\n"+jsonObject.toJSONString());
-                    errorMsgView.setVisibility(View.VISIBLE);
+                for (int i=0,size=vodEpisodes.size(); i<size; i++) {
+                    JSONObject episodes = vodEpisodes.getJSONObject(i);
+                    String name = episodes.getString("name");
+                    String url = episodes.getString("url");
+                    VipVideoDataBean.DramasItem dramasItem = new VipVideoDataBean.DramasItem();
+                    dramasItem.setTitle(name);
+                    dramasItem.setIndex(i);
+                    dramasItem.setUrl(url);
+                    dramasItemList.add(dramasItem);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                errorMsgView.setText("接口请求失败,错误信息如下\n"+e.getMessage());
-                errorMsgView.setVisibility(View.VISIBLE);
+                vipVideoDataBean.setDramasItemList(dramasItemList);
+                titleView.setText(message + "\n" + vipVideoDataBean.getTitle());
+                introductionView.setContent(vipVideoDataBean.getIntroduction());
+                introductionView.setVisibility(View.VISIBLE);
+                dramaIntroductionView.setText(vipVideoDataBean.getDramaIntroduction());
+                dramaIntroductionView.setVisibility(View.VISIBLE);
+                adapter.setNewInstance(dramasItemList);
+                videoInfoView.setVisibility(View.VISIBLE);
+                infoView.setVisibility(View.VISIBLE);
             }
-            infoView.setVisibility(View.VISIBLE);
         });
     }
 
-    private void handleEmptyVideoInfo(String name, String aes_iv, String aes_key, String url) {
-        VipVideoDataBean.DramasItem dramasItem = new VipVideoDataBean.DramasItem();
-        dramasItem.setTitle(name);
-        dramasItem.setIndex(0);
-        dramasItem.setUrl(getData(aes_iv, aes_key, url));
-        dramasItemList.add(dramasItem);
-
-        titleView.setText(name);
-        introductionView.setVisibility(View.GONE);
-        dramaIntroductionView.setVisibility(View.GONE);
-    }
-
-    private void handleNonEmptyVideoInfo(String title, String videoInfoHtml, String aes_iv, String aes_key, String url) {
-        Document document = Jsoup.parse(videoInfoHtml);
-        String imgUrl = document.select(".bj").attr("src");
-        String htmlTitle = document.select(".anthology-title-wrap .title").text();
-        title = Utils.isNullOrEmpty(htmlTitle) ? title : htmlTitle;
-        String introduction = document.select(".title-info").text();
-        String dramaIntroduction = document.select(".component-title").text();
-
-        vipVideoDataBean.setTitle(title);
-        vipVideoDataBean.setImgUrl(imgUrl);
-        vipVideoDataBean.setIntroduction(introduction);
-        vipVideoDataBean.setDramaIntroduction(dramaIntroduction);
-
-        Element listElem = document.getElementById("listShow");
-        if (Utils.isNullOrEmpty(listElem)) {
-            handleEmptyList(aes_iv, aes_key, url);
-        } else {
-            handleNonEmptyList(listElem);
-        }
-
-        titleView.setText(title);
-        if (!Utils.isNullOrEmpty(introduction)) {
-            introductionView.setContent(introduction);
-            introductionView.setVisibility(View.VISIBLE);
-        } else
-            introductionView.setVisibility(View.GONE);
-        if (!Utils.isNullOrEmpty(dramaIntroduction)) {
-            dramaIntroductionView.setText(dramaIntroduction);
-            dramaIntroductionView.setVisibility(View.VISIBLE);
-        } else
-            dramaIntroductionView.setVisibility(View.GONE);
-    }
-
-    private void handleEmptyList(String aes_iv, String aes_key, String url) {
-        VipVideoDataBean.DramasItem dramasItem = new VipVideoDataBean.DramasItem();
-        dramasItem.setTitle("全集");
-        dramasItem.setIndex(0);
-        dramasItem.setUrl(getData(aes_iv, aes_key, url));
-        dramasItemList.add(dramasItem);
-    }
-
-    private void handleNonEmptyList(Element listElem) {
-        Elements list = listElem.select("a");
-        int i = 0;
-        for (Element a : list) {
-            String href = a.attr("onclick");
-            /*Matcher matcher = pattern.matcher(href);
-            if (matcher.find()) {
-                VipVideoDataBean.DramasItem dramasItem = new VipVideoDataBean.DramasItem();
-                dramasItem.setTitle(a.text());
-                dramasItem.setIndex(i);
-                dramasItem.setUrl(matcher.group());
-                dramasItemList.add(dramasItem);
-                i++;
-            }*/
-            VipVideoDataBean.DramasItem dramasItem = new VipVideoDataBean.DramasItem();
-            dramasItem.setTitle(a.text());
-            dramasItem.setIndex(i);
-            dramasItem.setUrl(href);
-            dramasItemList.add(dramasItem);
-            i++;
-        }
-    }
-
-
-    /**
-     * 解密数据
-     * @param aes_iv
-     * @param aes_key
-     * @param data
-     * @return
-     */
-    public static String getData(String aes_iv, String aes_key, String data) {
-        try {
-            IvParameterSpec iv = new IvParameterSpec(aes_iv.getBytes(StandardCharsets.UTF_8));
-            SecretKeySpec sKeySpec = new SecretKeySpec(aes_key.getBytes(StandardCharsets.UTF_8), "AES");
-            Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
-            cipher.init(Cipher.DECRYPT_MODE, sKeySpec, iv);
-            byte[] original = cipher.doFinal(Base64.decodeBase64(data));
-            String result = new String(original, StandardCharsets.UTF_8).replaceAll("\u000F", "");
-            LogUtil.logInfo("播放地址", result);
-            return result;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+    @Override
+    public void error(String msg, boolean isEpisodes) {
+        if (isFinishing()) return;
+        runOnUiThread(() -> {
+            if (isEpisodes) {
+                infoView.setStrokeColor(getColor(R.color.red400));
+                parser.setEnabled(true);
+                infoView.setVisibility(View.VISIBLE);
+                errorMsgView.setText(msg);
+                errorMsgView.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     @Override

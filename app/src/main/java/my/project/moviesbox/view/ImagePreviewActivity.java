@@ -11,6 +11,7 @@ import android.view.WindowManager;
 import androidx.annotation.NonNull;
 
 import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
@@ -31,7 +32,8 @@ import my.project.moviesbox.view.base.BaseActivity;
  */
 public class ImagePreviewActivity extends BaseActivity<ActivityImagePreviewBinding> implements View.OnSystemUiVisibilityChangeListener {
     private PhotoView photoView;
-    private String tempFilePath = null;
+    private String imagePath;
+    private boolean isTempFile;
 
     @Override
     protected void initBeforeView() {
@@ -68,11 +70,12 @@ public class ImagePreviewActivity extends BaseActivity<ActivityImagePreviewBindi
 
     @Override
     protected void init() {
-        String imagePath = getIntent().getStringExtra("image_path");
-        boolean isTempFile = getIntent().getBooleanExtra("is_temp_file", false);
+        imagePath = getIntent().getStringExtra("image_path");
+        isTempFile = getIntent().getBooleanExtra("is_temp_file", false);
         if (imagePath != null) {
             GlideApp.with(this)
                     .load(isTempFile ? new File(imagePath) : Utils.getGlideUrl(imagePath))
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .dontAnimate() // 防止Glide动画和共享元素动画冲突
                     .listener(new RequestListener<>() {
                         @Override
@@ -131,11 +134,9 @@ public class ImagePreviewActivity extends BaseActivity<ActivityImagePreviewBindi
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (tempFilePath != null) {
-            File file = new File(tempFilePath);
-            if (file.exists()) {
-                file.delete();
-            }
+        if (isTempFile) {
+            File file = new File(imagePath);
+            if (file.exists()) file.delete();
         }
     }
 }

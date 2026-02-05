@@ -86,6 +86,7 @@ import my.project.moviesbox.config.GlideApp;
 import my.project.moviesbox.contract.DetailsContract;
 import my.project.moviesbox.contract.DownloadVideoContract;
 import my.project.moviesbox.contract.VideoContract;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.custom.VideoPreviewDialog;
 import my.project.moviesbox.database.entity.TDirectory;
 import my.project.moviesbox.database.entity.TDownload;
@@ -422,6 +423,13 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         binding.vodImgType1.setOnClickListener(v -> handleClick(v));
         // 收藏
         binding.favorite.setOnClickListener(v -> handleClick(v));
+        binding.favorite.setOnLongClickListener(v -> {
+            if (isFavorite) {
+                String directoryName = TFavoriteManager.queryByVideoId(vodId);
+                application.showToastMsg(String.format("所在清单: [%s]", directoryName), DialogXTipEnum.DEFAULT);
+            }
+            return true;
+        });
         // 下载
         binding.download.setOnClickListener(v -> handleClick(v));
         // 浏览器打开
@@ -572,6 +580,10 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         tagBottomSheetDialog = new BottomSheetDialog(this, R.style.BottomSheetDialogTheme);
         tagBottomSheetDialog.setContentView(dialogDramaBinding.getRoot());
         expandTagListRv.setLayoutManager(getFlexboxLayoutManager());
+        if (expandTagListRv.getTag() == null) {
+            expandTagListRv.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            expandTagListRv.setTag("decoration_added");
+        }
         detailTagAdapter.setOnItemLongClickListener((adapter, view, position) -> {
             tagBottomSheetDialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
             tagBottomSheetDialog.show();
@@ -599,7 +611,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
             return true;
         });
 
-        dramaListRv.setLayoutManager(getLinearLayoutManager());
+        dramaListRv.setLayoutManager(getLinearLayoutManager(dramaListRv));
         dramaListRv.setAdapter(dramaListAdapter);
         dramaListRv.setNestedScrollingEnabled(false);
     }
@@ -727,9 +739,13 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         return layoutManager;
     }
 
-    private LinearLayoutManager getLinearLayoutManager() {
+    private LinearLayoutManager getLinearLayoutManager(RecyclerView recyclerView) {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setOrientation(RecyclerView.HORIZONTAL);
+        if (recyclerView.getTag() == null) {
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            recyclerView.setTag("decoration_added");
+        }
         return linearLayoutManager;
     }
 
@@ -1137,8 +1153,18 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
     }
 
     private void setRecyclerViewView() {
-        expandListRv.setLayoutManager(new GridLayoutManager(this, parserInterface.setDetailExpandListItemSize(Utils.isPad())));
-        downloadListRv.setLayoutManager(new GridLayoutManager(this, parserInterface.setDetailExpandListItemSize(Utils.isPad())));
+        int expandSpanCount = parserInterface.setDetailExpandListItemSize(Utils.isPad());
+        expandListRv.setLayoutManager(new GridLayoutManager(this, expandSpanCount));
+        if (expandListRv.getTag() == null) {
+            expandListRv.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            expandListRv.setTag("decoration_added");
+        }
+        int downloadSpanCount = parserInterface.setDetailExpandListItemSize(Utils.isPad());
+        downloadListRv.setLayoutManager(new GridLayoutManager(this, downloadSpanCount));
+        if (downloadListRv.getTag() == null) {
+            downloadListRv.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            downloadListRv.setTag("decoration_added");
+        }
     }
 
     @Override
@@ -1223,7 +1249,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
                     multiRecommendDialog.show();
                     return true;
                 });
-                multiLayoutManager = getLinearLayoutManager();
+                multiLayoutManager = getLinearLayoutManager(multiListRv);
                 multiListRv.setLayoutManager(multiLayoutManager);
                 multiListRv.setAdapter(multiAdapter);
                 multiListRv.setNestedScrollingEnabled(false);
@@ -1252,7 +1278,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
                     multiRecommendDialog.show();
                     return true;
                 });
-                recommendLayoutManager = getLinearLayoutManager();
+                recommendLayoutManager = getLinearLayoutManager(recommendRv);
                 recommendRv.setLayoutManager(recommendLayoutManager);
                 if (Utils.checkHasNavigationBar(this)) recommendRv.setPadding(0,0,0, Utils.getNavigationBarHeight(this));
                 recommendRv.setAdapter(recommendAdapter);
@@ -1331,6 +1357,10 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         detailsExpandData.addAll(data);
         detailsExpandListItemAdapter.setNewInstance(detailsExpandData);
         multiRecommendRv.setLayoutManager(new GridLayoutManager(this, spanCount));
+        if (multiRecommendRv.getTag() == null) {
+            multiRecommendRv.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            multiRecommendRv.setTag("decoration_added");
+        }
         multiRecommendRv.setAdapter(detailsExpandListItemAdapter);
         multiRecommendDialog.setContentView(multiRecommendView);
     }

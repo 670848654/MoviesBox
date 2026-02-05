@@ -402,25 +402,29 @@ public abstract class BaseActivity<VB extends ViewBinding> extends AppCompatActi
     @Override
     public void startActivity(Intent intent) {
         super.startActivity(intent);
-        if (!getRunningActivityName().equals("ImagePreviewActivity")) {
-            overridePendingTransition(R.anim.scale_fade_in, R.anim.scale_fade_out);
-        }
+        if (!ConfigManager.getInstance().isOverridePendingTransition())
+            return;
+        if (!getRunningActivityName().equals("ImagePreviewActivity") && gtSdk30()) overridePendingTransition(R.anim.scale_fade_in, R.anim.scale_fade_out);
     }
     @Override
     public void startActivityForResult(Intent intent, int requestCode) {
         super.startActivityForResult(intent, requestCode);
-        overridePendingTransition(R.anim.scale_fade_in, R.anim.scale_fade_out);
+        if (!ConfigManager.getInstance().isOverridePendingTransition())
+            return;
+        if (gtSdk30()) overridePendingTransition(R.anim.scale_fade_in, R.anim.scale_fade_out);
     }
     @Override
     public void finish() {
         super.finish();
-        if (!getRunningActivityName().equals("ImagePreviewActivity")) {
-            overridePendingTransition(R.anim.scale_fade_in, R.anim.scale_fade_out);
-        }
+        if (!ConfigManager.getInstance().isOverridePendingTransition())
+            return;
+        if (!getRunningActivityName().equals("ImagePreviewActivity") && gtSdk30()) overridePendingTransition(R.anim.scale_fade_in, R.anim.scale_fade_out);
     }
     @Override
     public void startActivityForResult(Intent intent, int requestCode, Bundle options) {
         super.startActivityForResult(intent, requestCode, options);
-        overridePendingTransition(R.anim.scale_fade_in, R.anim.scale_fade_out);
+        if (!ConfigManager.getInstance().isOverridePendingTransition())
+            return;
+        if (gtSdk30()) overridePendingTransition(R.anim.scale_fade_in, R.anim.scale_fade_out);
     }
 }

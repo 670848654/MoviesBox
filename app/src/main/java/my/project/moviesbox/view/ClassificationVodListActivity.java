@@ -34,6 +34,7 @@ import my.project.moviesbox.application.App;
 import my.project.moviesbox.contract.ClassificationVodListContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
 import my.project.moviesbox.custom.FabExtendingOnScrollListener;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.custom.VideoPreviewDialog;
 import my.project.moviesbox.databinding.ActivityVodListBinding;
 import my.project.moviesbox.databinding.DialogClassificationBinding;
@@ -292,6 +293,10 @@ public class ClassificationVodListActivity extends BaseMvpActivity<Classificatio
             spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait, false);
         }
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
+        if (mRecyclerView.getTag() == null) {
+            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            mRecyclerView.setTag("decoration_added");
+        }
         mRecyclerView.getLayoutManager().scrollToPosition(position);
     }
 

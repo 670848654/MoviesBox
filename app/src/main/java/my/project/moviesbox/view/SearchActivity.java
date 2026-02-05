@@ -37,6 +37,7 @@ import my.project.moviesbox.adapter.SearchHistoryAdapter;
 import my.project.moviesbox.adapter.VodListAdapter;
 import my.project.moviesbox.contract.SearchContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.custom.VideoPreviewDialog;
 import my.project.moviesbox.databinding.ActivitySearchListBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
@@ -61,13 +62,13 @@ public class SearchActivity extends BaseMvpActivity<SearchModel, SearchContract.
     protected MaterialToolbar toolbar;
     protected RecyclerView mRecyclerView;
     protected SwipeRefreshLayout mSwipe;
-    protected  VodListAdapter adapter;
-    protected  final List<MultiItemEntity> multiItemEntities = new ArrayList<>();
-    protected  String searchContent;
+    protected VodListAdapter adapter;
+    protected final List<MultiItemEntity> multiItemEntities = new ArrayList<>();
+    protected String searchContent;
     protected SearchBar searchBar;
     protected SearchView searchView;
     protected RecyclerView rvHistory;
-    protected  boolean isSearch = false;
+    protected boolean isSearch = false;
 
     @Override
     protected void initBeforeView() {}
@@ -343,6 +344,10 @@ public class SearchActivity extends BaseMvpActivity<SearchModel, SearchContract.
             spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait, false);
         }
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
+        if (mRecyclerView.getTag() == null) {
+            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            mRecyclerView.setTag("decoration_added");
+        }
         mRecyclerView.getLayoutManager().scrollToPosition(position);
     }
 

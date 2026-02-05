@@ -16,6 +16,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.List;
 
 import my.project.moviesbox.adapter.WeekAdapter;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.databinding.FragmentWeekBinding;
 import my.project.moviesbox.event.RefreshEnum;
 import my.project.moviesbox.parser.bean.WeekDataBean;
@@ -109,7 +110,12 @@ public class WeekFragment extends BaseFragment<FragmentWeekBinding> {
 
     private void setRecyclerViewView() {
         position = recyclerView.getLayoutManager() == null ? 0 : ((GridLayoutManager) recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-        recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), parserInterface.setWeekItemListItemSize(Utils.isPad(), isPortrait)));
+        int spanCount = parserInterface.setWeekItemListItemSize(Utils.isPad(), isPortrait);
+        recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), spanCount));
+        if (recyclerView.getTag() == null) {
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            recyclerView.setTag("decoration_added");
+        }
         recyclerView.getLayoutManager().scrollToPosition(position);
     }
 }

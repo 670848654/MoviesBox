@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 应用默认设置 -->
+    <!-- 开启自定义activity动画 -->
+    <bool name="overridePendingTransition">false</bool>
     <!-- 是否显示首次弹窗 非true则显示 -->
     <bool name="appInfo">false</bool>
     <!-- 是否开启自用第三方VIP解析小工具 用处不大 -->

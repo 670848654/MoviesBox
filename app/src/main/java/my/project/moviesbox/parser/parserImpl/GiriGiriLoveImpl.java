@@ -237,8 +237,11 @@ public class GiriGiriLoveImpl implements ParserInterface {
             mainDataBean.setTags(tags);
             mainDataBeans.add(mainDataBean);
             // banner内容解析
-            Elements bannerEle = document.select("div.slid-e-list > .slid-e-list-box");
-            if (bannerEle.size() == 0)
+            // icu
+            Elements bannerIcuEle = document.select("div.slid-e-list > .slid-e-list-box");
+            // com
+            Elements bannerComEle = document.select("div.swiper-wrapper > .slide-time-bj.swiper-slide");
+            if (bannerIcuEle.size() == 0 && bannerComEle.size() == 0)
                 return ResultUtils.parserFail();
             mainDataBean = new MainDataBean();
             mainDataBean.setTitle("动漫推荐");
@@ -246,37 +249,52 @@ public class GiriGiriLoveImpl implements ParserInterface {
             mainDataBean.setDataType(BANNER_LIST.getType());
             mainDataBean.setVodItemType(STYLE_16_9);
             List<MainDataBean.Item> bannerItems = new ArrayList<>();
-            for (Element element : bannerEle) {
-                MainDataBean.Item item = new MainDataBean.Item();
-                item.setTitle(element.select("h3.slide-info-title").text());
-                // 提取图片URL（从 style 属性中解析）
-                Element imgDiv = element.selectFirst("div[style^=background-image]");
-                String imageUrl;
-                if (imgDiv != null) {
-                    String style = imgDiv.attr("style");  // e.g. background-image: url(/upload/vod/xxx.jpg);
-                    imageUrl = style.replaceAll(".*url\\(['\"]?(.*?)['\"]?\\).*", "$1");
-                    item.setImg(getImg(imageUrl));
-                } else {
-                    // 2025年9月20日19:50:06 新版获取图片
-                    Element el = element.selectFirst(".swiper-lazy.slid-e-bj");
-                    if (el != null) {
-                        imageUrl = el.attr("data-background");
+            if (bannerIcuEle.size() > 0) {
+                for (Element element : bannerIcuEle) {
+                    MainDataBean.Item item = new MainDataBean.Item();
+                    item.setTitle(element.select("h3.slide-info-title").text());
+                    // 提取图片URL（从 style 属性中解析）
+                    Element imgDiv = element.selectFirst("div[style^=background-image]");
+                    String imageUrl;
+                    if (imgDiv != null) {
+                        String style = imgDiv.attr("style");  // e.g. background-image: url(/upload/vod/xxx.jpg);
+                        imageUrl = style.replaceAll(".*url\\(['\"]?(.*?)['\"]?\\).*", "$1");
                         item.setImg(getImg(imageUrl));
+                    } else {
+                        // 2025年9月20日19:50:06 新版获取图片
+                        Element el = element.selectFirst(".swiper-lazy.slid-e-bj");
+                        if (el != null) {
+                            imageUrl = el.attr("data-background");
+                            item.setImg(getImg(imageUrl));
+                        }
                     }
+                    // 提取“影片详情”的 href 链接
+                    Element detailLink = element.selectFirst("a:contains(影片详情)");
+                    String detailHref = detailLink != null ? detailLink.attr("href") : null;
+                    item.setUrl(detailHref);
+                    item.setEpisodes(element.select(".slide-info").text());
+                    bannerItems.add(item);
                 }
-                // 提取“影片详情”的 href 链接
-                Element detailLink = element.selectFirst("a:contains(影片详情)");
-                String detailHref = detailLink != null ? detailLink.attr("href") : null;
-                item.setUrl(detailHref);
-                item.setEpisodes(element.select(".slide-info").text());
-                bannerItems.add(item);
+            } else if (bannerComEle.size() > 0) {
+                for (Element element : bannerComEle) {
+                    MainDataBean.Item item = new MainDataBean.Item();
+                    item.setTitle(element.select("h3.slide-info-title").text());
+                    item.setImg(getImg(element.select(".slide-time-img3").attr("data-background")));
+                    String detailHref = element.select("a").attr("href");
+                    item.setUrl(detailHref);
+                    item.setEpisodes(element.select(".slide-info").text());
+                    bannerItems.add(item);
+                }
             }
             mainDataBean.setItems(bannerItems);
             mainDataBeans.add(mainDataBean);
             // 日番、美番
             Elements boxs = document.select(".box-width.wow.fadeInUp");
             if (boxs.size() == 0)
+            {
+                LogUtil.logInfo("[.box-width.wow.fadeInUp]", "boxsEle size = 0");
                 return ResultUtils.parserFail();
+            }
             for (Element box : boxs) {
                 // 过滤番剧周期表
                 if ("week-module-box".equals(box.id()))
@@ -520,14 +538,14 @@ public class GiriGiriLoveImpl implements ParserInterface {
                 if (filterTitle.contains("类型")|| filterTitle.contains("類型")) {
                     classificationDataBean.setIndex(1);
                 } else if (filterTitle.contains("季度")) {
-                    classificationDataBean.setIndex(3);
+                    classificationDataBean.setIndex(2);
                 } else if (filterTitle.contains("年份")) {
                     classificationDataBean.setIndex(3);
                 } else if (filterTitle.contains("语言")|| filterTitle.contains("語言")) {
                     classificationDataBean.setIndex(4);
-                } else if (filterTitle.contains("类别")|| filterTitle.contains("類别")) {
+                } else if (filterTitle.contains("原作")) {
                     classificationDataBean.setIndex(5);
-                } else if (filterTitle.contains("改编")|| filterTitle.contains("改編")) {
+                } else if (filterTitle.contains("資源")|| filterTitle.contains("资源")) {
                     classificationDataBean.setIndex(6);
                 }
                 Elements aElements = column.select("a");
@@ -536,7 +554,7 @@ public class GiriGiriLoveImpl implements ParserInterface {
                     String liTitle = a.text();
                     if (liTitle.contains("注意"))
                         continue;
-                    String href = filterTitle.contains("类别")|| filterTitle.contains("類别") ?  "/version/"+a.text()+"/" : a.text();
+                    String href = filterTitle.contains("原作") ?  "/version/"+a.text()+"/" : a.text();
                     boolean isAll = liTitle.equals("全部");
                     items.add(new ClassificationDataBean.Item(liTitle, href.replace("全部", ""), isAll));
                 }

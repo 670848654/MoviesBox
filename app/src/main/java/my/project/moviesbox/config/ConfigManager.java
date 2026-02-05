@@ -36,6 +36,10 @@ public class ConfigManager {
         return instance;
     }
 
+    public boolean isOverridePendingTransition() {
+        return resources.getBoolean(R.bool.overridePendingTransition);
+    }
+
     public boolean isAppInfo() {
         return resources.getBoolean(R.bool.appInfo);
     }

@@ -26,6 +26,7 @@ import my.project.moviesbox.adapter.VodListAdapter;
 import my.project.moviesbox.contract.VodListContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
 import my.project.moviesbox.custom.FabExtendingOnScrollListener;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.custom.VideoPreviewDialog;
 import my.project.moviesbox.databinding.ActivityVodListBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
@@ -207,6 +208,10 @@ public class VodListActivity extends BaseMvpActivity<VodListModel, VodListContra
             spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait, false);
         }
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
+        if (mRecyclerView.getTag() == null) {
+            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            mRecyclerView.setTag("decoration_added");
+        }
         mRecyclerView.getLayoutManager().scrollToPosition(position);
     }
 

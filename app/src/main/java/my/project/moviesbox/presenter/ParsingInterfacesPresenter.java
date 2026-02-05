@@ -1,5 +1,7 @@
 package my.project.moviesbox.presenter;
 
+import com.alibaba.fastjson.JSONObject;
+
 import my.project.moviesbox.contract.ParsingInterfacesContract;
 import my.project.moviesbox.model.ParsingInterfacesModel;
 
@@ -22,9 +24,9 @@ public class ParsingInterfacesPresenter extends Presenter<ParsingInterfacesContr
         model = new ParsingInterfacesModel();
     }
 
-    public void parser(String parserUrl, String url) {
+    public void parser(String url, boolean isEpisodes) {
         view.loadingView();
-        model.parser(parserUrl, url, this);
+        model.parser(url, isEpisodes, this);
     }
 
     /**
@@ -37,12 +39,17 @@ public class ParsingInterfacesPresenter extends Presenter<ParsingInterfacesContr
      */
     @Override
     public void error(String msg) {
-        view.errorView(msg);
+
     }
 
     @Override
-    public void success(Object object) {
-        view.success(object);
+    public void success(JSONObject object, boolean isEpisodes) {
+        view.success(object, isEpisodes);
+    }
+
+    @Override
+    public void error(String msg, boolean isEpisodes) {
+        view.error(msg, isEpisodes);
     }
 
     @Override

@@ -27,10 +27,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:strokeColor="@color/pink200"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:layout_marginLeft="15dp"
-                android:layout_marginRight="15dp">
+                android:layout_margin="8dp">
 
                 <LinearLayout
                     android:paddingLeft="15dp"
@@ -95,11 +92,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:layout_marginLeft="15dp"
-                android:layout_marginRight="15dp">
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="8dp">
 
                 <LinearLayout
-                    android:layout_margin="15dp"
+                    android:layout_margin="5dp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">

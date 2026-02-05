@@ -30,6 +30,7 @@ import my.project.moviesbox.adapter.FavoriteListAdapter;
 import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.contract.FavoriteContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.database.entity.TDirectory;
 import my.project.moviesbox.database.entity.TFavoriteWithFields;
 import my.project.moviesbox.database.enums.DirectoryTypeEnum;
@@ -336,6 +337,10 @@ public class FavoriteFragment extends BaseMvpFragment<FavoriteModel, FavoriteCon
             }
         });
         mRecyclerView.setLayoutManager(gridLayoutManager);
+        if (mRecyclerView.getTag() == null) {
+            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            mRecyclerView.setTag("decoration_added");
+        }
         mRecyclerView.getLayoutManager().scrollToPosition(position);
     }
 
@@ -375,10 +380,10 @@ public class FavoriteFragment extends BaseMvpFragment<FavoriteModel, FavoriteCon
                         application.showToastMsg(String.format("已变更到 [%s] 中", selectDirectoryTitle), DialogXTipEnum.SUCCESS);
                         if (directoryId.equals("all")) {
                             tFavoriteWithField.setDirectoryName(selectDirectoryTitle);
-                            adapter.notifyItemChanged(position + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0));
+//                            adapter.notifyItemChanged(position);
                             return;
                         }
-                        adapter.removeAt(position + adapter.getHeaderLayoutCount() + (adapter.hasEmptyView() ? 1 : 0));
+                        adapter.removeAt(position);
                         favoriteCount = TFavoriteManager.queryFavoriteCountByDirectoryId(directoryId);
                         if (favoriteCount == 0) {
                             setRecyclerViewEmpty();

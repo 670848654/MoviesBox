@@ -44,6 +44,7 @@ import my.project.moviesbox.config.ConfigManager;
 import my.project.moviesbox.config.M3U8DownloadConfig;
 import my.project.moviesbox.contract.DownloadContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.database.entity.TDirectory;
 import my.project.moviesbox.database.entity.TDownloadData;
 import my.project.moviesbox.database.entity.TDownloadDataWithFields;
@@ -431,6 +432,10 @@ public class DownloadFragment extends BaseMvpFragment<DownloadModel, DownloadCon
             }
         });
         recyclerView.setLayoutManager(gridLayoutManager);
+        if (recyclerView.getTag() == null) {
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(0, true));
+            recyclerView.setTag("decoration_added");
+        }
         recyclerView.getLayoutManager().scrollToPosition(position);
     }
 

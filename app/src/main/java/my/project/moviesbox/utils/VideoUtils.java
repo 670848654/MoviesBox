@@ -25,7 +25,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.ArrayList;
@@ -183,18 +182,6 @@ public class VideoUtils {
                         }
                     }
                 }
-                /*for (File tsFile : fileList) {
-                    try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(tsFile))) {
-                        // 打印前 32 字节内容（调试阶段使用）
-                        *//*byte[] preview = new byte[32];
-                        bis.mark(preview.length);
-                        bis.read(preview);
-                        bis.reset();
-                        M3U8Cleaner.debugHeader(preview);*//*
-                        // 调用清理方法，自动检测伪装头并写入对齐数据
-                        M3U8Cleaner.clean(tsFile.getName(), bis, bos);
-                    }
-                }*/
             }
 
             LogUtil.logInfo("TsMergeHandler", "合并TS成功");
@@ -212,36 +199,16 @@ public class VideoUtils {
      * <p>参考 https://blog.csdn.net/feiyu361/article/details/121196667</p>
      * @return 第一个合法 TS 包起始位置
      */
-    public static int findTsStartPosition(InputStream is) throws IOException {
-        is.mark(1024);
-        int firstByteIndex = 0;
-        int b;
-        int[] window = new int[3]; // 三字节窗口
-        int count = 0;
-
-        while ((b = is.read()) != -1 && firstByteIndex < 1024) {
-            window[count % 3] = b;
-            count++;
-
-            if (count >= 3) {
-                int i = count % 3;
-                // 判断窗口是否为 0x47 0x40 0x11
-                if (window[i % 3] == 0x47 &&
-                        window[(i + 1) % 3] == 0x40 &&
-                        window[(i + 2) % 3] == 0x11) {
-                    // 第一个合法字节位置
-                    int startPos = firstByteIndex - 2; // 减去窗口长度-1
-                    is.reset();
-                    is.skip(startPos);
-                    return startPos;
-                }
+    private static int findTsStartPosition(BufferedInputStream bis) throws IOException {
+        int skip = 0;
+        int byteRead;
+        while ((byteRead = bis.read()) != -1) {
+            skip++;
+            if (byteRead == 0x47) {
+                return skip - 1; // 返回找到的位置，减去当前的字节位置
             }
-            firstByteIndex++;
         }
-
-        // 没找到，直接从 0 开始
-        is.reset();
-        return 0;
+        return 0; // 如果没有找到0x47，则返回0
     }
 
     /**

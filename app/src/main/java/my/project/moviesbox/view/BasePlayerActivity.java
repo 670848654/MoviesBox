@@ -77,6 +77,7 @@ import my.project.moviesbox.contract.DanmuContract;
 import my.project.moviesbox.custom.DanmakuJsonParser;
 import my.project.moviesbox.custom.DanmukuXmlParser;
 import my.project.moviesbox.custom.JZPlayer;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.custom.TextViewAnimator;
 import my.project.moviesbox.database.entity.TDownloadDataWithFields;
 import my.project.moviesbox.database.manager.TDownloadDataManager;
@@ -348,6 +349,10 @@ public abstract class BasePlayerActivity extends BaseActivity<ActivityPlayerBind
         layoutManager.setFlexWrap(FlexWrap.WRAP);         // 换行
         layoutManager.setJustifyContent(JustifyContent.FLEX_START); // 起始对齐
         recyclerView.setLayoutManager(layoutManager);
+        if (recyclerView.getTag() == null) {
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            recyclerView.setTag("decoration_added");
+        }
         setAdapter();
     }
 

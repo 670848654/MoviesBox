@@ -24,6 +24,7 @@ import my.project.moviesbox.R;
 import my.project.moviesbox.adapter.VodListAdapter;
 import my.project.moviesbox.contract.TopTicListContract;
 import my.project.moviesbox.custom.CustomLoadMoreView;
+import my.project.moviesbox.custom.SmartGridSpacingDecoration;
 import my.project.moviesbox.databinding.ActivityVodListBinding;
 import my.project.moviesbox.enums.DialogXTipEnum;
 import my.project.moviesbox.model.TopticListModel;
@@ -195,6 +196,10 @@ public class TopticListActivity extends BaseMvpActivity<TopticListModel, TopTicL
             spanCount = parserInterface.setVodListItemSize(Utils.isPad(), isPortrait, false);
         }
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
+        if (mRecyclerView.getTag() == null) {
+            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            mRecyclerView.setTag("decoration_added");
+        }
         mRecyclerView.getLayoutManager().scrollToPosition(position);
     }
 
