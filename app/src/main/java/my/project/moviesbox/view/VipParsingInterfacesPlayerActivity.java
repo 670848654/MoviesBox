@@ -402,7 +402,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseMvpActivity<ParsingI
         layoutManager.setJustifyContent(JustifyContent.FLEX_START); // 起始对齐
         recyclerView.setLayoutManager(layoutManager);
         if (recyclerView.getTag() == null) {
-            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true, adapter));
             recyclerView.setTag("decoration_added");
         }
     }

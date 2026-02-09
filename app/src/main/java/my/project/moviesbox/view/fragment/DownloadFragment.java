@@ -433,7 +433,7 @@ public class DownloadFragment extends BaseMvpFragment<DownloadModel, DownloadCon
         });
         recyclerView.setLayoutManager(gridLayoutManager);
         if (recyclerView.getTag() == null) {
-            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(0, true));
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(0, true, adapter));
             recyclerView.setTag("decoration_added");
         }
         recyclerView.getLayoutManager().scrollToPosition(position);

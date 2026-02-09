@@ -113,7 +113,7 @@ public class WeekFragment extends BaseFragment<FragmentWeekBinding> {
         int spanCount = parserInterface.setWeekItemListItemSize(Utils.isPad(), isPortrait);
         recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), spanCount));
         if (recyclerView.getTag() == null) {
-            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true, adapter));
             recyclerView.setTag("decoration_added");
         }
         recyclerView.getLayoutManager().scrollToPosition(position);

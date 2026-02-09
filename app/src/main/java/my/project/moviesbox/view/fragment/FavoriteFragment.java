@@ -338,7 +338,7 @@ public class FavoriteFragment extends BaseMvpFragment<FavoriteModel, FavoriteCon
         });
         mRecyclerView.setLayoutManager(gridLayoutManager);
         if (mRecyclerView.getTag() == null) {
-            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true, adapter));
             mRecyclerView.setTag("decoration_added");
         }
         mRecyclerView.getLayoutManager().scrollToPosition(position);
@@ -380,7 +380,7 @@ public class FavoriteFragment extends BaseMvpFragment<FavoriteModel, FavoriteCon
                         application.showToastMsg(String.format("已变更到 [%s] 中", selectDirectoryTitle), DialogXTipEnum.SUCCESS);
                         if (directoryId.equals("all")) {
                             tFavoriteWithField.setDirectoryName(selectDirectoryTitle);
-//                            adapter.notifyItemChanged(position);
+                            adapter.notifyItemChanged(position);
                             return;
                         }
                         adapter.removeAt(position);

@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.google.android.flexbox.FlexboxLayoutManager;
 
 /**
@@ -21,10 +22,12 @@ import com.google.android.flexbox.FlexboxLayoutManager;
 public class SmartGridSpacingDecoration extends RecyclerView.ItemDecoration {
     private final int space;
     private final boolean includeEdge;
+    private final BaseQuickAdapter<?, ?> adapter;
 
-    public SmartGridSpacingDecoration(int space, boolean includeEdge) {
+    public SmartGridSpacingDecoration(int space, boolean includeEdge, BaseQuickAdapter<?, ?> adapter) {
         this.space = space;
         this.includeEdge = includeEdge;
+        this.adapter = adapter;
     }
 
     @Override
@@ -50,21 +53,40 @@ public class SmartGridSpacingDecoration extends RecyclerView.ItemDecoration {
 
         GridLayoutManager manager = (GridLayoutManager) parent.getLayoutManager();
         int spanCount = manager.getSpanCount();
-        int column = position % spanCount;
+
+        int headerCount = adapter.getHeaderLayoutCount();
+
+        // 如果是 header
+        if (position < headerCount) {
+            if (includeEdge) {
+                outRect.left = space;
+                outRect.right = space;
+                outRect.top = space;
+            }
+            return;
+        }
+
+        // 真实数据 position（去掉 header）
+        int realPosition = position - headerCount;
+
+        int column = realPosition % spanCount;
 
         if (includeEdge) {
             outRect.left = space - column * space / spanCount;
             outRect.right = (column + 1) * space / spanCount;
 
-            if (position < spanCount) {
+            if (realPosition < spanCount) {
                 outRect.top = space;
             }
+
             outRect.bottom = space;
+
         } else {
+
             outRect.left = column * space / spanCount;
             outRect.right = space - (column + 1) * space / spanCount;
 
-            if (position >= spanCount) {
+            if (realPosition >= spanCount) {
                 outRect.top = space;
             }
         }

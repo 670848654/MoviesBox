@@ -145,7 +145,7 @@ public class VipParsingInterfacesActivity extends BaseMvpActivity<ParsingInterfa
 //        recyclerView.setLayoutManager(new GridLayoutManager(this, Utils.isPad() ? 10 : 4));
         recyclerView.setLayoutManager(new FlexboxLayoutManager(this));
         if (recyclerView.getTag() == null) {
-            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true, adapter));
             recyclerView.setTag("decoration_added");
         }
     }

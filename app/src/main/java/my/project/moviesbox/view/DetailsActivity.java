@@ -49,6 +49,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
+import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.entity.MultiItemEntity;
 import com.ctetin.expandabletextviewlibrary.ExpandableTextView;
 import com.google.android.flexbox.FlexDirection;
@@ -581,7 +582,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         tagBottomSheetDialog.setContentView(dialogDramaBinding.getRoot());
         expandTagListRv.setLayoutManager(getFlexboxLayoutManager());
         if (expandTagListRv.getTag() == null) {
-            expandTagListRv.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            expandTagListRv.addItemDecoration(new SmartGridSpacingDecoration(16, true, detailTagAdapter));
             expandTagListRv.setTag("decoration_added");
         }
         detailTagAdapter.setOnItemLongClickListener((adapter, view, position) -> {
@@ -611,7 +612,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
             return true;
         });
 
-        dramaListRv.setLayoutManager(getLinearLayoutManager(dramaListRv));
+        dramaListRv.setLayoutManager(getLinearLayoutManager(dramaListRv, dramaListAdapter));
         dramaListRv.setAdapter(dramaListAdapter);
         dramaListRv.setNestedScrollingEnabled(false);
     }
@@ -739,11 +740,11 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         return layoutManager;
     }
 
-    private LinearLayoutManager getLinearLayoutManager(RecyclerView recyclerView) {
+    private LinearLayoutManager getLinearLayoutManager(RecyclerView recyclerView, BaseQuickAdapter<?, ?> adapter) {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setOrientation(RecyclerView.HORIZONTAL);
         if (recyclerView.getTag() == null) {
-            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true, adapter));
             recyclerView.setTag("decoration_added");
         }
         return linearLayoutManager;
@@ -1156,13 +1157,13 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         int expandSpanCount = parserInterface.setDetailExpandListItemSize(Utils.isPad());
         expandListRv.setLayoutManager(new GridLayoutManager(this, expandSpanCount));
         if (expandListRv.getTag() == null) {
-            expandListRv.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            expandListRv.addItemDecoration(new SmartGridSpacingDecoration(16, true, expandListAdapter));
             expandListRv.setTag("decoration_added");
         }
         int downloadSpanCount = parserInterface.setDetailExpandListItemSize(Utils.isPad());
         downloadListRv.setLayoutManager(new GridLayoutManager(this, downloadSpanCount));
         if (downloadListRv.getTag() == null) {
-            downloadListRv.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            downloadListRv.addItemDecoration(new SmartGridSpacingDecoration(16, true, downloadAdapter));
             downloadListRv.setTag("decoration_added");
         }
     }
@@ -1249,7 +1250,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
                     multiRecommendDialog.show();
                     return true;
                 });
-                multiLayoutManager = getLinearLayoutManager(multiListRv);
+                multiLayoutManager = getLinearLayoutManager(multiListRv, multiAdapter);
                 multiListRv.setLayoutManager(multiLayoutManager);
                 multiListRv.setAdapter(multiAdapter);
                 multiListRv.setNestedScrollingEnabled(false);
@@ -1278,7 +1279,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
                     multiRecommendDialog.show();
                     return true;
                 });
-                recommendLayoutManager = getLinearLayoutManager(recommendRv);
+                recommendLayoutManager = getLinearLayoutManager(recommendRv, recommendAdapter);
                 recommendRv.setLayoutManager(recommendLayoutManager);
                 if (Utils.checkHasNavigationBar(this)) recommendRv.setPadding(0,0,0, Utils.getNavigationBarHeight(this));
                 recommendRv.setAdapter(recommendAdapter);
@@ -1358,7 +1359,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         detailsExpandListItemAdapter.setNewInstance(detailsExpandData);
         multiRecommendRv.setLayoutManager(new GridLayoutManager(this, spanCount));
         if (multiRecommendRv.getTag() == null) {
-            multiRecommendRv.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            multiRecommendRv.addItemDecoration(new SmartGridSpacingDecoration(16, true, detailsExpandListItemAdapter));
             multiRecommendRv.setTag("decoration_added");
         }
         multiRecommendRv.setAdapter(detailsExpandListItemAdapter);

@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SnapHelper;
 
 import com.chad.library.adapter.base.BaseMultiItemQuickAdapter;
+import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.entity.MultiItemEntity;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import com.google.android.material.carousel.CarouselLayoutManager;
@@ -164,8 +165,6 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
             else
                 helper.getView(R.id.moreBtn).setVisibility(View.GONE);
             if (helper.getItemViewType() == MultiItemEnum.ITEM_LIST.getType()) {
-                // 横向列表
-                initLinearLayoutRecycler(recyclerView);
                 switch (mainDataBean.getVodItemType()) {
                     case STYLE_1_1_DOT_4:
                         homeItemAdapter = new HomeItemAdapter(R.layout.item_home_data_type_0, items);
@@ -174,6 +173,8 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                         homeItemAdapter = new HomeItemAdapter(R.layout.item_home_data_type_1, items);
                         break;
                 }
+                // 横向列表
+                initLinearLayoutRecycler(recyclerView, homeItemAdapter);
             } else if (helper.getItemViewType() == MultiItemEnum.VOD_LIST.getType()) {
                 // 纵向列表
                 int spanCount;
@@ -182,7 +183,6 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                 } else {
                     spanCount = ParserInterfaceFactory.getParserInterface().setVodListItemSize(Utils.isPad(), isPortrait, false);
                 }
-                initGridLayoutRecycler(recyclerView, spanCount);
                 switch (mainDataBean.getVodItemType()) {
                     case STYLE_1_1_DOT_4:
                         homeItemAdapter = new HomeItemAdapter(R.layout.item_home_data_type_grid_0, items);
@@ -191,6 +191,7 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                         homeItemAdapter = new HomeItemAdapter(R.layout.item_home_data_type_grid_1, items);
                         break;
                 }
+                initGridLayoutRecycler(recyclerView, spanCount, homeItemAdapter);
             }
             homeItemAdapter.setOnItemClickListener((adapter, view, position) -> {
                 Utils.setVibration(view);
@@ -226,7 +227,7 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
         return layoutManager;
     }
 
-    private void initLinearLayoutRecycler(RecyclerView recyclerView) {
+    private void initLinearLayoutRecycler(RecyclerView recyclerView, BaseQuickAdapter<?, ?> adapter) {
         recyclerView.setLayoutManager(new LinearLayoutManager(context, RecyclerView.HORIZONTAL, false));
         // 先清空旧的
         if (recyclerView.getItemDecorationCount() > 0) {
@@ -234,10 +235,10 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                 recyclerView.removeItemDecorationAt(i);
             }
         }
-        recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+        recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true, adapter));
     }
 
-    private void initGridLayoutRecycler(RecyclerView recyclerView, int spanCount) {
+    private void initGridLayoutRecycler(RecyclerView recyclerView, int spanCount, BaseQuickAdapter<?, ?> adapter) {
         recyclerView.setLayoutManager(new GridLayoutManager(context, spanCount));
         // 先清空旧的
         if (recyclerView.getItemDecorationCount() > 0) {
@@ -245,7 +246,7 @@ public class HomeAdapter extends BaseMultiItemQuickAdapter<MultiItemEntity, Base
                 recyclerView.removeItemDecorationAt(i);
             }
         }
-        recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+        recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true, adapter));
     }
 
     /**

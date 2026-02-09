@@ -381,7 +381,7 @@ public class HistoryFragment extends BaseMvpFragment<HistoryModel, HistoryContra
         int spanCount = parserInterface.setHistoryListItemSize(Utils.isPad(), isPortrait);
         mRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), spanCount));
         if (mRecyclerView.getTag() == null) {
-            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(0, true));
+            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(0, true, adapter));
             mRecyclerView.setTag("decoration_added");
         }
         mRecyclerView.getLayoutManager().scrollToPosition(position);

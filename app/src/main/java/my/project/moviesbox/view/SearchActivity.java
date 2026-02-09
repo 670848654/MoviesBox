@@ -345,7 +345,7 @@ public class SearchActivity extends BaseMvpActivity<SearchModel, SearchContract.
         }
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
         if (mRecyclerView.getTag() == null) {
-            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true));
+            mRecyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true, adapter));
             mRecyclerView.setTag("decoration_added");
         }
         mRecyclerView.getLayoutManager().scrollToPosition(position);
