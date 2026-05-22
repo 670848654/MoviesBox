@@ -171,15 +171,37 @@ public class YjysImpl implements ParserInterface {
         try {
             Document document = Jsoup.parse(source);
             // 获取尾页的链接元素
-            Element lastPageLink = document.select("ul.pagination li.page-item:contains(尾页) a").first();
+            Element lastPageLink = document.select(".xl-pagination ul li:last-child a").first();
             // 提取 href 中的页码
-            String lastPageHref = lastPageLink.attr("href");
-            String lastPageNumber=  lastPageHref.substring(lastPageHref.lastIndexOf('/') + 1);
-            return Integer.valueOf(removeString(lastPageNumber, ';'));
+            if (lastPageLink != null) {
+                String lastPageHref = lastPageLink.attr("href"); // "/s/all/257?type=1"
+                // 截取最后一个 '/' 之后的所有内容
+                String endPart = lastPageHref.substring(lastPageHref.lastIndexOf('/') + 1);
+                // 只把最前面的连续数字提出来
+                String cleanNumber = extractFirstNumber(endPart);
+                if (cleanNumber != null) {
+                    return Integer.valueOf(cleanNumber);
+                }
+            }
+            return startPageNum();
         } catch (Exception e) {
             e.printStackTrace();
             return startPageNum();
         }
+    }
+
+    /**
+     * 提取字符串中开头的连续数字
+     */
+    private String extractFirstNumber(String str) {
+        if (str == null) return null;
+        // ^\d+ 匹配字符串开头的一串数字
+        Pattern pattern = Pattern.compile("^\\d+");
+        Matcher matcher = pattern.matcher(str);
+        if (matcher.find()) {
+            return matcher.group();
+        }
+        return null;
     }
 
     /**
@@ -204,7 +226,7 @@ public class YjysImpl implements ParserInterface {
             mainDataBean.setTags(tags);
             mainDataBeans.add(mainDataBean);
             /*************************** 解析banner内容开始 ***************************/
-            Elements bannerList = document.getElementById("carousel-captions").select("a.carousel-item");
+            Elements bannerList = document.select(".banner-slide");
             if (bannerList.size() == 0)
                 return ResultUtils.parserFail();
             List<MainDataBean.Item> bannerItems = new ArrayList<>();
@@ -212,48 +234,48 @@ public class YjysImpl implements ParserInterface {
             bannerBean.setHasMore(false);
             bannerBean.setDataType(BANNER_LIST.getType());
             bannerBean.setVodItemType(STYLE_16_9);
-            for (Element a : bannerList) {
+            for (Element banner : bannerList) {
                 MainDataBean.Item item = new MainDataBean.Item();
                 // 名称
-                item.setTitle(a.select("h3").text());
-                item.setEpisodes(a.select("p").text());
+                item.setTitle(banner.select("h1").text());
+                item.setEpisodes(banner.select("p.banner-desc").text());
                 // 地址
-                item.setUrl(a.attr("href"));
+                item.setUrl(banner.select("a").attr("href"));
                 // 图片
-                item.setImg(a.select("img").attr("src"));
+                item.setImg(banner.select("img").attr("src"));
                 bannerItems.add(item);
             }
             bannerBean.setItems(bannerItems);
             mainDataBeans.add(bannerBean);
             /*************************** 解析banner内容结束 ***************************/
             /*************************** 解析list内容开始 ***************************/
-            Elements headers = document.select(".page-header");
-            Elements vodItems = document.select(".container.px-1.px-md-2.my-2 .row-cards");
+            Elements headers = document.select(".category-grid .cat-item");
+            Elements vodItems = document.select(".movie-tabs .movie-block");
             if (headers.size() == 0 || vodItems.size() == 0)
                 return ResultUtils.parserFail();
             for (int i=0,size=headers.size(); i<size; i++) {
                 Element header = headers.get(i);
-                String headerTitle = header.select(".page-title").text();
-                String moreUrl = header.select("span.d-sm-inline a").attr("href");
+                String headerTitle = header.text();
+                String moreUrl = vodItems.get(i).select(".view-more-wrap a").attr("href");
                 MainDataBean contentBean = new MainDataBean();
                 // 更多跳转地址
                 contentBean.setDataType(ITEM_LIST.getType());
                 contentBean.setTitle(headerTitle);
                 contentBean.setHasMore(!moreUrl.isEmpty());
                 contentBean.setMore(moreUrl);
-                Elements vods = vodItems.get(i).select(".card");
+                Elements vods = vodItems.get(i).select(".movie-card");
                 List<MainDataBean.Item> vodItemList = new ArrayList<>();
                 for (Element vod : vods) {
                     MainDataBean.Item item = new MainDataBean.Item();
-                    String title = vod.select("h3").text(); // 标题
-                    // 当为电影时 这是评分
-                    Elements ribbonTop = vod.select("div.ribbon-top");
-                    // 当为多集时 这个集数
-                    Elements episodes = vod.select("span.badge.bg-pink");
+                    String title = vod.select("h4").text(); // 标题
+                    String rating = vod.select(".rating-badge").text();
+                    String episode = vod.select(".episode-badge").text();
                     item.setTitle(title);
                     item.setUrl(vod.select("a").attr("href"));
                     item.setImg(vod.select("img").attr("data-src"));
-                    item.setEpisodes(Utils.isNullOrEmpty(ribbonTop) ? episodes.text() : ribbonTop.text());
+                    item.setEpisodes(rating);
+                    if (!Utils.isNullOrEmpty(episode))
+                        item.setTopLeftTag(episode);
                     vodItemList.add(item);
                 }
 
@@ -284,39 +306,29 @@ public class YjysImpl implements ParserInterface {
         try {
             DetailsDataBean detailsDataBean = new DetailsDataBean();
             Document document = Jsoup.parse(source);
-            String title = document.select(".d-sm-block.d-md-none").text();
+            String title = document.select("h1.movie-title").text();
             if (title.isEmpty())
                 return ResultUtils.parserFail();
             detailsDataBean.setTitle(title);
             // 影视图片
-            String img = document.select(".col-md-auto.col-5.cover-lg-max-25 img").attr("src");
+            String img = document.select(".movie-poster img").attr("src");
             detailsDataBean.setImg(img);
             //影视地址
             detailsDataBean.setUrl(url);
-            detailsDataBean.setUpdateTime(document.select(".bg-purple-lt").text());
-            detailsDataBean.setScore(document.select(".bg-green-lt").text());
-//            detailsDataBean.setIntroduction(document.select(".text-truncate .text-orange").text());
-            Element synopsis = document.getElementById("synopsis");
-            if (!Utils.isNullOrEmpty(synopsis))
-                detailsDataBean.setIntroduction(synopsis.select(".card-body").text());
-            Elements tagList = document.select("p.mb-0.mb-md-2");
+//            detailsDataBean.setUpdateTime(document.select(".score-text").text());
+            detailsDataBean.setScore(document.select(".score-text").text());
+            detailsDataBean.setIntroduction(document.select(".desc").text());
+            Elements tagList = document.select(".info-list .info-item a.info-value");
             List<String> tagTitles = new ArrayList<>();
             List<String> tagUrls = new ArrayList<>();
             for (Element tag : tagList) {
-                String strong = tag.select("strong").text();
-                if (strong.contains("类型")) {
-                    Elements aList = tag.select("a");
-                    for (Element a : aList) {
-                        tagTitles.add(a.text());
-                        tagUrls.add(a.attr("href"));
-                    }
-                    break;
-                }
+                tagTitles.add(tag.text());
+                tagUrls.add(tag.attr("href"));
             }
             detailsDataBean.setTagTitles(tagTitles);
             detailsDataBean.setTagUrls(tagUrls);
             // 解析播放列表
-            Elements playElements = document.select(".d-flex").select(".me-2");
+            Elements playElements = document.select(".play-item");
             if (playElements.size() > 0) {
                 List<DetailsDataBean.Dramas> dramasList = new ArrayList<>();
                 DetailsDataBean.Dramas dramas = new DetailsDataBean.Dramas();
@@ -331,11 +343,11 @@ public class YjysImpl implements ParserInterface {
                 detailsDataBean.setDramasList(dramasList);
             }
             // 解析推荐列表
-            Elements recommendElements = document.select(".related .row-cards .col-lg"); //相关推荐
+            Elements recommendElements = document.select(".movie-card"); //相关推荐
             if (recommendElements.size() > 0) {
                 List<DetailsDataBean.Recommend> recommendList = new ArrayList<>();
                 for (Element recommend : recommendElements) {
-                    String recommendTitle = recommend.select("h4.text-truncate").text();
+                    String recommendTitle = recommend.select("h4").text();
                     String recommendImg = recommend.select("img").attr("src");
                     String recommendUrl = recommend.select("a").attr("href");
                     recommendList.add(new DetailsDataBean.Recommend(recommendTitle, recommendImg, recommendUrl));
@@ -402,7 +414,7 @@ public class YjysImpl implements ParserInterface {
     public Result<List<ClassificationDataBean>> parserClassificationList(String source) {
         try {
             Document document = Jsoup.parse(source);
-            Elements elements = document.select(".all-filter-wrapper dl");
+            Elements elements = document.select(".xl-compact-filter dl");
             List<ClassificationDataBean> classificationDataBeans = new ArrayList<>();
             if (elements.size() > 0) {
                 int index = 1;
@@ -495,15 +507,15 @@ public class YjysImpl implements ParserInterface {
             Document document = Jsoup.parse(source);
             Element verifyCode = document.getElementById("verifyCode");
             if (Utils.isNullOrEmpty(verifyCode)) {
-                Elements videoList = document.select(".col-12 .row");
+                Elements videoList = document.select(".xl-result-item");
                 if (videoList.size() > 0) {
                     for (Element video : videoList) {
                         VodDataBean item = new VodDataBean();
-                        String videoName = video.select(".search-movie-title").text(); // 标题
+                        String videoName = video.select("a.xl-result-name").text(); // 标题
 //                String dateTime = video.select("p.text-muted").text(); // r日期
 //                Elements ribbonTop = video.select(".ribbon-top"); // 评分
                         item.setTitle(videoName);
-                        item.setUrl(video.select(".search-movie-title").attr("href"));
+                        item.setUrl(video.select("a.xl-result-name").attr("href"));
                         item.setImg(video.select("img").attr("src"));
 //                item.setEpisodesTag(dateTime);
 //                item.setTopLeftTag(Utils.isNullOrEmpty(ribbonTop) ? "" : ribbonTop.text());
@@ -532,18 +544,20 @@ public class YjysImpl implements ParserInterface {
         try {
             List<VodDataBean> vodDataBeans  = new ArrayList<>();
             Document document = Jsoup.parse(source);
-            Elements videoList = document.select(".card.card-sm.card-link");
+            Elements videoList = document.select(".movie-card");
+
             if (videoList.size() > 0) {
                 for (Element video : videoList) {
                     VodDataBean item = new VodDataBean();
-                    String videoName = video.select(".card-title").text(); // 标题
-                    String dateTime = video.select("p.text-muted").text(); // r日期
-                    Elements ribbonTop = video.select(".ribbon-top"); // 评分
-                    item.setTitle(videoName);
+                    String title = video.select("h4").text(); // 标题
+                    String rating = video.select(".rating-badge").text();
+                    String episode = video.select(".episode-badge").text();
+                    item.setTitle(title);
                     item.setUrl(video.select("a").attr("href"));
-                    item.setImg(video.select("img").attr("src"));
-                    item.setEpisodesTag(dateTime);
-                    item.setTopLeftTag(Utils.isNullOrEmpty(ribbonTop) ? "" : ribbonTop.text());
+                    item.setImg(video.select("img").attr("data-src"));
+                    item.setEpisodesTag(rating);
+                    if (!Utils.isNullOrEmpty(episode))
+                        item.setTopLeftTag(episode);
                     vodDataBeans.add(item);
                 }
                 logInfo("视频列表数据", vodDataBeans.toString());
@@ -1061,17 +1075,17 @@ public class YjysImpl implements ParserInterface {
             Document document = Jsoup.parse(source);
             for (int i=0,size=7; i<size; i++) {
                 int week = WeekEnum.values()[i].getIndex();
-                Element weekDom = document.getElementById("tabs-"+(i+1));
+                Elements weekDom = document.select(".comments-list .tab-pane");
                 if (Utils.isNullOrEmpty(weekDom))
                     return null;
-                Elements weekA = weekDom.select("a");
+                Elements weekA = weekDom.get(i+1).select(".video-item");
                 List<WeekDataBean.WeekItem> weekItems = new ArrayList<>();
-                for (Element a : weekA) {
+                for (Element item : weekA) {
                     weekItems.add(new WeekDataBean.WeekItem(
-                            a.select("span.text-truncate").text(),
+                            item.select("a").text(),
                             3,
-                            a.attr("href"),
-                            a.select("span.text-muted").text(),
+                            item.select("a").attr("href"),
+                            item.select(".date").text(),
                             ""
                     ));
                 }
