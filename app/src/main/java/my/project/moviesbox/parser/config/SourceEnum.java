@@ -141,12 +141,12 @@ public enum SourceEnum {
             "",
             new ArrayList<>()),
     YJYS(SourceIndexEnum.YJYS,
-            "修罗影视", // 原 哔嘀影视->缘觉影视->修罗影视
+            "雪落影视", // 原 哔嘀影视->缘觉影视->修罗影视->雪落影视
             MOVIES.title,
             MOVIES.bg,
             "质量高，无广告但更新随缘",
             "yjys",
-            "https://xl01.com.de",
+            "https://xl02.com.de",
             "",
             "/search/%s/%s",
             false,
@@ -194,7 +194,7 @@ public enum SourceEnum {
             "https://bgm.girigirilove.com",
             "https://girigirilove.top/",
             "/search/%s----------%s---/", // 搜索参数.分页
-            true,
+            false,
             "/show/%s-%s-%s-%s-%s----%s-%s--%s%s", // 频道.季度.排序.类型.语言.分页.改编.年份.类别
             "https://m3u8.girigirilove.com/api.php/Scrolling/getVodOutScrolling,https://m3u8.girigirilove.com/api.php/Scrolling/getScrolling", // 该站点存在两个弹幕接口（默认使用第一个貌似站外弹幕数据，第二个貌似本站弹幕数据）弹幕API接口,POST请求{"play_url":"https://m3u8.girigirilove.com/zijian/oldanime/2025/04/cht/YourFormaCHT/01/playlist.m3u8"}参数为当前播放地址
             "",
