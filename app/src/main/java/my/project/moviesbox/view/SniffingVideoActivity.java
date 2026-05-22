@@ -99,6 +99,9 @@ public class SniffingVideoActivity extends BaseActivity<ActivitySniffingVideoBin
         settings.setAllowFileAccess(true); // 允许文件访问
         settings.setUseWideViewPort(true); // 支持大视窗
         settings.setLoadWithOverviewMode(true); // 强制页面使用适应屏幕的模式
+        settings.setDatabaseEnabled(true);
+        settings.setAllowContentAccess(true);
+
         webView.addJavascriptInterface(new JsInterface(), "AndroidJs");
         webView.setWebViewClient(new MyWebViewClient(this));
         webView.setWebChromeClient(new WebChromeClient() {
@@ -183,7 +186,7 @@ public class SniffingVideoActivity extends BaseActivity<ActivitySniffingVideoBin
                 if (!playUrls.contains(dialogItemBean)) {
                     playUrls.add(dialogItemBean);
                 }
-                showAlert("未知");
+//                showAlert("未知");
             }
             return null;
         }

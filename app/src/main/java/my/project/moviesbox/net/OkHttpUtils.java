@@ -228,10 +228,11 @@ public class OkHttpUtils {
      * @return
      * @throws IOException
      */
-    public InputStream performSyncRequestIs(String url) throws IOException {
+    public InputStream performSyncRequestIs(String url, Headers headers) throws IOException {
         LogUtil.logInfo("GET请求", url);
         // 创建请求
         Request request = new Request.Builder()
+                .headers(headers)
                 .url(url)
                 .build();
         // 发起同步请求

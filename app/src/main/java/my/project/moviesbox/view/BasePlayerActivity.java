@@ -350,7 +350,7 @@ public abstract class BasePlayerActivity extends BaseActivity<ActivityPlayerBind
         layoutManager.setJustifyContent(JustifyContent.FLEX_START); // 起始对齐
         recyclerView.setLayoutManager(layoutManager);
         if (recyclerView.getTag() == null) {
-            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true, dramaAdapter));
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(8, true, dramaAdapter));
             recyclerView.setTag("decoration_added");
         }
         setAdapter();

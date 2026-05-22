@@ -103,6 +103,8 @@ public class JZPlayer extends JzvdStd {
     public boolean openDamuConfig; // 是否开启弹幕
     public boolean hasDanmuConfig; // 站点是否支持弹幕
     public int damuShowCount; // 默认弹幕显示数量
+    // 弹幕是否已经启动过
+    private boolean isDanmakuStarted = false;
     public DanmakuView danmakuView;
     public DanmakuContext danmakuContext;
     public BaseDanmakuParser danmakuParser;
@@ -887,6 +889,7 @@ public class JZPlayer extends JzvdStd {
             danmakuView.clear();
             danmakuView.clearDanmakusOnScreen();
         }
+        isDanmakuStarted = false; // 播放结束重置状态
     }
 
     @Override
@@ -928,6 +931,10 @@ public class JZPlayer extends JzvdStd {
                 } else
                     danmakuView.resume();
             }*/
+            // 缓冲结束，如果是在播放状态下，恢复弹幕
+            if (danmakuView != null && danmakuView.isPrepared() && state == STATE_PLAYING) {
+                danmakuView.resume();
+            }
         }
     }
 
@@ -1000,6 +1007,7 @@ public class JZPlayer extends JzvdStd {
     @Override
     public void reset() {
         super.reset();
+        isDanmakuStarted = false; // 重置弹幕启动状态
     }
 
     public void showDanmmu() {
@@ -1045,13 +1053,25 @@ public class JZPlayer extends JzvdStd {
     }
 
     private void tryStartDanmaku() {
-        if (danmakuView != null && danmakuView.isPrepared()) {
+        /*if (danmakuView != null && danmakuView.isPrepared()) {
             // 同步视频进度
             danmakuView.seekTo(getCurrentPositionWhenPlaying());
             if (isVideoPrepared && isDanmakuPrepared) {
                 switch (state) {
                     case STATE_PREPARED -> danmakuView.start();
                     default -> danmakuView.resume();
+                }
+            }
+        }*/
+        if (danmakuView != null && danmakuView.isPrepared()) {
+            if (isVideoPrepared && isDanmakuPrepared) {
+                if (!isDanmakuStarted) {
+                    // 首次启动，传入当前视频进度并启动弹幕
+                    danmakuView.start(getCurrentPositionWhenPlaying());
+                    isDanmakuStarted = true;
+                } else {
+                    // 暂停后恢复播放
+                    danmakuView.resume();
                 }
             }
         }

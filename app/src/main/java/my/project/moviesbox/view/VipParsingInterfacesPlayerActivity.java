@@ -112,6 +112,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseMvpActivity<ParsingI
     public static final String ACTION_FORWARD = "ACTION_FORWARD";
     public static final String ACTION_REWIND = "ACTION_REWIND";
     protected String videoTitle, dramaTitle, url;
+    protected boolean isVip; // 是否是vip解析过来的
     protected boolean playNextVideo;
     protected int clickIndex; // 当前点击剧集
     protected boolean hasPreVideo = false;
@@ -197,6 +198,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseMvpActivity<ParsingI
         danmuUrl = bundle.getString("danmuUrl");
         dmid = bundle.getString("dmid");
         dramasItems = (List<VipVideoDataBean.DramasItem>) bundle.getSerializable("list");
+        isVip = bundle.getBoolean("vip");
         initPlayerView();
         initNavConfigView();
         initUserConfig();
@@ -297,22 +299,26 @@ public class VipParsingInterfacesPlayerActivity extends BaseMvpActivity<ParsingI
         player.isVideoPrepared = false;
         player.isDanmakuPrepared = false;
         player.setUp(playUrl, Utils.isNullOrEmpty(videoTitle) ? dramaTitle : videoTitle + " - " + dramaTitle, Jzvd.SCREEN_FULLSCREEN, JZExoPlayer.class);
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put("accept", "*/*");
-        headers.put("accept-encoding", "gzip, deflate, br, zstd");
-        headers.put("accept-language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6");
-        headers.put("origin", "https://jx.xmflv.cc");
-        headers.put("priority", "u=1, i");
-        headers.put("sec-ch-ua", "\"Not;A=Brand\";v=\"99\", \"Microsoft Edge\";v=\"139\", \"Chromium\";v=\"139\"");
-        headers.put("sec-ch-ua-mobile", "?0");
-        headers.put("sec-ch-ua-platform", "\"Windows\"");
-        headers.put("sec-fetch-dest", "empty");
-        headers.put("sec-fetch-mode", "cors");
-        headers.put("sec-fetch-site", "cross-site");
-        headers.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-                "AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0");
-        player.jzDataSource.headerMap = headers;
+        String urlInfo = "%s (%s), 视频地址：%s";
+        LogUtil.logInfo(String.format(urlInfo, videoTitle, dramaTitle, playUrl), "");
+        if (isVip) {
+            HashMap<String, String> headers = new HashMap<>();
+            headers.put("accept", "*/*");
+            headers.put("accept-encoding", "gzip, deflate, br, zstd");
+            headers.put("accept-language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6");
+            headers.put("origin", "https://jx.xmflv.cc");
+            headers.put("priority", "u=1, i");
+            headers.put("sec-ch-ua", "\"Not;A=Brand\";v=\"99\", \"Microsoft Edge\";v=\"139\", \"Chromium\";v=\"139\"");
+            headers.put("sec-ch-ua-mobile", "?0");
+            headers.put("sec-ch-ua-platform", "\"Windows\"");
+            headers.put("sec-fetch-dest", "empty");
+            headers.put("sec-fetch-mode", "cors");
+            headers.put("sec-fetch-site", "cross-site");
+            headers.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                    "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                    "Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0");
+            player.jzDataSource.headerMap = headers;
+        }
         player.startVideo();
         player.startButton.performClick();//响应点击事件
         if (!Utils.isNullOrEmpty(danmuUrl))
@@ -402,7 +408,7 @@ public class VipParsingInterfacesPlayerActivity extends BaseMvpActivity<ParsingI
         layoutManager.setJustifyContent(JustifyContent.FLEX_START); // 起始对齐
         recyclerView.setLayoutManager(layoutManager);
         if (recyclerView.getTag() == null) {
-            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(16, true, adapter));
+            recyclerView.addItemDecoration(new SmartGridSpacingDecoration(8, true, adapter));
             recyclerView.setTag("decoration_added");
         }
     }

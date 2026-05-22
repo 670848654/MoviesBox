@@ -35,7 +35,7 @@ import okhttp3.Response;
  */
 public class ParsingInterfacesModel extends BaseModel implements ParsingInterfacesContract.Model {
     // 接口地址 v3
-    public final static String PARSER_API = "https://202.189.8.170/Api";
+    public final static String PARSER_API = "https://api.hls.one:4433/Api";
     // 弹幕、剧集使用的接口地址前缀
     public final static String NORMAL_API_START = "https://dmku.hls.one";
     // 获取弹幕接口

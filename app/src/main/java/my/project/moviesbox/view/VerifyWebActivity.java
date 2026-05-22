@@ -1,10 +1,12 @@
 package my.project.moviesbox.view;
 
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
@@ -110,7 +112,14 @@ public class VerifyWebActivity extends BaseActivity<ActivityWebviewBinding> {
             getCookieBtn.setLayoutParams(params);
         }
         // 配置 WebView
-        webView.getSettings().setJavaScriptEnabled(true);
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
@@ -120,6 +129,13 @@ public class VerifyWebActivity extends BaseActivity<ActivityWebviewBinding> {
                     mSwipe.setRefreshing(false);
                 // 获取 Cookie
                 CookieManager cookieManager = CookieManager.getInstance();
+                cookieManager.setAcceptCookie(true);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    cookieManager.setAcceptThirdPartyCookies(webView, true);
+                    settings.setMixedContentMode(
+                            WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                    );
+                }
                 cookies = cookieManager.getCookie(url);
                 LogUtil.logInfo("getCookie", cookies);
             }

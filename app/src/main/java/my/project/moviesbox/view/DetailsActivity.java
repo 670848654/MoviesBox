@@ -248,7 +248,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
     private RecyclerView expandTagListRv;
     private BottomSheetDialog tagBottomSheetDialog;
     List<ClassificationDataBean.Item> detailTags = new ArrayList<>();
-    DetailTagAdapter detailTagAdapter;
+    private DetailTagAdapter detailTagAdapter;
     /**
      * 其他视图
      */
@@ -582,7 +582,7 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
         tagBottomSheetDialog.setContentView(dialogDramaBinding.getRoot());
         expandTagListRv.setLayoutManager(getFlexboxLayoutManager());
         if (expandTagListRv.getTag() == null) {
-            expandTagListRv.addItemDecoration(new SmartGridSpacingDecoration(16, true, detailTagAdapter));
+            expandTagListRv.addItemDecoration(new SmartGridSpacingDecoration(4, true, detailTagAdapter));
             expandTagListRv.setTag("decoration_added");
         }
         detailTagAdapter.setOnItemLongClickListener((adapter, view, position) -> {
@@ -1011,7 +1011,8 @@ public class DetailsActivity extends BaseMvpActivity<DetailsModel, DetailsContra
      * @param playUrl
      */
     private void playVod(String playUrl) {
-        LogUtil.logInfo("播放视频", playUrl);
+        String urlInfo = "%s (%s), 视频地址：%s";
+        LogUtil.logInfo(String.format(urlInfo, detailsTitle, dramaTitle, playUrl), "");
         cancelDialog();
         switch (SharedPreferencesUtils.getUserSetOpenVidePlayer()) {
             case 0 -> {

@@ -213,6 +213,7 @@ public class VipParsingInterfacesActivity extends BaseMvpActivity<ParsingInterfa
         bundle.putString("danmuUrl", danmuUrl);
         bundle.putString("dmid", dmid);
         bundle.putSerializable("list", (Serializable) dramasItemList);
+        bundle.putBoolean("vip", true);
         startActivity(new Intent(this, VipParsingInterfacesPlayerActivity.class).putExtras(bundle));
     }
 
