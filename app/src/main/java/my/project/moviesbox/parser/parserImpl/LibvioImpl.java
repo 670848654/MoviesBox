@@ -290,30 +290,31 @@ public class LibvioImpl implements ParserInterface {
         try {
             DetailsDataBean detailsDataBean = new DetailsDataBean();
             Document document = Jsoup.parse(source);
-            Elements content = document.select(".stui-pannel__bd .stui-content");
+            Elements content = document.select(".vod-hero__inner");
             if (content.size() == 0)
                 return ResultUtils.parserFail();
-            String title = content.select(".stui-content__detail h1").text();
-            String img = content.select(".stui-content__thumb a img").attr("data-original");
+            String title = content.select(".vod-info h1").text();
+            String img = content.select(".vod-poster .vod-poster__wrap a img").attr("data-original");
             detailsDataBean.setTitle(title);
             //影视图片
             detailsDataBean.setImg(img);
             //影视地址
             detailsDataBean.setUrl(url);
             // 无TAG
-            Elements data = content.select(".stui-content__detail p.data");
+            Elements data = content.select(".meta-item");
             for (Element s : data) {
                 if (s.text().contains("主演"))
                     detailsDataBean.setInfo(s.text());
                 else if (s.text().contains("更新"))
                     detailsDataBean.setUpdateTime(s.text());
-                else if (s.text().contains("评分"))
-                    detailsDataBean.setScore(s.text());
             }
+            Elements socre = content.select(".vod-rating .score");
+            if (!Utils.isNullOrEmpty(socre))
+                detailsDataBean.setScore(socre.text());
             // 简介
-            detailsDataBean.setIntroduction(content.select(".stui-content__detail p.desc .detail-content").text());
+            detailsDataBean.setIntroduction(content.select("span.detail-content").text());
             // 获取所有播放列表
-            Elements playList = document.select(".stui-pannel__bd .stui-vodlist__head");
+            Elements playList = document.select(".playlist-panel");
             if (playList.size() > 0) {
                 List<DetailsDataBean.Dramas> dramasList = new ArrayList<>();
                 for (Element play : playList) {
@@ -337,7 +338,7 @@ public class LibvioImpl implements ParserInterface {
                 }
                 // 解析剧集相关多季 该网点无
                 // 解析推荐列表
-                Elements recommendElements = document.select(".stui-pannel__bd ul.stui-vodlist.clearfix li a.lazyload"); //相关推荐
+                Elements recommendElements = document.select(".recommend-panel ul.stui-vodlist li div.stui-vodlist__box a.stui-vodlist__thumb"); //相关推荐
                 if (recommendElements.size() > 0) {
                     List<DetailsDataBean.Recommend> recommendList = new ArrayList<>();
                     for (Element recommend : recommendElements) {
@@ -594,6 +595,10 @@ public class LibvioImpl implements ParserInterface {
                 String jsonText = script.substring(script.indexOf("{"), script.lastIndexOf("}") + 1);
                 JSONObject jsonObject = JSON.parseObject(jsonText);
                 String url = jsonObject.getString("url");
+                if (url.endsWith("mp4")) {
+                    result.add(new DialogItemBean(url, MP4));
+                    return ResultUtils.ok(result);
+                }
                 String nextUrl = jsonObject.getString("link_next");
                 String id = jsonObject.getString("id");
                 String nid = jsonObject.getString("nid");
@@ -757,10 +762,10 @@ public class LibvioImpl implements ParserInterface {
     public DomainDataBean parserDomain(String source) {
         try {
             Document document = Jsoup.parse(source);
-            Elements aElements = document.select("ul li a");
+            Elements aElements = document.getElementById("mod-backup").select("div.url-grid a");
             List<DomainDataBean.Domain> domainList = new ArrayList<>();
             for (Element a : aElements) {
-                String title = a.text();
+                String title = a.select("span.url-label").text();
                 String href = a.attr("href");
                 if (!Utils.isNullOrEmpty(href)) {
                     domainList.add(new DomainDataBean.Domain(title, href));
