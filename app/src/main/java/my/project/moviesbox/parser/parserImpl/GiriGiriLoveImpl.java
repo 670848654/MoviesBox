@@ -45,6 +45,7 @@ import my.project.moviesbox.parser.config.SourceEnum;
 import my.project.moviesbox.parser.config.VodItemStyleEnum;
 import my.project.moviesbox.parser.config.WeekEnum;
 import my.project.moviesbox.parser.parserService.ParserInterface;
+import my.project.moviesbox.parser.sourceCustomView.VerifySearchActivity;
 import my.project.moviesbox.utils.Utils;
 import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.PlayerActivity;
@@ -609,6 +610,11 @@ public class GiriGiriLoveImpl implements ParserInterface {
         }
     }
 
+    @Override
+    public Class<? extends BaseActivity> searchOpenClass() {
+        return VerifySearchActivity.class;
+    }
+
     /**
      * 获取剧集列表集合接口 (搜索)
      *
@@ -620,6 +626,8 @@ public class GiriGiriLoveImpl implements ParserInterface {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
+            if (document.select(".verify-submit").size() > 0)
+                return null;
             // 新版
             Elements elements = document.select("div.search-list");
             // 旧版
