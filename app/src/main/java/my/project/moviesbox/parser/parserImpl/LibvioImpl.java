@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import lombok.Data;
 import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.bean.ResultUtils;
 import my.project.moviesbox.net.OkHttpUtils;
@@ -761,15 +762,15 @@ public class LibvioImpl implements ParserInterface {
     @Override
     public DomainDataBean parserDomain(String source) {
         try {
-            Document document = Jsoup.parse(source);
-            Elements aElements = document.getElementById("mod-backup").select("div.url-grid a");
             List<DomainDataBean.Domain> domainList = new ArrayList<>();
-            for (Element a : aElements) {
-                String title = a.select("span.url-label").text();
-                String href = a.attr("href");
-                if (!Utils.isNullOrEmpty(href)) {
-                    domainList.add(new DomainDataBean.Domain(title, href));
-                }
+            Document document = Jsoup.parse(source);
+            Elements scripts = document.select("script");
+            String _backupScript = extractTargetParam(scripts.html(), "_BACKUP");
+            String _K = extractTargetParam(scripts.html(), "_K");
+            LogUtil.logInfo("_backupScript", _backupScript);
+            List<RawLineData> rawLineDataList = extractBackupLines(_backupScript);
+            for (RawLineData rawLineData : rawLineDataList) {
+                domainList.add(new DomainDataBean.Domain(rawLineData.getLabel(), xorDecode(rawLineData.getEncodedStr(), _K)));
             }
             if (domainList.size() > 0)
                 return new DomainDataBean().success(domainList);
@@ -779,5 +780,91 @@ public class LibvioImpl implements ParserInterface {
             e.printStackTrace();
             return new DomainDataBean().error("获取最新域名失败："+e.getMessage());
         }
+    }
+
+    public static List<RawLineData> extractBackupLines(String jsonLikeStr) {
+        List<RawLineData> resultList = new ArrayList<>();
+
+        // 如果传入的字符串为 null 或空，直接返回空列表
+        if (jsonLikeStr == null || jsonLikeStr.trim().isEmpty()) {
+            return resultList;
+        }
+
+        // 核心提取正则，不需要 (?s)，因为我们在匹配单条记录内部
+        // 给 .*? 加入 (?s) 防止这一段对象文本内部有换行干扰
+        String itemRegex = "e:\\s*xorDecode\\([\"'](.*?)[\"'].*?(?s)label:\\s*[\"'](.*?)[\"']";
+        Pattern itemPattern = Pattern.compile(itemRegex);
+        Matcher itemMatcher = itemPattern.matcher(jsonLikeStr);
+
+        while (itemMatcher.find()) {
+            String encodedStr = itemMatcher.group(1); // 拿到 "0,31,80,70,91,90,66,4,71,94"
+            String label = itemMatcher.group(2);      // 拿到 "备用线路 01"
+
+            resultList.add(new RawLineData(encodedStr, label));
+        }
+
+        return resultList;
+    }
+
+    @Data
+    public static class RawLineData {
+        public String encodedStr; // 比如 "0,31,80,70..."
+        public String label;      // 比如 "备用线路 01"
+
+        public RawLineData(String encodedStr, String label) {
+            this.encodedStr = encodedStr;
+            this.label = label;
+        }
+    }
+
+    /**
+     * 万能解析工具：用正则精准剥离 JavaScript 里的字符串变量值
+     * 兼容 const/let/var 关键字，以及单引号或双引号
+     */
+    private static String extractTargetParam(String scriptText, String varName) {
+        // 分支 1：(["'])(.*?)\1  -> 匹配单行引号字符串
+        // 分支 2：(?s)(.*?);     -> (?s)开启单行模式，点号.可以匹配换行符。它会一直往下抓，直到撞到分号 ; 为止
+        String regex = "(?:const|let|var)\\s+" + varName + "\\s*=\\s*(?:([\"'])(.*?)\\1|(?s)(.*?);)";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(scriptText);
+
+        if (matcher.find()) {
+            // 如果 group(2) 有值，说明是引号字符串
+            if (matcher.group(2) != null) {
+                return matcher.group(2);
+            }
+            // 如果 group(3) 有值，说明是数组、对象或布尔值（支持跨行）
+            if (matcher.group(3) != null) {
+                return matcher.group(3).trim();
+            }
+        }
+        return null;
+    }
+
+    public static String xorDecode(String encoded, String key) {
+        LogUtil.logInfo("encoded", encoded);
+        if (encoded == null || encoded.isEmpty() || key == null || key.isEmpty()) {
+            return "";
+        }
+
+        // 按照逗号分割数字字符串
+        String[] numbers = encoded.split(",");
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < numbers.length; i++) {
+            // 1. 将字符串数字转为整数 (对应 JS 的 parseInt)
+            int n = Integer.parseInt(numbers[i].trim());
+
+            // 2. 获取对应位置 key 的字符编码 (对应 JS 的 key.charCodeAt(i % key.length))
+            char keyChar = key.charAt(i % key.length());
+
+            // 3. 异或运算并转回字符 (对应 JS 的 String.fromCharCode)
+            char decodedChar = (char) (n ^ keyChar);
+
+            result.append(decodedChar);
+        }
+        String url = result.toString();
+        LogUtil.logInfo("url", url);
+        return url;
     }
 }
