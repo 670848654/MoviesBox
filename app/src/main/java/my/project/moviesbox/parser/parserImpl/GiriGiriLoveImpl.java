@@ -1059,11 +1059,18 @@ public class GiriGiriLoveImpl implements ParserInterface {
         try {
             Document document = Jsoup.parse(source);
             List<DomainDataBean.Domain> domainList = new ArrayList<>();
-            String dataInfo = document.select("a.uePcBigButton").attr("href");
-            if (Utils.isNullOrEmpty(dataInfo))
+            Elements aList = document.select(".cards a");
+            String url = "";
+            for (Element a : aList) {
+                if (a.text().contains("Web网页端")) {
+                    url = a.attr("href");
+                    break;
+                }
+            }
+            if (Utils.isNullOrEmpty(url))
                 return new DomainDataBean().error("未能正确获取到最新域名数据，请自行通过发布页查看");
             else {
-                domainList.add(new DomainDataBean.Domain("最新域名", dataInfo));
+                domainList.add(new DomainDataBean.Domain("最新域名", url));
                 return new DomainDataBean().success(domainList);
             }
         } catch (Exception e) {
