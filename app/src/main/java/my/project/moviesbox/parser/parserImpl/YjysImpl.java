@@ -1027,7 +1027,7 @@ public class YjysImpl implements ParserInterface {
         JSONObject jsonObject = new JSONObject(json);
         if (jsonObject.has("url")) {
             String playUrl = jsonObject.getString("url");
-            playUrls.add(new DialogItemBean(playUrl, playUrl.contains("m3u8") ? M3U8 : MP4, true));
+            playUrls.add(new DialogItemBean(playUrl, playUrl.contains("m3u8") ? M3U8 : MP4));
         }
     }
 
