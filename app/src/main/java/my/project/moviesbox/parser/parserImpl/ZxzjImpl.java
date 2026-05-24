@@ -6,14 +6,19 @@ import static my.project.moviesbox.parser.config.SourceEnum.SourceIndexEnum.ZXZJ
 import static my.project.moviesbox.parser.config.VodTypeEnum.M3U8;
 import static my.project.moviesbox.parser.config.VodTypeEnum.MP4;
 
+import android.util.Base64;
+
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.codec.digest.DigestUtils;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,10 +26,13 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
 import my.project.moviesbox.bean.Result;
 import my.project.moviesbox.bean.ResultUtils;
 import my.project.moviesbox.net.OkHttpUtils;
-import my.project.moviesbox.parser.LogUtil;
 import my.project.moviesbox.parser.bean.ClassificationDataBean;
 import my.project.moviesbox.parser.bean.DetailsDataBean;
 import my.project.moviesbox.parser.bean.DialogItemBean;
@@ -42,6 +50,7 @@ import my.project.moviesbox.view.ClassificationVodListActivity;
 import my.project.moviesbox.view.PlayerActivity;
 import my.project.moviesbox.view.fragment.HomeFragment;
 import okhttp3.FormBody;
+import okhttp3.Headers;
 
 /**
   * @包名: my.project.moviesbox.parser.parserImpl
@@ -429,7 +438,7 @@ public class ZxzjImpl implements ParserInterface {
         try {
             List<VodDataBean> items = new ArrayList<>();
             Document document = Jsoup.parse(source);
-            Elements elements = document.select(".stui-pannel .stui-pannel__bd ul li a.lazyload");
+            Elements elements = document.select("ul.stui-vodlist.clearfix li a.lazyload");
             if (elements.size() > 0) {
                 for (Element item : elements) {
                     VodDataBean bean = new VodDataBean();
@@ -582,37 +591,136 @@ public class ZxzjImpl implements ParserInterface {
             String jsonText = script.substring(script.indexOf("{"), script.lastIndexOf("}") + 1);
             JSONObject jsonObject = JSON.parseObject(jsonText);
             String url = jsonObject.getString("url");
-            // 调用接口获取真实播放地址
-            // 先获取接口
-            LogUtil.logInfo("getDataUrl", url);
-            String responseData = OkHttpUtils.getInstance().performSyncRequestAndHeader(url);
+            logInfo("getDataUrl", url);
+            // 获取artplayer页面的源码
+            String responseData = OkHttpUtils.getInstance().performSyncRequestAndHeader(getDefaultDomain() + "/static/player/artplayer/?url=" + url);
             Document dataHtml = Jsoup.parse(responseData);
-            Elements dataScriptList = dataHtml.select("script");
-            Element dataScript = null;
-            for (Element javascript : dataScriptList) {
-                String html = javascript.html();
-                if (html.contains("result_v2")) {
-                    dataScript = javascript;
+            Elements scripts = dataHtml.select("script");
+            String targetScriptContent = "";
+            // 解密关键参数
+            String isSmartPlay, playPageUrl, secretKeySeed, timestamp, qualities;
+            for (Element script1 : scripts) {
+                String content = script1.html();
+                // 通过标志性的变量名，锁死包含目标参数的那一个 script 块
+                if (content.contains("playPageUrl") && content.contains("secretKeySeed") && content.contains("timestamp")) {
+                    targetScriptContent = content;
                     break;
                 }
             }
-            if (dataScript == null)
-                return null;
-            script = dataScript.html();
-            logInfo("javaScript", script);
-            jsonText = script.substring(script.indexOf("{"), script.lastIndexOf("}") + 1);
-            jsonObject = JSON.parseObject(jsonText);
-            String data = jsonObject.getString("data");
-            logInfo("data", data);
-            String playUrl = getDecodeData(data);
-            logInfo("playUrl", playUrl);
-            result.add(new DialogItemBean(playUrl, playUrl.contains("m3u8") ? M3U8 : MP4));
+            if (!targetScriptContent.isEmpty()) {
+                isSmartPlay = extractTargetParam(targetScriptContent, "isSmartPlay");
+                playPageUrl = extractTargetParam(targetScriptContent, "playPageUrl");
+                secretKeySeed = extractTargetParam(targetScriptContent, "secretKeySeed");
+                timestamp = extractTargetParam(targetScriptContent, "timestamp");
+                qualities = extractTargetParam(targetScriptContent, "qualities");
+                logInfo("isSmartPlay", isSmartPlay);
+                logInfo("playPageUrl", playPageUrl);
+                logInfo("secretKeySeed", secretKeySeed);
+                logInfo("timestamp", timestamp);
+                logInfo("qualities", qualities);
+            } else
+                return ResultUtils.fail("未在网页中找到包含关键参数的 script 标签！");
+            if ("false".equalsIgnoreCase(isSmartPlay)) {
+                // M3U8类型
+                JSONArray jsonArray = JSONArray.parseArray(qualities);
+                for (int i = 0, size = jsonArray.size(); i < size; i++) {
+                    JSONObject object = jsonArray.getJSONObject(i);
+                    String realPlayUrl = getDefaultDomain() + decryptH(object.getString("url"), timestamp);
+                    result.add(new DialogItemBean(realPlayUrl, realPlayUrl.contains("m3u8") ? M3U8 : MP4));
+                }
+                logInfo("realPlayUrl", result.toString());
+            } else {
+                // MP4类型
+                // 获取当前时间戳（秒）对应 JS 的 Math.floor(Date.now() / 1000)
+                long t = System.currentTimeMillis() / 1000;
+                // 计算 MD5 签名
+                String signature = DigestUtils.md5Hex(String.valueOf(t));
+                Headers.Builder builder = new Headers.Builder();
+                builder.set("Accept", "application/json, text/javascript, */*; q=0.01");
+                builder.set("Origin", getDefaultDomain());
+                builder.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0");
+                Headers headers = builder.build();
+                String jsonBody = String.format(
+                        "{\"vkey\":\"%s\",\"code\":\"%s\",\"t\":%d,\"signature\":\"%s\"}",
+                        playPageUrl, secretKeySeed, t, signature
+                );
+                String resultJson = OkHttpUtils.getInstance().postJsonSyncRequestAndHeader("https://hd.ticktockwow.com/smartplay-cache/api/webvideo_ty.php", headers, jsonBody);
+                logInfo("resultJson", resultJson);
+                JSONObject resultJsonObj = JSONObject.parseObject(resultJson);
+                String playUrl = resultJsonObj.getString("url");
+                String realPlayUrl = decryptH(playUrl, timestamp);
+                logInfo("realPlayUrl", realPlayUrl);
+                result.add(new DialogItemBean(realPlayUrl, realPlayUrl.contains("m3u8") ? M3U8 : MP4));
+            }
             return ResultUtils.ok(result);
         } catch (Exception e) {
             e.printStackTrace();
             logInfo("getPlayUrl error", e.getMessage());
             return ResultUtils.fail(e.getMessage());
         }
+    }
+
+    /**
+     * 万能解析工具：用正则精准剥离 JavaScript 里的字符串变量值
+     * 兼容 const/let/var 关键字，以及单引号或双引号
+     */
+    private static String extractTargetParam(String scriptText, String varName) {
+        // 匹配 var/let/const varName =
+        // 后面的内容分为两种情况：
+        // 1. 引号包裹的字符串: ([\"'])(.*?)\1
+        // 2. 没用引号包裹的复杂对象/非字符串(直到行尾的分号): ([^;\r\n]+)
+        String regex = "(?:const|let|var)\\s+" + varName + "\\s*=\\s*(?:([\"'])(.*?)\\1|([^;\r\n]+))";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(scriptText);
+
+        if (matcher.find()) {
+            // 如果 group(2) 有值，说明匹配到了引号包裹的字符串（比如 timestamp）
+            if (matcher.group(2) != null) {
+                return matcher.group(2);
+            }
+            // 如果 group(3) 有值，说明匹配到的是数组、对象或布尔值（比如 qualities 或 isSmartPlay）
+            if (matcher.group(3) != null) {
+                return matcher.group(3).trim();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 对应 JS 的 function h(a) 解密逻辑
+     * @param encryptedData
+     * @param timestamp
+     * @return
+     * @throws Exception
+     */
+    public static String decryptH(String encryptedData, String timestamp) throws Exception {
+        encryptedData = encryptedData.replace("\\/", "/");
+        if (encryptedData == null || encryptedData.isEmpty()) {
+            return encryptedData;
+        }
+        // 如果已经是常规网址开头，直接返回
+        if (encryptedData.toLowerCase().startsWith("http://") || encryptedData.toLowerCase().startsWith("https://")) {
+            return encryptedData;
+        }
+
+        // 计算 MD5，这里的"RY7e48naFXPsLJC"是网站写死的
+        String rawSalt = timestamp + "RY7e48naFXPsLJC";
+        String md5Hex = DigestUtils.md5Hex(rawSalt);
+
+        // 切割生成 Key 和 IV
+        String keyStr = md5Hex.substring(16);
+        String ivStr = md5Hex.substring(0, 16);
+
+        // AES-128-CBC 解密
+        byte[] encryptedBytes = Base64.decode(encryptedData, Base64.DEFAULT);
+
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        SecretKeySpec keySpec = new SecretKeySpec(keyStr.getBytes(StandardCharsets.UTF_8), "AES");
+        IvParameterSpec ivSpec = new IvParameterSpec(ivStr.getBytes(StandardCharsets.UTF_8));
+
+        cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
+        byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+        return new String(decryptedBytes, StandardCharsets.UTF_8);
     }
 
     /**
@@ -700,6 +808,7 @@ public class ZxzjImpl implements ParserInterface {
      * 解析真实播放地址
      * @param data 加密数据
      * @return
+     * @deprecated 新版解密方法为 {@link #decryptH}
      */
     private static String getDecodeData(String data) {
         StringBuilder reversedUrl = new StringBuilder(data).reverse();
@@ -720,12 +829,12 @@ public class ZxzjImpl implements ParserInterface {
     public DomainDataBean parserDomain(String source) {
         try {
             Document document = Jsoup.parse(source);
-            Elements aElements = document.select(".content-top ul li a");
+            Elements aElements = document.select(".box ul li a");
             List<DomainDataBean.Domain> domainList = new ArrayList<>();
             for (Element a : aElements) {
                 String title = a.text();
                 String href = a.attr("href");
-                if (!Utils.isNullOrEmpty(href) && !href.contains("建议收藏")) {
+                if (!Utils.isNullOrEmpty(href) && !title.contains("发布")) {
                     domainList.add(new DomainDataBean.Domain(title, href));
                 }
             }

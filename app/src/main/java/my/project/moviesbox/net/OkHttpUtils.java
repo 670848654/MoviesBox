@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -187,35 +186,23 @@ public class OkHttpUtils {
         return call.execute();
     }
 
-    public String performSyncRequestAndHeaderTest(String url) throws IOException {
-        Headers.Builder builder = new Headers.Builder();
-        builder.add("Accept", "*/*");
-        builder.add("Connection", "keep-alive");
-        builder.add("keep-alive", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36 Edg/117.0.2045.60");
-        builder.add("Referer", "https://www.libvio.link");
+    public String postJsonSyncRequestAndHeader(String url, Headers headers, String json) throws IOException {
+        LogUtil.logInfo("POST请求", url);
         // 创建请求
+        RequestBody body = RequestBody.create(json, MediaType.get("application/json; charset=utf-8"));
         Request request = new Request.Builder()
                 .url(url)
-                .headers(builder.build())
+                .post(body)
+                .headers(headers)
                 .build();
         // 发起同步请求
         try (Response response = getOkHttpClient().newCall(request).execute()) {
             if (response.isSuccessful()) {
-                String contentType = response.header("Content-Type");
-                Charset charset = Charset.forName("UTF-8"); // 默认使用 UTF-8
-
-                if (contentType != null) {
-                    MediaType mediaType = MediaType.parse(contentType);
-                    if (mediaType != null) {
-                        Charset responseCharset = mediaType.charset();
-                        if (responseCharset != null) {
-                            charset = responseCharset;
-                        }
-                    }
+                if (!response.isSuccessful()) {
+                    throw new IOException("服务器响应失败，状态码: " + response.code());
                 }
-                // 返回响应数据
-                byte[] responseBodyBytes = response.body().bytes();
-                return new String(responseBodyBytes, charset);
+                // 返回对应的 JSON 字符串
+                return response.body() != null ? response.body().string() : "";
             } else {
                 throw new IOException("Request failed with code: " + response.code());
             }

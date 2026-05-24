@@ -34,9 +34,17 @@ public class DomainDataBean {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class Domain {
         private String title;
         private String url;
+
+        public Domain(String title, String url) {
+            this.title = title;
+            setUrl(url);
+        }
+
+        public void setUrl(String url) {
+            this.url = url.startsWith("http") ? url : "https://" + url;
+        }
     }
 }
