@@ -6,10 +6,10 @@
     <string name="statementTitle">声明</string>
     <string name="statementSubContent">仅供学习交流<![CDATA[<br>]]>禁止非法传播或用于商业用途</string>
     <string name="testModelTitle">测试设备</string>
-    <string name="testModelSubContent">OnePlus 12 | XiaomiPad 5 Pro<![CDATA[<br>]]>Android 15 | 14</string>
+    <string name="testModelSubContent">OnePlus 12 | XiaomiPad 5 Pro<![CDATA[<br>]]>Android 16 | 14</string>
     <string name="currentVersionTitle">当前版本</string>
     <string name="lastBuildDateTitle">最后构建日期</string>
-    <string name="lastBuildDateSubContent">2025年10月21日11:42:25</string>
+    <string name="lastBuildDateSubContent">2026年5月24日09:49:56</string>
     <string name="cacheDirectoryTitle">存储位置</string>
     <string name="cacheDirectorySubContent">%s<![CDATA[<br>]]>卸载后自行删除此目录</string>
     <string name="authorizationDirectoryTitle">外部存储授权目录</string>
