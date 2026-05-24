@@ -103,8 +103,8 @@ public enum SourceEnum {
             MOVIES.bg,
             "质量高但并不是所有都能在线观看，可能存在Cloudflare、域名可能经常变更（可通过网站发布页查看最新域名）",
             "libvio",
-            "https://www.libvio.pw",
-            "https://www.libvio.app",
+            "https://www.libvio.run",
+            "https://ifabu.vip",
             "/search/%s----------%s---.html",
             true,
             "/show/%s--------%s---.html", // 暂不实现
@@ -117,11 +117,11 @@ public enum SourceEnum {
             MOVIES.bg,
             "质量高但只有热门电影/电视剧（无国产），无广告，可能存在Cloudflare、域名可能经常变更（可通过网站发布页查看最新域名）",
             "zxzj",
-            "https://www.zxzjhd.com",
-            "https://www.zxzj.site",
-            "/vodsearch/%s----------%s---.html",
+            "https://www.zxzj.one",
+            "https://zxzj.app",
+            "/search/%s----------%s---.html",
             true,
-            "/vodshow/%s--------%s---.html", // 暂不实现
+            "/show/%s--------%s---.html", // 暂不实现
             "",
             "",
             new ArrayList<>()),
@@ -191,7 +191,7 @@ public enum SourceEnum {
             ANIME.bg,
             "质量高，无国产动漫",
             "girigirilove",
-            "https://bgm.girigirilove.com",
+            "https://ani.girigirilove.com",
             "https://girigirilove.top/",
             "/search/%s----------%s---/", // 搜索参数.分页
             false,
